@@ -1,4 +1,4 @@
-[build-system]
+﻿[build-system]
 requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
@@ -51,6 +51,9 @@ dependencies = [
     "pydantic>=2.5",
     "PyYAML>=6.0",
     "pandas>=2.0",
+    "pyarrow>=14.0",
+    "jsonschema>=4.0",
+    "pyreadr>=0.4.7",
 ]
 
 [project.optional-dependencies]
@@ -102,10 +105,10 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Test files use common testing idioms that lint doesn't love:
 "tests/**/*.py" = [
-    "B011",  # `assert False` in tests — fine, tests don't run under -O
-    "B905",  # `zip()` without strict — fine in tests
-    "B007",  # unused loop var — fine in tests iterating for side effects
-    "E402",  # module-level import not at top — fine after sys.path shims
+    "B011",  # `assert False` in tests вЂ” fine, tests don't run under -O
+    "B905",  # `zip()` without strict вЂ” fine in tests
+    "B007",  # unused loop var вЂ” fine in tests iterating for side effects
+    "E402",  # module-level import not at top вЂ” fine after sys.path shims
 ]
 
 [tool.mypy]
