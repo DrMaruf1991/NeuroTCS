@@ -5,13 +5,22 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.2.0](https://img.shields.io/badge/version-1.2.0-success.svg)](CHANGELOG.md)
-[![Tests 92/92](https://img.shields.io/badge/tests-92%2F92-success.svg)](tests/)
+[![Version 1.3.0](https://img.shields.io/badge/version-1.3.0-success.svg)](CHANGELOG.md)
+[![Tests 120/120](https://img.shields.io/badge/tests-120%2F120-success.svg)](tests/)
 [![Spec v1.6 FINAL](https://img.shields.io/badge/spec-v1.6_FINAL-success.svg)](docs/spec/temporalmetric_v1.6_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
 
-The framework is anchored on Dr. Marufjon Salokhiddinov's ASNR 2026 presentation (Austin, May 2026) and the temporalmetric v1.6 FINAL technical specification. The AD instantiation has been validated on 12,006 real ADNI clinical-label transitions: 65 flagged (0.54%), all clinically interpretable.
+The framework is anchored on Dr. Marufjon Salokhiddinov's ASNR 2026 presentation (Austin, May 2026) and the temporalmetric v1.6 FINAL technical specification.
+
+**External replication achieved (v1.3.0, Aim 2).** The AD instantiation has been validated on **two independent cohorts**:
+
+| Cohort | Subjects | Transitions | Flagged | cTCS | audit_id |
+|---|---|---|---|---|---|
+| ADNI (Aim 1) | 2,958 | 12,006 | 65 (0.54 %) | **0.9946** | `d344ec1a...` |
+| OASIS-3 (Aim 2) | 1,247 | 7,248 | 30 (0.41 %) | **0.9942** | `96d942e4...` |
+
+ΔcTCS between cohorts = **0.0004**. Confidence intervals (BCa 95 %) overlap almost completely. The cTCS metric generalizes across cohorts collected by different institutions, in different decades, with different recruitment criteria. Full validation report at [`docs/validation/aim2_oasis3_external_replication.md`](docs/validation/aim2_oasis3_external_replication.md).
 
 ---
 
@@ -26,7 +35,7 @@ NeuroTCS is the umbrella for seven engineering pieces. Pieces 1–3 are shipped 
 | 3 | `neurotcs.rulepack` | ✅ shipped | 8 production rule packs across 6 disease domains |
 | 4 | `neurotcs.audit_core` | ✅ shipped | cTCS / pTCS / uTCS engine + cluster bootstrap + BCa + Huber |
 | 5 | `neurotcs.output_schema` | ⏳ planned | FHIR Observation emitter for EHR interoperability |
-| 6 | `neurotcs.adapters` | 🟡 partial | ADNI shipped; OASIS-3 / PPMI / RIDER / MIRIAD planned |
+| 6 | `neurotcs.adapters` | 🟡 partial | ADNI + OASIS-3 shipped; PPMI / RIDER / MIRIAD planned |
 | 7 | `neurotcs.validation_harness` | ⏳ planned | Synthetic-trajectory self-tests per rule pack |
 
 ## Rule packs shipped

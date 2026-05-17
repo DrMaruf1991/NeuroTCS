@@ -15,7 +15,7 @@ Public API (the most common imports):
     from neurotcs.input_contract.v1_1 import validate_manifest
 """
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __author__ = "Marufjon Salokhiddinov, MD PhD"
 __license__ = "Apache-2.0"
 
