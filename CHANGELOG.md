@@ -4,6 +4,62 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] — 2026-05-18
+
+### Added — TRAC framework + schema v1.2 + evidence-base verification
+
+**TRAC rule pack** (`ad/aa_2024_trac@1.0.0`) — Treatment-Related Amyloid Clearance:
+- Encodes the framework from La Joie R, Cummings JL, Dage JL, et al., *Alzheimer's & Dementia* 2025;21(11):e70997 (DOI 10.1002/alz.70997, PMCID PMC12657122), an Alzheimer's Association-convened workgroup paper led by UCSF (Renaud La Joie, PhD).
+- State space: `A_neg`, `A_pos`, `Partial_TRAC`, `Full_TRAC`.
+- 6 admissible transitions (1 natural amyloid accumulation + 5 treatment-conditional).
+- 3 documented inadmissible transitions (e.g. untreated A+ → A−, biologically implausible spontaneous clearance).
+- Drug-specific Centiloid thresholds noted: lecanemab interruption criterion 1 scan <11 CL OR 2 consecutive <25 CL; donanemab fibrillar clearance criterion <24.1 CL (both verified from La Joie 2025 footnote on TRAILBLAZER-ALZ criteria).
+- Transcription audit doc at `docs/transcription_audit/ad_aa_2024_trac.md` maps every YAML line to its source statement in La Joie 2025.
+- Covers FDA-approved anti-Aβ therapies: **lecanemab (Leqembi**, Eisai/Biogen; accelerated approval 2023-01-06, traditional/full approval **2023-07-06**, maintenance dosing 2025-01-26) and **donanemab (Kisunla**, donanemab-azbt, Eli Lilly; full approval **2024-07-02**, modified-titration label 2025-07-09 per TRAILBLAZER-ALZ 6).
+
+**Schema v1.2.0** — backward-compatible extension of rule pack format:
+- Added optional `required_conditions: dict[str, list[str]]` field to `Transition` for context-conditional admissibility.
+- Added optional `conditions_evaluated_at: Literal["from_visit", "to_visit", "either"]` field controlling which visit's context is checked. Default `"either"`.
+- Added `SUPPORTED_SCHEMA_VERSIONS = {"1.1.0", "1.2.0"}` — existing 8 production packs continue to load unchanged.
+- New `check_schema_version_supported` model validator on `RulePack` rejects unknown versions.
+- New `_check_required_conditions` helper evaluates per-visit context fields against `required_conditions`.
+
+**Audit core updates**:
+- `Trajectory.transitions_with_context()` — new method exposes per-visit `treatment_status` context alongside each transition.
+- `ctcs_per_patient` and `utcs_per_patient` now thread context through `is_admissible(...)` so conditional transitions are evaluated correctly. Trajectories lacking `treatment_status` pass `None` context, which the rule pack treats as fail-closed for conditional transitions (correct behavior — cannot certify a treatment-dependent transition without treatment evidence).
+- `audit()` flagged-transition counter also honors context.
+
+**Evidence-base verification methodology**:
+- All FDA approval dates and DOIs in the TRAC pack and v1.4.0 documentation were verified against primary sources via web search before committing — no claim relies on language-model memory. Citations are traceable to Eisai/Biogen and Eli Lilly press releases, FDA announcements, and PubMed/PMC.
+- The verified-evidence table (FDA dates, DOIs, Centiloid thresholds) is reproduced in `docs/transcription_audit/ad_aa_2024_trac.md` so any reviewer can spot-check.
+
+**README** — added "Known limitations and roadmap" section that publicly documents remaining gaps after v1.4.0:
+- AA 2024 transition priors still empty (`transition_priors: []`) — pTCS unavailable for that pack until populated from Mendes 2025 (PMC12079574, *Neurology* May 13 2025, DOI 10.1212/WNL.0000000000213675) and similar.
+- Plasma p-tau217 / Aβ42/40 reference range bindings — partial in input contract v1.1, full in v1.5.0.
+- Tau PET tracer scope — Tauvid/flortaucipir (Eli Lilly, AV-1451, FDA approved 2020) supported; **MK-6240 / florquinitau F-18** (Lantheus, NDA accepted 2025-10-28, PDUFA target **2026-08-13**) will be added on approval.
+
+**Tests** — 16 new tests added (12 rulepack + 4 audit_core):
+- Schema v1.2 acceptance of `required_conditions` and `conditions_evaluated_at`.
+- TRAC pack loads under v1.2 schema with correct state space and citation.
+- All 6 admissibility cases for treatment-conditional transitions (with/without treatment, with/without context, natural progression).
+- End-to-end audit on a synthetic 3-patient TRAC cohort: correct flagging of untreated implausible clearance.
+- Backward compatibility: all 8 existing v1.1.0 packs still load under v1.2.0 schema.
+- Locked ADNI invariant **unchanged** post-schema-bump: cTCS = 0.9946, 65/12006 flagged.
+
+### Test suite: **136/136** passing
+- 36 rulepack (24 prior + 12 new for v1.2 / TRAC)
+- 10 input contract v1.0
+- 23 input contract v1.1
+- 28 OASIS-3 adapter
+- 39 audit core (35 prior + 4 new for TRAC end-to-end)
+
+### Strategic
+- Closes the largest gap in the AD instantiation: NeuroTCS now correctly handles successfully-treated anti-amyloid therapy patients without falsely flagging biological reversal as model error.
+- Schema v1.2 generalizes beyond AD — any future rule pack can declare conditional admissibility for any context field (e.g. treatment status, comorbidity, dose).
+- Methodology fix: every regulatory-relevant fact verified at primary source before commit. Documented in CHANGELOG and transcription audit. Material for the FDA Q-Submission (Q1 2027).
+
+---
+
 ## [1.3.0] — 2026-05-17
 
 ### Added — Aim 2 external replication (OASIS-3)

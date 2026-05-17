@@ -149,14 +149,26 @@ def ctcs_per_patient(
     """Compute per-patient cTCS for one trajectory.
 
     Returns None if the trajectory has fewer than 2 visits (no transitions).
+
+    Uses `transitions_with_context()` so schema v1.2+ rule packs that declare
+    `required_conditions` on transitions (e.g. the TRAC pack
+    `ad/aa_2024_trac@1.0.0`) can evaluate treatment_status against the
+    trajectory's per-visit context. Trajectories without `treatment_status`
+    pass `None` contexts; rule packs treat that as fail-closed for
+    conditional transitions (correct behavior — we cannot certify a
+    treatment-dependent transition without treatment evidence).
     """
     n = trajectory.num_transitions
     if n == 0:
         return None
     rp = rulepack.rulepack
     K_sum = 0
-    for from_s, to_s, dt in trajectory.transitions():
-        ok, _ = rp.is_admissible(from_s, to_s, dt)
+    for from_s, to_s, dt, from_ctx, to_ctx in trajectory.transitions_with_context():
+        ok, _ = rp.is_admissible(
+            from_s, to_s, dt,
+            from_context=from_ctx,
+            to_context=to_ctx,
+        )
         if ok:
             K_sum += 1
     return K_sum / n
@@ -242,11 +254,17 @@ def utcs_per_patient(
     if n == 0:
         return None
     rp = rulepack.rulepack
-    transitions = trajectory.transitions()
+    transitions_ctx = trajectory.transitions_with_context()
     weights = trajectory.transition_confidences()
     weighted_sum = 0.0
-    for (from_s, to_s, dt), (p_t, p_t1) in zip(transitions, weights, strict=True):
-        ok, _ = rp.is_admissible(from_s, to_s, dt)
+    for (from_s, to_s, dt, from_ctx, to_ctx), (p_t, p_t1) in zip(
+        transitions_ctx, weights, strict=True
+    ):
+        ok, _ = rp.is_admissible(
+            from_s, to_s, dt,
+            from_context=from_ctx,
+            to_context=to_ctx,
+        )
         K = 1.0 if ok else 0.0
         weighted_sum += (p_t * p_t1) * K
     return weighted_sum / n

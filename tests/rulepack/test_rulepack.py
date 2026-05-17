@@ -44,6 +44,7 @@ FAIL = "\033[31m✗\033[0m"
 ALL_PACKS = [
     "ad/niaaa_2018",
     "ad/aa_2024",
+    "ad/aa_2024_trac",
     "pd/hoehn_yahr",
     "ms/mcdonald_2024",
     "oncology/recist_1_1",
@@ -60,9 +61,9 @@ TRANSCRIPTION_AUDIT_DIR = PROJECT_ROOT / "docs" / "transcription_audit"
 # Schema-level tests
 # ============================================================
 
-def test_schema_version_is_1_1():
-    assert SCHEMA_VERSION == "1.1.0"
-    print(f"  {PASS} test_schema_version_is_1_1")
+def test_schema_version_is_1_2():
+    assert SCHEMA_VERSION == "1.2.0"
+    print(f"  {PASS} test_schema_version_is_1_2")
 
 
 def test_citation_requires_pmid_or_doi():
@@ -533,12 +534,174 @@ def test_yaml_with_missing_transcribed_by_rejected():
 
 
 # ============================================================
+# Schema v1.2 / TRAC tests
+# ============================================================
+
+def test_schema_v1_2_supports_required_conditions():
+    """Schema v1.2 must accept the new required_conditions field on Transition."""
+    from neurotcs.rulepack.schema import Citation, Transition
+    # Should construct without raising
+    t = Transition(
+        from_state="A_pos",
+        to_state="Full_TRAC",
+        citation=Citation(
+            citation_doi="10.1002/alz.70997",
+            citation_text="La Joie 2025 TRAC test",
+        ),
+        guideline_section="La Joie 2025 §2",
+        required_conditions={"treatment_status": ["anti_amyloid_active"]},
+        conditions_evaluated_at="to_visit",
+    )
+    assert t.required_conditions == {"treatment_status": ["anti_amyloid_active"]}
+    assert t.conditions_evaluated_at == "to_visit"
+    print(f"  {PASS} test_schema_v1_2_supports_required_conditions")
+
+
+def test_schema_v1_2_default_evaluated_at_is_either():
+    """Default conditions_evaluated_at is 'either' for safety."""
+    from neurotcs.rulepack.schema import Citation, Transition
+    t = Transition(
+        from_state="A",
+        to_state="B",
+        citation=Citation(citation_doi="10.0/x", citation_text="x"),
+        guideline_section="x",
+        required_conditions={"k": ["v"]},
+    )
+    assert t.conditions_evaluated_at == "either"
+    print(f"  {PASS} test_schema_v1_2_default_evaluated_at_is_either")
+
+
+def test_trac_pack_loads_with_schema_v1_2():
+    pack = load_rulepack("ad/aa_2024_trac")
+    assert pack.rulepack.schema_version == "1.2.0"
+    assert pack.rulepack.rulepack_id == "ad/aa_2024_trac@1.0.0"
+    assert pack.rulepack.disease_domain.value == "alzheimers"
+    assert pack.rulepack.status.value == "production"
+    # 4 states: A_neg, A_pos, Partial_TRAC, Full_TRAC
+    assert len(pack.rulepack.state_space) == 4
+    state_names = {s.name for s in pack.rulepack.state_space}
+    assert state_names == {"A_neg", "A_pos", "Partial_TRAC", "Full_TRAC"}
+    # 6 admissible transitions (1 natural + 5 treatment-conditional)
+    assert len(pack.rulepack.admissible_transitions) == 6
+    # 3 documented inadmissible transitions
+    assert len(pack.rulepack.inadmissible_transitions) == 3
+    print(f"  {PASS} test_trac_pack_loads_with_schema_v1_2 "
+          f"(sha={pack.sha256[:8]})")
+
+
+def test_trac_pack_cites_la_joie_2025_doi():
+    """Verify TRAC anchor citation matches the verified La Joie 2025 DOI."""
+    pack = load_rulepack("ad/aa_2024_trac")
+    assert pack.rulepack.anchor_citation.citation_doi == "10.1002/alz.70997"
+    # And the transcribed_by field is set
+    assert "Salokhiddinov" in pack.rulepack.transcribed_by
+    print(f"  {PASS} test_trac_pack_cites_la_joie_2025_doi")
+
+
+def test_trac_admits_a_pos_to_full_trac_with_active_treatment():
+    pack = load_rulepack("ad/aa_2024_trac").rulepack
+    ok, t = pack.is_admissible(
+        "A_pos", "Full_TRAC", 365.0,
+        to_context={"treatment_status": "anti_amyloid_active"},
+    )
+    assert ok, "A+ -> Full_TRAC must be admissible under active anti-Aβ therapy"
+    assert t is not None
+    print(f"  {PASS} test_trac_admits_a_pos_to_full_trac_with_active_treatment")
+
+
+def test_trac_rejects_a_pos_to_full_trac_without_treatment():
+    pack = load_rulepack("ad/aa_2024_trac").rulepack
+    ok, t = pack.is_admissible(
+        "A_pos", "Full_TRAC", 365.0,
+        to_context={"treatment_status": "none"},
+    )
+    assert not ok, "A+ -> Full_TRAC must NOT be admissible without anti-Aβ therapy"
+    print(f"  {PASS} test_trac_rejects_a_pos_to_full_trac_without_treatment")
+
+
+def test_trac_fails_closed_when_context_missing():
+    """No context = fail-closed for conditional transitions (regulatory safety)."""
+    pack = load_rulepack("ad/aa_2024_trac").rulepack
+    ok, _ = pack.is_admissible("A_pos", "Full_TRAC", 365.0)
+    assert not ok, "Conditional transitions fail-closed when context is missing"
+    print(f"  {PASS} test_trac_fails_closed_when_context_missing")
+
+
+def test_trac_admits_natural_a_neg_to_a_pos_progression():
+    """Natural amyloid accumulation has no treatment requirement."""
+    pack = load_rulepack("ad/aa_2024_trac").rulepack
+    ok, _ = pack.is_admissible("A_neg", "A_pos", 730.0)
+    assert ok
+    print(f"  {PASS} test_trac_admits_natural_a_neg_to_a_pos_progression")
+
+
+def test_trac_admits_partial_to_full_under_treatment():
+    pack = load_rulepack("ad/aa_2024_trac").rulepack
+    ok, _ = pack.is_admissible(
+        "Partial_TRAC", "Full_TRAC", 180.0,
+        to_context={"treatment_status": "anti_amyloid_active"},
+    )
+    assert ok
+    print(f"  {PASS} test_trac_admits_partial_to_full_under_treatment")
+
+
+def test_trac_admits_full_to_partial_post_discontinuation():
+    """Re-accumulation after discontinuation is admissible."""
+    pack = load_rulepack("ad/aa_2024_trac").rulepack
+    ok, _ = pack.is_admissible(
+        "Full_TRAC", "Partial_TRAC", 730.0,
+        to_context={"treatment_status": "anti_amyloid_discontinued"},
+    )
+    assert ok
+    print(f"  {PASS} test_trac_admits_full_to_partial_post_discontinuation")
+
+
+def test_existing_v1_1_packs_still_load_under_v1_2_schema():
+    """Backward compatibility — all 8 prior packs must still load."""
+    for name in [
+        "ad/niaaa_2018", "ad/aa_2024", "pd/hoehn_yahr", "ms/mcdonald_2024",
+        "oncology/recist_1_1", "oncology/irecist", "stroke/mrs_followup",
+        "lung_nodule/fleischner_2017",
+    ]:
+        pack = load_rulepack(name)
+        assert pack.rulepack.schema_version == "1.1.0"
+    print(f"  {PASS} test_existing_v1_1_packs_still_load_under_v1_2_schema "
+          f"(8 packs)")
+
+
+def test_unsupported_schema_version_rejected():
+    """An unknown schema_version must be rejected by the validator."""
+    from pydantic import ValidationError
+
+    from neurotcs.rulepack.schema import RulePack
+    try:
+        RulePack(
+            schema_version="0.9.0",
+            rulepack_id="x/y@1.0.0",
+            ruleset_version="1.0.0",
+            effective_date="2026-01-01",
+            status="production",
+            disease_domain="alzheimers",
+            framework_name="x",
+            transcribed_by="X",
+            clinical_source_authority="x",
+            anchor_citation={"citation_doi": "10/x", "citation_text": "x"},
+            state_space=[{"name": "A", "description": "x", "ordinal_rank": 0}],
+            admissible_transitions=[],
+        )
+        assert False, "should have raised"
+    except (ValidationError, ValueError):
+        pass
+    print(f"  {PASS} test_unsupported_schema_version_rejected")
+
+
+# ============================================================
 # Runner
 # ============================================================
 
 def run_all():
     tests = [
-        test_schema_version_is_1_1,
+        test_schema_version_is_1_2,
         test_citation_requires_pmid_or_doi,
         test_transition_requires_citation_and_section,
         test_rulepack_requires_v1_1_authorship_fields,
@@ -562,8 +725,21 @@ def run_all():
         test_load_missing_file,
         test_yaml_with_missing_guideline_section_rejected,
         test_yaml_with_missing_transcribed_by_rejected,
+        # v1.2 schema + TRAC pack
+        test_schema_v1_2_supports_required_conditions,
+        test_schema_v1_2_default_evaluated_at_is_either,
+        test_trac_pack_loads_with_schema_v1_2,
+        test_trac_pack_cites_la_joie_2025_doi,
+        test_trac_admits_a_pos_to_full_trac_with_active_treatment,
+        test_trac_rejects_a_pos_to_full_trac_without_treatment,
+        test_trac_fails_closed_when_context_missing,
+        test_trac_admits_natural_a_neg_to_a_pos_progression,
+        test_trac_admits_partial_to_full_under_treatment,
+        test_trac_admits_full_to_partial_post_discontinuation,
+        test_existing_v1_1_packs_still_load_under_v1_2_schema,
+        test_unsupported_schema_version_rejected,
     ]
-    print(f"\nNeuroTCS Rule Pack v1.1 tests — running {len(tests)} tests:\n")
+    print(f"\nNeuroTCS Rule Pack v1.2 tests — running {len(tests)} tests:\n")
     failed = 0
     for t in tests:
         try:

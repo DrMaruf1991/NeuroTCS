@@ -118,6 +118,34 @@ class Trajectory:
             out.append((self.states[t], self.states[t + 1], float(dt)))
         return out
 
+    def transitions_with_context(
+        self,
+    ) -> list[tuple[str, str, float, dict[str, str] | None, dict[str, str] | None]]:
+        """Iterate (from_state, to_state, delta_t_days, from_context, to_context).
+
+        Per-visit context dicts carry the trajectory's per-visit fields
+        (currently `treatment_status`) for use with schema v1.2+ rule packs
+        that declare `required_conditions` on transitions. Returns None
+        for context dicts on trajectories that don't carry treatment_status,
+        which the rule pack treats as fail-closed for conditional transitions.
+        """
+        out: list[tuple[str, str, float, dict[str, str] | None, dict[str, str] | None]] = []
+        for t in range(self.num_transitions):
+            dt = (self.dates[t + 1] - self.dates[t]).days
+            from_ctx: dict[str, str] | None = None
+            to_ctx: dict[str, str] | None = None
+            if self.treatment_status is not None:
+                from_ctx = {"treatment_status": self.treatment_status[t]}
+                to_ctx = {"treatment_status": self.treatment_status[t + 1]}
+            out.append((
+                self.states[t],
+                self.states[t + 1],
+                float(dt),
+                from_ctx,
+                to_ctx,
+            ))
+        return out
+
     def transition_confidences(self) -> list[tuple[float, float]]:
         """Iterate (max_p_t, max_p_{t+1}) pairs for uTCS scoring.
 

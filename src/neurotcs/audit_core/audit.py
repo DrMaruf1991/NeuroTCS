@@ -261,12 +261,18 @@ def audit(
     n_patients_scored = len(per_patient.patients)
     n_transitions = int(per_patient.n_transitions.sum())
 
-    # Count flagged transitions: rebuild the running tally directly
+    # Count flagged transitions: rebuild the running tally directly.
+    # Uses transitions_with_context so schema v1.2 conditional admissibility
+    # (e.g. TRAC pack) flags treatment-untreated A+ -> A- correctly.
     n_flagged = 0
     for traj in trajectories:
         rp = rulepack.rulepack
-        for from_s, to_s, dt in traj.transitions():
-            ok, _ = rp.is_admissible(from_s, to_s, dt)
+        for from_s, to_s, dt, from_ctx, to_ctx in traj.transitions_with_context():
+            ok, _ = rp.is_admissible(
+                from_s, to_s, dt,
+                from_context=from_ctx,
+                to_context=to_ctx,
+            )
             if not ok:
                 n_flagged += 1
 

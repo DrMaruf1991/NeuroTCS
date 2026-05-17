@@ -535,6 +535,110 @@ def test_real_adni_audit_end_to_end():
 
 
 # ============================================================
+# TRAC end-to-end audit tests (schema v1.2 conditional admissibility)
+# ============================================================
+
+def _make_trac_trajectory(
+    states: list[str],
+    treatment_status: list[str],
+    interval_days: int = 365,
+    patient_id: str = "TEST_TRAC_001",
+) -> Trajectory:
+    """Build a synthetic trajectory carrying treatment_status per visit."""
+    base = date(2025, 1, 1)
+    dates = tuple(base + timedelta(days=i * interval_days)
+                   for i in range(len(states)))
+    return Trajectory(
+        patient_id=patient_id,
+        dates=dates,
+        states=tuple(states),
+        treatment_status=tuple(treatment_status),
+    )
+
+
+def test_trac_treated_patient_scores_perfect():
+    """Treated A+ -> Full_TRAC trajectory should score cTCS = 1.0."""
+    pack = load_rulepack("ad/aa_2024_trac")
+    traj = _make_trac_trajectory(
+        states=["A_pos", "Partial_TRAC", "Full_TRAC"],
+        treatment_status=["anti_amyloid_active",
+                           "anti_amyloid_active",
+                           "anti_amyloid_active"],
+    )
+    score = ctcs_per_patient(traj, pack)
+    assert score == 1.0, f"expected cTCS=1.0 for valid TRAC trajectory, got {score}"
+    print(f"  {PASS} test_trac_treated_patient_scores_perfect (cTCS={score})")
+
+
+def test_trac_untreated_patient_a_pos_to_a_neg_flagged():
+    """Untreated A+ -> A_neg is biologically implausible -> flagged."""
+    pack = load_rulepack("ad/aa_2024_trac")
+    traj = _make_trac_trajectory(
+        states=["A_pos", "A_neg"],
+        treatment_status=["none", "none"],
+    )
+    score = ctcs_per_patient(traj, pack)
+    # 1 transition, 0 admissible
+    assert score == 0.0, f"expected cTCS=0.0 for untreated A+ -> A-, got {score}"
+    print(f"  {PASS} test_trac_untreated_patient_a_pos_to_a_neg_flagged "
+          f"(cTCS={score})")
+
+
+def test_trac_full_audit_cohort_pipeline():
+    """Full audit() on a small TRAC cohort produces stable audit_id."""
+    pack = load_rulepack("ad/aa_2024_trac")
+    cohort = [
+        # Patient 1: textbook TRAC responder
+        _make_trac_trajectory(
+            states=["A_pos", "Partial_TRAC", "Full_TRAC"],
+            treatment_status=["anti_amyloid_active",
+                               "anti_amyloid_active",
+                               "anti_amyloid_active"],
+            patient_id="TRAC_responder_01",
+        ),
+        # Patient 2: untreated, no progression
+        _make_trac_trajectory(
+            states=["A_neg", "A_neg", "A_pos"],
+            treatment_status=["none", "none", "none"],
+            interval_days=730,
+            patient_id="TRAC_untreated_02",
+        ),
+        # Patient 3: untreated implausible clearance (should be flagged)
+        _make_trac_trajectory(
+            states=["A_pos", "A_neg"],
+            treatment_status=["none", "none"],
+            patient_id="TRAC_implausible_03",
+        ),
+    ]
+    result = audit(cohort, pack, bootstrap_B=200, seed=42)
+    assert result.n_patients_scored == 3
+    # Patient 1: 2 transitions, both admissible
+    # Patient 2: 2 transitions, both admissible
+    # Patient 3: 1 transition, NOT admissible
+    assert result.n_transitions == 5
+    assert result.n_flagged == 1, (
+        f"expected 1 flagged (untreated A+ -> A-), got {result.n_flagged}"
+    )
+    print(f"  {PASS} test_trac_full_audit_cohort_pipeline "
+          f"(n_transitions={result.n_transitions}, "
+          f"n_flagged={result.n_flagged}, cTCS={result.ctcs.ci.point:.4f})")
+
+
+def test_trac_post_discontinuation_re_accumulation_admissible():
+    """Full_TRAC -> Partial_TRAC under discontinued treatment is admissible."""
+    pack = load_rulepack("ad/aa_2024_trac")
+    traj = _make_trac_trajectory(
+        states=["Full_TRAC", "Partial_TRAC"],
+        treatment_status=["anti_amyloid_discontinued",
+                           "anti_amyloid_discontinued"],
+        interval_days=730,
+    )
+    score = ctcs_per_patient(traj, pack)
+    assert score == 1.0
+    print(f"  {PASS} test_trac_post_discontinuation_re_accumulation_admissible")
+
+
+# ============================================================
 # Runner
 # ============================================================
 
@@ -578,6 +682,11 @@ def run_all():
         test_audit_with_probabilities_utcs_differs_from_ctcs,
         test_audit_ptcs_unavailable_on_aa_2024,
         test_audit_skeleton_rejected,
+        # TRAC (schema v1.2 conditional admissibility)
+        test_trac_treated_patient_scores_perfect,
+        test_trac_untreated_patient_a_pos_to_a_neg_flagged,
+        test_trac_full_audit_cohort_pipeline,
+        test_trac_post_discontinuation_re_accumulation_admissible,
         # Real ADNI (skipped on CI)
         test_real_adni_audit_end_to_end,
     ]

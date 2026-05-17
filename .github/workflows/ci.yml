@@ -55,7 +55,7 @@ jobs:
           packs = list_rulepacks()
           invalid = [p for p in packs if p.get('status') == 'INVALID']
           assert not invalid, f'Invalid: {invalid}'
-          assert len(packs) == 8, f'Expected 8 packs, got {len(packs)}'
+          assert len(packs) == 9, f'Expected 9 packs, got {len(packs)}'
           print(f'All {len(packs)} rule packs load as production')
           "
 

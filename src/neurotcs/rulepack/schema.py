@@ -1,8 +1,19 @@
 """
-NeuroTCS Rule Pack Schema v1.1.0.
+NeuroTCS Rule Pack Schema v1.2.0.
 
 Citation-locked, version-stamped, fail-closed Pydantic specification for
 clinical rule packs.
+
+v1.2.0 changes vs v1.1.0:
+  - Added optional `required_conditions` field to Transition for
+    context-conditional admissibility. Enables encoding rules like the
+    Treatment-Related Amyloid Clearance (TRAC) framework (La Joie et al.,
+    Alzheimer's & Dementia 2025;21:e70997, DOI 10.1002/alz.70997, PMID
+    via PMCID PMC12657122), where biomarker reversals (A+ -> A-) are
+    admissible ONLY when the patient is on anti-amyloid therapy.
+  - Added `conditions_evaluated_at` field controlling whether to check
+    the from-visit, to-visit, or either visit's context.
+  - Backward compatible: rule packs without these fields behave identically.
 
 v1.1.0 changes vs v1.0.0:
   - Renamed `clinician_author` -> `transcribed_by` to reflect that the named
@@ -19,10 +30,10 @@ v1.1.0 changes vs v1.0.0:
     citation_doi).
 
 Authority model: clinical authority lives in the cited published guideline
-(e.g. Jack 2018, Eisenhauer 2009, Montalban 2025). The `transcribed_by`
-field names the board-certified physician who certifies that this YAML
-faithfully encodes those rules. The `reviewers` field is for additive
-specialist sign-off (non-blocking).
+(e.g. Jack 2018, Eisenhauer 2009, Montalban 2025, La Joie 2025). The
+`transcribed_by` field names the board-certified physician who certifies
+that this YAML faithfully encodes those rules. The `reviewers` field is
+for additive specialist sign-off (non-blocking).
 
 Reference: NeuroTCS / temporalmetric v1.6 FINAL spec, §B.6 + §C.2 + §C.6.
 """
@@ -31,6 +42,7 @@ from __future__ import annotations
 
 from datetime import date
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -38,7 +50,11 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 # Schema version
 # ============================================================
 
-SCHEMA_VERSION = "1.1.0"
+SCHEMA_VERSION = "1.2.0"
+
+
+# Schema versions that the loader accepts (backward compatible).
+SUPPORTED_SCHEMA_VERSIONS = frozenset({"1.1.0", "1.2.0"})
 
 
 # ============================================================
@@ -157,6 +173,32 @@ class Transition(BaseModel):
         False,
         description="Whether this rule can be overridden via CLI with explicit "
                     "citation. Defaults to false (strict)."
+    )
+    required_conditions: dict[str, list[str]] | None = Field(
+        None,
+        description="Optional context-conditional admissibility constraints "
+                    "(schema v1.2+). Maps context field name (e.g. "
+                    "'treatment_status') to allowed values (e.g. "
+                    "['anti_amyloid_active', 'anti_amyloid_discontinued']). "
+                    "If specified, this transition is admissible ONLY when "
+                    "the trajectory's per-visit context field matches at "
+                    "least one allowed value at the visit selected by "
+                    "`conditions_evaluated_at`. Example use: the TRAC "
+                    "framework (La Joie 2025, doi:10.1002/alz.70997) "
+                    "where A+ -> A- amyloid clearance is admissible only "
+                    "under anti-amyloid therapy."
+    )
+    conditions_evaluated_at: Literal["from_visit", "to_visit", "either"] = (
+        Field(
+            "either",
+            description="When `required_conditions` is set, this controls "
+                        "which visit's context is checked. 'from_visit' = "
+                        "the earlier visit only; 'to_visit' = the later "
+                        "visit only (typical for TRAC, since the follow-up "
+                        "scan is what proves clearance); 'either' = passes "
+                        "if either endpoint matches. Default 'either' is "
+                        "the most permissive."
+        )
     )
     notes: str | None = Field(None, max_length=2048)
 
@@ -298,6 +340,16 @@ class RulePack(BaseModel):
     # ============================================================
 
     @model_validator(mode="after")
+    def check_schema_version_supported(self) -> RulePack:
+        if self.schema_version not in SUPPORTED_SCHEMA_VERSIONS:
+            raise ValueError(
+                f"schema_version '{self.schema_version}' is not supported. "
+                f"Supported: {sorted(SUPPORTED_SCHEMA_VERSIONS)}. "
+                f"Current: {SCHEMA_VERSION}."
+            )
+        return self
+
+    @model_validator(mode="after")
     def check_state_consistency(self) -> RulePack:
         state_names = {s.name for s in self.state_space}
         if len(state_names) != len(self.state_space):
@@ -376,9 +428,26 @@ class RulePack(BaseModel):
     # API
     # ============================================================
 
-    def is_admissible(self, from_state: str, to_state: str,
-                      delta_t_days: float) -> tuple[bool, Transition | None]:
+    def is_admissible(
+        self,
+        from_state: str,
+        to_state: str,
+        delta_t_days: float,
+        from_context: dict[str, str] | None = None,
+        to_context: dict[str, str] | None = None,
+    ) -> tuple[bool, Transition | None]:
         """Check if a transition is admissible under this rule pack.
+
+        Args:
+            from_state, to_state: The categorical states at the two visits.
+            delta_t_days: Days between the visits.
+            from_context: Optional per-visit context at the FROM visit
+                (e.g. {"treatment_status": "anti_amyloid_active"}). Required
+                when matching a transition that carries `required_conditions`
+                and `conditions_evaluated_at` in {"from_visit", "either"}.
+            to_context: Optional per-visit context at the TO visit. Required
+                when matching a transition that carries `required_conditions`
+                and `conditions_evaluated_at` in {"to_visit", "either"}.
 
         Returns (admissible, matching_transition_or_None).
         Self-loops are admissible by convention (state unchanged).
@@ -387,11 +456,51 @@ class RulePack(BaseModel):
             return True, None
         for t in self.admissible_transitions:
             if t.from_state == from_state and t.to_state == to_state:
+                # Time-window check
                 if (t.min_delta_t_days is not None
                         and delta_t_days < t.min_delta_t_days):
                     return False, t
                 if (t.max_delta_t_days is not None
                         and delta_t_days > t.max_delta_t_days):
                     return False, t
+                # Conditional admissibility (schema v1.2+)
+                if t.required_conditions:
+                    if not _check_required_conditions(
+                        t.required_conditions,
+                        t.conditions_evaluated_at,
+                        from_context,
+                        to_context,
+                    ):
+                        return False, t
                 return True, t
         return False, None
+
+
+def _check_required_conditions(
+    required: dict[str, list[str]],
+    evaluated_at: str,
+    from_context: dict[str, str] | None,
+    to_context: dict[str, str] | None,
+) -> bool:
+    """Evaluate per-visit context fields against required conditions.
+
+    For each (key, allowed_values) pair in `required`, the chosen context
+    visit must carry a value for `key` that is in `allowed_values`. ALL
+    keys must match (AND). For "either", a single visit satisfying all
+    keys is sufficient.
+    """
+    def context_satisfies(ctx: dict[str, str] | None) -> bool:
+        if ctx is None:
+            return False
+        for key, allowed_values in required.items():
+            actual = ctx.get(key)
+            if actual is None or actual not in allowed_values:
+                return False
+        return True
+
+    if evaluated_at == "from_visit":
+        return context_satisfies(from_context)
+    if evaluated_at == "to_visit":
+        return context_satisfies(to_context)
+    # "either"
+    return context_satisfies(from_context) or context_satisfies(to_context)

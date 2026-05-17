@@ -5,8 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.3.0](https://img.shields.io/badge/version-1.3.0-success.svg)](CHANGELOG.md)
-[![Tests 120/120](https://img.shields.io/badge/tests-120%2F120-success.svg)](tests/)
+[![Version 1.4.0](https://img.shields.io/badge/version-1.4.0-success.svg)](CHANGELOG.md)
+[![Tests 136/136](https://img.shields.io/badge/tests-136%2F136-success.svg)](tests/)
 [![Spec v1.6 FINAL](https://img.shields.io/badge/spec-v1.6_FINAL-success.svg)](docs/spec/temporalmetric_v1.6_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
@@ -44,6 +44,7 @@ NeuroTCS is the umbrella for seven engineering pieces. Pieces 1–3 are shipped 
 |---|---|---|---|
 | `ad/niaaa_2018@1.1.0` | Alzheimer's | Jack 2018 NIA-AA Framework (PMID 29653606) | 4 + 2 inadmissible |
 | `ad/aa_2024@1.1.0` | Alzheimer's | Jack 2024 AA Revised Criteria (PMID 38934362) | 11 monotone |
+| `ad/aa_2024_trac@1.0.0` | Alzheimer's (anti-Aβ therapy) | **La Joie 2025 TRAC framework** (DOI 10.1002/alz.70997, PMCID PMC12657122) | 6 admissible + 3 inadmissible (5 require `treatment_status`) |
 | `pd/hoehn_yahr@1.0.0` | Parkinson's | Goetz 2008 MDS-UPDRS (DOI 10.1002/mds.22340) | 13 |
 | `ms/mcdonald_2024@1.0.0` | Multiple sclerosis | Montalban 2025 + Lublin 2014 | 13 (bidirectional RRMS) |
 | `oncology/recist_1_1@1.0.0` | Oncology (solid tumor) | Eisenhauer 2009 RECIST 1.1 (PMID 19097774) | 11 |
@@ -55,6 +56,8 @@ Each rule pack is:
 - **Citation-locked** — every transition requires `citation_pmid` or `citation_doi` AND `guideline_section` (exact section/table/figure pointer).
 - **Version-stamped** — canonical JSON SHA-256 hash computed at load time.
 - **Fail-closed** — Pydantic v2 strict mode rejects unknown fields, missing citations, inconsistent state spaces.
+
+**Schema v1.2.0 (v1.4.0)** adds backward-compatible support for **context-conditional admissibility**: a transition may declare `required_conditions: {treatment_status: [...]}`, in which case the audit core checks the trajectory's per-visit context before scoring it as admissible. The TRAC pack uses this to encode that A+ → A− amyloid clearance is admissible *only* under anti-Aβ therapy (lecanemab, donanemab). All 8 prior v1.1.0 packs load unchanged under v1.2.0.
 
 ## Authority model
 
@@ -179,6 +182,27 @@ The canonical spec is [`docs/spec/temporalmetric_v1.6_FINAL.md`](docs/spec/tempo
 ```
 
 See [`CITATION.cff`](CITATION.cff) for GitHub's citation widget.
+
+## Known limitations and roadmap
+
+NeuroTCS publicly documents gaps so reviewers can assess fitness for purpose.
+
+### v1.4.0 closed
+- ✅ **TRAC framework** (La Joie 2025, DOI 10.1002/alz.70997, PMCID PMC12657122) — shipped as `ad/aa_2024_trac@1.0.0`. Anti-amyloid therapy patients (lecanemab approved 2023-07-06, donanemab approved 2024-07-02) are no longer falsely flagged for biological reversal of amyloid biomarkers.
+- ✅ **Schema v1.2** with conditional admissibility (`required_conditions`) — generalizes beyond AD to any rule pack needing context-dependent rules.
+- ✅ **Evidence-base verification methodology** — every FDA date and DOI in v1.4.0 documentation was verified at a primary source (Eisai/Biogen, Eli Lilly, FDA, PubMed/PMC) before commit. No claim relies on language-model memory.
+
+### Open gaps (planned for v1.5.0)
+- ⚠️ **AA 2024 transition priors empty.** The `ad/aa_2024@1.1.0` rule pack has `transition_priors: []`. As a result, **pTCS is unavailable when auditing with AA 2024** (only cTCS and uTCS report). Source for priors: Mendes AJ et al., *Neurology* May 13 2025 (DOI 10.1212/WNL.0000000000213675, PMCID PMC12079574) — ADNI validation of the AA-2024 4×4 biological/clinical staging matrix — and similar emerging cohort studies.
+- ⚠️ **Plasma biomarker reference range bindings.** The 2024 AA criteria put plasma p-tau217 and Aβ42/40 as Core 1 biomarkers sufficient for diagnostic confirmation of AD. Input contract v1.1 supports them via UCUM units, but specific reference range thresholds (e.g. p-tau217 "intermediate range" 0.186–0.324 pg/mL per La Joie 2025) are not yet bound. pTCS scoring works on the categorical state, not the raw biomarker value, so this gap does NOT affect current audit results — but downstream interoperability is incomplete.
+- ⚠️ **Tau PET tracers in clinical use.** Eli Lilly's Tauvid (flortaucipir F-18, AV-1451, FDA approved May 2020) is the currently-marketed tau tracer and is implicitly supported via the existing T2 biomarker states. **MK-6240 / florquinitau F-18** (Lantheus; NDA accepted 2025-10-28, PDUFA target **2026-08-13**) will be added on FDA approval if it succeeds.
+- ⚠️ **Aim 3 (MIRIAD test-retest)** — DUA email sent 2026-05-17, awaiting response.
+- ⚠️ **Aim 5 (PD + Oncology external replication)** — PPMI + RIDER DUAs not yet filed.
+
+### Planned for v1.6.0 / 2.0.0
+- Piece 5: FHIR Observation emitter (output schema)
+- Piece 7: validation harness (synthetic-trajectory self-tests per rule pack)
+- Cohort-specific transition priors (clinical-ADNI, clinical-OASIS3, community)
 
 ## License
 
