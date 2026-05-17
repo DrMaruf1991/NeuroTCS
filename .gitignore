@@ -77,3 +77,5 @@ private/
 # But keep example/test fixtures
 !tests/fixtures/*.csv
 !tests/fixtures/*.yaml
+
+ci_failed_log.txt

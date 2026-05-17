@@ -5,7 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Schema v1.1](https://img.shields.io/badge/schema-v1.1.0-success.svg)](src/neurotcs/rulepack/schema.py)
+[![Version 1.2.0](https://img.shields.io/badge/version-1.2.0-success.svg)](CHANGELOG.md)
+[![Tests 92/92](https://img.shields.io/badge/tests-92%2F92-success.svg)](tests/)
 [![Spec v1.6 FINAL](https://img.shields.io/badge/spec-v1.6_FINAL-success.svg)](docs/spec/temporalmetric_v1.6_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
@@ -23,7 +24,7 @@ NeuroTCS is the umbrella for seven engineering pieces. Pieces 1–3 are shipped 
 | 1 | `neurotcs.input_contract.v1_0` | ✅ shipped | Categorical input contract (8-step validation, fail-closed) |
 | 2 | `neurotcs.input_contract.v1_1` | ✅ shipped | Continuous-biomarker contract with UCUM unit enforcement |
 | 3 | `neurotcs.rulepack` | ✅ shipped | 8 production rule packs across 6 disease domains |
-| 4 | `neurotcs.audit_core` | ⏳ planned | cTCS / pTCS / uTCS engine with cluster bootstrap + Huber |
+| 4 | `neurotcs.audit_core` | ✅ shipped | cTCS / pTCS / uTCS engine + cluster bootstrap + BCa + Huber |
 | 5 | `neurotcs.output_schema` | ⏳ planned | FHIR Observation emitter for EHR interoperability |
 | 6 | `neurotcs.adapters` | 🟡 partial | ADNI shipped; OASIS-3 / PPMI / RIDER / MIRIAD planned |
 | 7 | `neurotcs.validation_harness` | ⏳ planned | Synthetic-trajectory self-tests per rule pack |
@@ -65,27 +66,59 @@ See [`docs/transcription_audit/`](docs/transcription_audit/) for side-by-side YA
 git clone https://github.com/DrMaruf1991/NeuroTCS.git
 cd NeuroTCS
 pip install -e ".[dev]"
-python tests/rulepack/test_rulepack.py    # 24/24 should pass
+python tests/audit_core/test_audit_core.py    # 35/35 should pass
 ```
+
+### Rule pack only
 
 ```python
 from neurotcs import load_rulepack
 
 pack = load_rulepack("ad/niaaa_2018")
-pack.assert_usable_for_audit()
-print(pack.sha256[:16])
-
-# Check admissibility
 ok, rule = pack.rulepack.is_admissible("CN", "AD", delta_t_days=200)
 print(ok)  # False — CN->AD requires >=365 days (Jack 2018)
+```
 
-ok, rule = pack.rulepack.is_admissible("CN", "AD", delta_t_days=500)
-print(ok)  # True
+### Full audit pipeline (the v1.2.0 addition)
 
-# iRECIST pseudoprogression resolution
-ire = load_rulepack("oncology/irecist")
-ok, _ = ire.rulepack.is_admissible("iUPD", "iPR", 30)
-print(ok)  # True — pseudoprogression resolved to partial response
+```python
+from neurotcs import audit, load_rulepack, trajectories_from_dataframe
+import pandas as pd
+
+# Long-format DataFrame: one row per (patient, visit)
+df = pd.DataFrame({
+    "RID":       [1, 1, 1, 2, 2, 2],
+    "EXAMDATE":  ["2020-01-01", "2021-01-01", "2022-01-01",
+                  "2020-06-01", "2021-06-01", "2022-06-01"],
+    "DIAGNOSIS": ["CN", "MCI", "AD", "CN", "MCI", "MCI"],
+})
+
+trajectories = trajectories_from_dataframe(
+    df, patient_id_col="RID", visit_date_col="EXAMDATE",
+    state_col="DIAGNOSIS",
+)
+pack = load_rulepack("ad/niaaa_2018")
+result = audit(trajectories, pack, bootstrap_B=10_000, seed=42)
+
+print(result.summary())
+# cTCS  1.0000  (BCA 95% CI: 1.0000..1.0000; Huber: 1.0000; B=10000, N=2)
+# pTCS  -0.2741 (BCA 95% CI: -0.31..-0.24; ...)  (priors: clinical)
+# uTCS  1.0000  (BCA 95% CI: 1.0000..1.0000; ...)
+
+print(result.audit_id)         # stable SHA-256 over the full audit
+result.to_json("report.json")  # JSON for FDA Q-Sub / Nature Medicine supplement
+```
+
+### CLI
+
+```bash
+neurotcs-audit audit \
+  --predictions predictions.csv \
+  --rulepack ad/niaaa_2018 \
+  --output report.json \
+  --bootstrap 10000 --seed 42 \
+  --patient-col RID --date-col EXAMDATE --state-col DIAGNOSIS \
+  --state-label-map Dementia=AD
 ```
 
 ## Real-world validation

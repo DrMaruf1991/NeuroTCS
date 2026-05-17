@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -42,6 +42,9 @@ jobs:
       - name: Run input contract v1.1 tests
         run: python tests/input_contract/test_v1_1.py
 
+      - name: Run audit core tests
+        run: python tests/audit_core/test_audit_core.py
+
       - name: Verify all rule packs load
         run: |
           python -c "
@@ -52,3 +55,17 @@ jobs:
           assert len(packs) == 8, f'Expected 8 packs, got {len(packs)}'
           print(f'All {len(packs)} rule packs load as production')
           "
+
+      - name: Verify audit_core public API
+        run: |
+          python -c "
+          from neurotcs import audit, load_rulepack, Trajectory, BootstrapCI
+          from neurotcs.audit_core import build_generator, cluster_bootstrap, huber_m_estimate
+          print('audit_core public API verified')
+          "
+
+      - name: Build wheel + sdist
+        run: |
+          pip install build
+          python -m build
+          ls -la dist/
