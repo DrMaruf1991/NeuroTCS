@@ -1,0 +1,259 @@
+# NeuroTCS Rule Pack: Stroke Follow-up - modified Rankin Scale
+# Schema: 1.1.0 | Status: PRODUCTION
+
+schema_version: "1.1.0"
+rulepack_id: "stroke/mrs_followup@1.0.0"
+ruleset_version: "1.0.0"
+effective_date: "2026-05-17"
+status: "production"
+disease_domain: "stroke"
+framework_name: "modified Rankin Scale (Banks & Marotta 2007) - stroke follow-up trajectory"
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, KIUT, Uzbekistan"
+clinical_source_authority: >-
+  modified Rankin Scale (van Swieten JC et al., Stroke 1988;19:604-607
+  original; reliability/validity established in Banks JL & Marotta CA,
+  Stroke 2007;38(3):1091-1096, DOI 10.1161/01.STR.0000258355.23810.c6).
+  mRS is the international standard outcome scale for stroke clinical trials
+  endorsed by the American Heart Association / American Stroke Association,
+  the World Stroke Organization, and required by FDA/EMA for stroke
+  intervention drug approvals. Trajectory timing draws on AHA/ASA 2016
+  guidelines for the rehabilitation of stroke patients (Winstein 2016,
+  Stroke 47:e98-e169, DOI 10.1161/STR.0000000000000098) and Lyden 2017
+  (Stroke 48:513-519, DOI 10.1161/STROKEAHA.116.015434) on mRS in trials.
+reviewers: []
+
+anchor_citation:
+  citation_pmid: null
+  citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+  citation_text: >-
+    Banks JL, Marotta CA. Outcomes validity and reliability of the modified
+    Rankin Scale: implications for stroke clinical trials, epidemiological
+    studies, and rehabilitation care. Stroke 2007;38(3):1091-1096.
+
+state_space:
+  - name: "mRS_0"
+    description: "No symptoms"
+    ordinal_rank: 0
+  - name: "mRS_1"
+    description: "No significant disability despite symptoms; able to carry out all usual duties and activities"
+    ordinal_rank: 1
+  - name: "mRS_2"
+    description: "Slight disability; unable to carry out all previous activities, but able to look after own affairs without assistance"
+    ordinal_rank: 2
+  - name: "mRS_3"
+    description: "Moderate disability; requires some help, but able to walk without assistance"
+    ordinal_rank: 3
+  - name: "mRS_4"
+    description: "Moderately severe disability; unable to walk without assistance and unable to attend to own bodily needs without assistance"
+    ordinal_rank: 4
+  - name: "mRS_5"
+    description: "Severe disability; bedridden, incontinent, requires constant nursing care and attention"
+    ordinal_rank: 5
+  - name: "mRS_6"
+    description: "Dead (absorbing)"
+    ordinal_rank: 6
+
+admissible_transitions:
+
+  # ===== Improvement (lower mRS) - the expected post-stroke recovery direction =====
+
+  - from_state: "mRS_5"
+    to_state: "mRS_4"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/STR.0000000000000098"
+      citation_text: "Winstein 2016 AHA/ASA: post-stroke recovery follows time-dependent neurorehabilitation trajectory; band-by-band improvement is the expected pattern in first 90-180 days."
+    guideline_section: "Winstein 2016 Section 2 (Recovery trajectory)"
+    override_allowed: false
+
+  - from_state: "mRS_4"
+    to_state: "mRS_3"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/STR.0000000000000098"
+      citation_text: "Winstein 2016: post-stroke recovery."
+    guideline_section: "Winstein 2016 Section 2"
+    override_allowed: false
+
+  - from_state: "mRS_3"
+    to_state: "mRS_2"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/STR.0000000000000098"
+      citation_text: "Winstein 2016."
+    guideline_section: "Winstein 2016 Section 2"
+    override_allowed: false
+
+  - from_state: "mRS_2"
+    to_state: "mRS_1"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/STR.0000000000000098"
+      citation_text: "Winstein 2016."
+    guideline_section: "Winstein 2016 Section 2"
+    override_allowed: false
+
+  - from_state: "mRS_1"
+    to_state: "mRS_0"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/STR.0000000000000098"
+      citation_text: "Winstein 2016."
+    guideline_section: "Winstein 2016 Section 2"
+    override_allowed: false
+
+  # Two-band improvement: requires >= 30 days
+  - from_state: "mRS_5"
+    to_state: "mRS_3"
+    min_delta_t_days: 30.0
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/STR.0000000000000098"
+      citation_text: "Winstein 2016: two-band recovery typically observed over weeks of rehabilitation."
+    guideline_section: "Winstein 2016 Section 2"
+    override_allowed: true
+
+  - from_state: "mRS_4"
+    to_state: "mRS_2"
+    min_delta_t_days: 30.0
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/STR.0000000000000098"
+      citation_text: "Winstein 2016: two-band recovery."
+    guideline_section: "Winstein 2016 Section 2"
+    override_allowed: true
+
+  - from_state: "mRS_3"
+    to_state: "mRS_1"
+    min_delta_t_days: 30.0
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/STR.0000000000000098"
+      citation_text: "Winstein 2016."
+    guideline_section: "Winstein 2016 Section 2"
+    override_allowed: true
+
+  # ===== Worsening (higher mRS) - recurrent stroke or complication =====
+
+  - from_state: "mRS_0"
+    to_state: "mRS_1"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007: mRS can worsen due to recurrent stroke or complications."
+    guideline_section: "Banks 2007 'Implications for clinical trials'"
+    override_allowed: false
+
+  - from_state: "mRS_1"
+    to_state: "mRS_2"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007."
+    guideline_section: "Banks 2007"
+    override_allowed: false
+
+  - from_state: "mRS_2"
+    to_state: "mRS_3"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007."
+    guideline_section: "Banks 2007"
+    override_allowed: false
+
+  - from_state: "mRS_3"
+    to_state: "mRS_4"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007."
+    guideline_section: "Banks 2007"
+    override_allowed: false
+
+  - from_state: "mRS_4"
+    to_state: "mRS_5"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007."
+    guideline_section: "Banks 2007"
+    override_allowed: false
+
+  # ===== Death (any state to mRS_6) =====
+
+  - from_state: "mRS_0"
+    to_state: "mRS_6"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007: any patient can transition to mRS_6 (death)."
+    guideline_section: "Banks 2007"
+    override_allowed: false
+
+  - from_state: "mRS_1"
+    to_state: "mRS_6"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007."
+    guideline_section: "Banks 2007"
+    override_allowed: false
+
+  - from_state: "mRS_2"
+    to_state: "mRS_6"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007."
+    guideline_section: "Banks 2007"
+    override_allowed: false
+
+  - from_state: "mRS_3"
+    to_state: "mRS_6"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007."
+    guideline_section: "Banks 2007"
+    override_allowed: false
+
+  - from_state: "mRS_4"
+    to_state: "mRS_6"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007."
+    guideline_section: "Banks 2007"
+    override_allowed: false
+
+  - from_state: "mRS_5"
+    to_state: "mRS_6"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007."
+    guideline_section: "Banks 2007"
+    override_allowed: false
+
+inadmissible_transitions:
+
+  - from_state: "mRS_6"
+    to_state: "mRS_5"
+    reason: "mRS_6 (death) is an absorbing state."
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1161/01.STR.0000258355.23810.c6"
+      citation_text: "Banks 2007: mRS_6 is the terminal state."
+    guideline_section: "Banks 2007"
+
+transition_priors: []
+override_allowed_default: false
+
+notes: >-
+  mRS post-stroke recovery is bidirectional: improvement is expected in first
+  90-180 days (Winstein 2016 AHA/ASA), worsening can occur from recurrent
+  stroke or complications. Two-band improvement requires 30-day minimum
+  (rehabilitation timeline). mRS_6 (death) is absorbing. Maps directly to
+  MyRehab's existing mRS use case for cross-product integration.

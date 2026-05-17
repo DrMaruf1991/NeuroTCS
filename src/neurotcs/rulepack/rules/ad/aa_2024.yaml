@@ -1,0 +1,217 @@
+# NeuroTCS Rule Pack: Alzheimer's Disease — AA 2024 Revised Criteria
+# Schema: 1.1.0 | Status: PRODUCTION | NeuroTCS v2 instantiation
+
+schema_version: "1.1.0"
+rulepack_id: "ad/aa_2024@1.1.0"
+ruleset_version: "1.1.0"
+effective_date: "2026-05-17"
+status: "production"
+disease_domain: "alzheimers"
+framework_name: "Alzheimer's Association 2024 Revised Criteria (integrated biological + clinical staging, Stages 0-6)"
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, KIUT, Uzbekistan"
+clinical_source_authority: >-
+  Revised criteria for diagnosis and staging of Alzheimer's disease (Jack CR Jr
+  et al., Alzheimer's & Dementia 2024;20(8):5143-5169, DOI 10.1002/alz.13859,
+  PMID 38934362) - Alzheimer's Association Workgroup. The integrated
+  biological + clinical staging system (Stages 0-6) is the current AA standard
+  for AD staging incorporating A/T1/T2/N biomarker measurements with clinical
+  severity. Hansson & Jack 2024 (Nature Aging 4:1029-1031, DOI
+  10.1038/s43587-024-00675-3) provides the clinical-perspective commentary.
+reviewers: []
+
+anchor_citation:
+  citation_pmid: "38934362"
+  citation_doi: "10.1002/alz.13859"
+  citation_text: >-
+    Jack CR Jr, Andrews JS, Beach TG, Buracchio T, Dunn B, Graf A, et al.
+    Revised criteria for diagnosis and staging of Alzheimer's disease:
+    Alzheimer's Association Workgroup. Alzheimer's & Dementia
+    2024;20(8):5143-5169.
+
+state_space:
+  - name: "Stage_0"
+    description: "Asymptomatic, biomarker-negative individuals with genetic AD risk (ADAD mutation carriers, APOE4 homozygotes pre-A+)"
+    ordinal_rank: 0
+  - name: "Stage_1"
+    description: "Biomarker-positive (A+), tau-negative (T2-); biological onset; asymptomatic"
+    ordinal_rank: 1
+  - name: "Stage_2"
+    description: "A+ with medial temporal tau (T2+ MTL); asymptomatic or transitional-symptomatic"
+    ordinal_rank: 2
+  - name: "Stage_3"
+    description: "A+ with neocortical tau (T2+ NEO); subtle cognitive symptoms"
+    ordinal_rank: 3
+  - name: "Stage_4"
+    description: "A+ with substantial neocortical tau + clinical MCI (functional independence preserved)"
+    ordinal_rank: 4
+  - name: "Stage_5"
+    description: "A+ with extensive AD pathology + mild-moderate dementia (CDR 1.0-2.0; iADL dependence)"
+    ordinal_rank: 5
+  - name: "Stage_6"
+    description: "A+ with extensive AD pathology + severe dementia (CDR 3; bADL dependence)"
+    ordinal_rank: 6
+
+admissible_transitions:
+
+  - from_state: "Stage_0"
+    to_state: "Stage_1"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024 AA: biological onset (A+) from biomarker-negative."
+    guideline_section: "Jack 2024 §3 'Integrated biological-clinical staging', Table 6"
+    override_allowed: false
+
+  - from_state: "Stage_1"
+    to_state: "Stage_2"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: tau accumulation in medial temporal lobe (T2+ MTL)."
+    guideline_section: "Jack 2024 §3, Table 6 (Stage 2 definition)"
+    override_allowed: false
+
+  - from_state: "Stage_2"
+    to_state: "Stage_3"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: neocortical tau spread (T2+ NEO)."
+    guideline_section: "Jack 2024 §3, Table 6 (Stage 3 definition)"
+    override_allowed: false
+
+  - from_state: "Stage_3"
+    to_state: "Stage_4"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: transition to clinical MCI."
+    guideline_section: "Jack 2024 §3, Table 6 (Stage 4 definition)"
+    override_allowed: false
+
+  - from_state: "Stage_4"
+    to_state: "Stage_5"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: MCI to mild-moderate dementia."
+    guideline_section: "Jack 2024 §3, Table 6 (Stage 5 definition)"
+    override_allowed: false
+
+  - from_state: "Stage_5"
+    to_state: "Stage_6"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: mild-moderate to severe dementia."
+    guideline_section: "Jack 2024 §3, Table 6 (Stage 6 definition)"
+    override_allowed: false
+
+  - from_state: "Stage_0"
+    to_state: "Stage_2"
+    min_delta_t_days: 730.0
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: biological accumulation requires time even when intermediate stages missed in surveillance."
+    guideline_section: "Jack 2024 §3 (interval discussion)"
+    override_allowed: true
+
+  - from_state: "Stage_1"
+    to_state: "Stage_3"
+    min_delta_t_days: 730.0
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: tau spread requires interval."
+    guideline_section: "Jack 2024 §3"
+    override_allowed: true
+
+  - from_state: "Stage_2"
+    to_state: "Stage_4"
+    min_delta_t_days: 730.0
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: clinical decline requires interval."
+    guideline_section: "Jack 2024 §3"
+    override_allowed: true
+
+  - from_state: "Stage_3"
+    to_state: "Stage_5"
+    min_delta_t_days: 730.0
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: clinical progression requires interval."
+    guideline_section: "Jack 2024 §3"
+    override_allowed: true
+
+  - from_state: "Stage_4"
+    to_state: "Stage_6"
+    min_delta_t_days: 730.0
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: severe dementia requires clinical decline."
+    guideline_section: "Jack 2024 §3"
+    override_allowed: true
+
+inadmissible_transitions:
+
+  - from_state: "Stage_2"
+    to_state: "Stage_1"
+    reason: "AA 2024 biological staging is monotone non-decreasing."
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024 §3: biological staging is monotone."
+    guideline_section: "Jack 2024 §3"
+
+  - from_state: "Stage_3"
+    to_state: "Stage_2"
+    reason: "Monotone biological staging."
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024 §3."
+    guideline_section: "Jack 2024 §3"
+
+  - from_state: "Stage_4"
+    to_state: "Stage_3"
+    reason: "Integrated staging is monotone non-decreasing."
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024 §3."
+    guideline_section: "Jack 2024 §3"
+
+  - from_state: "Stage_5"
+    to_state: "Stage_4"
+    reason: "Monotone integrated staging."
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024 §3."
+    guideline_section: "Jack 2024 §3"
+
+  - from_state: "Stage_6"
+    to_state: "Stage_5"
+    reason: "Monotone integrated staging."
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024 §3."
+    guideline_section: "Jack 2024 §3"
+
+transition_priors: []
+override_allowed_default: false
+
+notes: >-
+  AA 2024 integrated biological + clinical staging (Stages 0-6). Biological
+  staging is monotone non-decreasing. Per Jack 2024 §3, clinical staging
+  within a fixed biological stage may fluctuate due to copathology and
+  reserve modifiers; this rule pack treats the integrated stage as monotone
+  for audit purposes. Anti-amyloid treatment effects handled via the
+  treatment_flags mechanism in the audit engine (post-ALZ-NET v0.2).

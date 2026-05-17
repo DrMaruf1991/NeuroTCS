@@ -1,0 +1,211 @@
+# NeuroTCS Rule Pack: Oncology (Immunotherapy) - iRECIST
+# Schema: 1.1.0 | Status: PRODUCTION
+
+schema_version: "1.1.0"
+rulepack_id: "oncology/irecist@1.0.0"
+ruleset_version: "1.0.0"
+effective_date: "2026-05-17"
+status: "production"
+disease_domain: "oncology"
+framework_name: "iRECIST (Seymour 2017) - immunotherapy response criteria"
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, KIUT, Uzbekistan"
+clinical_source_authority: >-
+  iRECIST (Seymour L et al., Lancet Oncology 2017;18(3):e143-e152,
+  DOI 10.1016/S1470-2045(17)30074-8, PMID 28271869) - developed by the
+  RECIST Working Group with input from immuno-oncology trialists at major
+  cancer centers. Required by ESMO and FDA for immunotherapy response
+  assessment in clinical trials because of the pseudoprogression phenomenon
+  (transient apparent progression followed by response, observed in
+  approximately 10% of immunotherapy responders per Hodi 2016, Clinical
+  Cancer Research 22:5487-5496).
+reviewers: []
+
+anchor_citation:
+  citation_pmid: "28271869"
+  citation_doi: "10.1016/S1470-2045(17)30074-8"
+  citation_text: >-
+    Seymour L, Bogaerts J, Perrone A, Ford R, Schwartz LH, Mandrekar S,
+    et al. iRECIST: guidelines for response criteria for use in trials
+    testing immunotherapeutics. Lancet Oncology 2017;18(3):e143-e152.
+
+state_space:
+  - name: "iCR"
+    description: "Immune Complete Response (RECIST 1.1 CR criteria met)"
+    ordinal_rank: 0
+  - name: "iPR"
+    description: "Immune Partial Response (RECIST 1.1 PR criteria met)"
+    ordinal_rank: 1
+  - name: "iSD"
+    description: "Immune Stable Disease (RECIST 1.1 SD criteria met)"
+    ordinal_rank: 2
+  - name: "iUPD"
+    description: "Immune Unconfirmed Progressive Disease: tentative PD per RECIST 1.1, pending confirmation (may resolve as pseudoprogression)"
+    ordinal_rank: 3
+  - name: "iCPD"
+    description: "Immune Confirmed Progressive Disease (absorbing)"
+    ordinal_rank: 4
+
+admissible_transitions:
+
+  # ===== Within iCR/iPR/iSD: full bidirectional, 4-week confirmation =====
+
+  - from_state: "iSD"
+    to_state: "iPR"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017: iPR confirmation per RECIST 1.1 4-week rule."
+    guideline_section: "Seymour 2017 §'Response confirmation', Figure 1"
+    override_allowed: false
+
+  - from_state: "iSD"
+    to_state: "iCR"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017: iCR confirmation."
+    guideline_section: "Seymour 2017 Figure 1"
+    override_allowed: false
+
+  - from_state: "iPR"
+    to_state: "iCR"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017: deepening response to iCR."
+    guideline_section: "Seymour 2017 Figure 1"
+    override_allowed: false
+
+  - from_state: "iPR"
+    to_state: "iSD"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017."
+    guideline_section: "Seymour 2017 Figure 1"
+    override_allowed: false
+
+  - from_state: "iCR"
+    to_state: "iPR"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017."
+    guideline_section: "Seymour 2017"
+    override_allowed: false
+
+  - from_state: "iCR"
+    to_state: "iSD"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017."
+    guideline_section: "Seymour 2017"
+    override_allowed: false
+
+  # ===== Forward to iUPD: any time per RECIST 1.1 criteria =====
+
+  - from_state: "iCR"
+    to_state: "iUPD"
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017: first apparent progression after iCR is recorded as iUPD pending confirmation."
+    guideline_section: "Seymour 2017 §'Definition of iUPD', Figure 1"
+    override_allowed: false
+
+  - from_state: "iPR"
+    to_state: "iUPD"
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017: first apparent progression after iPR -> iUPD."
+    guideline_section: "Seymour 2017 Figure 1"
+    override_allowed: false
+
+  - from_state: "iSD"
+    to_state: "iUPD"
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017: first apparent progression from iSD."
+    guideline_section: "Seymour 2017 Figure 1"
+    override_allowed: false
+
+  # ===== iUPD -> iCPD: 4-8 week confirmation per Seymour 2017 =====
+
+  - from_state: "iUPD"
+    to_state: "iCPD"
+    min_delta_t_days: 28.0
+    max_delta_t_days: 56.0
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017: iCPD requires confirmation imaging 4-8 weeks after iUPD with further increase >=5mm in target lesions OR new lesions OR progressive non-target disease."
+    guideline_section: "Seymour 2017 §'Definition of iCPD', Figure 1"
+    override_allowed: false
+
+  # ===== iUPD -> resolution (PSEUDOPROGRESSION): the entire reason iRECIST exists =====
+
+  - from_state: "iUPD"
+    to_state: "iSD"
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017: pseudoprogression resolution - iUPD may resolve to iSD if subsequent imaging shows stable or reduced disease (no >=5mm further growth + no new lesions)."
+    guideline_section: "Seymour 2017 §'iUPD resolution', Figure 1"
+    override_allowed: false
+
+  - from_state: "iUPD"
+    to_state: "iPR"
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017: pseudoprogression resolution to partial response - the canonical immunotherapy delayed response pattern."
+    guideline_section: "Seymour 2017 §'iUPD resolution'"
+    override_allowed: false
+
+  - from_state: "iUPD"
+    to_state: "iCR"
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017: deep pseudoprogression resolution to complete response."
+    guideline_section: "Seymour 2017 §'iUPD resolution'"
+    override_allowed: false
+
+inadmissible_transitions:
+
+  - from_state: "iCPD"
+    to_state: "iUPD"
+    reason: "iCPD is the absorbing terminal progressive state per iRECIST. Further therapy response is recorded as a new event."
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017 §'iCPD - definition'."
+    guideline_section: "Seymour 2017 §'iCPD definition'"
+
+  - from_state: "iCPD"
+    to_state: "iSD"
+    reason: "iCPD is absorbing."
+    citation:
+      citation_pmid: "28271869"
+      citation_doi: "10.1016/S1470-2045(17)30074-8"
+      citation_text: "Seymour 2017 §'iCPD'."
+    guideline_section: "Seymour 2017"
+
+transition_priors: []
+override_allowed_default: false
+
+notes: >-
+  iRECIST EXPLICITLY admits iUPD -> iSD/iPR/iCR transitions (pseudoprogression
+  resolution). This is the defining clinical reason iRECIST exists and
+  distinguishes it from RECIST 1.1. iCPD is absorbing per Seymour 2017.
+  Validation cohort target: TCIA immuno-oncology trial datasets pending DUA.

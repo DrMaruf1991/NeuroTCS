@@ -1,0 +1,190 @@
+# NeuroTCS Rule Pack: Oncology (Solid Tumor) - RECIST 1.1
+# Schema: 1.1.0 | Status: PRODUCTION
+
+schema_version: "1.1.0"
+rulepack_id: "oncology/recist_1_1@1.0.0"
+ruleset_version: "1.0.0"
+effective_date: "2026-05-17"
+status: "production"
+disease_domain: "oncology"
+framework_name: "RECIST 1.1 (Eisenhauer 2009) - solid tumor response"
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, KIUT, Uzbekistan"
+clinical_source_authority: >-
+  RECIST 1.1 (Eisenhauer EA et al., European Journal of Cancer
+  2009;45(2):228-247, DOI 10.1016/j.ejca.2008.10.026, PMID 19097774) -
+  developed by the RECIST Working Group at EORTC in collaboration with NCI
+  Clinical Trials Cooperative Groups. International standard for solid tumor
+  response assessment; endorsed by ESMO Clinical Practice Guidelines, FDA
+  (Guidance for Industry: Clinical Trial Endpoints for the Approval of
+  Cancer Drugs and Biologics, 2018), and EMA for solid tumor drug approval
+  trials.
+reviewers: []
+
+anchor_citation:
+  citation_pmid: "19097774"
+  citation_doi: "10.1016/j.ejca.2008.10.026"
+  citation_text: >-
+    Eisenhauer EA, Therasse P, Bogaerts J, Schwartz LH, Sargent D, Ford R,
+    et al. New response evaluation criteria in solid tumours: revised
+    RECIST guideline (version 1.1). European Journal of Cancer
+    2009;45(2):228-247.
+
+state_space:
+  - name: "CR"
+    description: "Complete Response: disappearance of all target lesions; any pathological lymph nodes must have short axis <10mm"
+    ordinal_rank: 0
+  - name: "PR"
+    description: "Partial Response: >=30% decrease in sum of diameters of target lesions, taking baseline sum diameters as reference"
+    ordinal_rank: 1
+  - name: "SD"
+    description: "Stable Disease: neither sufficient shrinkage to qualify for PR nor sufficient increase to qualify for PD, taking smallest sum diameters since treatment started as reference"
+    ordinal_rank: 2
+  - name: "PD"
+    description: "Progressive Disease: >=20% increase in sum of diameters with absolute increase of >=5mm, OR appearance of new lesions"
+    ordinal_rank: 3
+
+admissible_transitions:
+
+  # ===== Forward (worsening) =====
+
+  - from_state: "CR"
+    to_state: "PR"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009 §3.4: response confirmation requires repeat assessment >=4 weeks (28 days) after criteria first met."
+    guideline_section: "Eisenhauer 2009 §3.4 'Confirmation'"
+    override_allowed: false
+
+  - from_state: "CR"
+    to_state: "SD"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009 §3.4: re-emergence of measurable disease after CR."
+    guideline_section: "Eisenhauer 2009 §3.4"
+    override_allowed: false
+
+  - from_state: "CR"
+    to_state: "PD"
+    min_delta_t_days: 56.0
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009: jump from CR directly to PD in a single scan is implausible without intervening progression assessment; minimum 8 weeks to allow intervening growth."
+    guideline_section: "Eisenhauer 2009 §3.3 (response classification)"
+    override_allowed: true
+
+  - from_state: "PR"
+    to_state: "SD"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009 §3.4: re-growth in target lesions after partial response."
+    guideline_section: "Eisenhauer 2009 §3.4"
+    override_allowed: false
+
+  - from_state: "PR"
+    to_state: "PD"
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009 §3.3.4: progression from PR is admissible at any interval (>=20% growth from nadir + 5mm absolute, or new lesions)."
+    guideline_section: "Eisenhauer 2009 §3.3.4 'Time point response'"
+    override_allowed: false
+
+  - from_state: "SD"
+    to_state: "PD"
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009 §3.3.4: standard progression from stable disease."
+    guideline_section: "Eisenhauer 2009 §3.3.4"
+    override_allowed: false
+
+  # ===== Backward (response): admissible per Eisenhauer 2009 =====
+
+  - from_state: "SD"
+    to_state: "PR"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009: SD->PR requires >=30% shrinkage from baseline, with response confirmed at >=4 weeks (28 days)."
+    guideline_section: "Eisenhauer 2009 §3.3.4 + §3.4 (confirmation)"
+    override_allowed: false
+
+  - from_state: "SD"
+    to_state: "CR"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009: complete response confirmation at >=4 weeks."
+    guideline_section: "Eisenhauer 2009 §3.3.4 + §3.4"
+    override_allowed: false
+
+  - from_state: "PR"
+    to_state: "CR"
+    min_delta_t_days: 28.0
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009 §3.4: deepening of response to CR; confirmation at >=4 weeks."
+    guideline_section: "Eisenhauer 2009 §3.4"
+    override_allowed: false
+
+  # ===== PD -> response: admissible only with documented therapy change =====
+
+  - from_state: "PD"
+    to_state: "PR"
+    min_delta_t_days: 56.0
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009 §3.5 special notes: a new response after PD is generally recorded as a new response event (typically following therapy change), not a transition. Requires >=8 weeks to allow therapy effect."
+    guideline_section: "Eisenhauer 2009 §3.5 'Special notes'"
+    override_allowed: true
+    notes: >-
+      Override permitted only with documented therapy change in audit log.
+      In standard solid-tumor RECIST 1.1 trials, PD is typically a stopping
+      criterion; later response indicates new therapy line.
+
+  - from_state: "PD"
+    to_state: "SD"
+    min_delta_t_days: 56.0
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009 §3.5."
+    guideline_section: "Eisenhauer 2009 §3.5"
+    override_allowed: true
+
+inadmissible_transitions:
+
+  - from_state: "CR"
+    to_state: "PD"
+    reason: >-
+      Direct CR->PD over <8 weeks is implausible without intervening
+      assessment (CR -> SD -> PD or CR -> PR -> PD is the expected sequence).
+      Available only with override + therapy-change documentation.
+    citation:
+      citation_pmid: "19097774"
+      citation_doi: "10.1016/j.ejca.2008.10.026"
+      citation_text: "Eisenhauer 2009 §3.3.4 (response sequence)."
+    guideline_section: "Eisenhauer 2009 §3.3.4"
+
+transition_priors: []
+override_allowed_default: false
+
+notes: >-
+  RECIST 1.1 admits bidirectional CR<->PR<->SD transitions with 4-week
+  confirmation per Eisenhauer 2009 §3.4. PD is not strictly absorbing in
+  practice (salvage therapy can produce later response), but in standard
+  trial endpoints PD is treated as a stopping criterion. Confirmed responses
+  require minimum 28-day interval. Validation cohort: RIDER Lung PET-CT
+  (244 longitudinal subjects, TCIA) - Aim 5 oncology portability target.

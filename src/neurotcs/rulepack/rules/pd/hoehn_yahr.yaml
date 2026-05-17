@@ -1,0 +1,240 @@
+# NeuroTCS Rule Pack: Parkinson's Disease - Hoehn-Yahr (1967) + MDS-UPDRS (Goetz 2008)
+# Schema: 1.1.0 | Status: PRODUCTION
+#
+# Clinical source authority: Hoehn-Yahr staging is the international standard
+# for PD severity classification since 1967. MDS-UPDRS (Goetz 2008) is the
+# Movement Disorder Society-endorsed revision and clinimetric validation.
+
+schema_version: "1.1.0"
+rulepack_id: "pd/hoehn_yahr@1.0.0"
+ruleset_version: "1.0.0"
+effective_date: "2026-05-17"
+status: "production"
+disease_domain: "parkinsons"
+framework_name: "Hoehn-Yahr Staging (modified, with 1.5 and 2.5 substages) + MDS-UPDRS"
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, KIUT, Uzbekistan"
+clinical_source_authority: >-
+  Hoehn-Yahr Staging (Hoehn MM, Yahr MD. Neurology 1967;17(5):427-442) - the
+  international standard for Parkinson's disease severity classification since
+  1967. Modified Hoehn-Yahr (with 1.5 and 2.5 substages) is integrated into
+  the MDS-UPDRS (Goetz CG et al., Movement Disorders 2008;23(15):2129-2170)
+  endorsed by the Movement Disorder Society and used in essentially all
+  contemporary PD clinical trials. Natural-history transition timing draws
+  on Marras 2002 (Neurology 59:1724-1730) and PPMI longitudinal observations
+  (Marek 2018, Annals of Clinical and Translational Neurology 5:1460-1477).
+reviewers: []
+
+anchor_citation:
+  citation_pmid: null
+  citation_doi: "10.1002/mds.22340"
+  citation_text: >-
+    Goetz CG, Tilley BC, Shaftman SR, Stebbins GT, Fahn S, Martinez-Martin P,
+    et al. Movement Disorder Society-sponsored revision of the Unified
+    Parkinson's Disease Rating Scale (MDS-UPDRS): Scale presentation and
+    clinimetric testing results. Movement Disorders 2008;23(15):2129-2170.
+
+state_space:
+  - name: "HY_1"
+    description: "Stage 1: Unilateral involvement only"
+    ordinal_rank: 0
+  - name: "HY_1_5"
+    description: "Stage 1.5: Unilateral and axial involvement"
+    ordinal_rank: 1
+  - name: "HY_2"
+    description: "Stage 2: Bilateral involvement without impairment of balance"
+    ordinal_rank: 2
+  - name: "HY_2_5"
+    description: "Stage 2.5: Mild bilateral disease with recovery on pull test"
+    ordinal_rank: 3
+  - name: "HY_3"
+    description: "Stage 3: Mild to moderate bilateral disease; postural instability; physically independent"
+    ordinal_rank: 4
+  - name: "HY_4"
+    description: "Stage 4: Severe disability; still able to walk or stand unassisted"
+    ordinal_rank: 5
+  - name: "HY_5"
+    description: "Stage 5: Wheelchair-bound or bedridden unless aided"
+    ordinal_rank: 6
+
+# Hoehn-Yahr is monotone non-decreasing in natural history. Treatment-driven
+# improvement is admissible with explicit override + citation (e.g.,
+# levodopa initiation, DBS).
+admissible_transitions:
+
+  # ===== Adjacent (one-step) forward progressions: any interval =====
+
+  - from_state: "HY_1"
+    to_state: "HY_1_5"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/mds.22340"
+      citation_text: "Goetz 2008 MDS-UPDRS: modified H&Y stages document progression from unilateral to unilateral+axial."
+    guideline_section: "Goetz 2008 Appendix C (modified H&Y staging)"
+    override_allowed: false
+
+  - from_state: "HY_1_5"
+    to_state: "HY_2"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/mds.22340"
+      citation_text: "Goetz 2008: progression from unilateral+axial to bilateral involvement."
+    guideline_section: "Goetz 2008 Appendix C"
+    override_allowed: false
+
+  - from_state: "HY_2"
+    to_state: "HY_2_5"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/mds.22340"
+      citation_text: "Goetz 2008: bilateral disease developing mild postural recovery on pull test."
+    guideline_section: "Goetz 2008 Appendix C"
+    override_allowed: false
+
+  - from_state: "HY_2_5"
+    to_state: "HY_3"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/mds.22340"
+      citation_text: "Goetz 2008: development of frank postural instability."
+    guideline_section: "Goetz 2008 Appendix C"
+    override_allowed: false
+
+  - from_state: "HY_3"
+    to_state: "HY_4"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/mds.22340"
+      citation_text: "Goetz 2008: progression to severe disability with maintained ambulation."
+    guideline_section: "Goetz 2008 Appendix C"
+    override_allowed: false
+
+  - from_state: "HY_4"
+    to_state: "HY_5"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/mds.22340"
+      citation_text: "Goetz 2008: loss of independent ambulation."
+    guideline_section: "Goetz 2008 Appendix C"
+    override_allowed: false
+
+  # ===== Two-step jumps: require >= 365 days (natural-history pace) =====
+
+  - from_state: "HY_1"
+    to_state: "HY_2"
+    min_delta_t_days: 365.0
+    citation:
+      citation_pmid: "12473781"
+      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
+      citation_text: "Marras C et al. Neurology 2002;59:1724-1730 — typical H&Y progression rates indicate roughly 1 stage / 2-3 years; two-stage jump under 1 year is implausible."
+    guideline_section: "Marras 2002, Table 2 (stage-transition intervals)"
+    override_allowed: true
+
+  - from_state: "HY_1_5"
+    to_state: "HY_2_5"
+    min_delta_t_days: 365.0
+    citation:
+      citation_pmid: "12473781"
+      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
+      citation_text: "Marras 2002: natural-history H&Y progression."
+    guideline_section: "Marras 2002, Table 2"
+    override_allowed: true
+
+  - from_state: "HY_2"
+    to_state: "HY_3"
+    min_delta_t_days: 365.0
+    citation:
+      citation_pmid: "12473781"
+      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
+      citation_text: "Marras 2002: natural-history H&Y progression."
+    guideline_section: "Marras 2002, Table 2"
+    override_allowed: true
+
+  - from_state: "HY_2_5"
+    to_state: "HY_4"
+    min_delta_t_days: 365.0
+    citation:
+      citation_pmid: "12473781"
+      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
+      citation_text: "Marras 2002: natural-history progression."
+    guideline_section: "Marras 2002, Table 2"
+    override_allowed: true
+
+  - from_state: "HY_3"
+    to_state: "HY_5"
+    min_delta_t_days: 365.0
+    citation:
+      citation_pmid: "12473781"
+      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
+      citation_text: "Marras 2002: natural-history progression to wheelchair/bedridden."
+    guideline_section: "Marras 2002, Table 2"
+    override_allowed: true
+
+  # ===== Three-step or larger jumps: require >= 730 days =====
+
+  - from_state: "HY_1"
+    to_state: "HY_2_5"
+    min_delta_t_days: 730.0
+    citation:
+      citation_pmid: "12473781"
+      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
+      citation_text: "Marras 2002: three-stage progression typically requires multi-year intervals."
+    guideline_section: "Marras 2002, Table 2"
+    override_allowed: true
+
+  - from_state: "HY_2"
+    to_state: "HY_4"
+    min_delta_t_days: 730.0
+    citation:
+      citation_pmid: "12473781"
+      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
+      citation_text: "Marras 2002: multi-stage progression."
+    guideline_section: "Marras 2002, Table 2"
+    override_allowed: true
+
+inadmissible_transitions:
+
+  - from_state: "HY_2"
+    to_state: "HY_1"
+    reason: >-
+      Natural-history H&Y is monotone non-decreasing. Apparent backward
+      transitions reflect either treatment response (handled via override+
+      citation, e.g. levodopa initiation, DBS) or model instability. The base
+      rule pack treats backward transitions as inadmissible to make
+      treatment-driven improvement explicit and auditable.
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/mds.22340"
+      citation_text: "Goetz 2008: H&Y is a measure of accumulating disability; reversion is not part of natural history."
+    guideline_section: "Goetz 2008 Appendix C (introduction)"
+
+  - from_state: "HY_3"
+    to_state: "HY_2"
+    reason: "Natural-history monotonicity (override permitted for documented treatment effect)."
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/mds.22340"
+      citation_text: "Goetz 2008 Appendix C."
+    guideline_section: "Goetz 2008 Appendix C"
+
+  - from_state: "HY_4"
+    to_state: "HY_3"
+    reason: "Natural-history monotonicity (override permitted for DBS or aggressive medical optimization)."
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/mds.22340"
+      citation_text: "Goetz 2008 Appendix C."
+    guideline_section: "Goetz 2008 Appendix C"
+
+transition_priors: []
+
+override_allowed_default: false
+
+notes: >-
+  Modified Hoehn-Yahr (Goetz 2008 MDS-UPDRS Appendix C) is the international
+  standard for PD severity. Natural history is monotone non-decreasing;
+  treatment-driven improvement (levodopa initiation, deep brain stimulation,
+  carbidopa/levodopa intestinal gel) is handled via override mechanism with
+  explicit citation in the audit log.
+  Validation cohort: PPMI (2,000+ subjects, ppmi-info.org). Awaiting DUA
+  for real-data validation in Aim 5 multi-disease portability arm.

@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neurotcs.org/schemas/manifest/1.0.0",
+  "title": "NeuroTCS Submission Manifest",
+  "description": "Normative schema for NeuroTCS input contract v1.0.0",
+  "type": "object",
+  "required": [
+    "neurotcs_contract_version",
+    "conformance_level",
+    "submission_id",
+    "submission_timestamp",
+    "source_system",
+    "disease_domain",
+    "rule_pack",
+    "data_files",
+    "cohort_summary"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "neurotcs_contract_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semver of the contract this submission targets",
+      "const": "1.0.0"
+    },
+    "conformance_level": {
+      "type": "string",
+      "enum": ["L1", "L2", "L3"],
+      "description": "Declared conformance level"
+    },
+    "submission_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Globally unique identifier for this submission"
+    },
+    "submission_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this submission was generated (ISO 8601 UTC)"
+    },
+    "source_system": {
+      "type": "object",
+      "required": ["name", "version", "vendor"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 128},
+        "version": {"type": "string", "minLength": 1, "maxLength": 64},
+        "vendor": {"type": "string", "minLength": 1, "maxLength": 128}
+      }
+    },
+    "disease_domain": {
+      "type": "string",
+      "enum": [
+        "alzheimers",
+        "parkinsons",
+        "multiple_sclerosis",
+        "glioblastoma",
+        "stroke",
+        "custom"
+      ]
+    },
+    "rule_pack": {
+      "type": "object",
+      "required": ["id", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_+-]+@\\d+\\.\\d+(\\.\\d+)?$",
+          "description": "Format: <name>@<semver>, e.g. 'aa2024+trac@1.0'"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["registry", "inline"]
+        }
+      }
+    },
+    "data_files": {
+      "type": "object",
+      "required": ["predictions"],
+      "additionalProperties": false,
+      "properties": {
+        "predictions": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_./-]+\\.(parquet|json|jsonl|csv)$"
+        },
+        "patients": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_./-]+\\.(parquet|json|jsonl|csv)$"
+        }
+      }
+    },
+    "cohort_summary": {
+      "type": "object",
+      "required": ["n_patients", "n_visits_total", "date_range"],
+      "additionalProperties": false,
+      "properties": {
+        "n_patients": {"type": "integer", "minimum": 1},
+        "n_visits_total": {"type": "integer", "minimum": 2},
+        "date_range": {
+          "type": "array",
+          "items": {"type": "string", "format": "date"},
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "timezone": {
+      "type": "string",
+      "description": "IANA timezone if not UTC, e.g. 'Asia/Tashkent'"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"conformance_level": {"const": "L2"}}
+      },
+      "then": {
+        "properties": {
+          "data_files": {
+            "required": ["predictions", "patients"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"conformance_level": {"const": "L3"}}
+      },
+      "then": {
+        "properties": {
+          "data_files": {
+            "required": ["predictions", "patients"]
+          }
+        }
+      }
+    }
+  ]
+}
