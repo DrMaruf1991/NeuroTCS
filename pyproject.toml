@@ -1,4 +1,4 @@
-﻿[build-system]
+[build-system]
 requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
@@ -12,26 +12,10 @@ license = { text = "Apache-2.0" }
 authors = [
     { name = "Marufjon Salokhiddinov, MD PhD", email = "drmaruf1991@gmail.com" },
 ]
-maintainers = [
-    { name = "Marufjon Salokhiddinov, MD PhD", email = "drmaruf1991@gmail.com" },
-]
 keywords = [
-    "medical-ai",
-    "longitudinal",
-    "audit",
-    "clinical-trial",
-    "regulatory",
-    "neuroimaging",
-    "alzheimer",
-    "parkinson",
-    "multiple-sclerosis",
-    "oncology",
-    "recist",
-    "irecist",
-    "stroke",
-    "fleischner",
-    "fda",
-    "fhir",
+    "medical-ai", "longitudinal", "audit", "clinical-trial", "regulatory",
+    "neuroimaging", "alzheimer", "parkinson", "multiple-sclerosis",
+    "oncology", "recist", "irecist", "stroke", "fleischner", "fda", "fhir",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -45,7 +29,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Typing :: Typed",
 ]
 dependencies = [
     "pydantic>=2.5",
@@ -61,15 +44,10 @@ dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
     "ruff>=0.1.0",
-    "mypy>=1.7",
-]
-adni = [
-    "pyreadr>=0.4.7",
-    "pyarrow>=14.0",
 ]
 audit = [
     "numpy>=1.24",
-    "scipy>=1.11",  # for matrix exponential in audit_core
+    "scipy>=1.11",
 ]
 fhir = [
     "fhir.resources>=7.0",
@@ -78,9 +56,7 @@ fhir = [
 [project.urls]
 Homepage = "https://github.com/DrMaruf1991/NeuroTCS"
 Repository = "https://github.com/DrMaruf1991/NeuroTCS"
-Documentation = "https://github.com/DrMaruf1991/NeuroTCS/blob/main/README.md"
 Issues = "https://github.com/DrMaruf1991/NeuroTCS/issues"
-Specification = "https://github.com/DrMaruf1991/NeuroTCS/blob/main/docs/spec/temporalmetric_v1.6_FINAL.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -93,31 +69,15 @@ where = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-exclude = [".github", "build", "dist", "*.egg-info"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP"]
-ignore = [
-    "E501",  # line length handled by formatter
-    "B008",  # function calls in default args (Pydantic Field uses these)
-]
+ignore = ["E501", "B008"]
 
 [tool.ruff.lint.per-file-ignores]
-# Test files use common testing idioms that lint doesn't love:
-"tests/**/*.py" = [
-    "B011",  # `assert False` in tests вЂ” fine, tests don't run under -O
-    "B905",  # `zip()` without strict вЂ” fine in tests
-    "B007",  # unused loop var вЂ” fine in tests iterating for side effects
-    "E402",  # module-level import not at top вЂ” fine after sys.path shims
-]
-
-[tool.mypy]
-python_version = "3.10"
-strict = false
-ignore_missing_imports = true
-exclude = ["build/", "dist/"]
+"tests/**/*.py" = ["B011", "B905", "B007", "E402"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v --tb=short --color=yes"
+addopts = "-v --tb=short"
