@@ -115,7 +115,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -729,7 +729,7 @@ def load_miriad_trajectories(
     out_of_range = int(
         merged[mmse_col].apply(
             lambda v: (
-                isinstance(v, (int, float))
+                isinstance(v, int | float)
                 and not math.isnan(float(v))
                 and (float(v) < 0 or float(v) > 30)
             )
@@ -756,7 +756,7 @@ def load_miriad_trajectories(
             if group_col is not None:
                 group_map = dict(zip(
                     subjects[subj_col_subj].astype(str),
-                    subjects[group_col].astype(str),
+                    subjects[group_col].astype(str), strict=False,
                 ))
 
         # If we have a non-empty explicit group_map, use it. Otherwise fall
@@ -861,7 +861,7 @@ def load_miriad_trajectories(
             sex_map = {
                 str(s): _normalise_sex(v)
                 for s, v in zip(subjects[subj_col_subj],
-                                  subjects[sex_col])
+                                  subjects[sex_col], strict=False)
             }
         # YOB
         yob_col = None
@@ -874,7 +874,7 @@ def load_miriad_trajectories(
             yob_series = pd.to_numeric(subjects[yob_col], errors="coerce")
             yob_map = {
                 str(s): (int(v) if pd.notna(v) else None)
-                for s, v in zip(subjects[subj_col_subj], yob_series)
+                for s, v in zip(subjects[subj_col_subj], yob_series, strict=False)
             }
         # Education
         edu_col = None
@@ -887,7 +887,7 @@ def load_miriad_trajectories(
             edu_series = pd.to_numeric(subjects[edu_col], errors="coerce")
             edu_map = {
                 str(s): (int(v) if pd.notna(v) else None)
-                for s, v in zip(subjects[subj_col_subj], edu_series)
+                for s, v in zip(subjects[subj_col_subj], edu_series, strict=False)
             }
         # Hand
         hand_col = None
@@ -899,7 +899,7 @@ def load_miriad_trajectories(
         if hand_col is not None:
             hand_map = {
                 str(s): (str(v).strip().lower() if pd.notna(v) else None)
-                for s, v in zip(subjects[subj_col_subj], subjects[hand_col])
+                for s, v in zip(subjects[subj_col_subj], subjects[hand_col], strict=False)
             }
 
     merged["_NeuroTCS_sex"] = (

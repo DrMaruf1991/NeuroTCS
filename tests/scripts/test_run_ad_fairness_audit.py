@@ -13,7 +13,6 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-import pytest
 
 # Add scripts/ to sys.path so we can import the runner module
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"

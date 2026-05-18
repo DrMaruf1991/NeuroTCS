@@ -172,7 +172,7 @@ def _run_miriad(args) -> int:
     print(f"      audit_id    = {result.audit_id}")
     print(f"      audit_id_v2 = {result.audit_id_v2}")
 
-    print(f"[4/4] Running fairness panel B.4.4 (FUTURE-AI BMJ 2025)")
+    print("[4/4] Running fairness panel B.4.4 (FUTURE-AI BMJ 2025)")
     fairness = cohort_fairness_audit(result)
     print(f"      max disparity: {100*fairness.max_disparity:.3f}% "
           f"at stratum '{fairness.max_disparity_stratum}'")

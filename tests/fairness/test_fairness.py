@@ -15,7 +15,6 @@ from neurotcs.fairness import (
     robustness_audit,
 )
 
-
 # -----------------------------------------------------------------------------
 # Citation lock
 # -----------------------------------------------------------------------------
@@ -215,9 +214,10 @@ def test_cohort_fairness_audit_basic():
 def test_cohort_fairness_audit_raises_when_per_transition_missing():
     """cohort_fairness_audit must raise a clear error if per_transition
     is None (i.e. caller forgot return_per_transition=True)."""
+    import pytest
+
     from neurotcs import audit, load_rulepack
     from neurotcs.fairness import cohort_fairness_audit
-    import pytest
 
     pack = load_rulepack("ad/niaaa_2018")
     trajs = _three_demographic_trajectories()

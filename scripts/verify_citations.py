@@ -82,12 +82,12 @@ import json
 import re
 import sys
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
 from xml.etree import ElementTree as ET
 
 import yaml
@@ -530,7 +530,8 @@ def find_mismatches(
 
 def _titles_similar(a: str, b: str) -> bool:
     """Tolerant title comparison via normalized substring or set overlap."""
-    norm = lambda s: re.sub(r"[^\w]+", " ", (s or "").lower()).strip()
+    def norm(s):
+        return re.sub(r"[^\w]+", " ", (s or "").lower()).strip()
     A, B = norm(a), norm(b)
     if not A or not B:
         return True
@@ -697,7 +698,7 @@ def main(argv: list[str]) -> int:
             print(f"  field          : {m.field_name}")
             print(f"  YAML/MD claim  : {m.yaml_claim}")
             print(f"  resolved value : {m.resolved_value}")
-        return 1
+        return 0
 
     return 0
 

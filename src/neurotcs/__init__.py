@@ -42,6 +42,14 @@ from neurotcs.audit_core import (  # noqa: E402,F401
     paired_cluster_bootstrap_difference,
     trajectories_from_dataframe,
 )
+from neurotcs.fairness import (  # noqa: E402,F401
+    FairnessAuditResult,
+    RobustnessAuditResult,
+    StratumMetrics,
+    cohort_fairness_audit,
+    fairness_audit,
+    robustness_audit,
+)
 from neurotcs.rulepack.loader import (  # noqa: E402,F401
     LoadedRulePack,
     RulePackLoadError,
@@ -67,24 +75,16 @@ from neurotcs.sample_size import (  # noqa: E402,F401
     BinarySampleSize,
     binary_sample_size,
 )
-from neurotcs.fairness import (  # noqa: E402,F401
-    FairnessAuditResult,
-    RobustnessAuditResult,
-    StratumMetrics,
-    cohort_fairness_audit,
-    fairness_audit,
-    robustness_audit,
+from neurotcs.scanner_factorial import (  # noqa: E402,F401
+    FactorialCell,
+    ScannerFactorialResult,
+    scanner_factorial,
 )
 from neurotcs.silent_deployment import (  # noqa: E402,F401
     SilentDeploymentEvidence,
     SilentTrialTheme,
     SilentTrialThemeFinding,
     make_silent_deployment_evidence,
-)
-from neurotcs.scanner_factorial import (  # noqa: E402,F401
-    FactorialCell,
-    ScannerFactorialResult,
-    scanner_factorial,
 )
 from neurotcs.threshold_derivation import (  # noqa: E402,F401
     OperationalThreshold,

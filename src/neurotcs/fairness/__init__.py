@@ -1,3 +1,4 @@
+
 """
 neurotcs.fairness — FUTURE-AI fairness & robustness audit panels
 =================================================================
@@ -38,8 +39,8 @@ per the FUTURE-AI Fairness 3 recommendation (verbatim quote):
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from typing import Iterable, Mapping
 
 import numpy as np
 
@@ -296,7 +297,7 @@ def robustness_audit(
 # ============================================================
 
 def cohort_fairness_audit(
-    audit_result: "AuditResult",  # type: ignore[name-defined]
+    audit_result,  # AuditResult from neurotcs.audit_core
     *,
     attributes: Iterable[str] | None = None,
     missing_sentinel: str = "unknown",
