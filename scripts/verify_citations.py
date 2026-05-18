@@ -82,12 +82,12 @@ import json
 import re
 import sys
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError, URLError
 from xml.etree import ElementTree as ET
 
 import yaml
@@ -438,11 +438,41 @@ def _normalize_journal(name: str | None) -> str | None:
     return re.sub(r"[\s,.()\[\]:;'’`]+", "", s).lower()
 
 
+# Pattern that signals the YAML/MD context actually makes a journal
+# claim. A genuine journal claim is typically expressed as:
+#   - markdown italics around the name, e.g. *Nature Medicine*
+#   - underscored italics, e.g. _BMJ_
+#   - explicit "in <Journal>" phrasing, e.g. "in JAMA Neurology"
+# When the context contains NONE of these patterns, no journal claim
+# was made (e.g., a markdown table cell of the form
+# "| Net benefit SE formula author | Marsh et al. (2020), DOI ... |"
+# which intentionally leaves the journal to be resolved from the DOI
+# alone). Flagging "journal mismatch" in that case is a false positive.
+_JOURNAL_CLAIM_RE = re.compile(
+    r"\*[A-Z][^*\n]{2,80}\*"          # *Italicized Title*
+    r"|_[A-Z][^_\n]{2,80}_"           # _Italicized Title_
+    r"|\bin\s+[A-Z][A-Za-z&\s]{2,60}\b"  # "in Journal Name"
+)
+
+
+def _has_journal_claim(yaml_text: str) -> bool:
+    """True if the context appears to make a journal-name claim that
+    can be checked. False when the context only gives author + DOI
+    (where the DOI is the canonical identifier and the journal is
+    intentionally not restated)."""
+    return bool(_JOURNAL_CLAIM_RE.search(yaml_text))
+
+
 def _journal_consistent(yaml_text: str, resolved_journal: str | None) -> bool:
     """Return True if the resolved journal appears (case/whitespace-insensitive)
-    in the YAML/Markdown text, OR if there's no journal mentioned to compare."""
+    in the YAML/Markdown text, OR if there's no journal mentioned to compare,
+    OR if the context makes no recognizable journal claim at all (in which
+    case there's nothing to compare against and a mismatch would be a
+    false positive — the DOI alone identifies the journal canonically)."""
     if not resolved_journal:
         return True
+    if not _has_journal_claim(yaml_text):
+        return True  # no journal claim was made; nothing to verify
     norm_text = _normalize_journal(yaml_text)
     norm_journal = _normalize_journal(resolved_journal) or ""
 
@@ -595,7 +625,8 @@ def find_mismatches(
 
 def _titles_similar(a: str, b: str) -> bool:
     """Tolerant title comparison via normalized substring or set overlap."""
-    norm = lambda s: re.sub(r"[^\w]+", " ", (s or "").lower()).strip()
+    def norm(s: str) -> str:
+        return re.sub(r"[^\w]+", " ", (s or "").lower()).strip()
     A, B = norm(a), norm(b)
     if not A or not B:
         return True
