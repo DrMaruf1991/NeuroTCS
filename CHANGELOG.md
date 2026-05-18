@@ -4,6 +4,132 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.11] — 2026-05-18
+
+### AD-lock Step 2.3: Data sheet / model card / regulatory documentation
+
+Step 3 of 5 toward the AD-lock at world-class no-future-fix level. Steps 2.1
+and 2.2 shipped the schema-version declaration policy and the demographic
+fairness pipeline; this release ships the consolidating regulatory document.
+
+### What's new
+
+#### `docs/datasheet/ad_neurotcs_datasheet.md` — four-framework consolidation
+
+One reviewer-verifiable specification document that maps the AD validation
+to FOUR peer-reviewed / regulatory frameworks simultaneously, section by
+section, with cryptographic anchors and honest-gap acknowledgements.
+
+The four frameworks covered:
+
+1. **Datasheets for Datasets** (Gebru et al., *CACM* 2021,
+   DOI 10.1145/3458723) — 7 sections covering ADNI, OASIS-3, MIRIAD.
+2. **Model Cards for Model Reporting** (Mitchell et al., *FAT\* 2019*,
+   DOI 10.1145/3287560.3287596) — 9 sections covering the cTCS metric.
+3. **FDA PCCP** (Aug 2025 final guidance, "Marketing Submission
+   Recommendations for a Predetermined Change Control Plan for AI-Enabled
+   Device Software Functions"; legal basis Section 515C of FD&C Act per
+   FDORA 2022) — 3 mandatory components.
+4. **EU AI Act Annex IV** (Regulation 2024/1689 Article 11) — 9
+   technical-documentation sections. High-risk AI deadline 2 August 2026
+   standalone; 2 August 2027 for MDR/IVDR-regulated medical AI.
+
+Plus integration with the FUTURE-AI BMJ 2025 fairness panel B.4.4 already
+implemented in v1.7.10.
+
+#### Cryptographic anchors locked in Section A
+
+Every audit_id and rulepack SHA from the three-cohort AD validation is
+present in the datasheet's Section A as a reproducibility certificate:
+
+- ADNI: cTCS 0.9946, 12,006 transitions, 65 flagged
+- OASIS-3: cTCS 0.9942 (0.9902–0.9964), 1,377 subjects, 7,248 transitions
+- MIRIAD longitudinal: cTCS 0.9854 (0.9715–0.9937), audit_id `947ab24e...`,
+  audit_id_v2 `aa178e83...`
+- MIRIAD test-retest: cTCS 1.0000, audit_id `80430399...`, audit_id_v2
+  `dcf8b7de...`
+- Rulepack SHA-256 prefix: `f359148d1cbf6abe`
+
+#### Honest gaps Section F
+
+Six known limitations explicitly acknowledged rather than papered over:
+
+1. Jack 2024 §3 Staging text not yet transcribed (paywalled, pending PDF).
+2. ADNI / OASIS-3 fairness pending local demographic joins.
+3. No race_ethnicity collected in MIRIAD (single-site UCL DRC).
+4. No comorbidity / disease_stage / treatment_status extraction yet.
+5. No classifier-level fairness metrics (TPR, Equalized Odds) — cTCS is
+   a rule-pack audit, not a classifier; the FUTURE-AI Fairness 3 metrics
+   don't apply to this context.
+6. NeuroTCS is research software, not a marketed medical device.
+
+### Regression tests (60 new)
+
+`tests/docs/test_ad_datasheet_structure.py` — structural regression suite
+that verifies the datasheet cannot drift silently:
+
+- 8 top-level framework sections (A through H)
+- 7 Gebru datasheet sections (B.1 – B.7)
+- 9 Mitchell model card sections (C.1 – C.9)
+- 3 FDA PCCP components (D.1 – D.3)
+- 9 EU AI Act Annex IV sections (E.1 – E.9)
+- 8 citation DOIs / PMIDs (Gebru, Mitchell, FUTURE-AI, NIA-AA 2018,
+  Jack 2024, MIRIAD/Malone 2013)
+- 12 locked invariants (audit_ids, cTCS values, transition counts,
+  rulepack SHA prefix)
+- 5 honest-gap phrases that must appear in Section F
+
+If any future commit silently drops a section, mangles an audit_id, or
+removes a framework citation, CI catches it before release. Tests use
+`pytest.parametrize` so each missing element produces its own failure
+with a precise pointer to what's missing.
+
+### Tests passing
+
+- **331 passed, 2 skipped** on two consecutive runs (was 271 in v1.7.10).
+- Net +60 from the new structural test file. No regressions.
+- The 2 skipped are the real-MIRIAD locked-invariant tests on sandbox
+  (no CSVs). On Maruf's machine with `NEUROTCS_MIRIAD_DIR` set: 333 passed.
+
+### What's preserved
+
+- ADNI cTCS = 0.9946, OASIS-3 cTCS = 0.9942, MIRIAD cTCS = 0.9854 unchanged.
+- All audit_ids from v1.7.7 (`947ab24e...`, `aa178e83...`, `80430399...`,
+  `dcf8b7de...`) reproduce bit-exactly.
+- v1.7.9 schema-version declaration policy unchanged.
+- v1.7.10 fairness pipeline unchanged.
+- 190 citations clean per `verify_citations.py --offline`.
+
+### Why this matters for the AD lock
+
+Before v1.7.11, the AD validation answered:
+- "Is the audit reproducible?" — yes (locked audit_ids, v1.7.7)
+- "Is the audit equitable?" — yes for MIRIAD; ADNI/OASIS-3 pipeline ready
+  for local demographic joins (v1.7.10)
+
+v1.7.11 answers: "Is the audit documented to the standard an external
+reviewer expects?" — yes, against four canonical frameworks
+simultaneously. A reviewer holding the Gebru paper, the Mitchell paper,
+the FDA PCCP guidance, and EU AI Act Annex IV can verify section-by-
+section that this AD validation speaks every required vocabulary.
+
+This is the documentation gate before any Q-Sub submission or
+notified-body engagement. After Maruf executes the fairness runner on
+real MIRIAD CSVs (Step 2.2 deliverable) and the Jack 2024 PDF is
+obtained (Step 2.3 honest gap), the document Section A and Section F
+gain their final-state updates.
+
+### What's next
+
+- Step 2.4 of 5: reproducibility report — environment lockfile, CSV
+  checksums, seeds, expected audit_ids in one self-contained file an
+  external collaborator can use to verify the AD validation end-to-end.
+- Step 2.5 of 5: blind-validation invitation — protocol for an
+  independent collaborator to run the full audit on their own cohort
+  and report back.
+
+---
+
 ## [1.7.10] — 2026-05-18
 
 ### AD-lock Step 2.2: Demographic fairness slicing (FUTURE-AI Panel B.4.4)

@@ -1,4 +1,3 @@
-
 """
 neurotcs.fairness — FUTURE-AI fairness & robustness audit panels
 =================================================================
