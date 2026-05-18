@@ -15,7 +15,6 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-import pytest
 
 # Import the runner's main() via sys.path manipulation (scripts/ isn't
 # a package — adding it to path lets us import the module directly).

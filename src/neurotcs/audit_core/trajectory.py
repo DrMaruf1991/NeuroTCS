@@ -227,7 +227,7 @@ def trajectories_from_dataframe(
     n_skipped = 0
     for pid, group in work.groupby(patient_id_col, sort=False):
         states = tuple(group[state_col].astype(str).tolist())
-        dates = tuple(d.date() if isinstance(d, (pd.Timestamp, datetime))
+        dates = tuple(d.date() if isinstance(d, pd.Timestamp | datetime)
                        else d for d in group[visit_date_col].tolist())
 
         probs: np.ndarray | None = None
