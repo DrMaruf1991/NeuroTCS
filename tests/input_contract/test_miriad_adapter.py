@@ -14,6 +14,7 @@ MIRIAD exports from the XNAT database. Tests verify:
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 import pandas as pd
@@ -710,7 +711,7 @@ def test_audit_id_deterministic_across_runs(tmp_path: Path):
         f"audit_id not reproducible: {r1.audit_id} vs {r2.audit_id}"
     )
     assert r1.audit_id_v2 == r2.audit_id_v2, (
-        "audit_id_v2 not reproducible"
+        f"audit_id_v2 not reproducible"
     )
 
 
@@ -934,7 +935,6 @@ def test_find_miriad_files_via_env_var_with_drmaruf_names(tmp_path: Path,
     # SEARCH_BASES is computed at import time.
     monkeypatch.setenv("NEUROTCS_MIRIAD_DIR", str(tmp_path))
     import importlib
-
     import tests.audit_core.test_real_miriad_audit as t
     importlib.reload(t)
 
@@ -947,6 +947,182 @@ def test_find_miriad_files_via_env_var_with_drmaruf_names(tmp_path: Path,
     assert "12_16_24" in sessions.name  # MR Sessions (has Age + Scans)
     assert subjects is not None
     assert "12_16_33" in subjects.name  # Subjects (has YOB + MR Count)
+
+
+# ---------- v1.7.10 (AD-lock Step 2.2): demographic extraction tests ----------
+
+def _three_subject_miriad_csvs(tmp_path: Path) -> tuple[Path, Path, Path]:
+    """Build a synthetic MIRIAD CSV triple with three demographically-distinct
+    subjects, so we can verify the adapter extracts sex/age_band/YOB/Education
+    correctly into trajectory metadata.
+
+    S1: AD, male, baseline age 76.6, YOB 1932, Education 14, right-handed
+    S2: AD, female, baseline age 65.3, YOB 1944, Education 18, right-handed
+    S3: CN, female, baseline age 82.1, YOB 1925, Education 10, left-handed
+    """
+    sessions_csv = tmp_path / "sessions.csv"
+    clinical_csv = tmp_path / "clinical.csv"
+    subjects_csv = tmp_path / "subjects.csv"
+
+    pd.DataFrame([
+        # S1: 3 visits, MMSE will be set in clinical
+        {"Label": "miriad_188_1_MR_1", "Subject": "miriad_188", "Age": 76.64},
+        {"Label": "miriad_188_2_MR_1", "Subject": "miriad_188", "Age": 77.14},
+        {"Label": "miriad_188_3_MR_1", "Subject": "miriad_188", "Age": 77.64},
+        # S2: 2 visits
+        {"Label": "miriad_199_1_MR_1", "Subject": "miriad_199", "Age": 65.32},
+        {"Label": "miriad_199_2_MR_1", "Subject": "miriad_199", "Age": 65.82},
+        # S3: 2 visits (control)
+        {"Label": "miriad_255_1_MR_1", "Subject": "miriad_255", "Age": 82.10},
+        {"Label": "miriad_255_2_MR_1", "Subject": "miriad_255", "Age": 82.60},
+    ]).to_csv(sessions_csv, index=False)
+
+    pd.DataFrame([
+        # S1: MCI -> MCI -> AD
+        {"Label": "miriad_188_1_MMSE", "Subject": "miriad_188", "MMSE": 22},
+        {"Label": "miriad_188_2_MMSE", "Subject": "miriad_188", "MMSE": 19},
+        {"Label": "miriad_188_3_MMSE", "Subject": "miriad_188", "MMSE": 16},
+        # S2: MCI -> MCI
+        {"Label": "miriad_199_1_MMSE", "Subject": "miriad_199", "MMSE": 24},
+        {"Label": "miriad_199_2_MMSE", "Subject": "miriad_199", "MMSE": 23},
+        # S3: CN -> CN
+        {"Label": "miriad_255_1_MMSE", "Subject": "miriad_255", "MMSE": 29},
+        {"Label": "miriad_255_2_MMSE", "Subject": "miriad_255", "MMSE": 28},
+    ]).to_csv(clinical_csv, index=False)
+
+    pd.DataFrame([
+        {"Subject": "miriad_188", "Gender": "male", "Hand": "right",
+         "YOB": 1932, "Education": 14, "Ses": "", "MR Count": 3},
+        {"Subject": "miriad_199", "Gender": "female", "Hand": "right",
+         "YOB": 1944, "Education": 18, "Ses": "", "MR Count": 2},
+        {"Subject": "miriad_255", "Gender": "female", "Hand": "left",
+         "YOB": 1925, "Education": 10, "Ses": "", "MR Count": 2},
+    ]).to_csv(subjects_csv, index=False)
+
+    return clinical_csv, sessions_csv, subjects_csv
+
+
+def test_miriad_adapter_extracts_sex(tmp_path: Path):
+    """The MIRIAD adapter must populate trajectory.metadata['sex'] from
+    the Subjects.csv Gender column, normalised to 'M' / 'F' / 'unknown'.
+    """
+    clinical_csv, sessions_csv, subjects_csv = _three_subject_miriad_csvs(tmp_path)
+    trajectories, _ = load_miriad_trajectories(
+        clinical_csv, sessions_csv, subjects_csv=subjects_csv,
+        hash_ids=False,
+    )
+    by_id = {t.patient_id: t for t in trajectories}
+    assert by_id["miriad_188"].metadata["sex"] == "M"
+    assert by_id["miriad_199"].metadata["sex"] == "F"
+    assert by_id["miriad_255"].metadata["sex"] == "F"
+
+
+def test_miriad_adapter_extracts_age_band(tmp_path: Path):
+    """The MIRIAD adapter must populate trajectory.metadata['age_band']
+    from the minimum age-at-scan per subject (= baseline age).
+    """
+    clinical_csv, sessions_csv, subjects_csv = _three_subject_miriad_csvs(tmp_path)
+    trajectories, _ = load_miriad_trajectories(
+        clinical_csv, sessions_csv, subjects_csv=subjects_csv,
+        hash_ids=False,
+    )
+    by_id = {t.patient_id: t for t in trajectories}
+    # S1 baseline 76.64 -> 70-79; S2 baseline 65.32 -> 60-69; S3 82.10 -> 80-89
+    assert by_id["miriad_188"].metadata["age_band"] == "70-79"
+    assert by_id["miriad_199"].metadata["age_band"] == "60-69"
+    assert by_id["miriad_255"].metadata["age_band"] == "80-89"
+    # age_at_baseline preserved as float for downstream regression use
+    assert abs(by_id["miriad_188"].metadata["age_at_baseline"] - 76.64) < 0.01
+
+
+def test_miriad_adapter_extracts_yob_education_hand(tmp_path: Path):
+    """The MIRIAD adapter must also extract YOB, Education, and Hand
+    when columns are present in Subjects.csv.
+    """
+    clinical_csv, sessions_csv, subjects_csv = _three_subject_miriad_csvs(tmp_path)
+    trajectories, _ = load_miriad_trajectories(
+        clinical_csv, sessions_csv, subjects_csv=subjects_csv,
+        hash_ids=False,
+    )
+    by_id = {t.patient_id: t for t in trajectories}
+    assert by_id["miriad_188"].metadata["yob"] == 1932
+    assert by_id["miriad_188"].metadata["education_years"] == 14
+    assert by_id["miriad_188"].metadata["handedness"] == "right"
+    assert by_id["miriad_255"].metadata["handedness"] == "left"
+
+
+def test_miriad_adapter_demographics_unknown_without_subjects_csv(tmp_path: Path):
+    """If subjects_csv is not provided, demographic fields fall back to
+    'unknown' / None — the adapter must not crash and the audit must still
+    run end-to-end. Age band can still be computed from sessions.csv.
+    """
+    clinical_csv, sessions_csv, _ = _three_subject_miriad_csvs(tmp_path)
+    trajectories, _ = load_miriad_trajectories(
+        clinical_csv, sessions_csv, subjects_csv=None,
+        hash_ids=False,
+    )
+    by_id = {t.patient_id: t for t in trajectories}
+    # Age band IS available even without subjects.csv (computed from sessions)
+    assert by_id["miriad_188"].metadata["age_band"] == "70-79"
+    # Sex / YOB / Education / Hand are unknown / None
+    assert by_id["miriad_188"].metadata["sex"] == "unknown"
+    assert by_id["miriad_188"].metadata["yob"] is None
+    assert by_id["miriad_188"].metadata["education_years"] is None
+    assert by_id["miriad_188"].metadata["handedness"] is None
+
+
+def test_miriad_adapter_demographic_extraction_does_not_break_audit_id(tmp_path: Path):
+    """Critical no-regression test: adding demographic metadata must NOT
+    change cTCS values or audit_ids. Metadata is by design score-neutral.
+    """
+    clinical_csv, sessions_csv, subjects_csv = _three_subject_miriad_csvs(tmp_path)
+
+    # Load WITH and WITHOUT subjects.csv — both must produce IDENTICAL audit_id
+    pack = load_rulepack("ad/niaaa_2018")
+    t_with, _ = load_miriad_trajectories(
+        clinical_csv, sessions_csv, subjects_csv=subjects_csv,
+        hash_ids=False,
+    )
+    t_without, _ = load_miriad_trajectories(
+        clinical_csv, sessions_csv, subjects_csv=None,
+        hash_ids=False,
+    )
+    r_with = audit(t_with, pack, bootstrap_B=200, seed=42)
+    r_without = audit(t_without, pack, bootstrap_B=200, seed=42)
+    # Metadata is purely additive — audit_id depends only on trajectory shape
+    # + per-patient scores, not on free-form metadata.
+    assert r_with.audit_id == r_without.audit_id, (
+        f"audit_id changed when demographics were added: "
+        f"{r_with.audit_id} vs {r_without.audit_id}. Demographics must "
+        f"be metadata-only with no impact on the score signature."
+    )
+    assert r_with.audit_id_v2 == r_without.audit_id_v2
+
+
+def test_miriad_demographics_flow_through_per_transition(tmp_path: Path):
+    """End-to-end: demographics in trajectory.metadata propagate to
+    PerTransitionFlags.trajectory_metadata, ready for fairness_audit().
+    """
+    clinical_csv, sessions_csv, subjects_csv = _three_subject_miriad_csvs(tmp_path)
+    trajectories, _ = load_miriad_trajectories(
+        clinical_csv, sessions_csv, subjects_csv=subjects_csv,
+        hash_ids=False,
+    )
+    pack = load_rulepack("ad/niaaa_2018")
+    result = audit(trajectories, pack, bootstrap_B=200, seed=42,
+                    return_per_transition=True)
+    pt = result.per_transition
+    # Pull the sex column across every transition
+    sex = pt.attribute_array("sex")
+    age_band = pt.attribute_array("age_band")
+    # Every transition must have a non-default sex value
+    assert all(s in ("M", "F", "unknown") for s in sex.tolist())
+    assert all(b != "" for b in age_band.tolist())
+    # Specifically: S1 (miriad_188, M) contributes 2 transitions; S2 (F) 1;
+    # S3 (F) 1. Total 4. Two males, two females.
+    n_m = sum(1 for s in sex.tolist() if s == "M")
+    n_f = sum(1 for s in sex.tolist() if s == "F")
+    assert n_m == 2 and n_f == 2
 
 
 if __name__ == "__main__":

@@ -115,8 +115,9 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -265,6 +266,73 @@ VISIT_COL_CANDIDATES = [
     "Visit", "visit", "visit_label", "visit_number", "Session", "session",
     "label", "Label",
 ]
+
+# Demographic columns (Subjects.csv from UCL DRC MIRIAD XNAT export).
+# Per Malone et al. 2013 NeuroImage 70:33-36 and the public release schema:
+#   Gender    -> "male" / "female" (string, lowercase in real exports)
+#   YOB       -> integer year of birth (e.g. 1932)
+#   Education -> integer years of education
+#   Hand      -> handedness ("right" / "left" / "ambidextrous")
+SEX_COL_CANDIDATES = [
+    "Gender", "gender", "Sex", "sex", "M/F", "m_f",
+]
+YOB_COL_CANDIDATES = [
+    "YOB", "yob", "year_of_birth", "birth_year", "BirthYear",
+]
+EDUCATION_COL_CANDIDATES = [
+    "Education", "education", "years_education", "Educ", "yrs_education",
+]
+HAND_COL_CANDIDATES = [
+    "Hand", "hand", "handedness", "Handedness",
+]
+
+
+def _bin_age_at_baseline(age: float) -> str:
+    """Bin baseline age into a 10-year band for fairness stratification.
+
+    Returns "unknown" for missing / non-finite values.
+    Bands: <60, 60-69, 70-79, 80-89, 90+. Aligned with reporting
+    conventions in ADNI/OASIS-3 demographic tables.
+    """
+    if age is None:
+        return "unknown"
+    try:
+        a = float(age)
+    except (TypeError, ValueError):
+        return "unknown"
+    if not (a == a):  # NaN check (NaN != NaN)
+        return "unknown"
+    if a < 60:
+        return "<60"
+    if a < 70:
+        return "60-69"
+    if a < 80:
+        return "70-79"
+    if a < 90:
+        return "80-89"
+    return "90+"
+
+
+def _normalise_sex(value: Any) -> str:
+    """Normalise free-text Gender/Sex/M-F to {'M', 'F', 'unknown'}.
+
+    MIRIAD XNAT uses 'male'/'female' lowercase strings; ADNI uses 'M'/'F'.
+    This helper accepts either and returns the FUTURE-AI canonical M/F
+    plus 'unknown' for anything else (missing, ambiguous, third-gender).
+    """
+    if value is None:
+        return "unknown"
+    try:
+        if pd.isna(value):
+            return "unknown"
+    except (TypeError, ValueError):
+        pass
+    s = str(value).strip().lower()
+    if s in ("m", "male", "1", "man"):
+        return "M"
+    if s in ("f", "female", "2", "woman"):
+        return "F"
+    return "unknown"
 
 
 # ------------------------------------------------------------------
@@ -688,7 +756,7 @@ def load_miriad_trajectories(
             if group_col is not None:
                 group_map = dict(zip(
                     subjects[subj_col_subj].astype(str),
-                    subjects[group_col].astype(str), strict=False,
+                    subjects[group_col].astype(str),
                 ))
 
         # If we have a non-empty explicit group_map, use it. Otherwise fall
@@ -749,14 +817,145 @@ def load_miriad_trajectories(
     else:
         merged["_NeuroTCS_patient_id"] = merged[subj_col_s].astype(str)
 
+    # ---- Attach demographics for fairness stratification ----
+    # Per AD-lock Step 2.2: extract per-patient demographic constants
+    # from Subjects.csv (Gender, YOB, Education, Hand) plus a baseline-age
+    # band computed from the minimum age-at-scan per subject. These are
+    # carried on Trajectory.metadata and used by neurotcs.fairness.
+    # All demographics are patient-level constants (do not change between
+    # visits), so the first-row value is the canonical value per subject.
+
+    # Baseline-age band: minimum age across visits per subject -> 10-yr band
+    if age_col in merged.columns:
+        age_floats = pd.to_numeric(merged[age_col], errors="coerce")
+        baseline_age_by_subj = (
+            age_floats.groupby(merged[subj_col_s].astype(str)).min()
+        )
+        merged["_NeuroTCS_age_at_baseline"] = (
+            merged[subj_col_s].astype(str).map(baseline_age_by_subj)
+        )
+        merged["_NeuroTCS_age_band"] = (
+            merged["_NeuroTCS_age_at_baseline"].apply(_bin_age_at_baseline)
+        )
+    else:
+        merged["_NeuroTCS_age_at_baseline"] = None
+        merged["_NeuroTCS_age_band"] = "unknown"
+
+    # Sex, YOB, Education, Hand: pull from Subjects.csv when present.
+    # Subjects.csv was loaded as `subjects` earlier in this function.
+    sex_map: dict[str, str] = {}
+    yob_map: dict[str, Any] = {}
+    edu_map: dict[str, Any] = {}
+    hand_map: dict[str, Any] = {}
+    if subjects is not None:
+        subj_col_subj = _resolve_column(subjects, SUBJECT_COL_CANDIDATES,
+                                         purpose="subject (Subjects)")
+        # Sex
+        sex_col = None
+        for cand in SEX_COL_CANDIDATES:
+            if cand.lower() in {c.lower() for c in subjects.columns}:
+                sex_col = next(c for c in subjects.columns
+                                if c.lower() == cand.lower())
+                break
+        if sex_col is not None:
+            sex_map = {
+                str(s): _normalise_sex(v)
+                for s, v in zip(subjects[subj_col_subj],
+                                  subjects[sex_col])
+            }
+        # YOB
+        yob_col = None
+        for cand in YOB_COL_CANDIDATES:
+            if cand.lower() in {c.lower() for c in subjects.columns}:
+                yob_col = next(c for c in subjects.columns
+                                if c.lower() == cand.lower())
+                break
+        if yob_col is not None:
+            yob_series = pd.to_numeric(subjects[yob_col], errors="coerce")
+            yob_map = {
+                str(s): (int(v) if pd.notna(v) else None)
+                for s, v in zip(subjects[subj_col_subj], yob_series)
+            }
+        # Education
+        edu_col = None
+        for cand in EDUCATION_COL_CANDIDATES:
+            if cand.lower() in {c.lower() for c in subjects.columns}:
+                edu_col = next(c for c in subjects.columns
+                                if c.lower() == cand.lower())
+                break
+        if edu_col is not None:
+            edu_series = pd.to_numeric(subjects[edu_col], errors="coerce")
+            edu_map = {
+                str(s): (int(v) if pd.notna(v) else None)
+                for s, v in zip(subjects[subj_col_subj], edu_series)
+            }
+        # Hand
+        hand_col = None
+        for cand in HAND_COL_CANDIDATES:
+            if cand.lower() in {c.lower() for c in subjects.columns}:
+                hand_col = next(c for c in subjects.columns
+                                 if c.lower() == cand.lower())
+                break
+        if hand_col is not None:
+            hand_map = {
+                str(s): (str(v).strip().lower() if pd.notna(v) else None)
+                for s, v in zip(subjects[subj_col_subj], subjects[hand_col])
+            }
+
+    merged["_NeuroTCS_sex"] = (
+        merged[subj_col_s].astype(str).map(sex_map).fillna("unknown")
+    )
+    merged["_NeuroTCS_yob"] = merged[subj_col_s].astype(str).map(yob_map)
+    merged["_NeuroTCS_education_years"] = (
+        merged[subj_col_s].astype(str).map(edu_map)
+    )
+    merged["_NeuroTCS_handedness"] = (
+        merged[subj_col_s].astype(str).map(hand_map)
+    )
+
     # ---- Build trajectories ----
     trajectories = trajectories_from_dataframe(
         merged,
         patient_id_col="_NeuroTCS_patient_id",
         visit_date_col="_visit_date",
         state_col="_NeuroTCS_state",
+        metadata_cols=[
+            "_NeuroTCS_sex",
+            "_NeuroTCS_age_band",
+            "_NeuroTCS_age_at_baseline",
+            "_NeuroTCS_yob",
+            "_NeuroTCS_education_years",
+            "_NeuroTCS_handedness",
+        ],
         skip_invalid=skip_invalid,
     )
+
+    # Rename metadata keys from internal `_NeuroTCS_*` to the canonical
+    # FUTURE-AI fairness attribute names so `attribute_array("sex")` works.
+    _META_RENAME = {
+        "_NeuroTCS_sex": "sex",
+        "_NeuroTCS_age_band": "age_band",
+        "_NeuroTCS_age_at_baseline": "age_at_baseline",
+        "_NeuroTCS_yob": "yob",
+        "_NeuroTCS_education_years": "education_years",
+        "_NeuroTCS_handedness": "handedness",
+    }
+    renamed_trajectories = []
+    for t in trajectories:
+        new_meta = {
+            _META_RENAME.get(k, k): v for k, v in (t.metadata or {}).items()
+        }
+        # Trajectory is frozen — construct a new one with renamed metadata
+        renamed_trajectories.append(Trajectory(
+            patient_id=t.patient_id,
+            states=t.states,
+            dates=t.dates,
+            probabilities=t.probabilities,
+            state_labels=t.state_labels,
+            treatment_status=t.treatment_status,
+            metadata=new_meta,
+        ))
+    trajectories = renamed_trajectories
 
     n_transitions = sum(t.num_transitions for t in trajectories)
 

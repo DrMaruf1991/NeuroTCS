@@ -71,6 +71,90 @@ class MetricResult:
 
 
 @dataclass(frozen=True)
+class PerTransitionFlags:
+    """Per-transition admissibility verdicts aligned to trajectory order.
+
+    Produced only when `audit()` is called with `return_per_transition=True`.
+    Used by `neurotcs.fairness.fairness_audit()` to stratify the cohort flag
+    rate by demographic / clinical attributes per FUTURE-AI BMJ 2025.
+
+    Attributes:
+        patient_ids: Per-transition patient identifier (length = n_transitions).
+            One trajectory contributing T-1 transitions appears T-1 times here.
+        flags: Boolean array (length = n_transitions). True = the audit
+            kernel marked this transition as inadmissible.
+        from_states: Per-transition `from_state` label.
+        to_states: Per-transition `to_state` label.
+        delta_days: Per-transition delta-t in days (float).
+        trajectory_metadata: Per-transition metadata dict copied from each
+            transition's source trajectory. Carries demographic and clinical
+            attributes like "sex", "age_band", "apoe4_status" that are
+            recognised by `fairness_audit()`. Empty dicts for trajectories
+            with no metadata supplied.
+
+    The order is: iterate trajectories in input order, then transitions
+    within each trajectory in chronological order. This is deterministic
+    and reproducible — running the same input twice produces identical
+    arrays. Does NOT influence audit_id (additive field; audit_id is
+    derived from per-patient scores only, by design).
+    """
+    patient_ids: tuple[str, ...]
+    flags: np.ndarray
+    from_states: tuple[str, ...]
+    to_states: tuple[str, ...]
+    delta_days: np.ndarray
+    trajectory_metadata: tuple[dict[str, Any], ...]
+
+    def __post_init__(self) -> None:
+        n = len(self.patient_ids)
+        if self.flags.shape != (n,):
+            raise ValueError(
+                f"PerTransitionFlags: flags shape {self.flags.shape} does not "
+                f"match patient_ids length {n}"
+            )
+        if len(self.from_states) != n or len(self.to_states) != n:
+            raise ValueError(
+                f"PerTransitionFlags: from_states ({len(self.from_states)}) "
+                f"and to_states ({len(self.to_states)}) must equal patient_ids "
+                f"length {n}"
+            )
+        if self.delta_days.shape != (n,):
+            raise ValueError(
+                f"PerTransitionFlags: delta_days shape {self.delta_days.shape} "
+                f"does not match patient_ids length {n}"
+            )
+        if len(self.trajectory_metadata) != n:
+            raise ValueError(
+                f"PerTransitionFlags: trajectory_metadata "
+                f"({len(self.trajectory_metadata)}) must equal patient_ids "
+                f"length {n}"
+            )
+
+    @property
+    def n_transitions(self) -> int:
+        return len(self.patient_ids)
+
+    @property
+    def n_flagged(self) -> int:
+        return int(self.flags.sum())
+
+    def attribute_array(self, name: str,
+                        missing: str = "unknown") -> np.ndarray:
+        """Extract a single demographic attribute as a 1-D array.
+
+        Convenience for handing a column to `fairness_audit()`. Missing or
+        absent metadata entries are filled with the `missing` sentinel so
+        downstream stratification treats them as their own group rather
+        than crashing.
+        """
+        return np.array(
+            [md.get(name, missing) if md else missing
+             for md in self.trajectory_metadata],
+            dtype=object,
+        )
+
+
+@dataclass(frozen=True)
 class AuditResult:
     """End-to-end audit output.
 
@@ -117,6 +201,12 @@ class AuditResult:
     # Default "" preserves backward compatibility for any code that
     # constructs AuditResult manually (e.g. tests, downstream consumers).
     audit_id_v2: str = ""
+    # v1.7.10 (AD-lock Step 2.2): optional per-transition flag detail for
+    # demographic fairness stratification (FUTURE-AI BMJ 2025 panel B.4.4).
+    # Populated only when audit() is called with `return_per_transition=True`.
+    # Default None preserves backward compatibility — existing audit_ids and
+    # serialisation are byte-identical to v1.7.9.
+    per_transition: PerTransitionFlags | None = field(default=None, repr=False)
 
     @property
     def flagged_rate(self) -> float:
@@ -323,6 +413,7 @@ def audit(
     seed: int = 42,
     ci_method: str = "bca",
     prior_type: str = "clinical",
+    return_per_transition: bool = False,
 ) -> AuditResult:
     """Run the full audit pipeline on a cohort of trajectories.
 
@@ -335,6 +426,11 @@ def audit(
         seed: Reproducibility seed for the bootstrap.
         ci_method: "bca" (default) or "percentile".
         prior_type: "clinical" or "population" priors for pTCS scoring.
+        return_per_transition: If True, attach a `PerTransitionFlags` object
+            to the result with per-transition admissibility verdicts and
+            trajectory metadata. Used by the fairness audit (FUTURE-AI
+            BMJ 2025 panel B.4.4). Default False keeps memory low for
+            large cohorts. Does NOT influence audit_id or audit_id_v2.
 
     Returns:
         AuditResult with cTCS / pTCS / uTCS each fully scored.
@@ -351,7 +447,18 @@ def audit(
     # Count flagged transitions: rebuild the running tally directly.
     # Uses transitions_with_context so schema v1.2 conditional admissibility
     # (e.g. TRAC pack) flags treatment-untreated A+ -> A- correctly.
+    #
+    # When return_per_transition is True, also accumulate per-transition
+    # arrays in the SAME loop. This guarantees the per-transition output
+    # is bit-identical to the cohort flag count: same loop order, same
+    # admissibility call, same context handling.
     n_flagged = 0
+    _pt_patient_ids: list[str] = []
+    _pt_flags: list[bool] = []
+    _pt_from: list[str] = []
+    _pt_to: list[str] = []
+    _pt_dt: list[float] = []
+    _pt_meta: list[dict[str, Any]] = []
     for traj in trajectories:
         rp = rulepack.rulepack
         for from_s, to_s, dt, from_ctx, to_ctx in traj.transitions_with_context():
@@ -362,6 +469,26 @@ def audit(
             )
             if not ok:
                 n_flagged += 1
+            if return_per_transition:
+                _pt_patient_ids.append(traj.patient_id)
+                _pt_flags.append(not ok)
+                _pt_from.append(from_s)
+                _pt_to.append(to_s)
+                _pt_dt.append(float(dt))
+                # Defensive copy so downstream mutation can't corrupt history
+                _pt_meta.append(dict(traj.metadata) if traj.metadata else {})
+
+    if return_per_transition:
+        per_transition = PerTransitionFlags(
+            patient_ids=tuple(_pt_patient_ids),
+            flags=np.asarray(_pt_flags, dtype=bool),
+            from_states=tuple(_pt_from),
+            to_states=tuple(_pt_to),
+            delta_days=np.asarray(_pt_dt, dtype=float),
+            trajectory_metadata=tuple(_pt_meta),
+        )
+    else:
+        per_transition = None
 
     # cTCS bootstrap
     if per_patient.ctcs.size > 0:
@@ -441,4 +568,5 @@ def audit(
         bootstrap_B=bootstrap_B,
         ci_method=ci_method,
         seed=seed,
+        per_transition=per_transition,
     )

@@ -40,6 +40,7 @@ Quick start
 from neurotcs.audit_core.audit import (  # noqa: F401
     AuditResult,
     MetricResult,
+    PerTransitionFlags,
     audit,
 )
 from neurotcs.audit_core.bootstrap import (  # noqa: F401
@@ -74,6 +75,7 @@ __all__ = [
     "GeneratorMatrix",
     "MetricResult",
     "PerPatientScores",
+    "PerTransitionFlags",
     "Trajectory",
     "audit",
     "build_generator",

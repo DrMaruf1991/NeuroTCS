@@ -171,6 +171,7 @@ def trajectories_from_dataframe(
     probability_cols: Sequence[str] | None = None,
     state_label_map: dict[str, str] | None = None,
     treatment_status_col: str | None = None,
+    metadata_cols: Sequence[str] | None = None,
     skip_invalid: bool = False,
 ) -> list[Trajectory]:
     """Build a list of Trajectories from a long-format DataFrame.
@@ -191,6 +192,15 @@ def trajectories_from_dataframe(
             (e.g. ADNI's "Dementia" -> "AD"). Applied before trajectory
             construction.
         treatment_status_col: Optional column for treatment flags.
+        metadata_cols: Optional list of column names whose per-patient
+            values are stored on Trajectory.metadata. These columns are
+            assumed to be patient-level constants (sex, APOE4 status,
+            age band, etc.) and the FIRST row's value is used per
+            patient. If a per-patient value varies across visits in the
+            input, only the first encountered value is preserved (and
+            no warning is emitted — assume the caller has pre-normalised).
+            Used downstream by `neurotcs.fairness.fairness_audit()` for
+            demographic stratification (FUTURE-AI BMJ 2025 panel B.4.4).
         skip_invalid: If True, patients whose data fails Trajectory
             construction (e.g. unsortable dates, malformed probability rows)
             are silently dropped from the returned list. The total number of
@@ -223,6 +233,14 @@ def trajectories_from_dataframe(
     # Sort within patients
     work = work.sort_values([patient_id_col, visit_date_col])
 
+    # Validate metadata columns up front
+    if metadata_cols is not None:
+        missing_meta = [c for c in metadata_cols if c not in work.columns]
+        if missing_meta:
+            raise KeyError(
+                f"metadata_cols not found in DataFrame: {missing_meta}"
+            )
+
     trajectories: list[Trajectory] = []
     n_skipped = 0
     for pid, group in work.groupby(patient_id_col, sort=False):
@@ -243,6 +261,17 @@ def trajectories_from_dataframe(
         if treatment_status_col is not None and treatment_status_col in group.columns:
             tx = tuple(group[treatment_status_col].astype(str).tolist())
 
+        meta: dict[str, Any] = {}
+        if metadata_cols is not None:
+            for col in metadata_cols:
+                # Take the first visit's value as the patient-level constant.
+                first_val = group[col].iloc[0]
+                # Preserve None/NaN as None for clean fairness handling
+                if pd.isna(first_val):
+                    meta[col] = None
+                else:
+                    meta[col] = first_val
+
         try:
             trajectories.append(Trajectory(
                 patient_id=str(pid),
@@ -251,6 +280,7 @@ def trajectories_from_dataframe(
                 probabilities=probs,
                 state_labels=labels,
                 treatment_status=tx,
+                metadata=meta,
             ))
         except ValueError as e:
             if skip_invalid:

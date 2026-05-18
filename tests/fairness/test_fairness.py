@@ -15,6 +15,7 @@ from neurotcs.fairness import (
     robustness_audit,
 )
 
+
 # -----------------------------------------------------------------------------
 # Citation lock
 # -----------------------------------------------------------------------------
@@ -138,3 +139,124 @@ def test_fairness_audit_does_not_pick_up_scanner_vendor():
         "scanner_vendor must NOT appear in fairness panel (it belongs to "
         "Robustness per FUTURE-AI BMJ 2025)"
     )
+
+
+# ============================================================
+# v1.7.10 (AD-lock Step 2.2): cohort_fairness_audit helper
+# ============================================================
+
+def _three_demographic_trajectories():
+    """Build three trajectories with distinct demographic metadata for
+    end-to-end testing of cohort_fairness_audit."""
+    from datetime import date
+
+    from neurotcs import Trajectory
+    return [
+        Trajectory(
+            patient_id="P1",
+            states=("CN", "MCI", "AD-dementia"),
+            dates=(date(2024, 1, 1), date(2024, 7, 1), date(2025, 1, 1)),
+            metadata={"sex": "F", "age_band": "60-69"},
+        ),
+        Trajectory(
+            patient_id="P2",
+            states=("CN", "AD-dementia"),  # inadmissible: skips MCI
+            dates=(date(2024, 1, 1), date(2024, 7, 1)),
+            metadata={"sex": "M", "age_band": "70-79"},
+        ),
+        Trajectory(
+            patient_id="P3",
+            states=("MCI", "MCI"),
+            dates=(date(2024, 1, 1), date(2024, 7, 1)),
+            metadata={"sex": "F", "age_band": "70-79"},
+        ),
+    ]
+
+
+def test_cohort_fairness_audit_basic():
+    """cohort_fairness_audit must stratify cohort flag rate by sex and age_band
+    after audit() is called with return_per_transition=True.
+
+    Empirically verified flag pattern under ad/niaaa_2018:
+      - P1 (F): CN -> MCI (admissible) and MCI -> AD-dementia at dt=184d
+        FLAGGED (transition is too rapid under niaaa_2018 minimum delta_t).
+      - P2 (M): CN -> AD-dementia direct skip FLAGGED (skips MCI stage).
+      - P3 (F): MCI -> MCI self-loop (admissible).
+    Total: 4 transitions, 2 flagged, overall_flag_rate = 0.5.
+    """
+    from neurotcs import audit, load_rulepack
+    from neurotcs.fairness import cohort_fairness_audit
+
+    pack = load_rulepack("ad/niaaa_2018")
+    trajs = _three_demographic_trajectories()
+    result = audit(trajs, pack, bootstrap_B=200, seed=42,
+                    return_per_transition=True)
+
+    fairness = cohort_fairness_audit(result)
+    assert fairness.panel_id == "B.4.4_fairness"
+    assert result.n_transitions == 4
+    assert result.n_flagged == 2
+    assert fairness.overall_flag_rate == 0.5
+
+    # Sex strata: P1 (F) contributes 2 transitions (1 flagged),
+    # P2 (M) contributes 1 transition (1 flagged), P3 (F) contributes 1
+    # transition (0 flagged). So F has n=3, n_flagged=1; M has n=1, n_flagged=1.
+    sex_strata = {s.stratum_value: s for s in fairness.strata
+                   if s.stratum_name == "sex"}
+    assert sex_strata["F"].n == 3
+    assert sex_strata["M"].n == 1
+    assert sex_strata["F"].n_flagged == 1
+    assert sex_strata["M"].n_flagged == 1
+    # F flag rate = 1/3 ≈ 0.333; M flag rate = 1/1 = 1.0
+    assert abs(sex_strata["F"].flag_rate - 1/3) < 1e-9
+    assert sex_strata["M"].flag_rate == 1.0
+
+
+def test_cohort_fairness_audit_raises_when_per_transition_missing():
+    """cohort_fairness_audit must raise a clear error if per_transition
+    is None (i.e. caller forgot return_per_transition=True)."""
+    from neurotcs import audit, load_rulepack
+    from neurotcs.fairness import cohort_fairness_audit
+    import pytest
+
+    pack = load_rulepack("ad/niaaa_2018")
+    trajs = _three_demographic_trajectories()
+    result = audit(trajs, pack, bootstrap_B=200, seed=42)
+    # Note: no return_per_transition=True
+
+    with pytest.raises(ValueError, match="return_per_transition=True"):
+        cohort_fairness_audit(result)
+
+
+def test_cohort_fairness_audit_handles_missing_attribute():
+    """If some trajectories lack a requested attribute, those transitions
+    are bucketed into the 'unknown' stratum rather than crashing."""
+    from datetime import date
+
+    from neurotcs import Trajectory, audit, load_rulepack
+    from neurotcs.fairness import cohort_fairness_audit
+
+    pack = load_rulepack("ad/niaaa_2018")
+    trajs = [
+        Trajectory(
+            patient_id="P1",
+            states=("CN", "MCI"),
+            dates=(date(2024, 1, 1), date(2024, 7, 1)),
+            metadata={"sex": "F"},  # no age_band
+        ),
+        Trajectory(
+            patient_id="P2",
+            states=("CN", "MCI"),
+            dates=(date(2024, 1, 1), date(2024, 7, 1)),
+            metadata={"sex": "M", "age_band": "70-79"},
+        ),
+    ]
+    result = audit(trajs, pack, bootstrap_B=100, seed=42,
+                    return_per_transition=True)
+    fairness = cohort_fairness_audit(result)
+    age_strata = {s.stratum_value for s in fairness.strata
+                    if s.stratum_name == "age_band"}
+    # P1's transition has no age_band -> "unknown"
+    # P2's transition has "70-79"
+    assert "unknown" in age_strata
+    assert "70-79" in age_strata

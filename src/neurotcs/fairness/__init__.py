@@ -38,8 +38,8 @@ per the FUTURE-AI Fairness 3 recommendation (verbatim quote):
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
+from typing import Iterable, Mapping
 
 import numpy as np
 
@@ -49,6 +49,7 @@ __all__ = [
     "StratumMetrics",
     "fairness_audit",
     "robustness_audit",
+    "cohort_fairness_audit",
     "FUTURE_AI_CITATION",
     "FUTURE_AI_DOI",
     "FUTURE_AI_PMID",
@@ -288,3 +289,81 @@ def robustness_audit(
         max_disparity=max_d,
         max_disparity_stratum=max_stratum,
     )
+
+
+# ============================================================
+# v1.7.10 (AD-lock Step 2.2): cohort-level fairness convenience
+# ============================================================
+
+def cohort_fairness_audit(
+    audit_result: "AuditResult",  # type: ignore[name-defined]
+    *,
+    attributes: Iterable[str] | None = None,
+    missing_sentinel: str = "unknown",
+) -> FairnessAuditResult:
+    """Run FUTURE-AI fairness panel B.4.4 on a NeuroTCS AuditResult.
+
+    This is the canonical bridge from the audit pipeline to the fairness
+    pipeline. It pulls the per-transition flag array and the requested
+    demographic attributes off the AuditResult.per_transition object and
+    calls fairness_audit() with them.
+
+    Parameters
+    ----------
+    audit_result
+        An AuditResult produced with `audit(..., return_per_transition=True)`.
+        If `per_transition` is None, raises ValueError — the caller needs to
+        opt in to per-transition detail before fairness can be computed.
+    attributes
+        Demographic attribute names to stratify on. Each must be either:
+          - a member of FUTURE_AI_FAIRNESS_ATTRIBUTES (sex, age_band, ...),
+            in which case it will be picked up by fairness_audit, OR
+          - any name present in trajectory metadata that the caller wants
+            collected and passed through. Unknown names are silently
+            dropped by fairness_audit() (per panel B.4.4 contract).
+        Default: all FUTURE_AI_FAIRNESS_ATTRIBUTES.
+    missing_sentinel
+        String used for transitions whose source trajectory lacks the
+        requested attribute. Default "unknown" — these form their own
+        stratum so they're visible in the report rather than silently
+        dropped.
+
+    Returns
+    -------
+    FairnessAuditResult
+        Stratified flag-rate disparities per FUTURE-AI BMJ 2025 panel B.4.4.
+
+    Raises
+    ------
+    ValueError
+        If `audit_result.per_transition` is None.
+
+    Examples
+    --------
+    >>> from neurotcs import audit, load_rulepack
+    >>> from neurotcs.fairness import cohort_fairness_audit
+    >>> # ... load trajectories with demographic metadata ...
+    >>> pack = load_rulepack("ad/niaaa_2018")  # doctest: +SKIP
+    >>> result = audit(trajectories, pack,  # doctest: +SKIP
+    ...                 return_per_transition=True)
+    >>> fairness = cohort_fairness_audit(result)  # doctest: +SKIP
+    >>> fairness.panel_id  # doctest: +SKIP
+    'B.4.4_fairness'
+    """
+    if audit_result.per_transition is None:
+        raise ValueError(
+            "cohort_fairness_audit requires audit_result.per_transition. "
+            "Call audit(..., return_per_transition=True) first."
+        )
+
+    if attributes is None:
+        attrs_to_extract: list[str] = list(FUTURE_AI_FAIRNESS_ATTRIBUTES)
+    else:
+        attrs_to_extract = list(attributes)
+
+    pt = audit_result.per_transition
+    demo_map: dict[str, np.ndarray] = {}
+    for attr in attrs_to_extract:
+        demo_map[attr] = pt.attribute_array(attr, missing=missing_sentinel)
+
+    return fairness_audit(pt.flags, demo_map)

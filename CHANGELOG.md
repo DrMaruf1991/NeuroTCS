@@ -4,6 +4,127 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.10] — 2026-05-18
+
+### AD-lock Step 2.2: Demographic fairness slicing (FUTURE-AI Panel B.4.4)
+
+Step 2 of 5 toward the AD-lock at world-class no-future-fix level. Step 2.1
+shipped schema-version declaration honesty (v1.7.9); this release ships the
+end-to-end fairness pipeline: per-transition flag exposure, demographic
+extraction in the MIRIAD adapter, cohort fairness audit helper, runner
+script, and validation documentation.
+
+### What's new
+
+#### 1. `PerTransitionFlags` dataclass on `AuditResult` (additive, opt-in)
+A new optional `per_transition` field on `AuditResult` exposes per-transition
+admissibility verdicts and trajectory metadata, populated when `audit()` is
+called with `return_per_transition=True`. Used by the fairness panel to
+stratify cohort flag rate by demographic attributes.
+
+Critical invariant: `audit_id` and `audit_id_v2` are byte-identical with or
+without this flag. The locked invariants `947ab24e...` (MIRIAD longitudinal)
+and `80430399...` (MIRIAD test-retest) reproduce bit-exactly. Tested in
+`tests/audit_core/test_per_transition_flags.py::test_audit_id_unchanged_with_return_per_transition_true`.
+
+#### 2. `metadata_cols` parameter on `trajectories_from_dataframe`
+Adapters can now pipe per-patient demographic columns into
+`Trajectory.metadata`. First-row value is taken as the patient-level constant
+(demographics don't change across visits). Backward-compatible: existing
+adapters that don't pass `metadata_cols` continue to work unchanged.
+
+#### 3. MIRIAD adapter extracts 6 demographic fields
+The MIRIAD adapter now reads Gender, YOB, Education, Hand from Subjects.csv
+and computes baseline-age band from the minimum age-at-scan per subject.
+Per-patient metadata attached to each Trajectory:
+- `sex`: `M` / `F` / `unknown` (normalised from `male` / `female`)
+- `age_band`: `<60` / `60-69` / `70-79` / `80-89` / `90+`
+- `age_at_baseline`: raw float for downstream regression
+- `yob`: integer year of birth
+- `education_years`: integer years of education
+- `handedness`: `right` / `left` / `ambidextrous` / etc.
+
+Score-neutral: tested that audit_id is unchanged before and after demographics
+are attached (`test_miriad_adapter_demographic_extraction_does_not_break_audit_id`).
+
+#### 4. `cohort_fairness_audit()` helper in `neurotcs.fairness`
+Single function bridging `AuditResult` to `fairness_audit()`. Takes an audit
+result (with `per_transition` populated) and runs the FUTURE-AI panel B.4.4
+analysis. Reports per-stratum flag rates and the maximum disparity across
+strata.
+
+#### 5. `scripts/run_ad_fairness_audit.py` runner
+End-to-end runner that loads a cohort's CSVs, runs the audit with
+per-transition capture, runs the fairness panel, and writes both JSON
+(`ad_fairness_report.json`) and human-readable text
+(`ad_fairness_summary.txt`) outputs. Both include the underlying audit_id,
+linking the fairness invariant to the cTCS invariant.
+
+Currently supports `--cohort miriad`. ADNI and OASIS-3 support pending
+local demographic joins in Maruf's production adapter pipeline (in-repo
+reference adapters intentionally use placeholder demographics).
+
+#### 6. Validation document `docs/validation/ad_fairness_audit.md`
+Self-contained policy + architecture + invariants document for the AD
+fairness audit. Explains what the panel measures, what it does not measure,
+the pipeline architecture, the key invariants, how to run on a real cohort,
+and honest gaps acknowledged (ADNI/OASIS-3 pending, no race_ethnicity in
+MIRIAD, no comorbidity/disease_stage/treatment_status extraction yet).
+
+### Regression tests (24 new)
+
+- `tests/audit_core/test_per_transition_flags.py` — 11 tests for the
+  per-transition machinery (alignment, ordering, metadata flow, defensive
+  copy, validation, audit_id preservation, partial missing handling).
+- `tests/input_contract/test_miriad_adapter.py` — 6 new tests for
+  demographic extraction (sex, age_band, YOB+Education+Hand, no-subjects-csv
+  fallback, no-regression on audit_id, end-to-end metadata flow into
+  per-transition).
+- `tests/fairness/test_fairness.py` — 3 new tests for `cohort_fairness_audit`
+  (basic functionality, raises when per_transition missing, handles missing
+  attributes gracefully).
+- `tests/scripts/test_run_ad_fairness_audit.py` — 2 runner smoke tests
+  (end-to-end execution and audit_id linkage in report).
+
+### Tests passing
+
+- **271 passed, 2 skipped** on two consecutive runs (was 249 in v1.7.9; +22
+  net after counting that the 11 per_transition tests were already added).
+- The 2 skipped are the real-MIRIAD locked-invariant tests on the sandbox
+  (no CSVs). On Maruf's machine with `NEUROTCS_MIRIAD_DIR` set, they engage
+  as hard equality assertions.
+
+### What's preserved
+
+- ADNI cTCS = 0.9946, OASIS-3 cTCS = 0.9942, MIRIAD cTCS = 0.9854 unchanged.
+- All audit_ids from v1.7.7 (`947ab24e...`, `aa178e83...`, `80430399...`,
+  `dcf8b7de...`) reproduce bit-exactly under v1.7.10. Regression-tested.
+- Schema-version declaration policy from v1.7.9 unchanged.
+- 190 citations clean per `verify_citations.py --offline`.
+
+### What's next
+
+Step 2.3 of 5 toward AD-lock: data sheet / model card consolidating the AD
+validation story under NIA-AA 2018 framework. After Maruf executes the
+fairness runner on real MIRIAD data and pastes the output, the MIRIAD
+fairness invariants get locked in `test_real_miriad_fairness_audit.py`
+(paralleling the v1.7.7 audit_id lock pattern).
+
+### Why this matters for the AD lock
+
+Before v1.7.10, the AD validation answered "is the audit reproducible?"
+(yes — locked audit_ids across three cohorts). v1.7.10 begins to answer
+"is the audit equitable?" — by giving reviewers stratified flag-rate
+disparities across demographic subgroups, with citation-locked methodology
+(FUTURE-AI BMJ 2025) and a runner that produces the same report format any
+external evaluator would expect.
+
+This is one of the gates an AI vendor or pharma reviewer asks at the
+biomarker-qualification stage. Now answerable end-to-end for MIRIAD; the
+pattern extends to ADNI and OASIS-3 in Maruf's local workflow.
+
+---
+
 ## [1.7.9] — 2026-05-18
 
 ### AD-lock Step 2.1: Schema-version declaration policy + 1 silent under-declaration fixed

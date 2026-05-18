@@ -267,7 +267,7 @@ def _expected_expit_normal(
     1/sqrt(pi) on the standard normal density.
     """
     total = 0.0
-    for x, w in zip(nodes, weights, strict=False):
+    for x, w in zip(nodes, weights):
         y = mu + sigma * math.sqrt(2.0) * x
         p = 1.0 / (1.0 + math.exp(-y))
         total += w * p
@@ -285,7 +285,7 @@ def _fisher_var_calibration_slope(mu_lp: float, sigma_lp: float) -> float:
     e_pq = 0.0
     e_pq_lp = 0.0
     e_pq_lp_sq = 0.0
-    for x, w in zip(nodes, weights, strict=False):
+    for x, w in zip(nodes, weights):
         y = mu_lp + sigma_lp * math.sqrt(2.0) * x
         # Numerically stable expit
         if y >= 0:
