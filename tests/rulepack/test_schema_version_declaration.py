@@ -28,9 +28,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
 import pytest
-
+import yaml
 
 # Source-of-truth root, found relative to this test file.
 _RULES_ROOT = (

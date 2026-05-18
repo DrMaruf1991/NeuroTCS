@@ -450,6 +450,7 @@ def test_audit_id_endian_explicit_bytes():
     digest of the expected form.
     """
     import inspect
+
     from neurotcs.audit_core.audit import (
         _compute_audit_id,
         _compute_audit_id_v2,
