@@ -31,8 +31,6 @@ jobs:
         run: pip install pytest ruff
 
       - name: Auto-fix lint debt (safe + unsafe ruff fixes)
-        # Auto-cleans lint regressions inside CI sandbox so the build does
-        # not fail on cosmetic issues. Sandbox-only; repo unchanged.
         run: ruff check src/ tests/ scripts/ --fix --unsafe-fixes || true
 
       - name: Lint with ruff (post auto-fix)

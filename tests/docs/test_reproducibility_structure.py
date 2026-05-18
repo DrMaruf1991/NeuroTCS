@@ -89,7 +89,7 @@ def test_repro_section_present(repro_text: str, section: str):
 # in the reproducibility report so a collaborator can verify them.
 REPRO_REQUIRED_RULEPACK_SHAS = [
     "f359148d1cbf6abed3d4f1d36de6b3bf315c10e8997d5e73beb1a0d7bdf9e374",  # niaaa_2018
-    "e6fb93d7fe5e19eb503eccca932f660361e135a2b2ae0391456c4bee0d656af5",  # aa_2024
+    "1393ceb489d774c059cc30f500335e29622880e347a8081854f1c461f05c47e2",  # aa_2024
     "b704a4d21efbe893dead9ea906940c5e61196f9db7f938df55b506cbee6be6e7",  # aa_2024_trac
 ]
 
@@ -128,7 +128,8 @@ def test_repro_audit_id_present(repro_text: str, audit_id: str):
 REPRO_REQUIRED_GAPS = [
     "Cohort CSV checksums are not yet published",
     "ADNI and OASIS-3 audit_ids are not yet locked in CI",
-    "Jack 2024 PDF transcription is pending",
+    # "Jack 2024 PDF transcription is pending" — RESOLVED in v1.7.13;
+    # full ad/aa_2024@2.0.0 transcription ships in this release.
 ]
 
 

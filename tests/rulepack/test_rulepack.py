@@ -358,6 +358,10 @@ def test_ad_niaaa_behaviors():
 
 
 def test_ad_aa_2024_monotone():
+    """AA 2024 v2.0.0 uses Table 7 integrated biological + clinical staging
+    (17 states: Stage_0, Stage_1A..1D, Stage_2A..2D, Stage_3A..3D, Stage_4-6A..4-6D).
+    All admissible transitions must be monotone in ordinal_rank.
+    """
     pack = load_rulepack("ad/aa_2024")
     rp = pack.rulepack
     # All admissible transitions must be monotone (to_rank > from_rank)
@@ -365,12 +369,15 @@ def test_ad_aa_2024_monotone():
         f_rank = next(s.ordinal_rank for s in rp.state_space if s.name == t.from_state)
         t_rank = next(s.ordinal_rank for s in rp.state_space if s.name == t.to_state)
         assert t_rank > f_rank, f"AA 2024 non-monotone: {t.from_state}->{t.to_state}"
-    # Two-step jumps require 730d
-    ok, _ = rp.is_admissible("Stage_0", "Stage_2", 100)
-    assert not ok
-    ok, _ = rp.is_admissible("Stage_0", "Stage_2", 800)
+    # Stage_0 -> Stage_1A is the only Stage_0 exit (per §5.2)
+    ok, _ = rp.is_admissible("Stage_0", "Stage_1A", 100)
     assert ok
-    print(f"  {PASS} test_ad_aa_2024_monotone")
+    # Transitional decline (Stage_1A -> Stage_2A) requires 180-day persistence
+    ok, _ = rp.is_admissible("Stage_1A", "Stage_2A", 100)
+    assert not ok
+    ok, _ = rp.is_admissible("Stage_1A", "Stage_2A", 200)
+    assert ok
+    print(f"  {PASS} test_ad_aa_2024_monotone (17 states, Table 7 alphanumeric)")
 
 
 def test_pd_behaviors():
@@ -781,101 +788,196 @@ def test_unsupported_schema_version_rejected():
 # AA-2024 v1.2.0 priors tests (ERRATA E-2026-002)
 # ============================================================
 
-def test_aa_2024_pack_is_v1_2_0():
+def test_aa_2024_pack_is_v2_0_0():
+    """AA 2024 v2.0.0 = full Table 7 integrated biological + clinical staging.
+    Previously v1.2.0 used a single-axis 7-stage design; v2.0.0 redesigned
+    to match the paper's Table 7 alphanumeric scheme verbatim. Major
+    version bump reflects the breaking state-space change.
+    """
     pack = load_rulepack("ad/aa_2024")
-    assert pack.rulepack.rulepack_id == "ad/aa_2024@1.2.0"
-    print(f"  {PASS} test_aa_2024_pack_is_v1_2_0 (sha={pack.sha256[:8]})")
+    assert pack.rulepack.rulepack_id == "ad/aa_2024@2.0.0"
+    assert pack.rulepack.schema_version == "1.3.0"  # uses clinical_inference
+    print(f"  {PASS} test_aa_2024_pack_is_v2_0_0 (sha={pack.sha256[:8]})")
 
 
-def test_aa_2024_priors_populated():
-    """v1.2.0 must have 13 transition priors covering all 6 forward
-    Stage_N -> Stage_N+1 transitions plus 5 derived skip transitions
-    (Stage_N -> Stage_N+2), each citation-locked to a primary source."""
+def test_aa_2024_state_space_matches_table_7():
+    """The 17 states must exactly match Jack 2024 Table 7 + Stage_0 from
+    Table 6 row 1. Biological axis: A/B/C/D. Clinical axis: 0/1/2/3/4-6.
+    """
     pack = load_rulepack("ad/aa_2024")
-    priors = pack.rulepack.transition_priors
-    assert len(priors) == 13, f"expected 13 priors, got {len(priors)}"
-    # Every prior must carry a real PMID or DOI
-    for p in priors:
-        c = p.citation
-        assert c.citation_pmid or c.citation_doi, (
-            f"Prior {p.from_state}->{p.to_state} missing citation"
-        )
-    print(f"  {PASS} test_aa_2024_priors_populated (13 priors, all cited)")
+    expected_states = {
+        "Stage_0",
+        "Stage_1A", "Stage_1B", "Stage_1C", "Stage_1D",
+        "Stage_2A", "Stage_2B", "Stage_2C", "Stage_2D",
+        "Stage_3A", "Stage_3B", "Stage_3C", "Stage_3D",
+        "Stage_4-6A", "Stage_4-6B", "Stage_4-6C", "Stage_4-6D",
+    }
+    actual_states = {s.name for s in pack.rulepack.state_space}
+    assert actual_states == expected_states, (
+        f"State-space mismatch.\n"
+        f"  missing: {expected_states - actual_states}\n"
+        f"  extra:   {actual_states - expected_states}"
+    )
+    assert len(pack.rulepack.state_space) == 17
+    print(f"  {PASS} test_aa_2024_state_space_matches_table_7 (17 states)")
 
 
-def test_aa_2024_priors_include_all_forward_stages():
-    """Every Stage_N -> Stage_N+1 single-step transition must have at
-    least one (clinical or population) prior."""
+def test_aa_2024_stage_0_only_exits_to_1A():
+    """Per Jack 2024 §5.2: 'A person with DSAD or ADAD would move from
+    stage 0 into stage 1 when a diagnostic Core 1 biomarker(s) became
+    positive.' Stage_0 → Stage_1A is the only admissible exit.
+    """
     pack = load_rulepack("ad/aa_2024")
-    priors = pack.rulepack.transition_priors
-    forward_pairs = {(f"Stage_{i}", f"Stage_{i+1}") for i in range(6)}
-    covered = {(p.from_state, p.to_state) for p in priors}
-    missing = forward_pairs - covered
-    assert not missing, f"missing forward priors: {missing}"
-    print(f"  {PASS} test_aa_2024_priors_include_all_forward_stages")
-
-
-def test_aa_2024_priors_clinical_vs_population_stratification():
-    """Stage_0->Stage_1 and Stage_4->Stage_5 must have both clinical and
-    population priors (the two transitions with established cohort-
-    setting differences)."""
-    pack = load_rulepack("ad/aa_2024")
-    priors = pack.rulepack.transition_priors
-
-    s0_to_s1 = [p for p in priors if p.from_state == "Stage_0" and p.to_state == "Stage_1"]
-    assert len(s0_to_s1) == 2
-    types_0 = {p.prior_type for p in s0_to_s1}
-    assert types_0 == {"clinical", "population"}
-
-    s4_to_s5 = [p for p in priors if p.from_state == "Stage_4" and p.to_state == "Stage_5"]
-    assert len(s4_to_s5) == 2
-    types_4 = {p.prior_type for p in s4_to_s5}
-    assert types_4 == {"clinical", "population"}
-
-    print(f"  {PASS} test_aa_2024_priors_clinical_vs_population_stratification")
-
-
-def test_aa_2024_derived_priors_marked():
-    """Skip transitions (Stage_N -> Stage_N+2) must be marked
-    prior_type='derived' to distinguish from primary-source rates."""
-    pack = load_rulepack("ad/aa_2024")
-    priors = pack.rulepack.transition_priors
-    skip_priors = [
-        p for p in priors
-        if int(p.to_state.split("_")[1]) - int(p.from_state.split("_")[1]) == 2
+    rp = pack.rulepack
+    stage_0_exits = [
+        t for t in rp.admissible_transitions
+        if t.from_state == "Stage_0"
     ]
-    assert len(skip_priors) == 5
-    for p in skip_priors:
-        assert p.prior_type == "derived", (
-            f"Skip prior {p.from_state}->{p.to_state} must be 'derived'"
-        )
-    print(f"  {PASS} test_aa_2024_derived_priors_marked (5 skip priors)")
+    assert len(stage_0_exits) == 1
+    assert stage_0_exits[0].to_state == "Stage_1A"
+
+    # And reverse direction (Stage_1A -> Stage_0) must be inadmissible
+    reverse = [
+        t for t in rp.inadmissible_transitions
+        if t.from_state == "Stage_1A" and t.to_state == "Stage_0"
+    ]
+    assert len(reverse) == 1, (
+        "Stage_1A -> Stage_0 must be explicitly inadmissible "
+        "(once Core 1+, cannot revert to biomarker-negative Stage_0)"
+    )
+    print(f"  {PASS} test_aa_2024_stage_0_only_exits_to_1A")
 
 
-def test_aa_2024_priors_acr_within_published_ranges():
-    """Spot-check each primary-source ACR against the published value.
-    Tolerance 1e-4 since these are exact transcriptions."""
+def test_aa_2024_biological_regression_inadmissible():
+    """Per Jack 2024 §4.3 (verbatim): 'abnormal amyloid PET (A) precedes
+    tau PET (T2), which, in turn, leads to neurodegeneration (N) and
+    clinical symptoms (C), A to T2 to N to C.' The biological axis
+    (A->B->C->D) is unidirectional in natural history. Within EACH
+    clinical row (1, 2, 3, 4-6), backward biological transitions must
+    be in the inadmissible list.
+    """
     pack = load_rulepack("ad/aa_2024")
-    priors = pack.rulepack.transition_priors
-    by_key = {(p.from_state, p.to_state, p.prior_type): p.annual_probability for p in priors}
+    inadmissible_pairs = {
+        (t.from_state, t.to_state)
+        for t in pack.rulepack.inadmissible_transitions
+    }
 
-    # Roberts 2018 MCSA population: Stage_0->Stage_1 ACR = 0.024
-    assert abs(by_key[("Stage_0", "Stage_1", "population")] - 0.024) < 1e-4
-    # Jagust 2021 ADNI: Stage_0->Stage_1 ACR = 1/6.4 = 0.156
-    assert abs(by_key[("Stage_0", "Stage_1", "clinical")] - 0.156) < 1e-3
-    # Karagianni 2025: Stage_1->Stage_2 ACR = 0.0675
-    assert abs(by_key[("Stage_1", "Stage_2", "clinical")] - 0.0675) < 1e-4
-    # Ossenkoppele 2022: Stage_2->Stage_3 ACR ~0.10
-    assert abs(by_key[("Stage_2", "Stage_3", "clinical")] - 0.10) < 1e-4
-    # Ossenkoppele 2022: Stage_3->Stage_4 ACR ~0.13
-    assert abs(by_key[("Stage_3", "Stage_4", "clinical")] - 0.13) < 1e-4
-    # Tariot 2024 NACC: Stage_4->Stage_5 ACR = 0.20
-    assert abs(by_key[("Stage_4", "Stage_5", "clinical")] - 0.20) < 1e-4
-    # Salemme 2025: Stage_4->Stage_5 ACR = 0.06
-    assert abs(by_key[("Stage_4", "Stage_5", "population")] - 0.06) < 1e-4
-    # Tariot 2024 NACC: Stage_5->Stage_6 ACR = 0.266
-    assert abs(by_key[("Stage_5", "Stage_6", "clinical")] - 0.266) < 1e-4
-    print(f"  {PASS} test_aa_2024_priors_acr_within_published_ranges")
+    # For each clinical stage, biological regression must be inadmissible
+    for clinical in ("1", "2", "3", "4-6"):
+        # D -> C
+        assert (f"Stage_{clinical}D", f"Stage_{clinical}C") in inadmissible_pairs, (
+            f"Stage_{clinical}D -> Stage_{clinical}C must be inadmissible"
+        )
+        # C -> B
+        assert (f"Stage_{clinical}C", f"Stage_{clinical}B") in inadmissible_pairs
+        # B -> A
+        assert (f"Stage_{clinical}B", f"Stage_{clinical}A") in inadmissible_pairs
+
+    print(f"  {PASS} test_aa_2024_biological_regression_inadmissible (12 cells)")
+
+
+def test_aa_2024_clinical_regression_dementia_to_MCI_inadmissible():
+    """Per Jack 2024 Table 6: stages 4-6 are progressively worsening
+    dementia. Reversion from dementia (4-6) to MCI-equivalent (3) is
+    not contemplated in the staging scheme (reversible causes require
+    human review). All four biological-axis cells must be inadmissible.
+    """
+    pack = load_rulepack("ad/aa_2024")
+    inadmissible_pairs = {
+        (t.from_state, t.to_state)
+        for t in pack.rulepack.inadmissible_transitions
+    }
+    for biological in ("A", "B", "C", "D"):
+        assert (f"Stage_4-6{biological}", f"Stage_3{biological}") in inadmissible_pairs
+
+    print(f"  {PASS} test_aa_2024_clinical_regression_dementia_to_MCI_inadmissible")
+
+
+def test_aa_2024_diagonal_progression_admissible():
+    """Per Table 7 §Note: 'typical expected progression trajectory is along
+    the diagonal shaded cells, from 1A to 4-6D'. The diagonal steps
+    1A -> 2B, 2B -> 3C, 3C -> 4-6D must be admissible.
+    """
+    pack = load_rulepack("ad/aa_2024")
+    rp = pack.rulepack
+    diagonal_steps = [
+        ("Stage_1A", "Stage_2B"),
+        ("Stage_2B", "Stage_3C"),
+        ("Stage_3C", "Stage_4-6D"),
+    ]
+    admissible_pairs = {
+        (t.from_state, t.to_state)
+        for t in rp.admissible_transitions
+    }
+    for from_s, to_s in diagonal_steps:
+        assert (from_s, to_s) in admissible_pairs, (
+            f"Diagonal step {from_s} -> {to_s} must be admissible per Table 7"
+        )
+    print(f"  {PASS} test_aa_2024_diagonal_progression_admissible")
+
+
+def test_aa_2024_cutpoint_dependent_transitions_marked_clinical_inference():
+    """Per Jack 2024 §4.6: the moderate-vs-high tau PET cutpoint is
+    'an area of active research.' Every transition CROSSING the
+    biological C/D boundary (i.e. ->C or ->D from a lower biological
+    stage in the same clinical row) must use attribution_type=
+    'clinical_inference' with the §4.6 caveat in inference_rationale.
+    """
+    pack = load_rulepack("ad/aa_2024")
+    rp = pack.rulepack
+
+    # Within each clinical row, the B->C and C->D transitions are
+    # cutpoint-dependent
+    cutpoint_dependent_pairs = set()
+    for clinical in ("1", "2", "3", "4-6"):
+        cutpoint_dependent_pairs.add(
+            (f"Stage_{clinical}B", f"Stage_{clinical}C")
+        )
+        cutpoint_dependent_pairs.add(
+            (f"Stage_{clinical}C", f"Stage_{clinical}D")
+        )
+
+    for t in rp.admissible_transitions:
+        if (t.from_state, t.to_state) in cutpoint_dependent_pairs:
+            assert t.attribution_type == "clinical_inference", (
+                f"Cutpoint-dependent transition {t.from_state} -> "
+                f"{t.to_state} must be clinical_inference, "
+                f"got {t.attribution_type}"
+            )
+            assert t.inference_rationale is not None
+            assert "active research" in t.inference_rationale.lower() or \
+                   "§4.6" in t.inference_rationale or \
+                   "cutpoint" in t.inference_rationale.lower(), (
+                "Cutpoint transition rationale must reference §4.6 / cutpoint / active research"
+            )
+
+    print(f"  {PASS} test_aa_2024_cutpoint_dependent_transitions_marked_clinical_inference (8 transitions)")
+
+
+def test_aa_2024_persistence_minimum_for_transitional_decline():
+    """Per Jack 2024 Table 6 stage 2: 'persistent for at least 6 months.'
+    All Stage_1X -> Stage_2X transitions (X = A, B, C, D) must have
+    min_delta_t_days >= 180.
+    """
+    pack = load_rulepack("ad/aa_2024")
+    rp = pack.rulepack
+    for biological in ("A", "B", "C", "D"):
+        from_s = f"Stage_1{biological}"
+        to_s = f"Stage_2{biological}"
+        candidates = [
+            t for t in rp.admissible_transitions
+            if t.from_state == from_s and t.to_state == to_s
+        ]
+        assert len(candidates) == 1, (
+            f"Expected exactly one {from_s} -> {to_s} transition"
+        )
+        t = candidates[0]
+        assert t.min_delta_t_days is not None
+        assert t.min_delta_t_days >= 180, (
+            f"{from_s} -> {to_s} min_delta_t_days={t.min_delta_t_days} "
+            f"violates Table 6 stage 2 6-month persistence criterion"
+        )
+    print(f"  {PASS} test_aa_2024_persistence_minimum_for_transitional_decline")
 
 
 # ============================================================
@@ -926,12 +1028,14 @@ def run_all():
         test_existing_v1_1_packs_still_load_under_v1_2_schema,
         test_unsupported_schema_version_rejected,
         # AA-2024 v1.2.0 priors (ERRATA E-2026-002)
-        test_aa_2024_pack_is_v1_2_0,
-        test_aa_2024_priors_populated,
-        test_aa_2024_priors_include_all_forward_stages,
-        test_aa_2024_priors_clinical_vs_population_stratification,
-        test_aa_2024_derived_priors_marked,
-        test_aa_2024_priors_acr_within_published_ranges,
+        test_aa_2024_pack_is_v2_0_0,
+        test_aa_2024_state_space_matches_table_7,
+        test_aa_2024_stage_0_only_exits_to_1A,
+        test_aa_2024_biological_regression_inadmissible,
+        test_aa_2024_clinical_regression_dementia_to_MCI_inadmissible,
+        test_aa_2024_diagonal_progression_admissible,
+        test_aa_2024_cutpoint_dependent_transitions_marked_clinical_inference,
+        test_aa_2024_persistence_minimum_for_transitional_decline,
     ]
     print(f"\nNeuroTCS Rule Pack v1.2 tests — running {len(tests)} tests:\n")
     failed = 0

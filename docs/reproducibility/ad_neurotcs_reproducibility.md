@@ -28,7 +28,7 @@ Windows) because the loader canonicalises the YAML before hashing.
 | Rule pack | rulepack_id | schema_version | SHA-256 |
 |---|---|---|---|
 | `ad/niaaa_2018` | `ad/niaaa_2018@1.2.0` | 1.1.0 | `f359148d1cbf6abed3d4f1d36de6b3bf315c10e8997d5e73beb1a0d7bdf9e374` |
-| `ad/aa_2024` | `ad/aa_2024@1.2.0` | 1.1.0 | `e6fb93d7fe5e19eb503eccca932f660361e135a2b2ae0391456c4bee0d656af5` |
+| `ad/aa_2024` | `ad/aa_2024@2.0.0` | 1.3.0 | `1393ceb489d774c059cc30f500335e29622880e347a8081854f1c461f05c47e2` |
 | `ad/aa_2024_trac` | `ad/aa_2024_trac@1.0.0` | 1.2.0 | `b704a4d21efbe893dead9ea906940c5e61196f9db7f938df55b506cbee6be6e7` |
 
 ### 1.2 — Audit identity (cohort-level)
@@ -49,8 +49,8 @@ different hash.
 
 | Run | Expected outcome |
 |---|---|
-| `pytest tests/ -q` on this version, no env vars | **331 passed, 2 skipped** |
-| `pytest tests/ -q` with `NEUROTCS_MIRIAD_DIR` pointing at the canonical CSVs | **333 passed, 0 skipped** (the two skips become asserting tests) |
+| `pytest tests/ -q` on this version, no env vars | **400 passed, 4 skipped** |
+| `pytest tests/ -q` with `NEUROTCS_MIRIAD_DIR` pointing at the canonical CSVs | **404 passed, 0 skipped** (the two skips become asserting tests) |
 | Same command run twice consecutively | identical outcome both times (double-test rule) |
 
 The 2 skips are real-MIRIAD locked-invariant tests that engage only when
@@ -167,7 +167,7 @@ python -c "from neurotcs import load_rulepack; \
 python -c "from neurotcs import load_rulepack; \
     p = load_rulepack('ad/aa_2024'); \
     print(p.sha256)"
-# Expected: e6fb93d7fe5e19eb503eccca932f660361e135a2b2ae0391456c4bee0d656af5
+# Expected: 1393ceb489d774c059cc30f500335e29622880e347a8081854f1c461f05c47e2
 
 python -c "from neurotcs import load_rulepack; \
     p = load_rulepack('ad/aa_2024_trac'); \
@@ -182,7 +182,7 @@ modified or the wrong tag was checked out. Do NOT proceed.
 
 ```bash
 pytest tests/ -q
-# Expected (no env vars): 331 passed, 2 skipped
+# Expected (no env vars): 400 passed, 4 skipped
 ```
 
 Run it a SECOND time to confirm reproducibility:
@@ -320,7 +320,7 @@ redistribute any of these.
 - ✅ Code identity: rule-pack SHA-256 hashes.
 - ✅ Environment identity: Python + package version pins.
 - ✅ Audit-pipeline identity: seed, bootstrap_B, CI method, prior_type.
-- ✅ Test-suite identity: 331 passed, 2 skipped (or 333 passed, 0
+- ✅ Test-suite identity: 400 passed, 4 skipped (or 404 passed, 0
   skipped with MIRIAD CSVs present).
 - ✅ Locked audit_ids for MIRIAD longitudinal and test-retest.
 - ✅ Cross-platform CSV-checksum command using only stdlib /
@@ -336,10 +336,16 @@ redistribute any of these.
   These live on the maintainer's machine; CI runs only the MIRIAD
   invariants. Adding ADNI/OASIS-3 to CI requires either uploading the
   CSVs (DUA-prohibited) or installing them via a private CI runner.
-- ❌ **The Jack 2024 PDF transcription is pending**. The `ad/aa_2024`
-  rule pack ships a structural skeleton; full §3 staging text awaits
-  PDF acquisition. See `docs/datasheet/ad_neurotcs_datasheet.md`
-  Section F gap #1.
+- ✅ **The Jack 2024 transcription is RESOLVED in v1.7.13**. The
+  `ad/aa_2024@2.0.0` rule pack (schema 1.3.0, SHA `1393ceb489d774c0...`)
+  now encodes Table 7 integrated biological + clinical staging in
+  17 states with 28 admissible + 17 inadmissible transitions. Source
+  fetched from open-access PMC11350039 (CC BY-NC-ND 4.0).
+  Three external parameters (tau-PET moderate-vs-high cutpoint, neocortical
+  meta-ROI, amyloid PET positivity threshold) are documented as caller-
+  supplied at audit time in `docs/validation/aa_2024_audit_protocol.md`,
+  faithful to Jack 2024 §4.6 which explicitly declines to commit to a
+  single cutpoint methodology.
 
 These are documented honestly per the AD-lock no-future-fix discipline.
 A reviewer should know that the AD validation is fully reproducible for
@@ -356,7 +362,7 @@ checklist in order:
 
 1. **Rule-pack SHA mismatch (Step 3.2)?** You have a modified rule
    pack. Re-clone the tag.
-2. **`pytest` not at 331 passed + 2 skipped (Step 3.3)?** Your
+2. **`pytest` not at 400 passed + 4 skipped (Step 3.3)?** Your
    environment has a dependency at a different version. Re-install
    from `requirements.lock`.
 3. **Cohort CSV SHA-256 mismatch (Step 3.4)?** You have a different

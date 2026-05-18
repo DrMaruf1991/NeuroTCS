@@ -658,15 +658,27 @@ audit_id triggers a regression investigation before release.
 
 This section is the single source of truth for what is NOT yet covered.
 
-1. **Jack 2024 §3 Staging text not yet transcribed.** AA-2024 rule pack
-   currently ships a structural skeleton plus the TRAC companion pack
-   (`ad/aa_2024_trac@1.0.0`, schema 1.2.0). Full §3 transcription
-   blocked on PDF acquisition by the maintainer (the paper is paywalled
-   at Alzheimer's & Dementia).
+1. **Jack 2024 §3 Staging text transcription — RESOLVED in v1.7.13.**
+   The full AA-2024 rule pack (`ad/aa_2024@2.0.0`, schema 1.3.0,
+   SHA `1393ceb489d774c0...`) now encodes Table 7 integrated biological +
+   clinical staging in 17 states, with 28 admissible and 17 inadmissible
+   transitions. Source paper fetched in full from open-access PMC11350039
+   (CC BY-NC-ND 4.0 license).
    - Source: Jack et al., *Alzheimer's & Dementia* 2024;20(8):5143-5169,
      DOI [10.1002/alz.13859](https://doi.org/10.1002/alz.13859), PMID 38934362.
-   - When obtained, schema-version declaration policy (v1.7.9) and
-     transcription-attestation policy (v1.1.0 schema) apply.
+   - Schema-version declaration policy (v1.7.9) honored: pack declares
+     1.3.0 because it uses `attribution_type: clinical_inference` for
+     the moderate-vs-high tau-PET cutpoint transitions (per §4.6 "area
+     of active research").
+   - Transcription-attestation policy: `transcribed_by` field names
+     Maruf as the attesting physician.
+   - Three external parameters documented in `docs/validation/aa_2024_audit_protocol.md`:
+     tau-PET moderate-vs-high cutpoint, neocortical meta-ROI definition,
+     and amyloid PET positivity threshold. Fail-closed if not supplied.
+   - Note: `transition_priors` is empty for v2.0.0 (Table 7 multi-axis
+     staging not yet covered by published longitudinal cohort rates).
+     cTCS audit fully functional; pTCS audit defers to NIA-AA 2018 pack
+     until multi-axis priors transcription work is completed.
 
 2. **ADNI and OASIS-3 fairness pending local joins.** The in-repo
    reference adapters use placeholder demographics. Maruf's production

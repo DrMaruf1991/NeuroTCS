@@ -4,6 +4,190 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.13] — 2026-05-18
+
+### MIRIAD fairness lock + full AA-2024 transcription (Table 7 integrated staging)
+
+Two major deliverables shipped together in one release. After v1.7.13,
+the AD validation arc has its first locked external-cohort fairness
+invariant AND its first world-class transcription of the AA-2024 paper.
+
+### What's new
+
+#### Locked MIRIAD fairness invariants (v1.7.10 lifecycle final step)
+
+`tests/audit_core/test_real_miriad_fairness_audit.py` — two new locked-
+invariant tests, captured from Maruf's first real-data fairness audit on
+2026-05-18:
+
+- `test_real_miriad_fairness_audit_locked_invariants` — asserts the
+  audit_id, audit_id_v2, n_transitions=454, n_flagged=7, overall_flag_rate,
+  max_disparity_stratum=`age_band=80-89`, and **all 10 per-stratum counts**
+  bit-exactly. Skips cleanly when MIRIAD CSVs are absent.
+- `test_real_miriad_fairness_flag_rates_match_locked_per_stratum` —
+  independent 1e-12-precision check on per-stratum flag rates.
+
+Locked numbers:
+```
+cohort:       69 patients, 454 transitions, 7 flagged (1.54%)
+cTCS:         0.9854 (BCa 95% CI: 0.9715-0.9937)
+audit_id:     947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0
+audit_id_v2:  aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da
+
+sex F:                 n=251, 3 flagged (1.195%)
+sex M:                 n=203, 4 flagged (1.970%)
+age_band <60:          n=31,  0 flagged
+age_band 60-69:        n=234, 6 flagged (2.564%)
+age_band 70-79:        n=161, 1 flagged (0.621%)
+age_band 80-89:        n=28,  0 flagged
+race_ethnicity unknown: n=454, 7 flagged (1.542%)
+comorbidity unknown:    n=454, 7 flagged (1.542%)
+disease_stage unknown:  n=454, 7 flagged (1.542%)
+treatment_status unknown: n=454, 7 flagged (1.542%)
+```
+
+Defense in depth: any regression in the demographic-extraction logic in
+`adapter_miriad.py`, in PerTransitionFlags emission, or in the
+fairness-panel stratification is caught bit-exactly on Maruf's machine.
+
+#### AA-2024 rule pack — full Table 7 transcription (datasheet Section F gap #1 RESOLVED)
+
+`src/neurotcs/rulepack/rules/ad/aa_2024.yaml` — fully transcribed from
+the open-access source (Jack 2024 PMC11350039, CC BY-NC-ND 4.0).
+**Breaking change:** the previous v1.2.0 single-axis 7-stage skeleton
+(`Stage_0..Stage_6`) is replaced by the v2.0.0 Table 7 alphanumeric
+integrated biological + clinical staging:
+
+- **17 states**: `Stage_0`, `Stage_1A..1D`, `Stage_2A..2D`, `Stage_3A..3D`,
+  `Stage_4-6A..4-6D`. State names match Jack 2024 Table 7 verbatim.
+- **28 admissible transitions**: 1 Stage_0 exit (→`Stage_1A` only, per
+  §5.2); 12 within-clinical-row biological A→B→C→D progressions
+  (§4.3 stereotypical sequence); 12 within-biological-column clinical
+  1→2→3→4-6 progressions (Table 6); 3 diagonal trajectory steps
+  (`Stage_1A`→`Stage_2B`→`Stage_3C`→`Stage_4-6D`) per Table 7 §Note.
+- **17 inadmissible transitions**: 12 biological regressions (B→A, C→B,
+  D→C in each clinical row, since §4.3 is unidirectional in natural
+  history); 4 dementia→MCI clinical regressions (Table 6 staging is
+  progressive); 1 genetic-determinism constraint (`Stage_1A`→`Stage_0`
+  inadmissible, per §5.2 once Core 1+ cannot revert to biomarker-negative).
+- **180-day minimum** on every `Stage_1X`→`Stage_2X` transition,
+  enforcing Table 6 stage 2 "persistent for at least 6 months."
+- **8 transitions marked `clinical_inference`** (cutpoint-dependent
+  B→C and C→D in each clinical row) with `inference_rationale` quoting
+  §4.6 verbatim ("area of active research"). The moderate-vs-high tau
+  PET cutpoint is caller-supplied at audit time from a publication-
+  locked source.
+- **`Stage_0`→`Stage_1A`** marked `clinical_inference` because §5.2
+  specifies destination clinical stage but the biological sub-stage is
+  inferred from Table 4 stage A definition + §4.3 stereotypical sequence.
+
+**Identity:**
+- `rulepack_id`: `ad/aa_2024@2.0.0` (major version bump from v1.2.0 skeleton)
+- `schema_version`: 1.3.0 (uses `attribution_type: clinical_inference`
+  and `inference_rationale` features from ERRATA E-2026-003)
+- SHA-256: `1393ceb489d774c059cc30f500335e29622880e347a8081854f1c461f05c47e2`
+- `transition_priors`: empty (multi-axis longitudinal priors not yet
+  published; cTCS audit fully functional, pTCS defers to NIA-AA 2018 pack)
+
+#### AA-2024 audit protocol
+
+`docs/validation/aa_2024_audit_protocol.md` — end-to-end workflow doc
+covering:
+
+- State space recap (Table 7 cross-tabulation)
+- Three external parameters (caller-supplied at audit time):
+  - `tau_pet_mod_vs_high_cutpoint` (required, fail-closed)
+  - `neocortical_meta_roi_definition` (required, not fail-closed)
+  - `amyloid_pet_positivity_threshold` (required, fail-closed)
+- Acceptable citation sources (La Joie 2019 PMID 30347188, CenTauR
+  Villemagne 2023, Ossenkoppele 2022 PMID 36357681, FDA package inserts,
+  peer-reviewed local methodology)
+- Amyloid-positive cohort filter (§3 of the paper restricts staging to
+  the AD pathway only)
+- Per-visit state derivation (Tables 4 + 6 → alphanumeric Table 7 cell)
+- TRAC-treated subject routing (companion pack `ad/aa_2024_trac`)
+- 7-point verification checklist before publishing AA-2024 results
+
+#### ADNI adapter — AA-2024 reference functions
+
+`src/neurotcs/input_contract/v1_1/adapters/adapter_adni.py` — added two
+new reference functions alongside the existing CN/MCI/Dementia adapter:
+
+- `derive_aa_2024_state()` — pure function showing the (amyloid PET,
+  tau PET, clinical diagnosis) → Table 7 alphanumeric state derivation.
+  Handles the four edge cases: amyloid-negative non-ADAD (returns None,
+  not in AD pathway), ADAD/DSAD carrier biomarker-negative (returns
+  `Stage_0`), normal biological progression, and full A+T2HIGH+ →
+  `Stage_*D` advanced disease.
+- `build_aa_2024_predictions()` — reference ADNI table joiner showing
+  how to combine DXSUM + amyloid PET ROI summaries + tau PET ROI
+  summaries into a conforming predictions table.
+
+Both functions are clearly marked REFERENCE-ONLY in docstrings;
+production usage requires the user to wire in their site's actual ADNI
+data tables and to supply the three external parameters with citation.
+
+#### Datasheet update
+
+`docs/datasheet/ad_neurotcs_datasheet.md` Section F gap #1 marked
+**RESOLVED in v1.7.13** with new rulepack SHA, schema version, and
+notes about pTCS defer-to-NIA-AA-2018 policy.
+
+### Test-suite identity
+
+- Before: 399 passed + 2 skipped
+- After:  **400 passed + 4 skipped** (=404 with MIRIAD CSVs locally;
+  on cold sandbox install, the 4 skips are 2 real-MIRIAD audit + 2
+  new real-MIRIAD fairness lock tests waiting for CSV access)
+- Net delta: +2 new fairness lock tests, +6 new aa_2024 structure tests,
+  −6 old priors tests, −1 removed parametrized gap-3 test (Jack 2024
+  transcription gap is now RESOLVED so no longer in the required-gaps
+  list checked by `test_repro_gap_acknowledged`).
+
+### Tests added
+
+- `tests/audit_core/test_real_miriad_fairness_audit.py` (2 tests)
+- `tests/rulepack/test_rulepack.py`:
+  - `test_aa_2024_pack_is_v2_0_0`
+  - `test_aa_2024_state_space_matches_table_7`
+  - `test_aa_2024_stage_0_only_exits_to_1A`
+  - `test_aa_2024_biological_regression_inadmissible`
+  - `test_aa_2024_clinical_regression_dementia_to_MCI_inadmissible`
+  - `test_aa_2024_diagonal_progression_admissible`
+  - `test_aa_2024_cutpoint_dependent_transitions_marked_clinical_inference`
+  - `test_aa_2024_persistence_minimum_for_transitional_decline`
+
+### Tests changed
+
+- `tests/rulepack/test_rulepack.py::test_ad_aa_2024_monotone` updated
+  to use the 17-state space (Stage_0 → Stage_1A only exit; Stage_1A →
+  Stage_2A 180-day persistence check).
+- `tests/audit_core/test_audit_core.py`:
+  - `test_build_generator_returns_generator_for_aa_2024` →
+    `test_build_generator_returns_none_for_aa_2024_v2` (new pack has
+    no priors; build_generator returns None).
+  - `test_audit_ptcs_available_on_aa_2024` →
+    `test_audit_ptcs_unavailable_on_aa_2024_v2` (same reason).
+
+### Tests removed
+
+- `test_aa_2024_pack_is_v1_2_0` (superseded by v2_0_0)
+- `test_aa_2024_priors_populated` (no priors in v2.0.0)
+- `test_aa_2024_priors_include_all_forward_stages` (same)
+- `test_aa_2024_priors_clinical_vs_population_stratification` (same)
+- `test_aa_2024_derived_priors_marked` (same)
+- `test_aa_2024_priors_acr_within_published_ranges` (same)
+
+### Honest gaps (still tracked)
+
+- Multi-axis transition_priors for AA-2024 not yet transcribed
+  (pTCS uses NIA-AA 2018 pack as the single-axis surrogate). Future
+  work; not blocking AA-2024 cTCS audits.
+- `external_parameter_sources` argument to `audit()` is informational
+  in v1.7.13; runtime fail-closed enforcement is tracked for v1.7.14.
+
+---
+
 ## [1.7.12] — 2026-05-18
 
 ### AD-lock Steps 2.4 + 2.5: Reproducibility report + blind-validation protocol

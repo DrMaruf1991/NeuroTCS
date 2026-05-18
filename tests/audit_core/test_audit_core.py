@@ -229,26 +229,29 @@ def test_build_generator_population_priors():
     print(f"  {PASS} test_build_generator_population_priors")
 
 
-def test_build_generator_returns_generator_for_aa_2024():
-    """AA 2024 pack now has priors (v1.6.0 ERRATA E-2026-002);
-    build_generator must return a valid generator with 7-stage state
-    index (Stage_0..Stage_6)."""
+def test_build_generator_returns_none_for_aa_2024_v2():
+    """AA 2024 v2.0.0 uses integrated Table 7 biological + clinical staging
+    (17 states across two axes). The single-axis prior mechanism does NOT
+    apply because the state space is not ordinal-linear in the same way
+    NIA-AA 2018 (CN/MCI/AD) or the old single-axis aa_2024 pack was.
+
+    Per the schema's transition_priors mechanism, build_generator returns
+    None when transition_priors is empty (as is the case for the v2.0.0
+    Table 7 pack). The pack still supports CITATION-LOCKED admissibility
+    auditing (cTCS), but synthesizing a Markov generator for pTCS requires
+    additional methodological work to handle the off-diagonal cells in
+    Table 7 (cognitive reserve, copathology). That work is deferred.
+    """
     pack = load_rulepack("ad/aa_2024")
     gen = build_generator(pack, prior_type="clinical")
-    assert gen is not None
-    assert set(gen.state_index.keys()) == {
-        "Stage_0", "Stage_1", "Stage_2", "Stage_3",
-        "Stage_4", "Stage_5", "Stage_6",
-    }
-    # Rows sum to ~0 (generator property)
-    row_sums = gen.Q.sum(axis=1)
-    assert np.allclose(row_sums, 0, atol=1e-12)
-    # Off-diagonal >= 0
-    Q = gen.Q.copy()
-    np.fill_diagonal(Q, 0)
-    assert (Q >= 0).all()
-    print(f"  {PASS} test_build_generator_returns_generator_for_aa_2024 "
-          f"(priors_covered={gen.priors_covered})")
+    assert gen is None, (
+        "AA 2024 v2.0.0 (Table 7 integrated staging) has no transition_priors; "
+        "build_generator should return None. pTCS audits should be performed "
+        "on the single-axis NIA-AA 2018 pack until multi-axis priors are "
+        "transcribed in a future release."
+    )
+    print(f"  {PASS} test_build_generator_returns_none_for_aa_2024_v2 "
+          f"(v2.0.0 has no priors; cTCS-only audit)")
 
 
 def test_build_generator_no_priors_returns_none():
@@ -549,21 +552,26 @@ def test_audit_with_probabilities_utcs_differs_from_ctcs():
           f"(cTCS={result.ctcs.ci.point:.4f}, uTCS={result.utcs.ci.point:.4f})")
 
 
-def test_audit_ptcs_available_on_aa_2024():
-    """AA 2024 v1.2.0 NOW has priors (ERRATA E-2026-002). Synthetic
-    Stage_1 -> Stage_2 trajectory should produce available pTCS."""
+def test_audit_ptcs_unavailable_on_aa_2024_v2():
+    """AA 2024 v2.0.0 (Table 7 integrated staging) has empty
+    transition_priors; pTCS reports unavailable. cTCS audit on the
+    diagonal trajectory (Stage_1A -> Stage_2B per Table 7 §Note) still
+    works because admissibility rules are encoded.
+    """
     pack = load_rulepack("ad/aa_2024")
+    # Diagonal trajectory: Stage_1A -> Stage_2B (admissible per Table 7
+    # diagonal). Need delta_t >= 180 days for the 6-month persistence rule.
     trajectories = [
-        _make_traj(f"p{i}", ["Stage_1", "Stage_2"], [365]) for i in range(10)
+        _make_traj(f"p{i}", ["Stage_1A", "Stage_2B"], [365]) for i in range(10)
     ]
     result = audit(trajectories, pack, bootstrap_B=100, seed=42)
-    assert result.ctcs.available
-    assert result.ptcs.available, (
-        f"pTCS should be available with v1.2.0 priors; "
-        f"skipped_reason={result.ptcs.skipped_reason}"
+    assert result.ctcs.available, "cTCS should be available (admissibility encoded)"
+    assert not result.ptcs.available, (
+        f"pTCS should be unavailable on v2.0.0 (no priors yet); "
+        f"got available={result.ptcs.available}"
     )
-    print(f"  {PASS} test_audit_ptcs_available_on_aa_2024 "
-          f"(pTCS={result.ptcs.ci.point:.4f})")
+    print(f"  {PASS} test_audit_ptcs_unavailable_on_aa_2024_v2 "
+          f"(cTCS={result.ctcs.ci.point:.4f}, pTCS=unavailable)")
 
 
 def test_audit_ptcs_unavailable_on_trac():
@@ -793,7 +801,7 @@ def run_all():
         test_ctcs_none_for_single_visit,
         test_build_generator_for_ad_niaaa_2018,
         test_build_generator_population_priors,
-        test_build_generator_returns_generator_for_aa_2024,
+        test_build_generator_returns_none_for_aa_2024_v2,
         test_build_generator_no_priors_returns_none,
         test_ptcs_admissible_higher_than_inadmissible,
         test_utcs_with_probabilities,
@@ -816,7 +824,7 @@ def run_all():
         test_audit_id_v2_present_and_distinct,
         test_audit_id_v2_distinguishes_distinct_trajectories,
         test_audit_with_probabilities_utcs_differs_from_ctcs,
-        test_audit_ptcs_available_on_aa_2024,
+        test_audit_ptcs_unavailable_on_aa_2024_v2,
         test_audit_ptcs_unavailable_on_trac,
         test_audit_skeleton_rejected,
         # TRAC (schema v1.2 conditional admissibility)

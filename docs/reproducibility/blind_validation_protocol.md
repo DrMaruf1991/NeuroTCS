@@ -73,7 +73,7 @@ Optional but strongly recommended:
 │  Phase B: VERIFICATION                                                │
 │    2. You verify the rule packs. You clone the tag, run the SHA      │
 │       commands, confirm the three rule-pack SHAs match. You run      │
-│       `pytest tests/ -q` and confirm 331 passed + 2 skipped.         │
+│       `pytest tests/ -q` and confirm 400 passed + 4 skipped.         │
 │                                                                       │
 │  Phase C: AUDIT                                                       │
 │    3. You transform your cohort into a NeuroTCS Input Contract       │
@@ -155,7 +155,7 @@ collaborator's SHA verification would fail.
 
 Run the canonical Section 3.1–3.3 commands from
 `docs/reproducibility/ad_neurotcs_reproducibility.md`. Three rule-pack
-SHAs must match. Test suite must report 331 passed + 2 skipped.
+SHAs must match. Test suite must report 400 passed + 4 skipped.
 
 ### 4.2 — Verify your environment is reproducible
 
