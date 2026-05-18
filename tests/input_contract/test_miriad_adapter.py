@@ -14,6 +14,7 @@ MIRIAD exports from the XNAT database. Tests verify:
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 import pandas as pd
@@ -710,7 +711,7 @@ def test_audit_id_deterministic_across_runs(tmp_path: Path):
         f"audit_id not reproducible: {r1.audit_id} vs {r2.audit_id}"
     )
     assert r1.audit_id_v2 == r2.audit_id_v2, (
-        "audit_id_v2 not reproducible"
+        f"audit_id_v2 not reproducible"
     )
 
 
@@ -934,7 +935,6 @@ def test_find_miriad_files_via_env_var_with_drmaruf_names(tmp_path: Path,
     # SEARCH_BASES is computed at import time.
     monkeypatch.setenv("NEUROTCS_MIRIAD_DIR", str(tmp_path))
     import importlib
-
     import tests.audit_core.test_real_miriad_audit as t
     importlib.reload(t)
 

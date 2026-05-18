@@ -718,14 +718,35 @@ def test_trac_admits_full_to_partial_post_discontinuation():
 
 
 def test_existing_v1_1_packs_still_load_under_v1_2_schema():
-    """Backward compatibility — all 8 prior packs must still load."""
+    """Backward compatibility — all 8 prior packs must still load under the
+    current schema.
+
+    The pack list below is the set of packs that existed before schema v1.2.0
+    was introduced. The point of this test is that introducing 1.2.0 (and
+    later 1.3.0) features must not break loading of pre-existing packs. We
+    therefore check (a) each pack loads cleanly via load_rulepack(), and
+    (b) its declared schema_version is in the SUPPORTED set.
+
+    Note: this test does NOT hard-code each pack's declared version. Doing
+    so would couple this backward-compat test to the rule-pack content,
+    which legitimately evolves (e.g. pd/hoehn_yahr.yaml was elevated from
+    1.1.0 to 1.3.0 in v1.7.9 to correctly declare its use of 1.3.0-only
+    `attribution_type: clinical_inference`). The schema-version declaration
+    policy is enforced separately by
+    tests/rulepack/test_schema_version_declaration.py.
+    """
+    from neurotcs.rulepack.schema import SUPPORTED_SCHEMA_VERSIONS
     for name in [
         "ad/niaaa_2018", "ad/aa_2024", "pd/hoehn_yahr", "ms/mcdonald_2024",
         "oncology/recist_1_1", "oncology/irecist", "stroke/mrs_followup",
         "lung_nodule/fleischner_2017",
     ]:
         pack = load_rulepack(name)
-        assert pack.rulepack.schema_version == "1.1.0"
+        assert pack.rulepack.schema_version in SUPPORTED_SCHEMA_VERSIONS, (
+            f"Pack {name} declares schema_version="
+            f"{pack.rulepack.schema_version!r} which is not in the "
+            f"supported set {sorted(SUPPORTED_SCHEMA_VERSIONS)}."
+        )
     print(f"  {PASS} test_existing_v1_1_packs_still_load_under_v1_2_schema "
           f"(8 packs)")
 

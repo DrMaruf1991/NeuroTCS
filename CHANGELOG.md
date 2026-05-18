@@ -4,6 +4,80 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.9] — 2026-05-18
+
+### AD-lock Step 2.1: Schema-version declaration policy + 1 silent under-declaration fixed
+
+This is the first of five steps toward "AD-lock at world-class no-future-fix
+level" — each step ships independently with regression tests. Step 2.1 makes
+the rule-pack schema-version declarations honest, auditable, and enforced.
+
+### What's new
+
+- **Schema-version declaration policy** documented as a mandatory contract in
+  `src/neurotcs/rulepack/schema.py` docstring: every pack declares the
+  MINIMUM schema version whose features it actually uses, not the latest
+  available. Over-declaring inflates version inflation without justification;
+  under-declaring fails at load time. Both are now caught by automated test.
+- **Per-pack rationale comment** added to `ad/niaaa_2018.yaml` and
+  `ad/aa_2024.yaml` headers explaining why each declares its schema version.
+  `ad/aa_2024_trac.yaml` already had this rationale (it uses
+  `required_conditions`, hence 1.2.0).
+- **New regression test** `tests/rulepack/test_schema_version_declaration.py`
+  with 10 cases: 9 parametrized over every shipped rule pack (auto-discovered
+  by `Path.rglob`), plus 1 sanity guard against an empty discovery glob. The
+  parametrization means any newly-added pack is checked without code changes.
+
+### Silent under-declaration fixed (1)
+
+- **`pd/hoehn_yahr.yaml`**: declared `schema_version: "1.1.0"` but uses
+  `attribution_type: clinical_inference` AND `inference_rationale` on 7
+  transitions (both 1.3.0 features per ERRATA E-2026-003). Elevated to
+  `schema_version: "1.3.0"` with a documenting comment. No behavioural change
+  — the pack loaded identically before and after, since the Pydantic field
+  default is `guideline_quote` and the loader accepts 1.1.0/1.2.0/1.3.0
+  identically. The fix is purely making the declaration honest.
+
+### Backward-compat test fixed (1)
+
+- `tests/rulepack/test_rulepack.py::test_existing_v1_1_packs_still_load_under_v1_2_schema`:
+  previously hard-coded `assert schema_version == "1.1.0"` for each of 8
+  packs. That couples the backward-compat test to pack content, which
+  legitimately evolves. Replaced with `in SUPPORTED_SCHEMA_VERSIONS` —
+  enforces what the test name actually claims (backward-compat loading)
+  without freezing each pack's declared version into the test. Schema-version
+  declaration policy is now enforced separately in the dedicated test file.
+
+### Tests passing
+
+- **249 passed, 2 skipped** on two consecutive runs (was 239 in v1.7.8).
+- +10 from the new schema-version declaration test file.
+- The 2 skipped are the real-MIRIAD tests on sandbox (no CSVs). On Maruf's
+  machine with `NEUROTCS_MIRIAD_DIR` set, they engage as hard equality
+  assertions and the count is 251 passed.
+
+### What's preserved
+
+- Locked invariants from v1.7.7 (real-MIRIAD audit_ids `947ab24e...`,
+  `80430399...`) unchanged.
+- ADNI cTCS = 0.9946, OASIS-3 cTCS = 0.9942, MIRIAD cTCS = 0.9854 unchanged.
+- 190 citations clean per `verify_citations.py --offline`.
+- All v1.7.x adapter behaviour byte-identical.
+
+### Why this matters for the AD lock
+
+A reviewer or AI-vendor auditor inspecting the rule packs sees consistent
+schema-version declarations with a documented policy and a regression test
+preventing silent drift. The previously-silent under-declaration in the PD
+pack would have eventually surfaced as a confusing inconsistency during
+external review; it's now fixed before the AD lock proceeds.
+
+This is Step 2.1 of 5. Next steps in order: 2.2 demographic fairness slicing,
+2.3 data sheet / model card, 2.4 reproducibility report, 2.5 blind-validation
+invitation. Each ships independently with its own tests and CHANGELOG entry.
+
+---
+
 ## [1.7.8] — 2026-05-18
 
 ### Critical: v1.7.7 real-MIRIAD tests were silently skipping

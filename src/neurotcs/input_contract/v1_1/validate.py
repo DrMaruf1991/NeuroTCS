@@ -445,10 +445,10 @@ def _step9_load_biomarkers(path: Path, manifest: dict, predictions: pd.DataFrame
     def _is_nonempty_seq(x):
         if x is None:
             return False
-        if isinstance(x, list | tuple):
+        if isinstance(x, (list, tuple)):
             return len(x) > 0
         # numpy array
-        if hasattr(x, "__len__") and not isinstance(x, str | bytes | dict):
+        if hasattr(x, "__len__") and not isinstance(x, (str, bytes, dict)):
             try:
                 return len(x) > 0
             except TypeError:
@@ -501,7 +501,7 @@ def _normalize_inline_biomarkers(predictions: pd.DataFrame,
         if isinstance(items, np.ndarray):
             items = items.tolist()
 
-        if not isinstance(items, list | tuple):
+        if not isinstance(items, (list, tuple)):
             report.add_error("INVALID_TYPE",
                              f"predictions:continuous_biomarkers[row {idx}]",
                              f"Expected list/array; got {type(items).__name__}")
@@ -560,7 +560,7 @@ def _unpack_biomarker_dict(b: dict, patient_id: str, visit_id: str,
     ref_range = b.get("reference_range")
     ref_low, ref_high = None, None
     if ref_range is not None:
-        if not (isinstance(ref_range, list | tuple) and len(ref_range) == 2):
+        if not (isinstance(ref_range, (list, tuple)) and len(ref_range) == 2):
             report.add_error("INVALID_TYPE", loc + ".reference_range",
                              "reference_range must be a [low, high] pair")
             return None

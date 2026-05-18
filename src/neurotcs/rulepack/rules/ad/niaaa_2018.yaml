@@ -6,6 +6,13 @@
 # Aging and Alzheimer's Association joint working group. The framework is the
 # de-facto international standard for AD biological + clinical staging in
 # research and is the foundation for the AA 2024 revision.
+#
+# Schema version 1.1.0 (minimum required): this pack uses only 1.1.0 features
+# (states, transitions, citations, transcribed_by, clinical_source_authority,
+# guideline_section). It does NOT use required_conditions (1.2.0+) or
+# attribution_type=clinical_inference (1.3.0+). Per the schema-version
+# declaration policy in src/neurotcs/rulepack/schema.py docstring, packs
+# declare the MINIMUM schema version they require.
 
 schema_version: "1.1.0"
 rulepack_id: "ad/niaaa_2018@1.2.0"

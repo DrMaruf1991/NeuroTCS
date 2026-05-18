@@ -4,6 +4,33 @@ NeuroTCS Rule Pack Schema v1.3.0.
 Citation-locked, version-stamped, fail-closed Pydantic specification for
 clinical rule packs.
 
+Schema-version declaration policy (MANDATORY for every rule pack)
+-----------------------------------------------------------------
+Each rule pack MUST declare the MINIMUM schema version whose features it
+actually uses, not the latest schema version available. This produces
+honest, audit-friendly version tracking:
+
+  - A pack that uses ONLY 1.1.0-era fields (states, transitions, citations,
+    transcribed_by, clinical_source_authority, guideline_section) declares
+    `schema_version: "1.1.0"`.
+  - A pack that uses `required_conditions` or `conditions_evaluated_at`
+    (context-conditional admissibility) declares `schema_version: "1.2.0"`.
+  - A pack that uses `attribution_type == "clinical_inference"` (or sets
+    `inference_rationale` on any transition) declares `schema_version: "1.3.0"`.
+
+Rationale: an external reviewer or AI-vendor auditor inspecting the YAML
+can immediately tell which schema features are in play. A pack that
+"over-declares" (e.g. claims 1.3.0 but uses no 1.3.0 features) wastes
+reviewer attention. A pack that "under-declares" (e.g. claims 1.1.0 but
+uses required_conditions) will fail validation at load time.
+
+`tests/rulepack/test_schema_version_declaration.py` enforces this policy
+automatically across every shipped rule pack — under-declaring will be
+caught at CI time before it reaches a reviewer.
+
+Supported schema versions for loading: {1.1.0, 1.2.0, 1.3.0}. The loader
+accepts any of these and applies feature gating per-field.
+
 v1.3.0 changes vs v1.2.0 (shipped in v1.7.1, per ERRATA E-2026-003):
   - Added optional `attribution_type` field to Transition with two values:
     `guideline_quote` (default — citation_text reproduces a verbatim
