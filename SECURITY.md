@@ -37,4 +37,8 @@ You will receive an acknowledgement within 5 business days. Critical issues will
 
 - Dependency vulnerabilities in transitive deps (file upstream).
 - Cosmetic issues in documentation.
-- Issues in `audit_core`, `output_schema`, `adapters`, `validation_harness` while these subpackages are marked `__status__ = "planned"`.
+- Issues in `output_schema` and `validation_harness` while these
+  subpackages are marked `__status__ = "planned"`. (Note: `audit_core`
+  is `__status__ = "production"` and `adapters` is `__status__ =
+  "partial"` — both ARE in scope as of v1.7.1, per the v1.7.1 SECURITY
+  fix to the prior over-broad clause.)

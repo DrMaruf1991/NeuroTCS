@@ -28,7 +28,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -136,7 +136,7 @@ def main() -> None:
         "neurotcs_contract_version": "1.1.0",
         "conformance_level": "L2",
         "submission_id": args.id,
-        "submission_timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "submission_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source_system": {
             "name": "FreeSurfer UCSFFSX7 cross-sectional pipeline",
             "version": "ADNIMERGE2",

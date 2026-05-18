@@ -1,7 +1,7 @@
 """
 Cluster bootstrap CI engine + Huber M-estimator.
 
-Per temporalmetric v1.6 FINAL spec §A.5:
+Per temporalmetric v1.7 FINAL spec §A.5:
 
 > Cluster bootstrap by subject (B=10,000); per Efron & Tibshirani 1993 Ch. 8.
 > Pairwise model comparison with paired cluster bootstrap, BCa correction.

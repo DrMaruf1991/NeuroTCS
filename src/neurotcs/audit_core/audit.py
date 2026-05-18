@@ -113,6 +113,10 @@ class AuditResult:
     bootstrap_B: int
     ci_method: str
     seed: int
+    # v1.7.1: optional augmented audit_id that ALSO hashes input trajectories.
+    # Default "" preserves backward compatibility for any code that
+    # constructs AuditResult manually (e.g. tests, downstream consumers).
+    audit_id_v2: str = ""
 
     @property
     def flagged_rate(self) -> float:
@@ -124,6 +128,7 @@ class AuditResult:
         """Serializable summary. Per-patient arrays optionally included."""
         out: dict[str, Any] = {
             "audit_id": self.audit_id,
+            "audit_id_v2": self.audit_id_v2,
             "timestamp_utc": self.timestamp_utc,
             "rulepack": {
                 "id": self.rulepack_id,
@@ -175,6 +180,7 @@ class AuditResult:
         lines = [
             "NeuroTCS Audit Result",
             f"  audit_id:         {self.audit_id}",
+            f"  audit_id_v2:      {self.audit_id_v2 or '(not computed)'}",
             f"  rulepack:         {self.rulepack_id}",
             f"  rulepack_sha:     {self.rulepack_sha256[:16]}...",
             f"  patients:         {self.n_patients_scored} scored "
@@ -208,19 +214,100 @@ def _compute_audit_id(
 ) -> str:
     """Stable SHA-256 over the canonical audit content.
 
-    Same inputs → same audit_id, every time, anywhere.
+    Same inputs → same audit_id, every time, anywhere — including across
+    big-endian and little-endian machines. v1.7.1 explicitly forces the
+    numpy arrays to little-endian byte order before hashing
+    (`.astype('<f8')` for floats, `.astype('<i8')` for the int64
+    n_transitions counter); prior versions used the platform's native
+    byte order via `.tobytes()`, which would produce a different
+    audit_id on a big-endian machine for identical numerical inputs.
+
+    For FDA Q-Sub audit-trail portability, the v1.7.1 hash is the
+    canonical going-forward form. Locked invariants from v1.7.0 and
+    earlier will compute to a new audit_id under v1.7.1+; re-derive
+    them on first audit and capture the new locked value (see
+    `tests/audit_core/test_real_oasis3_audit.py` for the
+    re-derivation pattern).
     """
     h = hashlib.sha256()
     h.update(rulepack_sha.encode())
     h.update(b"|")
     # Per-patient signature: round to 1e-6 to be robust to numpy/scipy
     # microscopic drift across platforms while preserving correctness.
-    h.update(np.round(per_patient.ctcs, 6).tobytes())
+    # Force little-endian explicit byte order so the hash is identical
+    # across platforms with different native endianness (C5 fix).
+    h.update(np.round(per_patient.ctcs, 6).astype("<f8").tobytes())
     if per_patient.ptcs is not None:
-        h.update(np.round(per_patient.ptcs, 6).tobytes())
-    h.update(np.round(per_patient.utcs, 6).tobytes())
-    h.update(per_patient.n_transitions.tobytes())
+        h.update(np.round(per_patient.ptcs, 6).astype("<f8").tobytes())
+    h.update(np.round(per_patient.utcs, 6).astype("<f8").tobytes())
+    h.update(per_patient.n_transitions.astype("<i8").tobytes())
     h.update(f"|B={B}|seed={seed}|ci={ci_method}|prior={prior_type}".encode())
+    return h.hexdigest()
+
+
+def _trajectory_canonical_signature(
+    trajectories: list[Trajectory],
+) -> bytes:
+    """Build a deterministic byte signature of the input trajectories.
+
+    Used by `_compute_audit_id_v2` (C6 fix). Two distinct trajectories
+    that happen to produce identical rounded per-patient scores can
+    collide under the v1 audit_id; this signature makes that collision
+    cryptographically improbable by including the raw `(patient_id,
+    sorted dates, states)` content.
+
+    The signature is canonical:
+      - trajectories sorted by patient_id (lexicographic)
+      - dates rendered as ISO 8601 strings
+      - states joined with ``\\x1f`` (unit separator) so a state name
+        containing a pipe cannot break framing
+    """
+    parts: list[bytes] = []
+    for traj in sorted(trajectories, key=lambda t: t.patient_id):
+        date_strs = "|".join(
+            d.isoformat() if hasattr(d, "isoformat") else str(d)
+            for d in traj.dates
+        )
+        state_strs = "\x1f".join(traj.states)
+        parts.append(
+            f"{traj.patient_id}\x1e{date_strs}\x1e{state_strs}".encode()
+        )
+    return b"\x1d".join(parts)
+
+
+def _compute_audit_id_v2(
+    rulepack_sha: str,
+    per_patient: PerPatientScores,
+    B: int,
+    seed: int,
+    ci_method: str,
+    prior_type: str,
+    trajectory_signature: bytes,
+) -> str:
+    """Augmented SHA-256 audit_id that ALSO hashes the input trajectories.
+
+    The v1 audit_id hashes the rule pack + per-patient scores + bootstrap
+    parameters. Two distinct trajectories producing identical rounded
+    scores can therefore collide. v2 closes this gap by including a
+    canonical signature of the input trajectories in the hash. Added
+    v1.7.1 (C6 fix) per FDA Q-Sub audit-trail integrity requirements.
+
+    Available alongside the v1 audit_id (`AuditResult.audit_id_v2`); the
+    primary `AuditResult.audit_id` remains the v1 hash for backward
+    compatibility with locked invariants.
+    """
+    h = hashlib.sha256()
+    h.update(b"v2|")
+    h.update(rulepack_sha.encode())
+    h.update(b"|")
+    h.update(np.round(per_patient.ctcs, 6).astype("<f8").tobytes())
+    if per_patient.ptcs is not None:
+        h.update(np.round(per_patient.ptcs, 6).astype("<f8").tobytes())
+    h.update(np.round(per_patient.utcs, 6).astype("<f8").tobytes())
+    h.update(per_patient.n_transitions.astype("<i8").tobytes())
+    h.update(f"|B={B}|seed={seed}|ci={ci_method}|prior={prior_type}".encode())
+    h.update(b"|trajectories|")
+    h.update(hashlib.sha256(trajectory_signature).digest())
     return h.hexdigest()
 
 
@@ -329,9 +416,14 @@ def audit(
     audit_id = _compute_audit_id(
         rulepack.sha256, per_patient, bootstrap_B, seed, ci_method, prior_type,
     )
+    audit_id_v2 = _compute_audit_id_v2(
+        rulepack.sha256, per_patient, bootstrap_B, seed, ci_method, prior_type,
+        _trajectory_canonical_signature(trajectories),
+    )
 
     return AuditResult(
         audit_id=audit_id,
+        audit_id_v2=audit_id_v2,
         timestamp_utc=datetime.now(timezone.utc).isoformat(),
         rulepack_id=rulepack.rulepack_id,
         rulepack_sha256=rulepack.sha256,

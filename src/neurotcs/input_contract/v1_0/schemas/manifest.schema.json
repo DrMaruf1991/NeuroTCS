@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://neurotcs.org/schemas/manifest/1.0.0",
+  "$id": "urn:neurotcs:manifest:1.0.0",
   "title": "NeuroTCS Submission Manifest",
   "description": "Normative schema for NeuroTCS input contract v1.0.0",
   "type": "object",
@@ -25,7 +25,11 @@
     },
     "conformance_level": {
       "type": "string",
-      "enum": ["L1", "L2", "L3"],
+      "enum": [
+        "L1",
+        "L2",
+        "L3"
+      ],
       "description": "Declared conformance level"
     },
     "submission_id": {
@@ -41,12 +45,28 @@
     },
     "source_system": {
       "type": "object",
-      "required": ["name", "version", "vendor"],
+      "required": [
+        "name",
+        "version",
+        "vendor"
+      ],
       "additionalProperties": false,
       "properties": {
-        "name": {"type": "string", "minLength": 1, "maxLength": 128},
-        "version": {"type": "string", "minLength": 1, "maxLength": 64},
-        "vendor": {"type": "string", "minLength": 1, "maxLength": 128}
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "vendor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
       }
     },
     "disease_domain": {
@@ -62,7 +82,10 @@
     },
     "rule_pack": {
       "type": "object",
-      "required": ["id", "source"],
+      "required": [
+        "id",
+        "source"
+      ],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -72,13 +95,18 @@
         },
         "source": {
           "type": "string",
-          "enum": ["registry", "inline"]
+          "enum": [
+            "registry",
+            "inline"
+          ]
         }
       }
     },
     "data_files": {
       "type": "object",
-      "required": ["predictions"],
+      "required": [
+        "predictions"
+      ],
       "additionalProperties": false,
       "properties": {
         "predictions": {
@@ -93,14 +121,27 @@
     },
     "cohort_summary": {
       "type": "object",
-      "required": ["n_patients", "n_visits_total", "date_range"],
+      "required": [
+        "n_patients",
+        "n_visits_total",
+        "date_range"
+      ],
       "additionalProperties": false,
       "properties": {
-        "n_patients": {"type": "integer", "minimum": 1},
-        "n_visits_total": {"type": "integer", "minimum": 2},
+        "n_patients": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "n_visits_total": {
+          "type": "integer",
+          "minimum": 2
+        },
         "date_range": {
           "type": "array",
-          "items": {"type": "string", "format": "date"},
+          "items": {
+            "type": "string",
+            "format": "date"
+          },
           "minItems": 2,
           "maxItems": 2
         }
@@ -114,24 +155,38 @@
   "allOf": [
     {
       "if": {
-        "properties": {"conformance_level": {"const": "L2"}}
+        "properties": {
+          "conformance_level": {
+            "const": "L2"
+          }
+        }
       },
       "then": {
         "properties": {
           "data_files": {
-            "required": ["predictions", "patients"]
+            "required": [
+              "predictions",
+              "patients"
+            ]
           }
         }
       }
     },
     {
       "if": {
-        "properties": {"conformance_level": {"const": "L3"}}
+        "properties": {
+          "conformance_level": {
+            "const": "L3"
+          }
+        }
       },
       "then": {
         "properties": {
           "data_files": {
-            "required": ["predictions", "patients"]
+            "required": [
+              "predictions",
+              "patients"
+            ]
           }
         }
       }

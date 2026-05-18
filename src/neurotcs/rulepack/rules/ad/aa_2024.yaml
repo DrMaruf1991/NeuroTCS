@@ -272,7 +272,7 @@ transition_priors:
     prior_type: "clinical"
     citation:
       citation_pmid: null
-      citation_doi: "10.1002/alz.70861_108962"
+      citation_doi: "10.1002/alz70861_108962"
       citation_text: >-
         Karagianni S, Cash DM, Pereiro AMM, Silva-Rodriguez J,
         Grothe MJ, Aguiar P, Scholl M, Moscoso AR 2025 (Alz Dem

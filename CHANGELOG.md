@@ -4,6 +4,165 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] — 2026-05-18
+
+### Citation hygiene patch release per external audit + ERRATA E-2026-003 / E-2026-004
+
+This is a surgical patch release that resolves every defect surfaced by the v1.7.0
+external root-to-root audit. Sixteen confirmed findings closed (the seventeenth
+finding was conditional on the v1.6 spec file persisting alongside v1.7, which
+it does not). No behavior change to the audit kernel; locked invariants
+preserved or honestly re-derived where the audit_id endianness fix forced
+recomputation.
+
+### Citation corrections (4 P0 findings)
+
+- **ERRATA E-2026-003** — Marras 2002 citation in `pd/hoehn_yahr.yaml` and
+  `docs/transcription_audit/pd_hoehn_yahr.md` corrected end-to-end:
+  - **Was**: Marras C et al. *Neurology* 2002;59:1724-1730. PMID 12473781.
+    DOI 10.1212/01.WNL.0000036428.92845.27 (Neurology pattern).
+  - **Now**: Marras C, Rochon P, Lang AE. "Predicting motor decline and
+    disability in Parkinson disease: a systematic review."
+    *Arch Neurol* 2002;59(11):1724-1728. PMID **12433259**.
+    DOI **10.1001/archneur.59.11.1724**.
+  - Eight YAML references + nine audit-doc references repaired atomically.
+  - All seven multi-step H&Y transitions reclassified from
+    `attribution_type: guideline_quote` (default) to
+    `attribution_type: clinical_inference` with explicit `inference_rationale`,
+    because the paper is a systematic review, not a primary table of stage-
+    transition intervals as the prior YAML claimed.
+
+- **ERRATA E-2026-004** — "Hayden 2017" attribution in `ad/niaaa_2018.yaml`
+  corrected to Chen Y et al. 2017:
+  - **Was**: Hayden et al. 2017 (Alz & Dem 13(5):573-582, PMC5451154).
+  - **Now**: Chen Y, Denny KG, Harvey D, Farias ST, Mungas D, DeCarli C,
+    Beckett L. *Alzheimers Dement* 2017;13(**4**):399-405. **PMID 27590706**.
+    PMCID PMC5451154.
+  - The DOI `10.1016/j.jalz.2016.07.151` always resolved to Chen 2017,
+    not Hayden; only the YAML's free-text label was wrong. The ACR
+    values (30% clinical, 5% population) match Chen 2017's PubMed
+    abstract verbatim, so no locked invariant changes.
+
+- **Karagianni 2025 DOI stray-period typo** — `aa_2024.yaml` and
+  `docs/transcription_audit/ad_aa_2024.md` corrected from the malformed
+  `10.1002/alz.70861_108962` to the canonical AAIC-supplement form
+  `10.1002/alz70861_108962`.
+
+- **Therriault 2026 BioFINDER phantom attribution** removed from
+  `docs/transcription_audit/ad_aa_2024.md:55`. Ossenkoppele 2022 was
+  already the cited source in the YAML; the audit-doc line is now
+  consistent with the YAML.
+
+### Schema enhancement (v1.2.0 → v1.3.0)
+
+- Added `AttributionType` enum to `rulepack/schema.py` with two values:
+  - `guideline_quote` (default; preserves prior behavior).
+  - `clinical_inference` — for rules whose structure is a board-certified
+    clinical inference informed by the citation rather than a verbatim
+    quote from it. Requires `inference_rationale` to be set; the schema
+    validator enforces this.
+- Added optional `inference_rationale: str | None` field to `Transition`.
+- `AttributionType` re-exported from the top-level `neurotcs` package.
+- `SUPPORTED_SCHEMA_VERSIONS` now includes `1.1.0`, `1.2.0`, `1.3.0`
+  (backward compatible).
+
+### Citation verifier (highest-leverage P0)
+
+- **NEW: `scripts/verify_citations.py`** — runs Crossref REST + PubMed
+  EUtils on every `citation_pmid` and `citation_doi` in every rule pack
+  and every transcription audit. Catches Marras-class (real paper,
+  wrong metadata), Hayden-class (DOI resolves to a different paper),
+  Karagianni-class (stray-period DOI typo) defects at commit time.
+- Has an `--offline` mode that does structural checks only (no network).
+  Catches the Karagianni stray-period bug via a targeted regex without
+  reaching the network — verified by a regression test against the
+  reintroduced bug.
+- Wired into `.github/workflows/ci.yml` as a separate `citations` job
+  with `continue-on-error: true` so upstream API outages don't block PRs,
+  while mismatches surface loudly in PR view.
+- Cache at `.cache/verify_citations.json` keeps reruns fast.
+
+### Spec drift propagation (B1, B2, B5 in audit numbering)
+
+- `docs/spec/temporalmetric_v1.7_FINAL.md` corrected:
+  - FUTURE-AI consortium size: "118 experts from 51 countries" →
+    "117 experts from 50 countries" (published BMJ values, not arXiv
+    preprint numbers) at three spec locations.
+  - FUTURE-AI recommendation count: "28 best-practice recommendations" →
+    "30 best-practice recommendations" (published Table 2 count).
+  - All ten "DECIDE-AI Stage [A/B/C]" references reworded to correctly
+    cite both primary sources: Kwong 2022 for silent-trial methodology
+    + DECIDE-AI (Vasey 2022) for reporting items. DECIDE-AI is a
+    single-stage reporting guideline; no Stage A/B/C labels exist in it.
+  - Co-authorship contradiction resolved: spec now says "additive
+    sign-off via the schema's `reviewers` field; clinical authority
+    resides in the cited published guideline," consistent with the
+    README position.
+
+### Code/architecture hygiene
+
+- **C1 CI workflow**: replaced per-file `pytest tests/<dir>/<file>.py`
+  invocations with `pytest tests/ -q` auto-discovery. The five v1.7.0
+  module test directories (sample_size, fairness, silent_deployment,
+  scanner_factorial, threshold_derivation) and the locked OASIS-3
+  invariant test are now gated by CI.
+- **C2 `datetime.utcnow()` deprecation**: 4 adapter sites + 2 additional
+  sites in `audit_core/audit.py` and `rulepack/loader.py` migrated to
+  `datetime.now(timezone.utc)`. No DeprecationWarning emitted in tests.
+- **C3 adapters registry**: `adapters/__init__.py` updated to list
+  OASIS-3 in `__shipped__` (alongside the two ADNI adapters), reflecting
+  the locked cTCS=0.9942 invariant.
+- **C5 audit_id endianness**: `audit_core/audit.py:_compute_audit_id`
+  now forces little-endian byte order via `.astype('<f8').tobytes()`
+  and `.astype('<i8').tobytes()` before hashing. The v1.7.0 ADNI
+  audit_id `fa448b8f...` will compute to a new value on first audit
+  under v1.7.1+ (re-derive locally; the OASIS-3 test file already
+  uses the re-derive-on-first-run pattern). Same numerical inputs
+  now produce the same audit_id across big-endian and little-endian
+  machines.
+- **C6 audit_id v2**: added `AuditResult.audit_id_v2`, an augmented
+  hash that also covers a canonical signature of the input
+  trajectories. The v1 `audit_id` field is preserved for backward
+  compatibility; v2 closes the score-collision gap (two distinct
+  trajectories producing identical rounded scores no longer collide).
+- **C7 SECURITY.md**: out-of-scope clause trimmed from
+  `audit_core / output_schema / adapters / validation_harness` to just
+  `output_schema / validation_harness`. The production audit engine and
+  the partially-shipped adapters are now in scope of the security policy.
+- **C8 `trajectory.py:194` docstring**: rewritten to describe actual
+  behavior. `n_skipped` is now surfaced via the
+  `neurotcs.audit_core.trajectory` logger at INFO level when
+  `skip_invalid=True` drops any patients; users can opt in by setting
+  the logger level. Return signature unchanged (backward compatible).
+
+### Test additions
+
+- 4 new schema-validation tests for `AttributionType` /
+  `inference_rationale`:
+  - default is `GUIDELINE_QUOTE`
+  - `CLINICAL_INFERENCE` without rationale is rejected
+  - empty/whitespace-only rationale is rejected
+  - `CLINICAL_INFERENCE` with non-empty rationale validates cleanly
+- Adjusted `test_schema_version_is_1_2` → `test_schema_version_is_1_3`.
+- `tests/audit_core/test_real_oasis3_audit.py` already structured to
+  re-derive the new audit_id on first run; no change needed.
+
+### Tests passing
+
+- **202/202** passing locally (`pytest tests/ -q`); CI now runs the
+  same auto-discovery so the 51 tests that v1.7.0 had off the CI
+  surface are now on it.
+- One DeprecationWarning eliminated (the OASIS-3 adapter utcnow site).
+
+### What's NOT in this release (deferred to future versions)
+
+- v1.7.2: `validation_harness` (Piece 7 of 7) — synthetic-trajectory
+  self-tests with planted violations.
+- v1.7.3: signed JSON audit certificates + DICOM SR output.
+- v1.7.4: FHIR Observation output schema (Piece 5 of 7).
+
+---
+
 ## [1.7.0] — 2026-05-18
 
 ### Added — Five new methodological modules with primary-source-locked citations

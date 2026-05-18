@@ -7,11 +7,12 @@ treatment-status flags. The audit engine consumes lists of trajectories;
 each trajectory contributes its per-patient TCS scores to the cohort
 bootstrap.
 
-Per temporalmetric v1.6 FINAL spec §A.2 - §A.4 + §C.5.
+Per temporalmetric v1.7 FINAL spec §A.2 - §A.4 + §C.5.
 """
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -19,6 +20,8 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -188,9 +191,14 @@ def trajectories_from_dataframe(
             (e.g. ADNI's "Dementia" -> "AD"). Applied before trajectory
             construction.
         treatment_status_col: Optional column for treatment flags.
-        skip_invalid: If True, skip patients whose data fails validation
-            (e.g. dates not ascending) rather than raising. Errors are
-            counted and returned via the exception's `attempted` count.
+        skip_invalid: If True, patients whose data fails Trajectory
+            construction (e.g. unsortable dates, malformed probability rows)
+            are silently dropped from the returned list. The total number of
+            skipped patients is logged at INFO level via the
+            ``neurotcs.audit_core.trajectory`` logger (configure with
+            ``logging.getLogger('neurotcs.audit_core.trajectory').setLevel(
+            logging.INFO)`` to surface it). If False (default), the first
+            invalid patient raises ``ValueError``.
 
     Returns:
         List of Trajectory objects, one per unique patient_id.
@@ -252,5 +260,12 @@ def trajectories_from_dataframe(
                 f"Trajectory construction failed for patient {pid}: {e}. "
                 f"Pass skip_invalid=True to drop and continue."
             ) from e
+
+    if skip_invalid and n_skipped > 0:
+        _logger.info(
+            "trajectories_from_dataframe: skipped %d invalid patient "
+            "trajectory(ies); returning %d valid trajectories.",
+            n_skipped, len(trajectories),
+        )
 
     return trajectories

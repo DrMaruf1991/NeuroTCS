@@ -33,20 +33,14 @@ jobs:
       - name: Lint with ruff
         run: ruff check src/ tests/
 
-      - name: Run rule pack tests
-        run: python tests/rulepack/test_rulepack.py
-
-      - name: Run input contract v1.0 tests
-        run: python tests/input_contract/test_v1_0.py
-
-      - name: Run input contract v1.1 tests
-        run: python tests/input_contract/test_v1_1.py
-
-      - name: Run OASIS-3 adapter tests
-        run: python tests/input_contract/test_oasis3_adapter.py
-
-      - name: Run audit core tests
-        run: python tests/audit_core/test_audit_core.py
+      # --- Single source of truth for test discovery (v1.7.1 fix) ---
+      # Replaces per-file invocations so every test under tests/ is
+      # gated by CI automatically as new modules ship. Includes the
+      # five v1.7.0 module test suites (sample_size, fairness,
+      # silent_deployment, scanner_factorial, threshold_derivation)
+      # and the locked OASIS-3 invariant test.
+      - name: Run full test suite (pytest auto-discovery)
+        run: python -m pytest tests/ -q
 
       - name: Verify all rule packs load
         run: |
@@ -67,8 +61,44 @@ jobs:
           print('audit_core public API verified')
           "
 
+      - name: Verify v1.7.0 + v1.7.1 module public API
+        run: |
+          python -c "
+          from neurotcs import binary_sample_size, fairness_audit, robustness_audit
+          from neurotcs import make_silent_deployment_evidence, scanner_factorial
+          from neurotcs import derive_threshold_distribution, derive_threshold_conformal
+          from neurotcs import AttributionType
+          print('v1.7.0 + v1.7.1 schema additions verified')
+          "
+
       - name: Build wheel + sdist
         run: |
           pip install build
           python -m build
           ls -la dist/
+
+  citations:
+    name: Citation resolver (Crossref + PubMed EUtils)
+    runs-on: ubuntu-latest
+    # Don't block merges if Crossref is down; gate releases via manual review.
+    # When the citation resolver returns non-zero, the CI run shows a warning
+    # but doesn't fail the build — this avoids upstream outages blocking work
+    # while still surfacing citation drift loudly in PR view.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML requests
+
+      - name: Verify every citation_pmid + citation_doi resolves and matches YAML metadata
+        run: python scripts/verify_citations.py

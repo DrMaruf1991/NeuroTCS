@@ -30,6 +30,7 @@ from neurotcs.rulepack.loader import (
 )
 from neurotcs.rulepack.schema import (
     SCHEMA_VERSION,
+    AttributionType,
     Citation,
     DiseaseDomain,
     RulePack,
@@ -61,9 +62,9 @@ TRANSCRIPTION_AUDIT_DIR = PROJECT_ROOT / "docs" / "transcription_audit"
 # Schema-level tests
 # ============================================================
 
-def test_schema_version_is_1_2():
-    assert SCHEMA_VERSION == "1.2.0"
-    print(f"  {PASS} test_schema_version_is_1_2")
+def test_schema_version_is_1_3():
+    assert SCHEMA_VERSION == "1.3.0"
+    print(f"  {PASS} test_schema_version_is_1_3")
 
 
 def test_citation_requires_pmid_or_doi():
@@ -99,6 +100,66 @@ def test_transition_requires_citation_and_section():
                     guideline_section="ref §1")
     assert t.guideline_section == "ref §1"
     print(f"  {PASS} test_transition_requires_citation_and_section")
+
+
+def test_transition_attribution_type_default_is_guideline_quote():
+    """Schema v1.3: default attribution_type is GUIDELINE_QUOTE."""
+    cit = Citation(citation_pmid="1", citation_text="ref")
+    t = Transition(from_state="A", to_state="B", citation=cit,
+                    guideline_section="ref §1")
+    assert t.attribution_type == AttributionType.GUIDELINE_QUOTE
+    assert t.inference_rationale is None
+    print(f"  {PASS} test_transition_attribution_type_default_is_guideline_quote")
+
+
+def test_transition_clinical_inference_requires_rationale():
+    """Schema v1.3: attribution_type=clinical_inference REQUIRES inference_rationale."""
+    cit = Citation(citation_pmid="1", citation_text="ref")
+    try:
+        Transition(
+            from_state="A", to_state="B", citation=cit,
+            guideline_section="ref §1",
+            attribution_type=AttributionType.CLINICAL_INFERENCE,
+            # missing inference_rationale!
+        )
+        assert False, "should have raised because rationale is required"
+    except Exception as e:
+        assert "inference_rationale" in str(e).lower()
+    print(f"  {PASS} test_transition_clinical_inference_requires_rationale")
+
+
+def test_transition_clinical_inference_empty_rationale_rejected():
+    """Schema v1.3: empty / whitespace-only rationale must be rejected too."""
+    cit = Citation(citation_pmid="1", citation_text="ref")
+    try:
+        Transition(
+            from_state="A", to_state="B", citation=cit,
+            guideline_section="ref §1",
+            attribution_type=AttributionType.CLINICAL_INFERENCE,
+            inference_rationale="   ",  # whitespace only
+        )
+        assert False
+    except Exception as e:
+        assert "inference_rationale" in str(e).lower()
+    print(f"  {PASS} test_transition_clinical_inference_empty_rationale_rejected")
+
+
+def test_transition_clinical_inference_with_rationale_valid():
+    """Schema v1.3: clinical_inference + non-empty rationale must validate."""
+    cit = Citation(citation_pmid="1", citation_text="ref")
+    t = Transition(
+        from_state="A", to_state="B", citation=cit,
+        guideline_section="ref §1",
+        attribution_type=AttributionType.CLINICAL_INFERENCE,
+        inference_rationale=(
+            "Direct A->B transition in a single scan is clinically "
+            "implausible given measurement noise; 56-day minimum follows "
+            "the response-confirmation window described in the citation."
+        ),
+    )
+    assert t.attribution_type == AttributionType.CLINICAL_INFERENCE
+    assert "implausible" in t.inference_rationale
+    print(f"  {PASS} test_transition_clinical_inference_with_rationale_valid")
 
 
 def test_rulepack_requires_v1_1_authorship_fields():
@@ -802,9 +863,13 @@ def test_aa_2024_priors_acr_within_published_ranges():
 
 def run_all():
     tests = [
-        test_schema_version_is_1_2,
+        test_schema_version_is_1_3,
         test_citation_requires_pmid_or_doi,
         test_transition_requires_citation_and_section,
+        test_transition_attribution_type_default_is_guideline_quote,
+        test_transition_clinical_inference_requires_rationale,
+        test_transition_clinical_inference_empty_rationale_rejected,
+        test_transition_clinical_inference_with_rationale_valid,
         test_rulepack_requires_v1_1_authorship_fields,
         test_production_requires_transitions,
         test_strict_mode_rejects_extras,

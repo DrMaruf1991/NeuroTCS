@@ -18,11 +18,15 @@ clinical_source_authority: >-
   Hoehn-Yahr Staging (Hoehn MM, Yahr MD. Neurology 1967;17(5):427-442) - the
   international standard for Parkinson's disease severity classification since
   1967. Modified Hoehn-Yahr (with 1.5 and 2.5 substages) is integrated into
-  the MDS-UPDRS (Goetz CG et al., Movement Disorders 2008;23(15):2129-2170)
-  endorsed by the Movement Disorder Society and used in essentially all
-  contemporary PD clinical trials. Natural-history transition timing draws
-  on Marras 2002 (Neurology 59:1724-1730) and PPMI longitudinal observations
-  (Marek 2018, Annals of Clinical and Translational Neurology 5:1460-1477).
+  the MDS-UPDRS (Goetz CG et al., Movement Disorders 2008;23(15):2129-2170,
+  PMID 19025984) endorsed by the Movement Disorder Society and used in
+  essentially all contemporary PD clinical trials. Natural-history transition
+  timing is informed by Marras C, Rochon P, Lang AE (Archives of Neurology
+  2002;59(11):1724-1728, PMID 12433259, DOI 10.1001/archneur.59.11.1724),
+  a systematic review of motor-decline predictors in PD; the per-transition
+  minimum-Δt floors below are clinical inferences applied on top of this
+  evidence base rather than verbatim quotations from a specific table (per
+  ERRATA E-2026-003).
 reviewers: []
 
 anchor_citation:
@@ -124,50 +128,110 @@ admissible_transitions:
     to_state: "HY_2"
     min_delta_t_days: 365.0
     citation:
-      citation_pmid: "12473781"
-      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
-      citation_text: "Marras C et al. Neurology 2002;59:1724-1730 — typical H&Y progression rates indicate roughly 1 stage / 2-3 years; two-stage jump under 1 year is implausible."
-    guideline_section: "Marras 2002, Table 2 (stage-transition intervals)"
+      citation_pmid: "12433259"
+      citation_doi: "10.1001/archneur.59.11.1724"
+      citation_text: "Marras C, Rochon P, Lang AE. Predicting motor decline and disability in Parkinson disease: a systematic review. Arch Neurol 2002;59(11):1724-1728. PMID 12433259, DOI 10.1001/archneur.59.11.1724. The review aggregates natural-history evidence that motor progression in PD averages roughly one Hoehn-Yahr stage per 2-3 years; the 365-day minimum-Δt floor for two-step jumps is a clinical inference (per ERRATA E-2026-003)."
+    guideline_section: "Marras 2002 (Arch Neurol 59:1724-1728) — systematic-review discussion of motor-decline predictors"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      Marras et al. 2002 is a systematic review of motor-decline predictors
+      in early PD; it summarises natural-history progression as averaging
+      roughly one Hoehn-Yahr stage per 2-3 years, but does NOT publish a
+      per-transition table of admissibility windows. The 365-day floor
+      for two-step H&Y jumps is a conservative clinical inference: a
+      genuine two-stage natural-history progression in under 12 months is
+      implausible given the published pace, and observing one in audit
+      data should at minimum trigger a human review (override_allowed=true
+      keeps this fail-soft for treatment-related or atypical-parkinsonism
+      contexts). Per ERRATA E-2026-003.
     override_allowed: true
 
   - from_state: "HY_1_5"
     to_state: "HY_2_5"
     min_delta_t_days: 365.0
     citation:
-      citation_pmid: "12473781"
-      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
-      citation_text: "Marras 2002: natural-history H&Y progression."
-    guideline_section: "Marras 2002, Table 2"
+      citation_pmid: "12433259"
+      citation_doi: "10.1001/archneur.59.11.1724"
+      citation_text: "Marras C, Rochon P, Lang AE. Predicting motor decline and disability in Parkinson disease: a systematic review. Arch Neurol 2002;59(11):1724-1728. PMID 12433259, DOI 10.1001/archneur.59.11.1724. Informs the natural-history H&Y progression pace; the encoded floor is a clinical inference (per ERRATA E-2026-003)."
+    guideline_section: "Marras 2002 (Arch Neurol 59:1724-1728) — systematic-review discussion of motor-decline predictors"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      Marras et al. 2002 is a systematic review of motor-decline predictors
+      in early PD; it summarises natural-history progression as averaging
+      roughly one Hoehn-Yahr stage per 2-3 years, but does NOT publish a
+      per-transition table of admissibility windows. The 365-day floor
+      for two-step H&Y jumps is a conservative clinical inference: a
+      genuine two-stage natural-history progression in under 12 months is
+      implausible given the published pace, and observing one in audit
+      data should at minimum trigger a human review (override_allowed=true
+      keeps this fail-soft for treatment-related or atypical-parkinsonism
+      contexts). Per ERRATA E-2026-003.
     override_allowed: true
 
   - from_state: "HY_2"
     to_state: "HY_3"
     min_delta_t_days: 365.0
     citation:
-      citation_pmid: "12473781"
-      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
-      citation_text: "Marras 2002: natural-history H&Y progression."
-    guideline_section: "Marras 2002, Table 2"
+      citation_pmid: "12433259"
+      citation_doi: "10.1001/archneur.59.11.1724"
+      citation_text: "Marras C, Rochon P, Lang AE. Predicting motor decline and disability in Parkinson disease: a systematic review. Arch Neurol 2002;59(11):1724-1728. PMID 12433259, DOI 10.1001/archneur.59.11.1724. Informs the natural-history H&Y progression pace; the encoded floor is a clinical inference (per ERRATA E-2026-003)."
+    guideline_section: "Marras 2002 (Arch Neurol 59:1724-1728) — systematic-review discussion of motor-decline predictors"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      Marras et al. 2002 is a systematic review of motor-decline predictors
+      in early PD; it summarises natural-history progression as averaging
+      roughly one Hoehn-Yahr stage per 2-3 years, but does NOT publish a
+      per-transition table of admissibility windows. The 365-day floor
+      for two-step H&Y jumps is a conservative clinical inference: a
+      genuine two-stage natural-history progression in under 12 months is
+      implausible given the published pace, and observing one in audit
+      data should at minimum trigger a human review (override_allowed=true
+      keeps this fail-soft for treatment-related or atypical-parkinsonism
+      contexts). Per ERRATA E-2026-003.
     override_allowed: true
 
   - from_state: "HY_2_5"
     to_state: "HY_4"
     min_delta_t_days: 365.0
     citation:
-      citation_pmid: "12473781"
-      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
-      citation_text: "Marras 2002: natural-history progression."
-    guideline_section: "Marras 2002, Table 2"
+      citation_pmid: "12433259"
+      citation_doi: "10.1001/archneur.59.11.1724"
+      citation_text: "Marras C, Rochon P, Lang AE. Predicting motor decline and disability in Parkinson disease: a systematic review. Arch Neurol 2002;59(11):1724-1728. PMID 12433259, DOI 10.1001/archneur.59.11.1724. Informs the natural-history H&Y progression pace; the encoded floor is a clinical inference (per ERRATA E-2026-003)."
+    guideline_section: "Marras 2002 (Arch Neurol 59:1724-1728) — systematic-review discussion of motor-decline predictors"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      Marras et al. 2002 is a systematic review of motor-decline predictors
+      in early PD; it summarises natural-history progression as averaging
+      roughly one Hoehn-Yahr stage per 2-3 years, but does NOT publish a
+      per-transition table of admissibility windows. The 365-day floor
+      for two-step H&Y jumps is a conservative clinical inference: a
+      genuine two-stage natural-history progression in under 12 months is
+      implausible given the published pace, and observing one in audit
+      data should at minimum trigger a human review (override_allowed=true
+      keeps this fail-soft for treatment-related or atypical-parkinsonism
+      contexts). Per ERRATA E-2026-003.
     override_allowed: true
 
   - from_state: "HY_3"
     to_state: "HY_5"
     min_delta_t_days: 365.0
     citation:
-      citation_pmid: "12473781"
-      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
-      citation_text: "Marras 2002: natural-history progression to wheelchair/bedridden."
-    guideline_section: "Marras 2002, Table 2"
+      citation_pmid: "12433259"
+      citation_doi: "10.1001/archneur.59.11.1724"
+      citation_text: "Marras C, Rochon P, Lang AE. Predicting motor decline and disability in Parkinson disease: a systematic review. Arch Neurol 2002;59(11):1724-1728. PMID 12433259, DOI 10.1001/archneur.59.11.1724. Informs the pace of progression through to wheelchair/bedridden states; the encoded floor is a clinical inference (per ERRATA E-2026-003)."
+    guideline_section: "Marras 2002 (Arch Neurol 59:1724-1728) — systematic-review discussion of motor-decline predictors"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      Marras et al. 2002 is a systematic review of motor-decline predictors
+      in early PD; it summarises natural-history progression as averaging
+      roughly one Hoehn-Yahr stage per 2-3 years, but does NOT publish a
+      per-transition table of admissibility windows. The 365-day floor
+      for two-step H&Y jumps is a conservative clinical inference: a
+      genuine two-stage natural-history progression in under 12 months is
+      implausible given the published pace, and observing one in audit
+      data should at minimum trigger a human review (override_allowed=true
+      keeps this fail-soft for treatment-related or atypical-parkinsonism
+      contexts). Per ERRATA E-2026-003.
     override_allowed: true
 
   # ===== Three-step or larger jumps: require >= 730 days =====
@@ -176,20 +240,38 @@ admissible_transitions:
     to_state: "HY_2_5"
     min_delta_t_days: 730.0
     citation:
-      citation_pmid: "12473781"
-      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
-      citation_text: "Marras 2002: three-stage progression typically requires multi-year intervals."
-    guideline_section: "Marras 2002, Table 2"
+      citation_pmid: "12433259"
+      citation_doi: "10.1001/archneur.59.11.1724"
+      citation_text: "Marras C, Rochon P, Lang AE. Predicting motor decline and disability in Parkinson disease: a systematic review. Arch Neurol 2002;59(11):1724-1728. PMID 12433259, DOI 10.1001/archneur.59.11.1724. Supports the inference that three-stage H&Y progression typically requires multi-year intervals; the 730-day minimum-Δt floor is a clinical inference (per ERRATA E-2026-003)."
+    guideline_section: "Marras 2002 (Arch Neurol 59:1724-1728) — systematic-review discussion of motor-decline predictors"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      Marras et al. 2002 establishes the natural-history pace of motor
+      decline in early PD as roughly one Hoehn-Yahr stage per 2-3 years.
+      A three-stage natural-history progression in under 24 months is
+      clinically implausible by that benchmark, so a 730-day minimum-Δt
+      floor is a conservative clinical inference. The review itself
+      does NOT enumerate per-transition admissibility windows. Per
+      ERRATA E-2026-003.
     override_allowed: true
 
   - from_state: "HY_2"
     to_state: "HY_4"
     min_delta_t_days: 730.0
     citation:
-      citation_pmid: "12473781"
-      citation_doi: "10.1212/01.WNL.0000036428.92845.27"
-      citation_text: "Marras 2002: multi-stage progression."
-    guideline_section: "Marras 2002, Table 2"
+      citation_pmid: "12433259"
+      citation_doi: "10.1001/archneur.59.11.1724"
+      citation_text: "Marras C, Rochon P, Lang AE. Predicting motor decline and disability in Parkinson disease: a systematic review. Arch Neurol 2002;59(11):1724-1728. PMID 12433259, DOI 10.1001/archneur.59.11.1724. Supports the inference that multi-stage H&Y progression typically requires multi-year intervals; the 730-day minimum-Δt floor is a clinical inference (per ERRATA E-2026-003)."
+    guideline_section: "Marras 2002 (Arch Neurol 59:1724-1728) — systematic-review discussion of motor-decline predictors"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      Marras et al. 2002 establishes the natural-history pace of motor
+      decline in early PD as roughly one Hoehn-Yahr stage per 2-3 years.
+      A three-stage natural-history progression in under 24 months is
+      clinically implausible by that benchmark, so a 730-day minimum-Δt
+      floor is a conservative clinical inference. The review itself
+      does NOT enumerate per-transition admissibility windows. Per
+      ERRATA E-2026-003.
     override_allowed: true
 
 inadmissible_transitions:

@@ -439,6 +439,93 @@ def test_audit_id_changes_with_seed():
     print(f"  {PASS} test_audit_id_changes_with_seed")
 
 
+def test_audit_id_endian_explicit_bytes():
+    """v1.7.1 (C5 fix): audit_id must be computed from little-endian
+    explicit byte order, not the platform's native order.
+
+    We can't easily synthesise a big-endian machine in this test
+    environment, but we CAN verify the implementation uses .astype('<f8')
+    and .astype('<i8') by inspecting the function source — and we
+    can verify that the v1 audit_id field is a 64-char SHA-256 hex
+    digest of the expected form.
+    """
+    import inspect
+    from neurotcs.audit_core.audit import (
+        _compute_audit_id,
+        _compute_audit_id_v2,
+    )
+
+    # The function source must use the explicit little-endian dtype string.
+    src_v1 = inspect.getsource(_compute_audit_id)
+    assert ".astype(\"<f8\")" in src_v1 or ".astype('<f8')" in src_v1, (
+        "C5 fix: _compute_audit_id must use astype('<f8').tobytes() for "
+        "cross-platform endianness portability"
+    )
+    assert ".astype(\"<i8\")" in src_v1 or ".astype('<i8')" in src_v1, (
+        "C5 fix: _compute_audit_id must use astype('<i8').tobytes() for "
+        "cross-platform endianness portability on the n_transitions array"
+    )
+
+    # Same enforcement on v2.
+    src_v2 = inspect.getsource(_compute_audit_id_v2)
+    assert ".astype(\"<f8\")" in src_v2 or ".astype('<f8')" in src_v2
+    assert ".astype(\"<i8\")" in src_v2 or ".astype('<i8')" in src_v2
+    print(f"  {PASS} test_audit_id_endian_explicit_bytes")
+
+
+def test_audit_id_v2_present_and_distinct():
+    """v1.7.1 (C6 fix): every audit must populate audit_id_v2 alongside
+    audit_id. The two must differ (v2 also hashes the trajectory signature)
+    and v2 must be a 64-char SHA-256 hex digest like v1.
+    """
+    pack = load_rulepack("ad/niaaa_2018")
+    trajectories = [
+        _make_traj(f"p{i}", ["CN", "MCI"], [365]) for i in range(10)
+    ]
+    result = audit(trajectories, pack, bootstrap_B=100, seed=42)
+    assert result.audit_id_v2, "audit_id_v2 must be populated"
+    assert len(result.audit_id_v2) == 64, (
+        f"audit_id_v2 must be 64-char sha256 hex; got {len(result.audit_id_v2)}"
+    )
+    assert all(c in "0123456789abcdef" for c in result.audit_id_v2), (
+        "audit_id_v2 must be lowercase hex"
+    )
+    assert result.audit_id != result.audit_id_v2, (
+        "audit_id_v2 must differ from audit_id (it hashes trajectories too)"
+    )
+    print(f"  {PASS} test_audit_id_v2_present_and_distinct")
+
+
+def test_audit_id_v2_distinguishes_distinct_trajectories():
+    """v1.7.1 (C6 fix): the central defensive property — two trajectory
+    cohorts producing identical per-patient cTCS / pTCS / uTCS scores
+    must STILL produce DIFFERENT audit_id_v2 values.
+
+    Construct two cohorts that each produce an audit with cTCS = 1.0
+    everywhere (no flags) but with structurally different trajectories.
+    Under v1 audit_id they could collide; under v2 they must not.
+    """
+    pack = load_rulepack("ad/niaaa_2018")
+
+    # Cohort A: 10 patients each CN -> MCI over 365 days
+    traj_a = [_make_traj(f"a{i}", ["CN", "MCI"], [365]) for i in range(10)]
+    # Cohort B: 10 patients each CN -> CN -> MCI over 365 + 365 days
+    #           (identical cTCS = 1.0 because self-loops are admissible
+    #           by convention, but the trajectory shape is different)
+    traj_b = [_make_traj(f"b{i}", ["CN", "CN", "MCI"], [365, 365])
+              for i in range(10)]
+
+    r_a = audit(traj_a, pack, bootstrap_B=100, seed=42)
+    r_b = audit(traj_b, pack, bootstrap_B=100, seed=42)
+
+    # The v2 hashes MUST differ because the trajectory content differs.
+    assert r_a.audit_id_v2 != r_b.audit_id_v2, (
+        "audit_id_v2 must distinguish structurally different trajectory "
+        "cohorts even when per-patient scores collide"
+    )
+    print(f"  {PASS} test_audit_id_v2_distinguishes_distinct_trajectories")
+
+
 def test_audit_with_probabilities_utcs_differs_from_ctcs():
     pack = load_rulepack("ad/niaaa_2018")
     rng = np.random.default_rng(0)
@@ -724,6 +811,9 @@ def run_all():
         test_audit_end_to_end_synthetic,
         test_audit_id_deterministic,
         test_audit_id_changes_with_seed,
+        test_audit_id_endian_explicit_bytes,
+        test_audit_id_v2_present_and_distinct,
+        test_audit_id_v2_distinguishes_distinct_trajectories,
         test_audit_with_probabilities_utcs_differs_from_ctcs,
         test_audit_ptcs_available_on_aa_2024,
         test_audit_ptcs_unavailable_on_trac,

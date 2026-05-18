@@ -1,8 +1,27 @@
 """
-NeuroTCS Rule Pack Schema v1.2.0.
+NeuroTCS Rule Pack Schema v1.3.0.
 
 Citation-locked, version-stamped, fail-closed Pydantic specification for
 clinical rule packs.
+
+v1.3.0 changes vs v1.2.0 (shipped in v1.7.1, per ERRATA E-2026-003):
+  - Added optional `attribution_type` field to Transition with two values:
+    `guideline_quote` (default — citation_text reproduces a verbatim
+    statement from the cited section) and `clinical_inference` (the rule
+    structure is a board-certified clinical inference applied on top of
+    the cited evidence, not directly quoted from it).
+  - Added optional `inference_rationale` field to Transition, required
+    when `attribution_type == clinical_inference`, explaining the
+    clinical reasoning that bridges the cited evidence to the encoded rule.
+  - Motivation: ERRATA E-2026-003 surfaced cases where the YAML's
+    `citation_text` field paraphrased a clinical inference applied to a
+    cited paper, rather than reproducing a verbatim quote from that paper.
+    The new field forces explicit disambiguation between the two, so a
+    reviewer reading the YAML can immediately tell whether the rule is
+    "transcribed from §X table Y" or "transcriber's clinical judgment
+    informed by §X".
+  - Backward compatible: default `guideline_quote` preserves prior
+    behavior. Rule packs that do not set the field load identically.
 
 v1.2.0 changes vs v1.1.0:
   - Added optional `required_conditions` field to Transition for
@@ -35,7 +54,7 @@ Authority model: clinical authority lives in the cited published guideline
 that this YAML faithfully encodes those rules. The `reviewers` field is
 for additive specialist sign-off (non-blocking).
 
-Reference: NeuroTCS / temporalmetric v1.6 FINAL spec, §B.6 + §C.2 + §C.6.
+Reference: NeuroTCS / temporalmetric v1.7 FINAL spec, §B.6 + §C.2 + §C.6.
 """
 
 from __future__ import annotations
@@ -50,11 +69,11 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 # Schema version
 # ============================================================
 
-SCHEMA_VERSION = "1.2.0"
+SCHEMA_VERSION = "1.3.0"
 
 
 # Schema versions that the loader accepts (backward compatible).
-SUPPORTED_SCHEMA_VERSIONS = frozenset({"1.1.0", "1.2.0"})
+SUPPORTED_SCHEMA_VERSIONS = frozenset({"1.1.0", "1.2.0", "1.3.0"})
 
 
 # ============================================================
@@ -78,6 +97,39 @@ class DiseaseDomain(str, Enum):
     ONCOLOGY = "oncology"
     PULMONOLOGY = "pulmonology"
     CUSTOM = "custom"
+
+
+class AttributionType(str, Enum):
+    """How the citation_text relates to the encoded rule.
+
+    Added in schema v1.3.0 per ERRATA E-2026-003.
+
+    - GUIDELINE_QUOTE (default): the citation_text reproduces a verbatim
+      statement from the cited section of the cited publication. The rule's
+      structure (state pair, min/max delta_t) follows directly from the
+      cited text without interpretive bridging.
+
+    - CLINICAL_INFERENCE: the rule structure is a board-certified clinical
+      inference informed by the cited publication, NOT a verbatim
+      transcription. The cited paper supports the clinical reasoning but
+      does not state the encoded rule in the form encoded. Requires
+      `inference_rationale` to be set, explaining the bridging logic.
+
+    Example clinical_inference uses:
+      - RECIST 1.1 CR -> PD with min_delta_t_days=56: Eisenhauer 2009 does
+        not state "CR -> PD requires >= 8 weeks" verbatim. The transcriber
+        applies the clinical inference that a direct CR -> PD transition
+        in a single scan is implausible given measurement noise, and
+        encodes a min interval informed by RECIST's 8-week response
+        confirmation window (§3.3.4).
+      - PD Hoehn-Yahr two-step jumps with min_delta_t_days=365: anchored
+        to the Marras 2002 systematic review's finding that natural-history
+        progression averages roughly 1 stage per 2-3 years (the review does
+        NOT publish a "Table 2 of stage-transition intervals"; the 365-day
+        floor is the transcriber's conservative clinical inference).
+    """
+    GUIDELINE_QUOTE = "guideline_quote"
+    CLINICAL_INFERENCE = "clinical_inference"
 
 
 # ============================================================
@@ -200,6 +252,24 @@ class Transition(BaseModel):
                         "the most permissive."
         )
     )
+    attribution_type: AttributionType = Field(
+        AttributionType.GUIDELINE_QUOTE,
+        description="How the citation_text relates to the encoded rule. "
+                    "Default 'guideline_quote' (verbatim from cited section). "
+                    "'clinical_inference' marks a transcriber's clinical "
+                    "judgment informed by the citation rather than reproduced "
+                    "from it; requires `inference_rationale` to be set. "
+                    "Added schema v1.3.0 per ERRATA E-2026-003."
+    )
+    inference_rationale: str | None = Field(
+        None, max_length=2048,
+        description="When `attribution_type == clinical_inference`, this "
+                    "field MUST be set and should explain the clinical "
+                    "reasoning that bridges the cited evidence to the "
+                    "encoded rule. Reviewers reading the YAML can audit "
+                    "the inference separately from the citation. Added "
+                    "schema v1.3.0 per ERRATA E-2026-003."
+    )
     notes: str | None = Field(None, max_length=2048)
 
     @model_validator(mode="after")
@@ -211,6 +281,21 @@ class Transition(BaseModel):
                 f"min_delta_t_days ({self.min_delta_t_days}) > "
                 f"max_delta_t_days ({self.max_delta_t_days}) for "
                 f"{self.from_state} -> {self.to_state}"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def check_inference_rationale_required(self) -> Transition:
+        if (self.attribution_type == AttributionType.CLINICAL_INFERENCE
+                and (self.inference_rationale is None
+                     or not self.inference_rationale.strip())):
+            raise ValueError(
+                f"Transition {self.from_state} -> {self.to_state} has "
+                f"attribution_type='clinical_inference' but no "
+                f"inference_rationale. Clinical inferences MUST carry an "
+                f"explicit rationale so reviewers can audit the bridging "
+                f"reasoning separately from the citation. Added schema "
+                f"v1.3.0 per ERRATA E-2026-003."
             )
         return self
 

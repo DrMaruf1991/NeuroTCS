@@ -8,13 +8,13 @@ Version 1.7 FINAL · 12 May 2026 · License: Apache-2.0 (library), CC-BY-4.0 (pa
 v1.7 closes five gaps flagged by external auditor (deep-research report, May 2026), each verified against primary sources before integration:
 
 1. **Subgroup fairness audit panel** (§B.4.4) — explicit stratification by sex, age band, race/ethnicity, scanner vendor, field strength, disease stage, treatment status; aligns with TRIPOD+AI (Collins 2024), CLAIM 2024 (Tejani 2024), FUTURE-AI Fairness principle (Lekadir 2025 BMJ).
-2. **Silent-deployment phase** (§B.5.3, DECIDE-AI Stage C) — explicit two-site silent pilot in W17–W20 logging alert frequency, review yield, operational burden without changing clinical decisions; verified per Vasey 2022 *Nat Med* 28:924-933 framework.
+2. **Silent-deployment phase** (§B.5.3, Kwong 2022 silent-trial methodology + DECIDE-AI reporting items) — explicit two-site silent pilot in W17–W20 logging alert frequency, review yield, operational burden without changing clinical decisions; aligned with Kwong et al. *Front Digit Health* 2022;4:929508 (CC-BY 4.0) and reported per Vasey et al. *Nat Med* 2022;28:924-933 DECIDE-AI checklist.
 3. **Riley 2024 sample-size methodology** (§B.4.1) — Aims 1, 2, 3, 5 sample sizes replaced with Riley framework (Riley 2024 BMJ 388:e074821; Riley 2021 *Stat Med* binary DOI 10.1002/sim.9025; Archer 2021 *Stat Med* continuous DOI 10.1002/sim.8766) targeting precise CI widths for calibration, discrimination, and clinical utility.
 4. **Scanner/vendor and interval-length stress tests** (§B.4.5) — explicit factorial sensitivity matrix including Siemens × GE × Philips × Canon vendor stratification; 1.5T vs 3T field strength; short (<6mo), medium (6–18mo), long (>18mo) interval bins.
 5. **Operational threshold derivation methodology** (§A.8) — methodology only, not predetermined values; thresholds will be empirically calibrated from Aim 1 mediation analysis with bootstrap CI per Threshold Optimization principles, ACR-SIIM Practice Parameter (approved 5 May 2026) "stop rules" guidance, and conformal prediction frameworks.
 
 Three new framework citations added — all verified primary-source May 2026:
-- **FUTURE-AI** (Lekadir K et al. *BMJ* 2025;388:e081554, DOI 10.1136/bmj-2024-081554, PMID 39909534) — six principles consensus framework, 118 experts from 51 countries.
+- **FUTURE-AI** (Lekadir K et al. *BMJ* 2025;388:e081554, DOI 10.1136/bmj-2024-081554, PMID 39909534) — six principles consensus framework, 117 experts from 50 countries.
 - **R-AI-DIOLOGY** (Haller S et al. *Neuroradiology* 2022, DOI 10.1007/s00234-021-02890-w, PMID 35098343) — neuroradiology-specific 10-aspect AI checklist; high relevance for ASFNR audience.
 - **ACR-SIIM Practice Parameter for Imaging AI** (approved ACR Council 5 May 2026 + ARCH-AI designation + Assess-AI registry + Larson 2025 JACR roadmap DOI 10.1016/j.jacr.2025.02.008, PMID 40057886) — first professional-society practice parameter explicitly requiring ongoing AI performance monitoring with drift detection and stop rules. `temporalmetric` is operationally aligned with this parameter.
 
@@ -163,7 +163,7 @@ Pre-register on OSF before any model is scored on test data. Sensitivity analyse
    - τ_high_alert ≤ cTCS < τ_review → "review; flag for follow-up"
    - cTCS ≥ τ_review → "low concern"
 4. **Cross-validate** on OASIS-3 external (Aim 2) and MIRIAD short-interval (Aim 3); thresholds adjusted if external CIs do not overlap internal CIs.
-5. **Clinician adjudication calibration** (per §B.5.2 Cohen's κ ≥ 0.6 target) — thresholds tuned to maintain false-alert burden below clinician-determined acceptability (target ≤ 15% false alerts at high-alert tier, per DECIDE-AI Stage C silent pilot, §B.5.3).
+5. **Clinician adjudication calibration** (per §B.5.2 Cohen's κ ≥ 0.6 target) — thresholds tuned to maintain false-alert burden below clinician-determined acceptability (target ≤ 15% false alerts at high-alert tier, per Kwong 2022 silent pilot reported on the DECIDE-AI checklist, §B.5.3).
 6. **Conformal prediction wrapper** (per Conformal Triage methodology, medRxiv 2024.02.09.24302543) — provides distribution-free statistical guarantees on PPV/NPV at the chosen thresholds for site-specific patient populations.
 
 **Specific threshold values (τ_high_alert, τ_review) are NOT predetermined in this spec.** They will be derived from Aim 1 data and reported in the methods paper with bootstrap CIs, OASIS-3 external validation, and ALZ-NET silent-deployment recalibration. Pre-stating specific cutoffs without empirical grounding would be hallucinated science and is explicitly disallowed by the spec's citation-locked rule discipline.
@@ -229,7 +229,7 @@ Compliance verified by senior author before submission. Each checklist completed
 
 `temporalmetric` is designed to operationalize three independent trustworthy-AI frameworks. Each principle in each framework maps to specific spec components, documented per framework checklist:
 
-**FUTURE-AI** (Lekadir K et al. *BMJ* 2025;388:e081554, DOI 10.1136/bmj-2024-081554, PMID 39909534) — six principles: Fairness, Universality, Traceability, Usability, Robustness, Explainability. 118-expert consortium from 51 countries.
+**FUTURE-AI** (Lekadir K et al. *BMJ* 2025;388:e081554, DOI 10.1136/bmj-2024-081554, PMID 39909534) — six principles: Fairness, Universality, Traceability, Usability, Robustness, Explainability. 117-expert consortium from 50 countries.
 - *Fairness* → §B.4.4 subgroup audit panel + §B.4.5 scanner/vendor stratification.
 - *Universality* → §B.6 multi-disease rule-pack registry + ADNI label translation layer.
 - *Traceability* → §C.2 version-stamped citation-locked YAML rule packs; §C.3 audit_report_pdf_sha; rulepack_sha in all output JSON.
@@ -307,15 +307,15 @@ Cohen's quadratic-weighted κ with bootstrap CI (B = 10,000). Pre-registered tar
 - κ ≥ 0.4 (moderate) — minimum acceptable; below this, taxonomy revisited.
 - Disagreements adjudicated by third senior reader (recruited if κ < 0.6).
 
-#### B.5.3 Silent-deployment phase (DECIDE-AI Stage C)
+#### B.5.3 Silent-deployment phase (Kwong 2022 silent-trial methodology, DECIDE-AI reporting checklist)
 
-Per **DECIDE-AI** (Vasey 2022 *Nat Med* 28:924-933) Stage C "early live evaluation," the framework runs in silent mode at ≥2 deployment sites before any claim of clinical decision impact. Silent mode = system computes scores in real time on actual incoming AD AI predictions; outputs are logged but NOT shown to clinicians and do NOT influence any clinical decision.
+Per the silent-trial methodology of **Kwong et al.** (*Front Digit Health* 2022;4:929508, PMID 36052317, CC-BY 4.0), the framework runs in silent mode at ≥2 deployment sites before any claim of clinical decision impact. Silent mode = system computes scores in real time on actual incoming AD AI predictions; outputs are logged but NOT shown to clinicians and do NOT influence any clinical decision. Verbatim from Kwong 2022: "the silent trial… evaluates the proposed model on patients in real-time, while the end-users (i.e., clinicians) are blinded to predictions such that they do not influence clinical decision-making." Reporting follows **DECIDE-AI** (Vasey 2022 *Nat Med* 28:924-933, PMID 35585196), a single-stage reporting guideline for early-stage clinical evaluation of AI decision-support systems; DECIDE-AI itself defines no Stage A/B/C labels (per ERRATA notice in docs/transcription_audit/v1.7_frameworks.md).
 
-**Sites:** KIUT (primary, Maruf-led) + 1 EU site recruited via ESNR-BRACCO network (target: Munich Klinikum rechts der Isar or Karolinska — relationships under exploration). ALZ-NET integration explored as Stage C+ extension (post-CMS-approved CED).
+**Sites:** KIUT (primary, Maruf-led) + 1 EU site recruited via ESNR-BRACCO network (target: Munich Klinikum rechts der Isar or Karolinska — relationships under exploration). ALZ-NET integration explored as a post-silent-trial extension (post-CMS-approved CED).
 
 **Window:** W17–W20 of the 21-week timeline (4 weeks before ASFNR Newport Beach Oct 2026); extended through Q1 2027 for FDA Q-Sub data package.
 
-**Logged endpoints (per DECIDE-AI checklist Stage C items 8–14):**
+**Logged endpoints (per Kwong 2022 silent-trial themes — dataset drift, bias, feasibility, stakeholder attitudes — reported on the DECIDE-AI 17-item checklist):**
 - Alert frequency per 100 serial cases (target benchmark from Aim 1 results)
 - Expert-adjudication confirmation rate of flagged cases (target ≥ 60% — i.e., when `temporalmetric` flags, expert agrees ≥60% of the time)
 - Time-to-quality-review per flagged case
@@ -329,7 +329,7 @@ Per **DECIDE-AI** (Vasey 2022 *Nat Med* 28:924-933) Stage C "early live evaluati
 - If INSUFFICIENT_DATA rate > 25% sustained → revisit data quality requirements; flag as deployment-readiness concern in publication.
 - If wall-clock time > 30 min per cohort report (target ≤ 5 min) → infrastructure review.
 
-**No clinical decisions changed during Stage C.** This is the regulatory and ethical boundary: silent-deployment data informs Stage D workflow study (planned post-publication, after ALZ-NET formal agreement), NOT immediate care.
+**No clinical decisions changed during the silent-deployment phase.** This is the regulatory and ethical boundary: silent-deployment data informs the subsequent prospective workflow-study phase (planned post-publication, after ALZ-NET formal agreement; corresponds to Kwong 2022 stage 3 "prospective clinical evaluation"), NOT immediate care.
 
 #### B.5.4 Conformal prediction wrapper (optional, v0.2)
 
@@ -350,7 +350,7 @@ The library exposes an abstract `RulePack` API. Every disease lives at `temporal
 | Stroke | modified Rankin Scale | mRS 0–6 | 30/90/180/365d expected | Banks & Marotta 2007 Stroke 38:1091-1096 |
 | Lung nodule | Fleischner 2017 | Size + doubling-time bins | Monotone growth | MacMahon 2017 Radiology 284:228-243, DOI 10.1148/radiol.2017161659 |
 
-**Production status:** v0.1 ships **AD AA 2024 (Jack 2024) as primary** + TRAC handling (La Joie 2025) + NIA-AA 2018 legacy compatibility + ADNI translation layer, all in production. Schema-validated YAML skeletons ship for PD, MS, oncology, stroke, lung nodule. v0.2 (Q1 2027) ships PD, MS (McDonald 2024), oncology RECIST 1.1, stroke, lung nodule — all with disease-specialist co-authors. v0.3+ extends to prostate (Epstein), diabetic retinopathy (ETDRS), NYHA heart failure, METAVIR liver fibrosis, RANO neuro-oncology, BI-RADS longitudinal breast.
+**Production status:** v0.1 ships **AD AA 2024 (Jack 2024) as primary** + TRAC handling (La Joie 2025) + NIA-AA 2018 legacy compatibility + ADNI translation layer, all in production. Schema-validated YAML skeletons ship for PD, MS, oncology, stroke, lung nodule. v0.2 (Q1 2027) ships PD, MS (McDonald 2024), oncology RECIST 1.1, stroke, lung nodule — each with optional disease-specialist sign-off via the schema's `reviewers` field (additive and non-blocking; clinical authority resides in the cited published guideline per §B.6, not in a co-author signature). v0.3+ extends to prostate (Epstein), diabetic retinopathy (ETDRS), NYHA heart failure, METAVIR liver fibrosis, RANO neuro-oncology, BI-RADS longitudinal breast.
 
 ---
 
@@ -515,7 +515,7 @@ ASNR Austin 17–20 May 2026 → ASFNR Newport Beach 9–12 Oct 2026 (21 weeks).
 - W9: OASIS-3 ingest; FreeSurfer features parsed.
 - W10: Rescore every model on OASIS-3; ΔcTCS table.
 - W11: pTCS sensitivity (clinical vs population priors; NIA-AA 2018 vs AA 2024).
-- W12: uTCS analysis; disease-specialist co-authors confirmed for v0.2 rulepacks.
+- W12: uTCS analysis; disease-specialist `reviewers` field populated for v0.2 rulepacks (additive sign-off per §B.6).
 
 **Weeks 13–16 — MIRIAD test-retest stress test:**
 - W13: MIRIAD ingest; visit alignment.
@@ -524,7 +524,7 @@ ASNR Austin 17–20 May 2026 → ASFNR Newport Beach 9–12 Oct 2026 (21 weeks).
 - W16: AAL atlas aggregation; regional flip signature figure. **Gate G3: short-interval flip rate > expected baseline → headline.**
 
 **Weeks 17–20 — saliency / mediation / human review / multi-disease portability / silent deployment:**
-- W17: Mediation analysis on ADNI + OASIS-3 (R `mediation`). **Silent-deployment Stage C launched** at KIUT + 1 EU site (per §B.5.3); logging endpoints active.
+- W17: Mediation analysis on ADNI + OASIS-3 (R `mediation`). **Silent-deployment phase launched** at KIUT + 1 EU site (per §B.5.3, Kwong 2022 silent-trial methodology); logging endpoints active.
 - W18: Two-rater human review; Cohen's κ. Silent deployment continuing; weekly alert-frequency reports.
 - W19: Aim 5 multi-disease portability — PPMI ingest, score ≥1 published PD AI classifier with PD rulepack; RIDER Lung PET-CT ingest, score with RECIST 1.1 rulepack. Goal: supplementary figures. Silent deployment week 3.
 - W20: Sensitivity analyses, final figures, supplements. Silent deployment week 4: interim report on false-alert burden, INSUFFICIENT_DATA rate, operational metrics. Subgroup fairness audit panel results compiled (§B.4.4). Stress test matrix complete (§B.4.5). **Gate G4: silent deployment without stop-rule breach + κ ≥ 0.6 + fairness audit no breach > 0.10 → submission-ready.**
@@ -537,7 +537,7 @@ ASNR Austin 17–20 May 2026 → ASFNR Newport Beach 9–12 Oct 2026 (21 weeks).
 - W5+: Layer 3 dashboard built on Railway, ready for ASFNR live demo.
 - W10+: FDA Q-Sub draft started for Q1 2027 filing.
 - W12+: Provisional patent filing with broad claims.
-- W17+: Silent-deployment phase (DECIDE-AI Stage C) per §B.5.3; runs through Q1 2027 for FDA data package.
+- W17+: Silent-deployment phase (Kwong 2022 silent-trial methodology, DECIDE-AI reporting) per §B.5.3; runs through Q1 2027 for FDA data package.
 
 **Buffer**: 2 weeks float distributed across W3, W7, W14, W19.
 
@@ -630,7 +630,7 @@ These are wedge → platform reasoned estimates anchored to the verified FDA-cle
 **Use of funds:**
 - 2 ML engineers (US-comp): $480K
 - 1 clinical lead (Maruf): $150K
-- 4 disease-specialist consultants (PD, MS, oncology, stroke rulepack co-authors): $80K total
+- 4 disease-specialist consultants (PD, MS, oncology, stroke rulepack `reviewers` field sign-off; additive per §B.6): $80K total
 - Regulatory consultant retainer (Hogan Lovells health or Ropes & Gray FDA practice): $30–60K focused Q-Sub engagement; $150–250K full De Novo submission package — budget $200K
 - Regulatory affairs / quality systems lead (part-time, year 2): $80K
 - EU MDR Notified Body fees + Technical File preparation: $80–120K
@@ -642,7 +642,7 @@ These are wedge → platform reasoned estimates anchored to the verified FDA-cle
 
 Total: ~$1.5M; remainder of $2-3M seed for operational runway + sales/BD year 2.
 
-**Defensibility**: (a) Citation-locked, hash-stamped rule-pack registry; (b) FDA De Novo Class II with new product code (no predicate); (c) broad patent on time-aware kernel + uncertainty-weighted temporal coherence + rulepack architecture; (d) clinical authoring network of disease specialists; (e) 18-month head start in a niche requiring deep neuroradiology + ML + regulatory expertise — Maruf is one of a small set of people combining all three.
+**Defensibility**: (a) Citation-locked, hash-stamped rule-pack registry; (b) FDA De Novo Class II with new product code (no predicate); (c) broad patent on time-aware kernel + uncertainty-weighted temporal coherence + rulepack architecture; (d) clinical reviewer network of disease specialists (additive sign-off via the schema's `reviewers` field; per §B.6 clinical authority lives in the cited published guideline); (e) 18-month head start in a niche requiring deep neuroradiology + ML + regulatory expertise — Maruf is one of a small set of people combining all three.
 
 ### E.8 Competitive intelligence
 
@@ -720,7 +720,7 @@ P/I scored 1–5. Trigger = observable signal mitigation fires.
 
 ## H. Best-Ever Additions
 
-1. Multi-disease platform is CORE. v0.1 ships **AD AA 2024 (Jack 2024) as primary + TRAC handling (La Joie 2025) + NIA-AA 2018 legacy compatibility + ADNI translation layer**, all in production, plus YAML skeletons for PD/MS/oncology/stroke/lung-nodule. v0.2 (Q1 2027) ships all six neuro+oncology rulepacks in production with disease-specialist co-authors. v0.3+ extends to prostate (Epstein), DR (ETDRS), NYHA heart failure, METAVIR liver fibrosis, RANO neuro-oncology, BI-RADS longitudinal.
+1. Multi-disease platform is CORE. v0.1 ships **AD AA 2024 (Jack 2024) as primary + TRAC handling (La Joie 2025) + NIA-AA 2018 legacy compatibility + ADNI translation layer**, all in production, plus YAML skeletons for PD/MS/oncology/stroke/lung-nodule. v0.2 (Q1 2027) ships all six neuro+oncology rulepacks in production; disease-specialist sign-off is logged in the schema's `reviewers` field (additive and non-blocking per the §B.6 authority model: clinical authority resides in the cited published guideline). v0.3+ extends to prostate (Epstein), DR (ETDRS), NYHA heart failure, METAVIR liver fibrosis, RANO neuro-oncology, BI-RADS longitudinal.
 2. Federated learning hooks — accept hashed per-subject TCS summaries for multi-site aggregation without raw data sharing; aligns with NIH Bridge2AI privacy standards.
 3. DICOM router + structured report integration via ACR Common Data Elements.
 4. Patient-facing trajectory dashboard (Flutter — Maruf's stack) supporting shared decision-making for anti-amyloid eligibility.
@@ -805,7 +805,7 @@ P/I scored 1–5. Trigger = observable signal mitigation fires.
 - Jacobson NC, Berkman LF. Clustering effects in multi-site research. Quality of Life Research 2010;19:533-541.
 
 **Added v1.7 — Trustworthy-AI frameworks and methodology (all verified May 2026 against primary sources):**
-- **Lekadir K, Frangi AF, Porras AR, et al. FUTURE-AI: international consensus guideline for trustworthy and deployable artificial intelligence in healthcare. BMJ 2025;388:e081554. DOI 10.1136/bmj-2024-081554. PMID 39909534. 118-expert consortium from 51 countries; six principles (Fairness, Universality, Traceability, Usability, Robustness, Explainability); 28 best-practice recommendations.**
+- **Lekadir K, Frangi AF, Porras AR, et al. FUTURE-AI: international consensus guideline for trustworthy and deployable artificial intelligence in healthcare. BMJ 2025;388:e081554. DOI 10.1136/bmj-2024-081554. PMID 39909534. 117-expert consortium from 50 countries; six principles (Fairness, Universality, Traceability, Usability, Robustness, Explainability); 30 best-practice recommendations.**
 - **Haller S, Van Cauter S, Federau C, et al. The R-AI-DIOLOGY checklist: a practical checklist for evaluation of artificial intelligence tools in clinical neuroradiology. Neuroradiology 2022;64(5):851-864. DOI 10.1007/s00234-021-02890-w. PMID 35098343. 10-aspect neuroradiology-specific AI evaluation checklist.**
 - **ACR-SIIM Practice Parameter for Imaging Artificial Intelligence. Approved by American College of Radiology Council 5 May 2026 at ACR 2026 annual meeting, Washington DC. Joint with Society for Imaging Informatics in Medicine. Covers AI tool selection, predeployment evaluation, ongoing performance monitoring with drift detection and stop rules, patient privacy. Practices implementing per the parameter earn ARCH-AI (ACR Recognized Center for Healthcare-AI) designation; Assess-AI is the companion quality registry.**
 - **Larson DB, Bhargavan-Chatfield M, Tilkin M, Coombs L, Wald C. The Road Map for ACR Practice Accreditation for Radiology Artificial Intelligence. Journal of the American College of Radiology 2025;22(5):586-592. DOI 10.1016/j.jacr.2025.02.008. PMID 40057886.**
@@ -929,9 +929,9 @@ Document v1.7 FINAL. 12 May 2026. Apache-2.0 / CC-BY-4.0.
 3. §B.4.2 — Trustworthy-AI framework alignment added: FUTURE-AI six principles (Lekadir 2025 BMJ), R-AI-DIOLOGY 10-aspect neuroradiology checklist (Haller 2022 Neuroradiology), ACR-SIIM Practice Parameter (approved 5 May 2026) with Assess-AI + ARCH-AI + Larson 2025 JACR roadmap.
 4. §B.4.4 — Full subgroup fairness audit panel: 7 dimensions (sex × age × race/ethnicity × scanner vendor × field strength × disease stage × treatment status); equalized-odds disparity metric; two-level audit (base model + temporalmetric itself).
 5. §B.4.5 — Factorial stress test matrix: scanner vendor × field strength × interval length × acquisition protocol × slice thickness × pipeline; pre-specified pass thresholds.
-6. §B.5.3 — DECIDE-AI Stage C silent-deployment phase explicit: KIUT + 1 EU site, W17–W20, no clinical decisions changed, stop rules per ACR-SIIM Practice Parameter, extends through Q1 2027 for FDA Q-Sub data package.
+6. §B.5.3 — Silent-deployment phase explicit (Kwong 2022 silent-trial methodology + DECIDE-AI reporting items): KIUT + 1 EU site, W17–W20, no clinical decisions changed, stop rules per ACR-SIIM Practice Parameter, extends through Q1 2027 for FDA Q-Sub data package.
 7. §B.5.4 — Optional conformal prediction wrapper (v0.2) for distribution-free PPV/NPV guarantees.
 
 **v1.6 content preserved:** AA 2024 (Jack 2024 PMID 38934362) primary + TRAC handling (La Joie 2025 Alzheimer's & Dementia 21(11):e70997, DOI 10.1002/alz.70997) + ADNI translation layer + AUDIT citation correction (Aumente-Maestro et al. 2025 Comput Methods Programs Biomed 271:108991) + Schuessler 2025 + Jian 2025 TimeFlow differentiation.
 
-**Defensibility:** Spec is now defensible at ASFNR Newport Beach Oct 2026 against any reviewer who reads CLAIM 2024, TRIPOD+AI, STARD-AI, DECIDE-AI, FUTURE-AI, R-AI-DIOLOGY, or the ACR-SIIM Practice Parameter. All sample sizes are Riley-framework derived. All thresholds are methodology-stated (not number-hallucinated). All subgroup analyses are panel-defined. All silent-deployment endpoints are DECIDE-AI Stage C compliant. Nature Medicine W22 submission ready.
+**Defensibility:** Spec is now defensible at ASFNR Newport Beach Oct 2026 against any reviewer who reads CLAIM 2024, TRIPOD+AI, STARD-AI, DECIDE-AI, FUTURE-AI, R-AI-DIOLOGY, or the ACR-SIIM Practice Parameter. All sample sizes are Riley-framework derived. All thresholds are methodology-stated (not number-hallucinated). All subgroup analyses are panel-defined. All silent-deployment endpoints align with Kwong 2022 silent-trial methodology and are reported on the DECIDE-AI checklist. Nature Medicine W22 submission ready.

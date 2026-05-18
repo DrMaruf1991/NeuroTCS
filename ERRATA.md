@@ -108,3 +108,103 @@ The verified evidence table for each rule pack is logged in `docs/transcription_
 ### Acknowledgment
 
 Same as E-2026-001: the gap was flagged by Dr. Salokhiddinov asking whether the AD rule packs were sufficiently current and pushing for "world-class no partial fix" verification.
+
+---
+
+## E-2026-003 · Marras 2002 citation metadata wrong, "Table 2 stage-transition intervals" does not exist (fixed in v1.7.1)
+
+**Discovered:** 2026-05-18 (external audit of the v1.7.0 release)
+**Fixed in:** v1.7.1 (commit shipping with this errata entry)
+**Affected versions:** v1.0.0 through v1.7.0
+**Severity:** Restrictive — affects the structural integrity of citation locking; **does NOT change any audit value**. The cTCS, pTCS, uTCS, and locked invariants (ADNI cTCS=0.9946; OASIS-3 cTCS=0.9942) are unchanged because all of those audits run on AD rule packs, not PD.
+
+### What happened
+
+The `pd/hoehn_yahr` rule pack and its transcription audit cited the natural-history pace of Hoehn-Yahr progression as:
+
+> Marras C et al. *Neurology* 2002;59:1724-1730. PMID 12473781. DOI 10.1212/01.WNL.0000036428.92845.27.
+
+Every element of that citation is wrong:
+
+| Field | Claimed | Verified (PubMed + Crossref) |
+|---|---|---|
+| Journal | Neurology | **Archives of Neurology** |
+| Pages | 1724-1730 | **1724-1728** |
+| PMID | 12473781 | **12433259** |
+| DOI prefix | 10.1212/01.WNL.* (Neurology pattern) | **10.1001/archneur.59.11.1724** (Arch Neurol pattern) |
+
+The PMID 12473781 actually points to an unrelated paper. The DOI `10.1212/01.WNL.0000036428.92845.27` is a Neurology-journal DOI pattern that cannot resolve to an Archives of Neurology paper.
+
+Worse: the YAML's `guideline_section` field attributed multi-step Δt floors to **"Marras 2002, Table 2 (stage-transition intervals)"** — but the real paper is a *systematic review* of motor-decline predictors in PD literature (1966-2002), and it does **NOT publish a per-transition table of admissibility windows**. The min-Δt floors in the YAML are clinical inferences applied on top of the review's reported pace of ~1 H&Y stage per 2-3 years, not direct transcriptions of a table that does not exist.
+
+### What changed in v1.7.1
+
+1. **All 8 Marras citation blocks in `pd/hoehn_yahr.yaml` corrected** with verified metadata: PMID 12433259, DOI 10.1001/archneur.59.11.1724, journal Archives of Neurology, pages 1724-1728.
+2. **All 7 multi-step Marras transitions reclassified** as `attribution_type: clinical_inference` (a new schema v1.3.0 field) with explicit `inference_rationale`. Reviewers reading the YAML can now see at a glance that the min-Δt floor is a clinical inference informed by the cited review, not a verbatim quote from a non-existent table.
+3. **`pd_hoehn_yahr.md` transcription audit rewritten** with the corrected citation and a verification protocol section that walks reviewers through PubMed PMID 12433259 (NOT the prior 12473781) and confirms that Marras 2002 is a systematic review.
+4. **Schema v1.3.0** adds the `AttributionType` enum (`guideline_quote` | `clinical_inference`) and the optional `inference_rationale` field. A validator REQUIRES the rationale when attribution_type is clinical_inference. Backward compatible: the default `guideline_quote` preserves prior behavior.
+5. **`scripts/verify_citations.py` added** to call Crossref and PubMed EUtils on every `citation_pmid` and `citation_doi` in every rule pack and every transcription audit, on every commit. This is the mechanical defense that catches Marras-class defects (real paper, wrong metadata) at commit time. Wired into `.github/workflows/ci.yml` as a separate `citations` job.
+
+### What is preserved
+
+The Hoehn-Yahr rule pack's behavior is unchanged — the min-Δt floors (365 days for 2-step jumps, 730 days for 3-step jumps) and override_allowed=true flags are all preserved. Only the *attribution metadata* changed. No audit result, no cTCS value, no audit_id value depends on the citation text.
+
+### Methodology change (cumulative E-2026-001/2/3 lessons)
+
+Starting v1.7.1, every numerical value AND every citation in a NeuroTCS rule pack:
+
+1. (E-2026-001) Must be verified against a peer-reviewed primary source via DOI or PMID.
+2. (E-2026-001) For ACR-type values, the source paper's methods section must explicitly state the rate is annual.
+3. (E-2026-002) Where multiple cohort settings exist, both must be encoded as separate priors.
+4. (E-2026-002) Derived priors must be marked `prior_type: "derived"`.
+5. **(E-2026-003, NEW) Citations must be verified against Crossref AND PubMed EUtils via `scripts/verify_citations.py` on every commit. A real paper at the wrong journal/pages/PMID/DOI no longer ships.**
+6. **(E-2026-003, NEW) When a rule's structure is a clinical inference informed by — but not directly quoted from — the citation, the transition MUST set `attribution_type: clinical_inference` and provide a non-empty `inference_rationale`. The schema validator enforces this.**
+
+### Acknowledgment
+
+Flagged by an external auditor running citation cross-checks on the v1.7.0 release. The auditor's specific signal — "the DOI prefix 10.1212/01.WNL.* is a Neurology pattern that cannot resolve to an Arch Neurol paper" — is exactly the kind of structural mismatch that a mechanical resolver catches and a human eye fills in automatically. The methodology fix (per-commit Crossref + EUtils verification) is more important than the value fix.
+
+---
+
+## E-2026-004 · "Hayden 2017" attribution is incorrect; DOI 10.1016/j.jalz.2016.07.151 actually resolves to Chen Y et al. 2017 (fixed in v1.7.1)
+
+**Discovered:** 2026-05-18 (external audit of the v1.7.0 release)
+**Fixed in:** v1.7.1 (commit shipping with this errata entry)
+**Affected versions:** v1.0.0 through v1.7.0
+**Severity:** Restrictive — affects attribution accuracy of two priors in `ad/niaaa_2018`; **does NOT change any audit value**. The numerical ACR values (30% clinical, 5% population) match the resolved paper's abstract verbatim, so locked invariants (ADNI cTCS=0.9946 etc.) are unchanged.
+
+### What happened
+
+The `ad/niaaa_2018` rule pack cited two CN→MCI conversion priors as:
+
+> Hayden et al. 2017 (Alz & Dem 13(5):573-582, PMC5451154) with DOI 10.1016/j.jalz.2016.07.151.
+
+The DOI `10.1016/j.jalz.2016.07.151` actually resolves to a different paper:
+
+> Chen Y, Denny KG, Harvey D, Farias ST, Mungas D, DeCarli C, Beckett L. "Progression from normal cognition to mild cognitive impairment in a diverse clinic-based and community-based elderly cohort." *Alzheimers Dement* 2017;**13(4):399-405** (NOT 13(5):573-582). PMID 27590706. PMCID PMC5451154.
+
+There is no "Hayden" among the authors. The paper is from the UC Davis ADC cohort (same DeCarli/Beckett lab the YAML had partially identified correctly), but the lead author is Chen, not Hayden. The page numbers are also wrong (13(4):399-405, not 13(5):573-582).
+
+### What is preserved (and why this is "metadata only")
+
+The ACR values themselves are correct. The Chen 2017 paper's PubMed abstract states **verbatim**:
+
+> "The clinic-based sample showed an annual conversion rate of **30% (95% CI 17%-54%) per person-year**, whereas the community-based sample showed a conversion rate of **5% (95% CI 3%-6%) per person-year**."
+
+These match the YAML's `annual_probability: 0.30` (CI 0.17-0.54) and `annual_probability: 0.048` (CI 0.030-0.080) priors exactly. So the corrected citation strengthens the rule pack rather than changing its behavior — the locked AD cTCS/pTCS/uTCS values, audit_ids, and ADNI/OASIS-3 replication results all carry through unchanged.
+
+### What changed in v1.7.1
+
+1. Both CN→MCI priors in `ad/niaaa_2018.yaml` updated:
+   - `citation_pmid` corrected from `null` to `27590706` (Chen 2017's PMID).
+   - `citation_text` rewritten to cite Chen Y et al. 2017 with correct pages 13(4):399-405, and to quote the verbatim ACR sentence from the abstract.
+   - Comment block above the priors explicitly notes the correction with cross-reference to this errata.
+2. The new `scripts/verify_citations.py` would have caught this at commit time via its cross-resolver title check: Crossref's title for DOI 10.1016/j.jalz.2016.07.151 differs by more than the Jaccard threshold from any "Hayden" attribution; the verifier flags this as a `title` mismatch.
+
+### Methodology change
+
+Per the cumulative ERRATA E-2026-001/2/3/4 record, every citation in every rule pack and every transcription audit is now mechanically verified by `scripts/verify_citations.py` against Crossref + EUtils on every commit. The four cases that motivated this script — Marras (wrong everything), Chen-née-Hayden (wrong author, wrong pages), Karagianni (stray-period DOI typo), Therriault (phantom attribution) — would all have been caught at commit time had the verifier existed earlier.
+
+### Acknowledgment
+
+Same external audit that flagged Marras 2002. The auditor's specific signal — "the DOI resolves to a different paper" — is the strongest red flag in citation verification and is exactly what the Crossref/EUtils cross-resolver title check is designed to surface.

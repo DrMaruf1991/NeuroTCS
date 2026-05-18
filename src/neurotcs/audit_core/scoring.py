@@ -1,7 +1,7 @@
 """
 NeuroTCS scoring engine: cTCS, pTCS, uTCS.
 
-Per temporalmetric v1.6 FINAL spec §A.2 - §A.4:
+Per temporalmetric v1.7 FINAL spec §A.2 - §A.4:
 
   cTCS  Categorical Temporal Consistency Score
         cTCSᵢ = (1 / (Tᵢ − 1)) · Σₜ K(ŷᵢ,ₜ, ŷᵢ,ₜ₊₁, Δτ)

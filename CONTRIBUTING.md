@@ -4,7 +4,7 @@ Thank you for your interest in NeuroTCS. This document explains how to set up a 
 
 ## Repository status
 
-NeuroTCS is currently a **private repository** under active development by Dr. Marufjon Salokhiddinov (MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, KIUT Tashkent). Pieces 1, 2, and 3 of the temporalmetric v1.6 FINAL spec are shipped; pieces 4–7 are in active development. External contributions are welcome once the repo is made public after first Nature Medicine submission and FDA Q-Sub response (~Q1 2027).
+NeuroTCS is currently a **private repository** under active development by Dr. Marufjon Salokhiddinov (MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, KIUT Tashkent). Pieces 1, 2, and 3 of the temporalmetric v1.7 FINAL spec are shipped; pieces 4–7 are in active development. External contributions are welcome once the repo is made public after first Nature Medicine submission and FDA Q-Sub response (~Q1 2027).
 
 Until then, contributions from co-authors and invited reviewers should follow the workflow below.
 
@@ -31,7 +31,7 @@ NeuroTCS/
 │   ├── adapters/                    piece 6 (PARTIAL)
 │   └── validation_harness/          piece 7 (PLANNED)
 ├── tests/                           all tests (mirrors src/ structure)
-├── docs/spec/                       temporalmetric v1.6 FINAL spec
+├── docs/spec/                       temporalmetric v1.7 FINAL spec
 ├── docs/transcription_audit/        per-rule-pack YAML <-> source verification
 └── examples/                        end-to-end usage scripts
 ```

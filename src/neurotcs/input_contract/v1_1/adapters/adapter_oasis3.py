@@ -58,7 +58,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -357,7 +357,7 @@ def build_patients(predictions: pd.DataFrame,
 
 def build_manifest(predictions: pd.DataFrame, submission_id: str) -> dict:
     """Manifest matching v1.1.0 schema."""
-    ts_now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts_now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     return {
         "neurotcs_contract_version": "1.1.0",
         "conformance_level": "L2",

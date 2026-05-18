@@ -5,20 +5,30 @@ abstract: >-
   NeuroTCS is a citation-locked, fail-closed framework for auditing the
   temporal coherence of longitudinal medical AI predictions against
   internationally endorsed published clinical guidelines. The framework
-  comprises seven engineering pieces: (1) categorical input contract,
-  (2) continuous-biomarker input contract with UCUM unit enforcement,
-  (3) citation-locked clinical rule packs spanning Alzheimer's disease
-  (NIA-AA 2018, AA 2024), Parkinson's disease (Hoehn-Yahr / MDS-UPDRS),
-  multiple sclerosis (McDonald 2024 / EDSS), oncology (RECIST 1.1, iRECIST),
-  stroke (modified Rankin Scale), and lung-nodule surveillance (Fleischner
-  2017), (4) audit core library (cTCS / pTCS / uTCS with cluster bootstrap
-  and Huber M-estimation), (5) FHIR Observation output schema, (6) reference
-  dataset adapters (ADNI, PPMI, RIDER, MIRIAD, OASIS-3, ALZ-NET), and
-  (7) synthetic-trajectory validation harness. Pieces 1-3 are shipped in
-  v1.1.0 with real-world validation on 12,006 ADNI clinical-label transitions
-  (65 flagged, 0.54%, all clinically interpretable). Pieces 4-7 are planned.
+  comprises seven core engineering pieces plus five v1.7.0 methodological
+  modules: (1) categorical input contract, (2) continuous-biomarker input
+  contract with UCUM unit enforcement, (3) citation-locked clinical rule
+  packs spanning Alzheimer's disease (NIA-AA 2018, AA 2024, AA 2024 TRAC),
+  Parkinson's disease (Hoehn-Yahr / MDS-UPDRS), multiple sclerosis
+  (McDonald 2024 / EDSS), oncology (RECIST 1.1, iRECIST), stroke (modified
+  Rankin Scale), and lung-nodule surveillance (Fleischner 2017), (4) audit
+  core library (cTCS / pTCS / uTCS with cluster bootstrap, BCa intervals,
+  and Huber M-estimation), (5) FHIR Observation output schema (planned),
+  (6) reference dataset adapters (ADNI shipped, OASIS-3 shipped; PPMI,
+  RIDER, MIRIAD, ALZ-NET planned), and (7) synthetic-trajectory
+  validation harness (planned). v1.7.0 adds five methodological modules:
+  Riley 2024 sample-size calculator, FUTURE-AI fairness + robustness
+  panels, Kwong 2022 silent-deployment evidence, multi-dimensional
+  scanner factorial, and empirical operational threshold derivation.
+  v1.7.1 introduces schema v1.3.0 (attribution_type field for
+  guideline_quote vs clinical_inference disambiguation), per-commit
+  Crossref + PubMed EUtils citation verification, and resolves the
+  ERRATA E-2026-003 (Marras 2002 metadata) and E-2026-004 (Chen 2017
+  née Hayden) citation defects. External replication achieved on ADNI
+  (cTCS = 0.9946, 12,006 transitions) and OASIS-3 (cTCS = 0.9942,
+  7,248 transitions) — ΔcTCS = 0.0004.
 type: software
-version: "1.7.0"
+version: "1.7.1"
 date-released: "2026-05-18"
 license: Apache-2.0
 repository-code: "https://github.com/DrMaruf1991/NeuroTCS"

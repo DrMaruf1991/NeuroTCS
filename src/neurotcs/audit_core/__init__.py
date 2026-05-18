@@ -10,7 +10,7 @@ The audit core consumes (input contract + rule pack) and produces:
   - uTCS  Uncertainty-weighted TCS (Thulasidasan 2019 extension, §A.4)
 
 Each with cluster-bootstrap 95% confidence intervals (B = 10,000 by default,
-BCa correction) and Huber M-estimator (c = 1.345). Per temporalmetric v1.6
+BCa correction) and Huber M-estimator (c = 1.345). Per temporalmetric v1.7
 FINAL spec §A.2 — §A.5.
 
 Quick start

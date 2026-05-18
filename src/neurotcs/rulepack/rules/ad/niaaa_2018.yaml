@@ -140,21 +140,32 @@ transition_priors:
   # CN->MCI rates differ substantially by recruitment cohort:
   # population/community ~5%/yr; memory-clinic referrals ~30%/yr (the
   # clinic referral itself is a strong selection signal for impending
-  # impairment). Both verified in Hayden 2017 (UC Davis ADC cohort).
+  # impairment). Both verified in Chen et al. 2017 (UC Davis ADC cohort).
+  # NOTE (ERRATA E-2026-004): prior versions ≤ v1.7.0 attributed this
+  # source to "Hayden et al. 2017" with pages 13(5):573-582. The DOI
+  # 10.1016/j.jalz.2016.07.151 actually resolves to Chen Y, Denny KG,
+  # Harvey D, Farias ST, Mungas D, DeCarli C, Beckett L. Alzheimers Dement
+  # 2017;13(4):399-405. PMID 27590706. Same UC Davis ADC cohort, no
+  # Hayden among authors. The ACR values were always correct (verified
+  # verbatim against the Chen 2017 abstract); only the citation metadata
+  # was wrong. Corrected here.
   - from_state: "CN"
     to_state: "MCI"
     annual_probability: 0.30
     confidence_interval_95: [0.17, 0.54]
     prior_type: "clinical"
     citation:
-      citation_pmid: null
+      citation_pmid: "27590706"
       citation_doi: "10.1016/j.jalz.2016.07.151"
       citation_text: >-
-        Hayden et al. 2017 (Alz & Dem 13(5):573-582, PMC5451154):
-        UC Davis ADC longitudinal cohort. Clinic-recruited CN to MCI
-        ACR = 30% (95% CI 17-54%) per person-year over mean 4.5-year
-        follow-up. Memory-clinic referral is a strong selection signal
-        for impending impairment.
+        Chen Y, Denny KG, Harvey D, Farias ST, Mungas D, DeCarli C, Beckett L.
+        Progression from normal cognition to mild cognitive impairment in a
+        diverse clinic-based and community-based elderly cohort. Alzheimers
+        Dement 2017;13(4):399-405. PMID 27590706, DOI 10.1016/j.jalz.2016.07.151,
+        PMCID PMC5451154. UC Davis ADC longitudinal cohort (n=254, 2000-2015).
+        Verbatim from abstract: "The clinic-based sample showed an annual
+        conversion rate of 30% (95% CI 17%-54%) per person-year." Memory-clinic
+        referral is a strong selection signal for impending impairment.
 
   - from_state: "CN"
     to_state: "MCI"
@@ -162,14 +173,17 @@ transition_priors:
     confidence_interval_95: [0.030, 0.080]
     prior_type: "population"
     citation:
-      citation_pmid: null
+      citation_pmid: "27590706"
       citation_doi: "10.1016/j.jalz.2016.07.151"
       citation_text: >-
-        Hayden et al. 2017 (Alz & Dem 13(5):573-582, PMC5451154):
-        community-recruited CN to MCI ACR = 5% (95% CI 3-6%) per
-        person-year. Cross-validated by Mitchell & Shiri-Feshki 2009
-        (Petersen 2000: 1-2%/yr in general elderly; community rises
-        with age) and Indianapolis Dementia Project community estimates.
+        Chen Y, Denny KG, Harvey D, Farias ST, Mungas D, DeCarli C, Beckett L.
+        Progression from normal cognition to mild cognitive impairment in a
+        diverse clinic-based and community-based elderly cohort. Alzheimers
+        Dement 2017;13(4):399-405. PMID 27590706, PMCID PMC5451154. Verbatim
+        from abstract: "the community-based sample showed a conversion rate
+        of 5% (95% CI 3%-6%) per person-year." Cross-validated by Mitchell &
+        Shiri-Feshki 2009 (community 1-2% in general elderly; rises with age)
+        and Indianapolis Dementia Project community estimates.
 
   # ---------------- MCI -> AD ----------------
   # CORRECTED v1.2.0: prior v1.1.0 erroneously used Salemme 2025 cumulative

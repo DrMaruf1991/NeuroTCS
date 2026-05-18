@@ -23,7 +23,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -73,7 +73,7 @@ def build_patients(predictions: pd.DataFrame) -> pd.DataFrame:
 
 def build_manifest(predictions: pd.DataFrame, submission_id: str) -> dict:
     """Manifest matching v1.0.0 schema."""
-    ts_now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts_now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     return {
         "neurotcs_contract_version": "1.0.0",
         "conformance_level": "L2",

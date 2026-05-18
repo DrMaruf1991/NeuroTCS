@@ -23,7 +23,7 @@ Public API (the most common imports):
     from neurotcs.silent_deployment import make_silent_deployment_evidence
 """
 
-__version__ = "1.7.0"
+__version__ = "1.7.1"
 __author__ = "Marufjon Salokhiddinov, MD PhD"
 __license__ = "Apache-2.0"
 
@@ -50,6 +50,7 @@ from neurotcs.rulepack.loader import (  # noqa: E402,F401
 )
 from neurotcs.rulepack.schema import (  # noqa: E402,F401
     SCHEMA_VERSION,
+    AttributionType,
     Citation,
     DiseaseDomain,
     InadmissibleTransition,
@@ -92,6 +93,7 @@ from neurotcs.threshold_derivation import (  # noqa: E402,F401
 __all__ = [
     "__version__",
     # rule pack
+    "AttributionType",
     "Citation",
     "DiseaseDomain",
     "InadmissibleTransition",
