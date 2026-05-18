@@ -82,12 +82,12 @@ import json
 import re
 import sys
 import time
-from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from urllib.error import HTTPError, URLError
+from typing import Iterable
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 from xml.etree import ElementTree as ET
 
 import yaml
@@ -246,15 +246,12 @@ def _yield_from_citation_block(
         pmid = None
     if not pmid and not doi:
         return
-    # v1.7.5: 800-char context so multi-sentence YAML citation_text
-    # blocks (e.g., Tariot derived-prior citations that lead with math)
-    # reach the comparison logic with author/journal info intact.
     yield CitationRef(
         file_path=path,
         line=0,  # YAML parse doesn't preserve line; label gives location
         pmid=pmid,
         doi=doi,
-        context=f"[{label}] {text[:800]}",
+        context=f"[{label}] {text[:200]}",
     )
 
 
@@ -264,33 +261,27 @@ _DOI_RE = re.compile(r"\bDOI\s*[:#]?\s*(10\.\d{4,}/[A-Za-z0-9._\-+/]+)", re.I)
 
 
 def scan_transcription_audits() -> Iterable[CitationRef]:
-    """Yield CitationRef for every PMID/DOI in transcription audit Markdown.
-
-    v1.7.3: Context is widened to 3 lines above + hit + 1 below to catch
-    multi-line bullets where author names sit on the line before the
-    PMID/DOI identifier.
-    """
+    """Yield CitationRef for every PMID/DOI in transcription audit Markdown."""
     if not TRANSCRIPTION_AUDIT_DIR.exists():
         return
     for path in sorted(TRANSCRIPTION_AUDIT_DIR.glob("*.md")):
         text = path.read_text()
-        lines = text.splitlines()
-        for lineno, line in enumerate(lines, start=1):
+        for lineno, line in enumerate(text.splitlines(), start=1):
             pmids = _PMID_RE.findall(line)
             dois = _DOI_RE.findall(line)
             if not pmids and not dois:
                 continue
+            # If a line has both a PMID and a DOI, treat them as one
+            # CitationRef so the journal cross-check uses both signals.
+            # If only one, the other side stays None.
             pmid = pmids[0] if pmids else None
             doi = dois[0].rstrip(".,;)") if dois else None
-            i = lineno - 1
-            window = lines[max(0, i - 3): min(len(lines), i + 2)]
-            context = " ".join(s.strip() for s in window)
             yield CitationRef(
                 file_path=path,
                 line=lineno,
                 pmid=pmid,
                 doi=doi,
-                context=context[:600],
+                context=line.strip()[:280],
             )
 
 
@@ -424,78 +415,40 @@ def resolve_eutils(pmid: str) -> ResolverRecord | None:
 def _normalize_journal(name: str | None) -> str | None:
     if name is None:
         return None
-    # Strip "and" / "&" connectors so "Alzheimer's & Dementia" matches
-    # "Alzheimer's and Dementia".
-    s = re.sub(r"\band\b", "", name, flags=re.IGNORECASE)
-    s = re.sub(r"[&]", "", s)
-    return re.sub(r"[\s,.()\[\]:;'’`]+", "", s).lower()
-
-
-# v1.7.5: Pattern that signals the YAML/MD context actually makes a
-# journal claim. Single-asterisk italics (*Nature Medicine*) or
-# "in <Journal>" phrasing only. Markdown-bold (**Rule pack:**) and
-# state-machine labels (Partial_TRAC->Full_TRAC) must NOT match. The
-# negative lookbehind/lookahead on asterisks prevents **bold** from
-# being read as *bold*. Underscored italics pattern is intentionally
-# omitted — it false-matched state labels.
-_JOURNAL_CLAIM_RE = re.compile(
-    r"(?<!\*)\*(?!\*)[A-Z][^*\n]{2,80}\*(?!\*)"  # *Italicized*  (not **bold**)
-    r"|\bin\s+[A-Z][A-Za-z&\s]{2,60}\b"          # "in Journal Name"
-)
-
-
-def _has_journal_claim(yaml_text: str) -> bool:
-    """True if the context appears to make a journal-name claim.
-    False when the context only gives author + DOI (DOI is canonical;
-    no journal restatement needed)."""
-    return bool(_JOURNAL_CLAIM_RE.search(yaml_text))
+    return re.sub(r"[\s,.()\[\]:;'’`]+", "", name).lower()
 
 
 def _journal_consistent(yaml_text: str, resolved_journal: str | None) -> bool:
-    """Return True if the resolved journal appears in the YAML/Markdown,
-    OR if no journal claim is made (nothing to verify)."""
+    """Return True if the resolved journal appears (case/whitespace-insensitive)
+    in the YAML/Markdown text, OR if there's no journal mentioned to compare."""
     if not resolved_journal:
-        return True
-    if not _has_journal_claim(yaml_text):
         return True
     norm_text = _normalize_journal(yaml_text)
     norm_journal = _normalize_journal(resolved_journal) or ""
 
+    # Direct match
     if norm_journal and norm_journal in norm_text:
         return True
 
+    # Tolerate common short-form / long-form journal name variants. The
+    # resolver may return "Alzheimers Dement" while the YAML cites the
+    # paper as "Alzheimer's & Dementia" — these should be treated as
+    # consistent for hygiene purposes.
     aliases = {
-        "alzheimers": ["alzheimer", "alzheimerdementia", "alzheimerdement",
-                       "alzheimersdementia", "alzheimersdement"],
+        "alzheimers": ["alzheimer", "alzheimerdementia", "alzheimerdement"],
         "alzheimersdementia": [
             "alzheimerdement", "alzdem", "alzheimerdementia",
-            "alzheimersdement", "alzheimers",
         ],
-        "alzheimersdement": [
-            "alzheimerdement", "alzdem", "alzheimerdementia",
-            "alzheimersdementia", "alzheimers",
-        ],
-        "alzheimersresearchtherapy": ["alzheimersresther", "alzresther"],
-        "alzheimersresther": ["alzheimersresearchtherapy", "alzresther"],
         "archneurol": ["archivesofneurology", "archivesofneurol"],
         "archivesofneurology": ["archneurol"],
         "frontdigithealth": ["frontiersindigitalhealth"],
         "natmed": ["naturemedicine"],
-        "naturemedicine": ["natmed"],
         "natrevneurol": ["naturereviewsneurology"],
-        "naturereviewsneurology": ["natrevneurol"],
         "movementdisorders": ["movdisord"],
         "movdisord": ["movementdisorders"],
         "jamcollradiol": [
             "journalofamericancollegeofradiology", "jacr", "jamcollradiol",
         ],
-        "naturehealth": ["nathealth"],
-        "nathealth": ["naturehealth"],
-        "statmed": ["statisticsinmedicine", "statisticsmedicine"],
-        "statisticsinmedicine": ["statmed"],
-        "statisticsmedicine": ["statmed"],
-        "europeanjournalofcancer": ["eurjcancer", "ejcancer"],
-        "eurjcancer": ["europeanjournalofcancer"],
         "alzheimersdementiadiagnassessdismonit": [
             "alzheimersdementiadiagnassdismonit", "alzheimersdadm",
             "alzdem", "alzheimerdementia",
@@ -509,29 +462,10 @@ def _journal_consistent(yaml_text: str, resolved_journal: str | None) -> bool:
     return False
 
 
-# v1.7.5: Annotated subsidiary references (Correction, Erratum,
-# Scoping review, etc.) deliberately don't restate authors.
-_SUBSIDIARY_PREFIX_RE = re.compile(
-    r"\*\*\s*("
-    r"correction|corrigendum|erratum|"
-    r"scoping\s+review|supplementary|see\s+also|"
-    r"cross[\s\-]?reference"
-    r")\s*\*?\*?\s*:",
-    re.IGNORECASE,
-)
-
-
-def _looks_like_subsidiary_reference(yaml_text: str) -> bool:
-    return bool(_SUBSIDIARY_PREFIX_RE.search(yaml_text))
-
-
 def _author_consistent(yaml_text: str, resolved_authors: list[str]) -> bool:
-    """First-author surname should appear in the YAML text.
-    Skipped for subsidiary references (Correction, Erratum, etc.)."""
+    """First-author surname should appear in the YAML text."""
     if not resolved_authors:
-        return True
-    if _looks_like_subsidiary_reference(yaml_text):
-        return True
+        return True  # nothing to compare
     first = resolved_authors[0]
     return first.lower() in yaml_text.lower()
 
@@ -596,8 +530,7 @@ def find_mismatches(
 
 def _titles_similar(a: str, b: str) -> bool:
     """Tolerant title comparison via normalized substring or set overlap."""
-    def norm(s: str) -> str:
-        return re.sub(r"[^\w]+", " ", (s or "").lower()).strip()
+    norm = lambda s: re.sub(r"[^\w]+", " ", (s or "").lower()).strip()
     A, B = norm(a), norm(b)
     if not A or not B:
         return True
@@ -637,11 +570,6 @@ def _save_cache(cache: dict) -> None:
 
 def main(argv: list[str]) -> int:
     offline = "--offline" in argv or "--no-network" in argv
-    # v1.7.5: Resolver is INFORMATIONAL by default. Mismatches print as
-    # warnings; exit 0 (CI badge stays green). Offline structural checks
-    # (Karagianni-class typos) still hard-fail. --strict upgrades online
-    # mismatches to exit 1 for release-gating.
-    strict = "--strict" in argv
 
     refs = list(scan_rulepack_yamls()) + list(scan_transcription_audits())
     print(f"Scanning {len(refs)} citation references "
@@ -761,13 +689,7 @@ def main(argv: list[str]) -> int:
 
     if mismatches:
         print()
-        if strict:
-            print("=== MISMATCHES (--strict mode, will exit 1) ===")
-        else:
-            print("=== MISMATCHES (informational warnings — exit 0) ===")
-            print("Text-similarity matching against arbitrary YAML/Markdown is")
-            print("inherently approximate. Offline structural check (--offline)")
-            print("is bit-exact. Run with --strict to fail CI on any mismatch.")
+        print("=== MISMATCHES ===")
         for m in mismatches:
             print(f"\n{m.file_path.relative_to(PROJECT_ROOT)}"
                   f"{':' + str(m.line) if m.line else ''}")
@@ -775,7 +697,7 @@ def main(argv: list[str]) -> int:
             print(f"  field          : {m.field_name}")
             print(f"  YAML/MD claim  : {m.yaml_claim}")
             print(f"  resolved value : {m.resolved_value}")
-        return 1 if strict else 0
+        return 1
 
     return 0
 

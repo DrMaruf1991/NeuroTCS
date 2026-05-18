@@ -25,6 +25,7 @@ from neurotcs.sample_size import (
     binary_sample_size,
 )
 
+
 # -----------------------------------------------------------------------------
 # Citation lock — these must never change without an ERRATA entry.
 # -----------------------------------------------------------------------------

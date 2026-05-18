@@ -14,6 +14,7 @@ MIRIAD exports from the XNAT database. Tests verify:
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 import pandas as pd
@@ -710,7 +711,7 @@ def test_audit_id_deterministic_across_runs(tmp_path: Path):
         f"audit_id not reproducible: {r1.audit_id} vs {r2.audit_id}"
     )
     assert r1.audit_id_v2 == r2.audit_id_v2, (
-        "audit_id_v2 not reproducible"
+        f"audit_id_v2 not reproducible"
     )
 
 
@@ -832,6 +833,120 @@ def run_all() -> None:
     for fn in fns:
         fn()
         print(f"  {PASS} {fn.__name__}")
+
+
+# ---------- v1.7.8: content-aware CSV identifier tests ----------
+
+def test_content_aware_identifier_mr_sessions(tmp_path: Path):
+    """v1.7.8 (Fix A): the real-MIRIAD test must identify MR Sessions
+    files by HEADER content, not just filename. Maruf's XNAT export
+    names files like `DrMaruf_5_18_2026_12_16_24.csv` which don't match
+    any canonical pattern. Header-based discovery handles this.
+    """
+    from tests.audit_core.test_real_miriad_audit import (
+        _looks_like_mr_sessions_csv,
+    )
+    sessions_csv = tmp_path / "DrMaruf_5_18_2026_12_16_24.csv"
+    pd.DataFrame([
+        {"Label": "miriad_188_1_MR_1", "Project": "MIRIAD", "Date": "",
+         "Subject": "miriad_188", "M/F": "M", "Age": 76.64,
+         "Type": "", "Scanner": "", "Scans": "T1(1)"},
+    ]).to_csv(sessions_csv, index=False)
+    assert _looks_like_mr_sessions_csv(sessions_csv) is True
+
+    # Negative: a Subjects file must NOT identify as MR Sessions
+    subjects_csv = tmp_path / "DrMaruf_5_18_2026_12_16_33.csv"
+    pd.DataFrame([
+        {"Subject": "miriad_188", "Gender": "M", "Hand": "", "YOB": "",
+         "Education": "", "Ses": "", "MR Count": 11},
+    ]).to_csv(subjects_csv, index=False)
+    assert _looks_like_mr_sessions_csv(subjects_csv) is False
+
+
+def test_content_aware_identifier_clinical(tmp_path: Path):
+    """v1.7.8 (Fix A): ClinicalAssessment files identified by MMSE column."""
+    from tests.audit_core.test_real_miriad_audit import (
+        _looks_like_clinical_csv,
+    )
+    clinical_csv = tmp_path / "DrMaruf_5_18_2026_12_16_7.csv"
+    pd.DataFrame([
+        {"id": "/@WEBAPP/images/r.gif", "Label": "miriad_255_1_MMSE",
+         "Subject": "miriad_255", "Gender": "female", "MMSE": 18,
+         "memory": "", "orientation": "", "sumbox": 4.0, "rating": 1.0},
+    ]).to_csv(clinical_csv, index=False)
+    assert _looks_like_clinical_csv(clinical_csv) is True
+
+    # MR Sessions should NOT be confused for Clinical (has no MMSE column)
+    sessions_csv = tmp_path / "sessions.csv"
+    pd.DataFrame([
+        {"Label": "miriad_188_1_MR_1", "Subject": "miriad_188", "Age": 76.0,
+         "Scans": "T1(1)"},
+    ]).to_csv(sessions_csv, index=False)
+    assert _looks_like_clinical_csv(sessions_csv) is False
+
+
+def test_content_aware_identifier_subjects(tmp_path: Path):
+    """v1.7.8 (Fix A): Subjects files identified by demographics (YOB,
+    Education, MR Count) AND absence of MMSE/Age columns.
+    """
+    from tests.audit_core.test_real_miriad_audit import (
+        _looks_like_subjects_csv,
+    )
+    subjects_csv = tmp_path / "DrMaruf_5_18_2026_12_16_33.csv"
+    pd.DataFrame([
+        {"Subject": "miriad_188", "Gender": "M", "Hand": "", "YOB": "",
+         "Education": "", "Ses": "", "MR Count": 11},
+    ]).to_csv(subjects_csv, index=False)
+    assert _looks_like_subjects_csv(subjects_csv) is True
+
+    # Clinical has MMSE → must NOT be confused for Subjects
+    clinical_csv = tmp_path / "clinical.csv"
+    pd.DataFrame([
+        {"Subject": "miriad_188", "MMSE": 22},
+    ]).to_csv(clinical_csv, index=False)
+    assert _looks_like_subjects_csv(clinical_csv) is False
+
+
+def test_find_miriad_files_via_env_var_with_drmaruf_names(tmp_path: Path,
+                                                          monkeypatch):
+    """v1.7.8 (Fix A): end-to-end discovery of MIRIAD CSVs with the exact
+    filenames from Maruf's 2026-05-18 XNAT export. This is the regression
+    test guarding against the v1.7.7 bug where the real-MIRIAD tests
+    silently skipped because the discovery scheme only looked for
+    canonical filenames.
+    """
+    # Write the three CSVs with the exact filenames + headers from Maruf
+    pd.DataFrame([
+        {"Label": "miriad_188_1_MR_1", "Project": "MIRIAD", "Date": "",
+         "Subject": "miriad_188", "M/F": "M", "Age": 76.64,
+         "Type": "", "Scanner": "", "Scans": "T1(1)"},
+    ]).to_csv(tmp_path / "DrMaruf_5_18_2026_12_16_24.csv", index=False)
+    pd.DataFrame([
+        {"id": "/@WEBAPP/images/r.gif", "Label": "miriad_188_1_MMSE",
+         "Subject": "miriad_188", "Gender": "male", "MMSE": 21,
+         "memory": "", "sumbox": 4.0, "rating": 1.0},
+    ]).to_csv(tmp_path / "DrMaruf_5_18_2026_12_16_7.csv", index=False)
+    pd.DataFrame([
+        {"Subject": "miriad_188", "Gender": "M", "Hand": "", "YOB": "",
+         "Education": "", "Ses": "", "MR Count": 11},
+    ]).to_csv(tmp_path / "DrMaruf_5_18_2026_12_16_33.csv", index=False)
+
+    # Point env var at tmp_path. We need to reload the test module since
+    # SEARCH_BASES is computed at import time.
+    monkeypatch.setenv("NEUROTCS_MIRIAD_DIR", str(tmp_path))
+    import importlib
+    import tests.audit_core.test_real_miriad_audit as t
+    importlib.reload(t)
+
+    result = t._find_miriad_files()
+    assert result is not None, (
+        "Content-aware discovery failed to find MIRIAD CSVs in env var path"
+    )
+    clinical, sessions, subjects = result
+    assert "12_16_7" in clinical.name   # Clinical (smallest non-subjects)
+    assert "12_16_24" in sessions.name  # MR Sessions (has Age + Scans)
+    assert subjects is not None
+    assert "12_16_33" in subjects.name  # Subjects (has YOB + MR Count)
 
 
 if __name__ == "__main__":

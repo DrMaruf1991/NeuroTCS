@@ -83,8 +83,12 @@ def main(argv: list[str] | None = None) -> int:
           f"{long_report.n_transitions} transitions")
     print(f"        rows_with_mmse={long_report.rows_with_mmse}, "
           f"unmappable_mmse={long_report.unmappable_mmse}")
-    print(f"        group↔MMSE disagreements: "
+    print(f"        mmse_forward_filled (visits w/o per-visit MMSE): "
+          f"{long_report.mmse_forward_filled}")
+    print(f"        group↔MMSE broad disagreements: "
           f"{long_report.group_mmse_disagreements}")
+    print(f"        group↔MMSE state-DISCORDANT (clinically meaningful): "
+          f"{long_report.group_mmse_state_discordant}")
     print(f"        test-retest scans excluded: "
           f"{long_report.n_test_retest_visits_excluded}")
 
@@ -123,6 +127,11 @@ def main(argv: list[str] | None = None) -> int:
     summary_lines.append(f"  audit_id           : {long_result.audit_id}")
     summary_lines.append(f"  audit_id_v2        : {long_result.audit_id_v2}")
     summary_lines.append("")
+    summary_lines.append(f"  mmse_forward_filled    : {long_report.mmse_forward_filled}")
+    summary_lines.append(f"  group/MMSE broad       : {long_report.group_mmse_disagreements}")
+    summary_lines.append(f"  group/MMSE discordant  : {long_report.group_mmse_state_discordant}")
+    summary_lines.append(f"  test-retest scans excl : {long_report.n_test_retest_visits_excluded}")
+    summary_lines.append("")
     summary_lines.append(f"  delta cTCS vs ADNI(0.9946)    : "
                          f"{long_result.ctcs.ci.point - 0.9946:+.4f}")
     summary_lines.append(f"  delta cTCS vs OASIS-3(0.9942) : "
@@ -153,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
         summary_lines.append(f"  pairs identified   : {pair_report.n_rescan_pairs}")
         summary_lines.append(f"  pairs with MMSE    : "
                              f"{pair_report.n_rescan_pairs_with_mmse}")
-        summary_lines.append("  pairs audit-ready  : 0")
+        summary_lines.append(f"  pairs audit-ready  : 0")
         summary_lines.append("")
     else:
         pair_result = audit(

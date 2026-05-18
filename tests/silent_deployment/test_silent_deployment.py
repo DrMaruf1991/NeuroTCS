@@ -9,12 +9,13 @@ from neurotcs.silent_deployment import (
     KWONG_2022_CITATION,
     KWONG_2022_DOI,
     KWONG_2022_PMID,
-    KWONG_2022_THEME_QUESTIONS,
     SilentDeploymentEvidence,
     SilentTrialTheme,
     SilentTrialThemeFinding,
     make_silent_deployment_evidence,
 )
+from neurotcs.silent_deployment import KWONG_2022_THEME_QUESTIONS
+
 
 # -----------------------------------------------------------------------------
 # Citation locks

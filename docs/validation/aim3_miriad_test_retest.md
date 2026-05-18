@@ -1,16 +1,66 @@
 # Aim 3 — MIRIAD Measurement-Noise Floor + Third-Cohort Generalisation Test
 
-**Status**: pipeline shipped (v1.7.4); locked invariants to be re-derived on Maruf's first MIRIAD-data run.
+**Status**: REAL-DATA RUN COMPLETE (2026-05-18); invariants locked in v1.7.7.
 **Framework**: temporalmetric v1.7 FINAL §B.1 Aim 3.
 **Rule pack**: `ad/niaaa_2018@1.2.0` (same as Aim 1 ADNI, Aim 2 OASIS-3).
 **Cohort**: MIRIAD (Malone et al. 2013 *NeuroImage* 70:33-36, PMID 23274184, DOI 10.1016/j.neuroimage.2012.12.044). 46 mild-to-moderate AD + 23 cognitively-normal controls (n=69 total), 708 T1 MRI scans, UCL Dementia Research Centre.
 
+## Real-data findings (2026-05-18 run, NeuroTCS v1.7.6)
+
+### (A) Longitudinal kernel-logic generalisation — **PASSED**
+
+| Metric | Value | Locked? |
+|---|---|---|
+| Trajectories | 69 / 69 (full cohort) | ✓ |
+| Transitions | 454 | ✓ |
+| Flagged | 7 (1.54 %) | ✓ |
+| cTCS | **0.9854** (BCa 95 % CI: 0.9715–0.9937) | ✓ |
+| pTCS (clinical) | −0.3622 | — |
+| uTCS | 0.9854 | — |
+| ΔcTCS vs ADNI (0.9946) | **−0.0092** | — |
+| ΔcTCS vs OASIS-3 (0.9942) | **−0.0088** | — |
+| audit_id | `947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0` | ✓ |
+| audit_id_v2 | `aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da` | ✓ |
+
+**Interpretation**: The cTCS kernel — designed and validated on CDR-anchored ADNI/OASIS-3 — produces a generalisation cTCS of 0.9854 on MMSE-anchored MIRIAD, within 0.01 of the CDR-anchored cohorts. This is closer agreement than the conservative ±0.05 band set for the construct difference. The kernel's admissibility logic is robust across staging instruments.
+
+### (B) Test-retest pipeline determinism — **PASSED**
+
+| Metric | Value | Locked? |
+|---|---|---|
+| Same-session pairs identified | 185 candidate | — |
+| Pairs with per-visit MMSE | 69 (baseline-rescan only) | ✓ |
+| Pairs entered into audit | 69 | ✓ |
+| Identical-state pairs | 69 (100 %) | ✓ |
+| Differing-state pairs | 0 | ✓ |
+| Flag rate | **0.000 %** | ✓ |
+| cTCS | 1.0000 (BCa 95 % CI: 1.0000–1.0000) | — |
+| audit_id | `804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85` | ✓ |
+| audit_id_v2 | `dcf8b7de3ff9019e9cda703064039e3a71193566d1f5082ce96646188fd52fc4` | ✓ |
+
+**Why only 69 pairs of an expected ~207?** MIRIAD has back-to-back rescans at weeks 0, 6, and 38 (= 3 rescan visits × 69 subjects = 207 candidate pairs). However, per Malone 2013, MMSE is recorded at baseline + every 6 months only. The week-0 baseline rescan has same-visit MMSE; the week-6 and week-38 rescans do NOT have a clinical-assessment row with matching visit number. The adapter's per-visit Label-based join correctly excludes pairs without same-visit MMSE rather than fabricating values, leaving the **baseline rescan for each subject = 69 audit-ready pairs**.
+
+**Interpretation**: 69 independent same-session pairs flow through the audit kernel with zero flagged transitions. The kernel produces bit-identical decisions on bit-identical inputs across 69 independent test cases. This bounds **pipeline determinism**, not MMSE re-administration noise (which would require Malone 2013-style per-scan MMSE administration, not present in MIRIAD's protocol). True MMSE re-administration noise is deferred to RIDER (v0.2 roadmap).
+
+### Adapter diagnostics (v1.7.6 round-2 audit fields)
+
+| Field | Value | Meaning |
+|---|---|---|
+| `rows_with_mmse` | 523 / 523 | Every loaded scan has matched MMSE after forward-fill |
+| `unmappable_mmse` | 0 | All MMSE values map cleanly to Folstein states |
+| `mmse_forward_filled` | (computed at runtime) | Visits inherited MMSE from prior assessment per Malone 2013's 6-monthly cadence |
+| `group_mmse_disagreements` (broad) | 359 | All AD-MCI severity-consistent + state-discordant cases |
+| `group_mmse_state_discordant` | (computed at runtime) | The clinically meaningful subset only |
+| `n_test_retest_visits_excluded` | 185 | Back-to-back rescan scans removed from longitudinal cohort |
+
+The high broad disagreement count (359) is expected because MIRIAD's AD inclusion criterion is MMSE 12-26, which spans the Folstein MCI and AD ranges. The clinically meaningful state-discordant count is the field to report.
+
 ## What MIRIAD adds to the validation story
 
-Aim 1 (ADNI, n_transitions = 12,006) and Aim 2 (OASIS-3, n_transitions = 7,248) established that the cTCS metric generalises across two large independent CDR-anchored AD cohorts. **MIRIAD asks two complementary questions** that the other two cohorts cannot:
+Aim 1 (ADNI, n_transitions = 12,006) and Aim 2 (OASIS-3, n_transitions = 7,248) established that the cTCS metric generalises across two large independent CDR-anchored AD cohorts. **MIRIAD answers two complementary questions** that the other two cohorts cannot:
 
-1. **Does the kernel logic generalise to an MMSE-anchored staging?** ADNI and OASIS-3 derive state from Clinical Dementia Rating (Morris 1993). MIRIAD has only MMSE per visit (Folstein 1975); no CDR data per scan. The rule pack's CN/MCI/AD admissibility rules are themselves clinically agnostic about the upstream staging instrument — but until v1.7.4 this generalisation had not been tested empirically.
-2. **What is the within-session measurement-noise floor?** MIRIAD is the **only** of the three cohorts with back-to-back same-session rescans (weeks 0, 6, 38 each have two scans). The audit flag rate on these pairs quantifies what fraction of "flagged transitions" in ADNI/OASIS-3 could plausibly be attributable to within-session noise versus genuine biological inadmissibility.
+1. **Does the kernel logic generalise to MMSE-anchored staging?** ADNI and OASIS-3 derive state from Clinical Dementia Rating (Morris 1993). MIRIAD has only MMSE per visit (Folstein 1975); no CDR data per scan. The rule pack's CN/MCI/AD admissibility rules are themselves clinically agnostic about the upstream staging instrument. **Answer (2026-05-18): YES** — cTCS 0.9854 vs ADNI 0.9946 (Δ = −0.0092).
+2. **What is the pipeline determinism floor?** MIRIAD is the only of the three cohorts with back-to-back same-session rescans. **Answer (2026-05-18): EXACT** — 69 pairs, 0 flagged, cTCS = 1.0000.
 
 | Property | ADNI (Aim 1) | OASIS-3 (Aim 2) | MIRIAD (Aim 3) |
 |---|---|---|---|
@@ -18,10 +68,11 @@ Aim 1 (ADNI, n_transitions = 12,006) and Aim 2 (OASIS-3, n_transitions = 7,248) 
 | Sample size | 2,958 subjects | 1,247 subjects | 69 subjects |
 | Follow-up window | up to 18 years | up to 30 years | up to 2 years |
 | Scanner heterogeneity | many | many | **single scanner** (same radiographer, same sequences) |
-| Test-retest scans | none | none | **3 visits × 2 back-to-back scans ≈ 207 pairs** |
+| Test-retest scans | none | none | 69 audit-ready baseline pairs |
 | Per-visit clinical signal | clinical diagnosis | CDR global score | **MMSE only** (no per-visit CDR) |
-| MMSE cadence | every visit (when collected) | every visit | **6-monthly** (Malone 2013) |
-| Statistical question | natural-history admissibility | natural-history replication (CDR↔CDR) | **kernel-logic generalisation (CDR→MMSE) + within-session noise floor** |
+| MMSE/CDR cadence | every visit | every visit | **6-monthly** (Malone 2013) |
+| cTCS | 0.9946 | 0.9942 | **0.9854** (longitudinal) / 1.0000 (test-retest) |
+| Statistical question | natural-history admissibility | natural-history replication (CDR↔CDR) | **kernel-logic generalisation (CDR→MMSE) + pipeline-determinism floor** |
 
 ### Honest framing — what this is NOT
 
@@ -144,9 +195,6 @@ All four citations are gated by `scripts/verify_citations.py` against Crossref +
 
 - **v1.7.2** — initial MIRIAD adapter shipped with MMSE staging, group-disagreement diagnostic, and same-session rescan exclusion.
 - **v1.7.3** — surgical patch for real XNAT export format (composite `Label` parsing, subject-ID-based group inference fallback).
-- **v1.7.4** — deep audit + 4 critical fixes after expert-grade methodology review:
-  - F1: `BootstrapCI` attribute names (would have crashed the runner).
-  - F8: same-session pair `delta_t = 0` (was 1 day, methodologically incorrect).
-  - F11: MMSE forward-fill within subject (Malone 2013 records MMSE 6-monthly, not per scan).
-  - F2+F12: state-discordant vs severity-consistent disagreement distinction (MIRIAD AD inclusion criterion is MMSE 12-26 = MCI range under Folstein).
-  - F13: honest framing of what MIRIAD's test-retest design actually measures (pipeline determinism, not MMSE re-administration noise).
+- **v1.7.4** — round-1 deep methodology audit + 6 fixes (F1-F13) after expert-grade review.
+- **v1.7.6** — round-2 deep audit + 2 reporting bugs fixed (R1, R2) + 11 edge-case regression tests added. 237 tests passing on two consecutive runs from cold install.
+- **v1.7.7** — REAL-DATA RUN COMPLETE. Locked invariants from 2026-05-18 MIRIAD run: longitudinal cTCS = 0.9854, audit_id `947ab24e...`; test-retest cTCS = 1.0000, audit_id `80430399...`. Three-cohort consistency achieved (ADNI 0.9946 / OASIS-3 0.9942 / MIRIAD 0.9854 — all within 0.01 of each other). Runner now displays state-discordant disagreement count separately from broad count. Numerical invariants (trajectory count, transitions, flag count, cTCS to 4dp) locked as test assertions.
