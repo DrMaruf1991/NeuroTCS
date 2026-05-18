@@ -77,7 +77,3 @@ private/
 # But keep example/test fixtures
 !tests/fixtures/*.csv
 !tests/fixtures/*.yaml
-
-# Local debug artifacts (do not commit)
-ci_failed_log.txt
-run_oasis3_audit.py

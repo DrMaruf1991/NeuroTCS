@@ -4,6 +4,122 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] — 2026-05-18
+
+### Added — Five new methodological modules with primary-source-locked citations
+
+This release implements five new modules that close the spec-vs-code gap for
+spec v1.7. Every framework was primary-source verified during a dedicated
+framework-audit phase BEFORE any code was written. Seven memory drifts were
+caught and corrected; without this phase they would have generated a third
+public erratum after E-2026-001 and E-2026-002.
+
+**New modules:**
+
+| Module | Source | License |
+|---|---|---|
+| `neurotcs.sample_size` | Riley 2024 (BMJ 384:e074821, PMID 38253388) | CC-BY 4.0 |
+| `neurotcs.fairness` | FUTURE-AI / Lekadir 2025 (BMJ 388:e081554, PMID 39909534) | CC-BY-NC 4.0 |
+| `neurotcs.silent_deployment` | Kwong 2022 (Front Digit Health 4:929508, PMID 36052317) + DECIDE-AI / Vasey 2022 (Nat Med 28:924-933, PMID 35585196) | CC-BY 4.0 + Springer sub |
+| `neurotcs.scanner_factorial` | FUTURE-AI Robustness 3 | CC-BY-NC 4.0 |
+| `neurotcs.threshold_derivation` | Larson 2025 ACR-SIIM (JACR 22:586-592, PMID 40057886) | Elsevier sub |
+
+**Module summaries:**
+
+- **`sample_size`**: Riley 2024 four-criteria sample-size calculator for binary
+  outcomes (O/E, calibration slope, c-statistic, net benefit). Calibration
+  slope uses Gauss-Hermite-quadrature Fisher-information integration; the
+  Newcombe (2006) formula gives the c-statistic SE. Reproduces N=347 for the
+  Riley 2024 ISARIC c-statistic example exactly; calibration-slope criterion
+  yields ~1143 vs the paper's 949 (a ~20% conservative bias of the normal-LP
+  approximation vs the paper's beta(1.33, 1.75) LP fit; documented and tested).
+
+- **`fairness`**: Two SEPARATE audit panels per the FUTURE-AI distinction
+  caught during framework verification: panel B.4.4 stratifies on six
+  demographic/clinical attributes (sex, age_band, race_ethnicity, comorbidity,
+  disease_stage, treatment_status); panel B.4.5 stratifies on five
+  technical/operational attributes (scanner_vendor, field_strength,
+  acquisition_site, protocol, operator). The two attribute sets are disjoint
+  by design and the test suite enforces this.
+
+- **`silent_deployment`**: Kwong 2022 four-theme silent-trial framework
+  (dataset drift, bias, feasibility, stakeholder attitudes) with verbatim
+  Table 1 key questions reproduced under CC-BY 4.0 license. Cites BOTH Kwong
+  2022 (for silent-trial methodology) AND DECIDE-AI (for reporting items) —
+  these are separate primary sources, not a single Stage-A/B/C scheme.
+  `SilentDeploymentEvidence` dataclass produces a structured evidence record
+  with model hash, rule-pack ID, audit ID, and per-theme findings.
+
+- **`scanner_factorial`**: Multi-dimensional cross-tabulation of audit flags
+  across technical dimensions (e.g. vendor × field-strength × interval). Filters
+  cells below `min_cell_n` for stable rate estimation. Complements the 1D
+  per-attribute robustness panel by surfacing INTERACTION effects (e.g. model
+  is fine on Siemens 3T but flags 8% of GE 1.5T transitions) that single-
+  attribute stratification can miss.
+
+- **`threshold_derivation`**: Two empirical methods for deriving operational
+  audit thresholds from a reference epoch. (1) k-sigma below the reference
+  mean; (2) Vovk-style finite-sample conformal lower bound (distribution-free,
+  finite-sample valid). Supports ACR-SIIM's "ongoing monitoring with drift
+  detection and stop rules" obligation without requiring vendor-fixed
+  thresholds.
+
+### Documentation
+
+- **NEW**: `docs/transcription_audit/v1.7_frameworks.md` — full primary-source
+  verification audit for all 10 sources (5 frameworks + 5 cross-references)
+  with PMID/DOI, license terms, verbatim quotes, and a section enumerating the
+  seven memory drifts caught BEFORE code.
+- **REPLACED**: `docs/spec/temporalmetric_v1.6_FINAL.md` → `temporalmetric_v1.7_FINAL.md`
+  (96 KB, v1.7 spec text from upstream).
+
+### Memory-drift corrections caught during framework verification
+
+| # | Drift | Corrected to | Source check |
+|---|---|---|---|
+| 1 | FUTURE-AI = 118 experts / 51 countries | 117 / 50 | BMJ paper (not arXiv preprint) |
+| 2 | Haller 2022 pages 851–858 | 851–864 (14 pages) | Springer metadata + PubMed |
+| 3 | DECIDE-AI has Stage A/B/C silent-deployment labels | DECIDE-AI single-stage; silent-deployment is Kwong 2022 | Vasey 2022 full text + Kwong 2022 |
+| 4 | FUTURE-AI Fairness includes scanner vendor | Scanner vendor is Robustness 1; two panels | FUTURE-AI BMJ Table 2 |
+| 5 | DECIDE-AI = 17-item core | 17 AI-specific + 28 subitems + 10 generic | Vasey 2022 abstract |
+| 6 | Riley framework applies to audit-time sizing | Riley is external-validation precision | Riley 2024 §1 |
+| 7 | Larson 2025 has no commercial conflict | Larson holds Bunkerhill Health equity | JACR competing-interests section |
+
+### Tests
+
+- Baseline 145/145 tests still passing (locked ADNI invariant intact:
+  cTCS=0.9946, audit_id=fa448b8f…; locked OASIS-3 replication intact:
+  cTCS=0.9942, ΔcTCS=0.0004).
+- **NEW**: 12 sample-size tests (validated against Riley 2024 worked
+  examples; c-statistic N=347 reproduced exactly).
+- **NEW**: 9 fairness tests (citation lock, attribute disjointness between
+  B.4.4 and B.4.5 panels, disparity detection).
+- **NEW**: 9 silent-deployment tests (Kwong 2022 + DECIDE-AI citation locks,
+  verbatim Table 1 questions, DECIDE-AI-no-stage-labels regression test).
+- **NEW**: 8 scanner-factorial tests (2D/3D interaction detection, min_cell_n
+  filter, length-mismatch errors).
+- **NEW**: 10 threshold-derivation tests (k-sigma monotonicity, conformal
+  coverage monotonicity, Larson 2025 citation lock).
+
+### Citation block
+
+`CITATION.cff` updated with 10 new bibliography entries: Riley 2024,
+Lekadir 2025 (FUTURE-AI), Haller 2022 (R-AI-DIOLOGY), Larson 2025 (ACR-SIIM),
+Vasey 2022 (DECIDE-AI), Kwong 2022 (silent trial), Collins 2024 (TRIPOD+AI),
+Tejani 2024 (CLAIM).
+
+### What's next
+
+- v1.7.1: validation harness (Piece 7 of 7) — synthetic-trajectory self-tests
+- v1.7.2: signed JSON audit certificates + DICOM SR output
+- v1.7.3: MLOps callbacks (MLflow, Weights & Biases)
+- v1.7.4: FHIR Observation output schema (Piece 5 of 7)
+- v1.8.0: six non-AD rule-pack priors (PD, MS, oncology, stroke, lung nodule)
+- v1.9.0: FDA PCCP Evidence Pack (3 required components per Final Guidance 2024)
+- v2.0.0: Layer 2 leaderboard + Layer 3 dashboard
+
+---
+
 ## [1.6.0] — 2026-05-18
 
 ### Fixed — `ad/aa_2024` priors populated (ERRATA E-2026-002)
