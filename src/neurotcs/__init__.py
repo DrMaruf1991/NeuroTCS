@@ -23,7 +23,7 @@ Public API (the most common imports):
     from neurotcs.silent_deployment import make_silent_deployment_evidence
 """
 
-__version__ = "1.7.11"
+__version__ = "1.7.12"
 __author__ = "Marufjon Salokhiddinov, MD PhD"
 __license__ = "Apache-2.0"
 
