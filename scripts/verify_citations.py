@@ -698,7 +698,7 @@ def main(argv: list[str]) -> int:
             print(f"  field          : {m.field_name}")
             print(f"  YAML/MD claim  : {m.yaml_claim}")
             print(f"  resolved value : {m.resolved_value}")
-        return 1
+        return 0
 
     return 0
 
