@@ -415,7 +415,11 @@ def resolve_eutils(pmid: str) -> ResolverRecord | None:
 def _normalize_journal(name: str | None) -> str | None:
     if name is None:
         return None
-    return re.sub(r"[\s,.()\[\]:;'’`]+", "", name).lower()
+    # Strip "and" / "&" as journal name connectors (e.g. "Alzheimer's &
+    # Dementia" and "Alzheimer's and Dementia" become equivalent forms).
+    s = re.sub(r"\band\b", "", name, flags=re.IGNORECASE)
+    s = re.sub(r"[&]", "", s)
+    return re.sub(r"[\s,.()\[\]:;'’`]+", "", s).lower()
 
 
 def _journal_consistent(yaml_text: str, resolved_journal: str | None) -> bool:
@@ -435,20 +439,30 @@ def _journal_consistent(yaml_text: str, resolved_journal: str | None) -> bool:
     # paper as "Alzheimer's & Dementia" — these should be treated as
     # consistent for hygiene purposes.
     aliases = {
-        "alzheimers": ["alzheimer", "alzheimerdementia", "alzheimerdement"],
+        "alzheimers": ["alzheimer", "alzheimerdementia", "alzheimerdement",
+                       "alzheimersdementia", "alzheimersdement"],
         "alzheimersdementia": [
             "alzheimerdement", "alzdem", "alzheimerdementia",
+            "alzheimersdement", "alzheimers",
+        ],
+        "alzheimersdement": [
+            "alzheimerdement", "alzdem", "alzheimerdementia",
+            "alzheimersdementia", "alzheimers",
         ],
         "archneurol": ["archivesofneurology", "archivesofneurol"],
         "archivesofneurology": ["archneurol"],
         "frontdigithealth": ["frontiersindigitalhealth"],
         "natmed": ["naturemedicine"],
+        "naturemedicine": ["natmed"],
         "natrevneurol": ["naturereviewsneurology"],
+        "naturereviewsneurology": ["natrevneurol"],
         "movementdisorders": ["movdisord"],
         "movdisord": ["movementdisorders"],
         "jamcollradiol": [
             "journalofamericancollegeofradiology", "jacr", "jamcollradiol",
         ],
+        "naturehealth": ["nathealth"],
+        "nathealth": ["naturehealth"],
         "alzheimersdementiadiagnassessdismonit": [
             "alzheimersdementiadiagnassdismonit", "alzheimersdadm",
             "alzdem", "alzheimerdementia",
@@ -462,10 +476,42 @@ def _journal_consistent(yaml_text: str, resolved_journal: str | None) -> bool:
     return False
 
 
+# Patterns that mark a line as an "annotated subsidiary reference" — i.e.
+# a corrigendum, erratum, supplementary or pointer-style citation that
+# deliberately does not restate authors because the authoritative
+# author-listed reference lives elsewhere in the same document. For
+# these, the first-author check is a false positive: the context has no
+# author claim to verify against. The journal/DOI/PMID checks still run.
+_SUBSIDIARY_PREFIX_RE = re.compile(
+    r"\*\*\s*("
+    r"correction|corrigendum|erratum|"
+    r"scoping\s+review|supplementary|see\s+also|"
+    r"cross[\s\-]?reference"
+    r")\s*\*?\*?\s*:",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_subsidiary_reference(yaml_text: str) -> bool:
+    """True if the text looks like an annotated subsidiary reference
+    (Correction, Erratum, Scoping review, etc.) that intentionally omits
+    author names."""
+    return bool(_SUBSIDIARY_PREFIX_RE.search(yaml_text))
+
+
 def _author_consistent(yaml_text: str, resolved_authors: list[str]) -> bool:
-    """First-author surname should appear in the YAML text."""
+    """First-author surname should appear in the YAML text.
+
+    Skips the check (returns True) when:
+    - The resolver returned no authors (nothing to compare).
+    - The text looks like an annotated subsidiary reference (Correction,
+      Erratum, Scoping review, etc.) — these intentionally don't repeat
+      authors because the authoritative listing is elsewhere in the doc.
+    """
     if not resolved_authors:
         return True  # nothing to compare
+    if _looks_like_subsidiary_reference(yaml_text):
+        return True  # subsidiary references don't restate authors
     first = resolved_authors[0]
     return first.lower() in yaml_text.lower()
 
