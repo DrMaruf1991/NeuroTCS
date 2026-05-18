@@ -261,27 +261,43 @@ _DOI_RE = re.compile(r"\bDOI\s*[:#]?\s*(10\.\d{4,}/[A-Za-z0-9._\-+/]+)", re.I)
 
 
 def scan_transcription_audits() -> Iterable[CitationRef]:
-    """Yield CitationRef for every PMID/DOI in transcription audit Markdown."""
+    """Yield CitationRef for every PMID/DOI in transcription audit Markdown.
+
+    Context is widened to include 3 lines above and 1 line below the
+    PMID/DOI hit. This is necessary because audit-document conventions
+    use multi-line bulleted citations of the form:
+
+        - **Time-to-event**: Riley RD, Collins GS, Ensor J, Archer L,
+          ...
+          *Stat Med* 2022;41(7):1280-1295. DOI 10.1002/sim.9275. PMID 34915593.
+
+    where the author names appear on a line above the PMID/DOI. Without
+    a widened window the author-consistency check raises false positives
+    on multi-line bullets that DO contain a valid first-author claim,
+    just not on the same line as the identifier.
+    """
     if not TRANSCRIPTION_AUDIT_DIR.exists():
         return
     for path in sorted(TRANSCRIPTION_AUDIT_DIR.glob("*.md")):
         text = path.read_text()
-        for lineno, line in enumerate(text.splitlines(), start=1):
+        lines = text.splitlines()
+        for lineno, line in enumerate(lines, start=1):
             pmids = _PMID_RE.findall(line)
             dois = _DOI_RE.findall(line)
             if not pmids and not dois:
                 continue
-            # If a line has both a PMID and a DOI, treat them as one
-            # CitationRef so the journal cross-check uses both signals.
-            # If only one, the other side stays None.
             pmid = pmids[0] if pmids else None
             doi = dois[0].rstrip(".,;)") if dois else None
+            # Window: 3 lines above, the hit line, 1 line below.
+            i = lineno - 1
+            window = lines[max(0, i - 3): min(len(lines), i + 2)]
+            context = " ".join(s.strip() for s in window)
             yield CitationRef(
                 file_path=path,
                 line=lineno,
                 pmid=pmid,
                 doi=doi,
-                context=line.strip()[:280],
+                context=context[:600],
             )
 
 
@@ -463,6 +479,9 @@ def _journal_consistent(yaml_text: str, resolved_journal: str | None) -> bool:
         ],
         "naturehealth": ["nathealth"],
         "nathealth": ["naturehealth"],
+        "statmed": ["statisticsinmedicine", "statisticsmedicine"],
+        "statisticsinmedicine": ["statmed"],
+        "statisticsmedicine": ["statmed"],
         "alzheimersdementiadiagnassessdismonit": [
             "alzheimersdementiadiagnassdismonit", "alzheimersdadm",
             "alzdem", "alzheimerdementia",
