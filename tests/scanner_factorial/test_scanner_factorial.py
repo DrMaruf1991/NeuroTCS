@@ -58,13 +58,12 @@ def test_scanner_factorial_min_cell_n_filter():
 
 
 def test_scanner_factorial_three_dimensions():
-    """3D factorial: vendor × field-strength × protocol."""
-    n = 16
+    """3D factorial: vendor × field-strength × protocol (n=16)."""
     flags = np.array([False] * 8 + [True] * 8)
     attrs = {
         "scanner_vendor": np.array(["GE"] * 8 + ["Siemens"] * 8),
         "field_strength": np.array((["1.5T"] * 4 + ["3T"] * 4) * 2),
-        "protocol": np.array((["MPRAGE", "MPRAGE", "FLAIR", "FLAIR"] * 4)),
+        "protocol": np.array(["MPRAGE", "MPRAGE", "FLAIR", "FLAIR"] * 4),
     }
     result = scanner_factorial(
         flags, attrs,

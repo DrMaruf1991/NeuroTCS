@@ -153,7 +153,7 @@ def main(argv: list[str] | None = None) -> int:
         summary_lines.append(f"  pairs identified   : {pair_report.n_rescan_pairs}")
         summary_lines.append(f"  pairs with MMSE    : "
                              f"{pair_report.n_rescan_pairs_with_mmse}")
-        summary_lines.append(f"  pairs audit-ready  : 0")
+        summary_lines.append("  pairs audit-ready  : 0")
         summary_lines.append("")
     else:
         pair_result = audit(

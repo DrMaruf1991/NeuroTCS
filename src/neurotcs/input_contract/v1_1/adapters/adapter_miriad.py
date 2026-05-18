@@ -115,7 +115,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -689,6 +689,7 @@ def load_miriad_trajectories(
                 group_map = dict(zip(
                     subjects[subj_col_subj].astype(str),
                     subjects[group_col].astype(str),
+                    strict=True,
                 ))
 
         # If we have a non-empty explicit group_map, use it. Otherwise fall

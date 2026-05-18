@@ -14,7 +14,6 @@ MIRIAD exports from the XNAT database. Tests verify:
 
 from __future__ import annotations
 
-import io
 from pathlib import Path
 
 import pandas as pd
@@ -711,7 +710,7 @@ def test_audit_id_deterministic_across_runs(tmp_path: Path):
         f"audit_id not reproducible: {r1.audit_id} vs {r2.audit_id}"
     )
     assert r1.audit_id_v2 == r2.audit_id_v2, (
-        f"audit_id_v2 not reproducible"
+        "audit_id_v2 not reproducible"
     )
 
 

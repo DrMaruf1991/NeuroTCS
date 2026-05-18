@@ -5,8 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.7.1](https://img.shields.io/badge/version-1.7.1-success.svg)](CHANGELOG.md)
-[![Tests 199/199](https://img.shields.io/badge/tests-199%2F199-success.svg)](tests/)
+[![Version 1.7.6](https://img.shields.io/badge/version-1.7.6-success.svg)](CHANGELOG.md)
+[![Tests 237/237](https://img.shields.io/badge/tests-237%2F237-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7_FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
