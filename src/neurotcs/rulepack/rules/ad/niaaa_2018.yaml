@@ -8,9 +8,9 @@
 # research and is the foundation for the AA 2024 revision.
 
 schema_version: "1.1.0"
-rulepack_id: "ad/niaaa_2018@1.1.0"
-ruleset_version: "1.1.0"
-effective_date: "2026-05-17"
+rulepack_id: "ad/niaaa_2018@1.2.0"
+ruleset_version: "1.2.0"
+effective_date: "2026-05-18"
 status: "production"
 disease_domain: "alzheimers"
 framework_name: "NIA-AA 2018 Research Framework (clinical staging CN/MCI/AD)"
@@ -136,54 +136,126 @@ inadmissible_transitions:
 
 transition_priors:
 
+  # ---------------- CN -> MCI ----------------
+  # CN->MCI rates differ substantially by recruitment cohort:
+  # population/community ~5%/yr; memory-clinic referrals ~30%/yr (the
+  # clinic referral itself is a strong selection signal for impending
+  # impairment). Both verified in Hayden 2017 (UC Davis ADC cohort).
   - from_state: "CN"
     to_state: "MCI"
-    annual_probability: 0.05
+    annual_probability: 0.30
+    confidence_interval_95: [0.17, 0.54]
+    prior_type: "clinical"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1016/j.jalz.2016.07.151"
+      citation_text: >-
+        Hayden et al. 2017 (Alz & Dem 13(5):573-582, PMC5451154):
+        UC Davis ADC longitudinal cohort. Clinic-recruited CN to MCI
+        ACR = 30% (95% CI 17-54%) per person-year over mean 4.5-year
+        follow-up. Memory-clinic referral is a strong selection signal
+        for impending impairment.
+
+  - from_state: "CN"
+    to_state: "MCI"
+    annual_probability: 0.048
+    confidence_interval_95: [0.030, 0.080]
+    prior_type: "population"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1016/j.jalz.2016.07.151"
+      citation_text: >-
+        Hayden et al. 2017 (Alz & Dem 13(5):573-582, PMC5451154):
+        community-recruited CN to MCI ACR = 5% (95% CI 3-6%) per
+        person-year. Cross-validated by Mitchell & Shiri-Feshki 2009
+        (Petersen 2000: 1-2%/yr in general elderly; community rises
+        with age) and Indianapolis Dementia Project community estimates.
+
+  # ---------------- MCI -> AD ----------------
+  # CORRECTED v1.2.0: prior v1.1.0 erroneously used Salemme 2025 cumulative
+  # incidence (41.5% over 5.2-year mean follow-up) as if it were annual.
+  # Correct values are the annual conversion rate (ACR) explicitly reported
+  # by Salemme 2025 ("ACR nearly doubled from 6% in population settings to
+  # 11% in clinical settings"). See CHANGELOG and ERRATA for full discussion.
+  - from_state: "MCI"
+    to_state: "AD"
+    annual_probability: 0.11
+    confidence_interval_95: [0.08, 0.14]
     prior_type: "clinical"
     citation:
       citation_pmid: null
       citation_doi: "10.1002/dad2.70074"
-      citation_text: "Salemme 2025 CN->MCI annual progression (clinical cohort)."
+      citation_text: >-
+        Salemme 2025 (Alzheimer's & Dementia: DADM 17(1):e70074):
+        annual conversion rate (ACR) = 11% in clinical settings, computed
+        as converters / person-years across 89 studies. Cross-validated by
+        Mitchell & Shiri-Feshki 2009 (specialist clinic Mayo-MCI->AD
+        ACR=8.1%) and clinical AD progression rate 13.7% person-years
+        in NACC analysis (Neurology 2022).
 
   - from_state: "MCI"
     to_state: "AD"
-    annual_probability: 0.415
-    confidence_interval_95: [0.36, 0.47]
-    prior_type: "clinical"
-    citation:
-      citation_pmid: null
-      citation_doi: "10.1002/dad2.70074"
-      citation_text: "Salemme 2025: 41.5% MCI->dementia (clinical cohorts)."
-
-  - from_state: "MCI"
-    to_state: "AD"
-    annual_probability: 0.27
-    confidence_interval_95: [0.21, 0.33]
+    annual_probability: 0.06
+    confidence_interval_95: [0.04, 0.08]
     prior_type: "population"
     citation:
       citation_pmid: null
       citation_doi: "10.1002/dad2.70074"
-      citation_text: "Salemme 2025: 27% MCI->dementia (population cohorts)."
+      citation_text: >-
+        Salemme 2025: annual conversion rate (ACR) = 6% in population
+        settings. Cross-validated by Mitchell & Shiri-Feshki 2009
+        (community Mayo-MCI->AD ACR=6.8%) and Indianapolis Dementia
+        Project (5.9% [95% CI 5.3-6.5%]).
 
+  # ---------------- MCI -> CN (reversion) ----------------
+  # Reversion is real and well-documented. Salemme 2025 reports clinical
+  # cumulative 8% (over mean 5.2yr fu) ≈ 2-4%/yr annualized; population
+  # cumulative 25% ≈ 5-10%/yr. We use midpoint values cross-validated by
+  # multiple community cohort studies (Singapore SLAS, Hisayama, Indianapolis).
   - from_state: "MCI"
     to_state: "CN"
-    annual_probability: 0.087
-    confidence_interval_95: [0.06, 0.11]
+    annual_probability: 0.04
+    confidence_interval_95: [0.02, 0.08]
     prior_type: "clinical"
     citation:
       citation_pmid: null
       citation_doi: "10.1002/dad2.70074"
-      citation_text: "Salemme 2025: 8.7% MCI->CN (clinical cohorts)."
+      citation_text: >-
+        Salemme 2025 clinical reversion 8% (95% CI 4-11%) cumulative
+        over ~5yr fu, annualized ~2-4%. Canevelli 2016 and Malek-Ahmadi
+        2016 meta-analyses report 8-14% cumulative in clinic-based studies.
 
   - from_state: "MCI"
     to_state: "CN"
-    annual_probability: 0.282
-    confidence_interval_95: [0.23, 0.34]
+    annual_probability: 0.10
+    confidence_interval_95: [0.05, 0.20]
     prior_type: "population"
     citation:
       citation_pmid: null
       citation_doi: "10.1002/dad2.70074"
-      citation_text: "Salemme 2025: 28.2% MCI->CN (population cohorts)."
+      citation_text: >-
+        Salemme 2025 population reversion 25% (95% CI 19-30%) cumulative
+        over ~5yr fu, annualized ~5-10%. Indianapolis Dementia Project
+        annual reversion = 18.6% (95% CI 16.7-20.4%) in elderly African
+        American community cohort (upper bound of range). Hisayama
+        5-year reversion 31.3% (≈7%/yr).
+
+  # ---------------- CN -> AD (direct, rare) ----------------
+  # Some CN individuals skip the MCI stage and progress directly to AD.
+  # Lu 2025 (NACC) reports 6.3% over 2-year mean fu in ADNI = ~3.2%/yr.
+  - from_state: "CN"
+    to_state: "AD"
+    annual_probability: 0.005
+    confidence_interval_95: [0.002, 0.015]
+    prior_type: "population"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/alz.14393"
+      citation_text: >-
+        Lu X et al. 2025 (Alz & Dem 21:e14393): 6.3% of CN individuals
+        convert directly to AD dementia without intermediate MCI stage,
+        over 2-year mean follow-up. Conservative annual rate 0.5% used
+        as prior (most fast-progressors are mis-classified at baseline).
 
 override_allowed_default: false
 

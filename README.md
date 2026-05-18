@@ -5,7 +5,7 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.4.0](https://img.shields.io/badge/version-1.4.0-success.svg)](CHANGELOG.md)
+[![Version 1.5.0](https://img.shields.io/badge/version-1.5.0-success.svg)](CHANGELOG.md)
 [![Tests 136/136](https://img.shields.io/badge/tests-136%2F136-success.svg)](tests/)
 [![Spec v1.6 FINAL](https://img.shields.io/badge/spec-v1.6_FINAL-success.svg)](docs/spec/temporalmetric_v1.6_FINAL.md)
 
@@ -17,10 +17,12 @@ The framework is anchored on Dr. Marufjon Salokhiddinov's ASNR 2026 presentation
 
 | Cohort | Subjects | Transitions | Flagged | cTCS | audit_id |
 |---|---|---|---|---|---|
-| ADNI (Aim 1) | 2,958 | 12,006 | 65 (0.54 %) | **0.9946** | `d344ec1a...` |
-| OASIS-3 (Aim 2) | 1,247 | 7,248 | 30 (0.41 %) | **0.9942** | `96d942e4...` |
+| ADNI (Aim 1) | 2,958 | 12,006 | 65 (0.54 %) | **0.9946** | `fa448b8f...` |
+| OASIS-3 (Aim 2) | 1,247 | 7,248 | 30 (0.41 %) | **0.9942** | re-derive locally |
 
 ΔcTCS between cohorts = **0.0004**. Confidence intervals (BCa 95 %) overlap almost completely. The cTCS metric generalizes across cohorts collected by different institutions, in different decades, with different recruitment criteria. Full validation report at [`docs/validation/aim2_oasis3_external_replication.md`](docs/validation/aim2_oasis3_external_replication.md).
+
+> **Note** (v1.5.0): pTCS values and audit IDs were corrected in v1.5.0 after a primary-source review of MCI→AD priors. See [`ERRATA.md`](ERRATA.md) E-2026-001 for details. cTCS and uTCS findings are unaffected (deterministic admissibility kernel, no priors used).
 
 ---
 
@@ -42,7 +44,7 @@ NeuroTCS is the umbrella for seven engineering pieces. Pieces 1–3 are shipped 
 
 | Pack | Disease | Anchor publication | Transitions |
 |---|---|---|---|
-| `ad/niaaa_2018@1.1.0` | Alzheimer's | Jack 2018 NIA-AA Framework (PMID 29653606) | 4 + 2 inadmissible |
+| `ad/niaaa_2018@1.2.0` | Alzheimer's | Jack 2018 NIA-AA Framework (PMID 29653606) | 4 + 2 inadmissible |
 | `ad/aa_2024@1.1.0` | Alzheimer's | Jack 2024 AA Revised Criteria (PMID 38934362) | 11 monotone |
 | `ad/aa_2024_trac@1.0.0` | Alzheimer's (anti-Aβ therapy) | **La Joie 2025 TRAC framework** (DOI 10.1002/alz.70997, PMCID PMC12657122) | 6 admissible + 3 inadmissible (5 require `treatment_status`) |
 | `pd/hoehn_yahr@1.0.0` | Parkinson's | Goetz 2008 MDS-UPDRS (DOI 10.1002/mds.22340) | 13 |

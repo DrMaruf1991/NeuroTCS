@@ -219,7 +219,9 @@ def test_build_generator_population_priors():
     gen_clinical = build_generator(pack, prior_type="clinical")
     gen_pop = build_generator(pack, prior_type="population")
     assert gen_clinical is not None and gen_pop is not None
-    # Population MCI->AD prior (0.27) differs from clinical (0.415)
+    # Population MCI->AD prior (0.06 ACR) differs from clinical (0.11 ACR)
+    # Note: pre-v1.5.0 these were 0.27 and 0.415 (cumulative not annual);
+    # see ERRATA.md E-2026-001.
     i_mci = gen_clinical.state_index["MCI"]
     i_ad = gen_clinical.state_index["AD"]
     assert not np.isclose(gen_clinical.Q[i_mci, i_ad],

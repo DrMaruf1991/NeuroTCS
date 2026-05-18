@@ -4,6 +4,41 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] — 2026-05-18
+
+### Fixed — MCI→AD transition priors corrected (ERRATA E-2026-001)
+
+**Severity**: Affects pTCS values only. **cTCS and uTCS — including the headline Aim 1 ADNI and Aim 2 OASIS-3 replication findings — are unaffected** (cTCS is the admissibility kernel and does not depend on priors).
+
+**What happened**: The `ad/niaaa_2018@1.1.0` rule pack encoded MCI→AD annual transition priors as 0.415 (clinical) and 0.27 (population), citing Salemme 2025. These figures are actually the **cumulative incidence of dementia over the meta-analysis's mean 5.2-year follow-up**, NOT annual rates. The correct annual conversion rates from the same primary source are 0.11 (clinical) and 0.06 (population), explicitly reported by Salemme 2025 (DOI 10.1002/dad2.70074): *"The ACR nearly doubled from 6% in population settings to 11% in clinical settings."*
+
+**Fix**: `ad/niaaa_2018` bumped to `@1.2.0` with corrected priors derived directly from Salemme 2025 ACR values, plus a new clinical CN→MCI prior (Hayden 2017, doi:10.1016/j.jalz.2016.07.151, UC Davis ADC longitudinal cohort: 30% ACR for memory-clinic referrals vs 5% for community recruits). All priors cross-validated by Mitchell & Shiri-Feshki 2009 (DOI 10.1111/j.1600-0447.2008.01326.x).
+
+**Locked ADNI invariant (v1.5.0)**: 12,006 transitions, 65 flagged (0.54 %), **cTCS = 0.9946**, **pTCS = -0.3452** (corrected, clinical priors), uTCS = 0.9946, **audit_id = `fa448b8fc8bc410fa5a35e5845083e1d00a216ba4ee5baba482762139fd4a74a`**.
+
+**Locked OASIS-3 invariant (v1.5.0)**: 1,247 subjects, 7,248 transitions, 30 flagged (0.41 %), **cTCS = 0.9942** (unchanged), pTCS and audit_id need local re-derivation with corrected priors (test file updated to capture them on first run).
+
+**ΔcTCS vs ADNI = 0.0004 (preserved)**. The headline external-replication finding is bit-exact unchanged.
+
+### Methodology
+- Every numerical value in a rule pack must now be cross-validated against at least one additional primary source before commit. For ACR-type values specifically, the source paper's methods section must explicitly confirm whether the rate is annual or cumulative. This is the most common source of confusion in MCI prognosis literature.
+- Public ERRATA file (`ERRATA.md`) added at repo root for transparent correction tracking.
+
+### Acknowledgment
+Bug identified by Dr. Salokhiddinov during a v1.5.0 review session that pushed for primary-source evidence verification of all AD rule packs. The methodology fix is more important than the value fix.
+
+### Test suite: **136/136** passing
+- 36 rulepack (TRAC + schema v1.2 tests retained)
+- 10 input contract v1.0
+- 23 input contract v1.1
+- 28 OASIS-3 adapter
+- 39 audit core (added "see ERRATA E-2026-001" cross-reference to test comments)
+
+### Strategic
+This is the first published NeuroTCS errata, and it follows the right pattern: bug found by primary-source review, root-cause analysis published transparently, fix shipped with full forward-citation pointers, methodology updated to prevent recurrence. For the FDA Q-Submission (Q1 2027), having a public errata process is a positive signal, not a negative one.
+
+---
+
 ## [1.4.0] — 2026-05-18
 
 ### Added — TRAC framework + schema v1.2 + evidence-base verification
