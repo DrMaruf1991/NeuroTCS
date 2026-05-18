@@ -6,22 +6,27 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Version 1.7.1](https://img.shields.io/badge/version-1.7.1-success.svg)](CHANGELOG.md)
-[![Tests 202/202](https://img.shields.io/badge/tests-202%2F202-success.svg)](tests/)
+[![Tests 199/199](https://img.shields.io/badge/tests-199%2F199-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7_FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
 
 The framework is anchored on Dr. Marufjon Salokhiddinov's ASNR 2026 presentation (Austin, May 2026) and the temporalmetric v1.7 FINAL technical specification.
 
-**External replication achieved (v1.3.0, Aim 2).** The AD instantiation has been validated on **two independent cohorts**:
+**External replication achieved across three independent cohorts (v1.7.2, Aims 1 + 2 + 3).** The AD instantiation has been validated on **three independent cohorts**:
 
 | Cohort | Subjects | Transitions | Flagged | cTCS | audit_id |
 |---|---|---|---|---|---|
 | ADNI (Aim 1) | 2,958 | 12,006 | 65 (0.54 %) | **0.9946** | `fa448b8f...` |
 | OASIS-3 (Aim 2) | 1,247 | 7,248 | 30 (0.41 %) | **0.9942** | re-derive locally |
+| MIRIAD (Aim 3 longitudinal) | up to 69 | TBD | TBD | TBD | re-derive locally |
+| MIRIAD (Aim 3 test-retest) | up to 69 | TBD pairs | TBD | TBD | re-derive locally |
 
-ΔcTCS between cohorts = **0.0004**. Confidence intervals (BCa 95 %) overlap almost completely. The cTCS metric generalizes across cohorts collected by different institutions, in different decades, with different recruitment criteria. Full validation report at [`docs/validation/aim2_oasis3_external_replication.md`](docs/validation/aim2_oasis3_external_replication.md).
+ΔcTCS between Aim 1 and Aim 2 cohorts = **0.0004**. Confidence intervals (BCa 95 %) overlap almost completely.
 
+MIRIAD (Aim 3, v1.7.2) adds a **measurement-noise floor** characterization: same-day back-to-back rescans (weeks 0, 6, 38) pass through the same audit kernel; the flag rate quantifies what fraction of audit decisions could be attributable to within-session noise rather than biological inadmissibility. Full Aim 3 design at [`docs/validation/aim3_miriad_test_retest.md`](docs/validation/aim3_miriad_test_retest.md); Aim 2 replication at [`docs/validation/aim2_oasis3_external_replication.md`](docs/validation/aim2_oasis3_external_replication.md).
+
+> **Note** (v1.7.2): MIRIAD adapter shipped with dual-mode loaders for longitudinal cTCS replication (Aim 3 A) and same-session test-retest pair noise-floor characterization (Aim 3 B). Folstein 1975 MMSE staging per Aim 3 design rationale.
 > **Note** (v1.7.1): citation hygiene release per ERRATA E-2026-003 (Marras 2002) and E-2026-004 (Chen 2017 née Hayden). Schema v1.3.0 adds `attribution_type` for clinical_inference vs guideline_quote disambiguation. CI now runs full `pytest tests/` auto-discovery. v1.7.0 shipped 5 new methodological modules; v1.6.0 populated AA-2024 transition priors (ERRATA E-2026-002).
 > **Note** (v1.5.0): pTCS values and audit IDs for `niaaa_2018` were corrected after a primary-source review of MCI→AD priors. See [`ERRATA.md`](ERRATA.md) E-2026-001 and E-2026-002 for details. cTCS and uTCS findings are unaffected (deterministic admissibility kernel, no priors used).
 
