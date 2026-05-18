@@ -51,3 +51,60 @@ Starting v1.5.0, every numerical value in a NeuroTCS rule pack must be cross-val
 ### Acknowledgment
 
 This error was identified by Dr. Marufjon Salokhiddinov during a v1.5.0 review session that asked whether the existing AA rule packs were sufficiently current. The question prompted re-reading of the Salemme 2025 source, which surfaced the cumulative-vs-annual confusion. The methodology fix is more important than the value fix.
+
+---
+
+## E-2026-002 · `ad/aa_2024@1.1.0` ships with empty `transition_priors` — pTCS unavailable (fixed in v1.6.0)
+
+**Discovered:** 2026-05-18 (during v1.5.0 review session)
+**Fixed in:** v1.6.0 (commit shipping with this errata entry)
+**Affected versions:** v1.0.0 through v1.5.0
+**Severity:** Restrictive — pTCS could not be computed when auditing trajectories with the AA-2024 rule pack. Did not affect cTCS or uTCS. Did not affect any published Aim 1 ADNI or Aim 2 OASIS-3 findings (which use `ad/niaaa_2018`).
+
+### What happened
+
+The `ad/aa_2024@1.1.0` rule pack was shipped with `transition_priors: []`. Without priors, the audit engine cannot build the continuous-time Markov generator matrix needed for pTCS, so pTCS would be reported as unavailable. This was a known gap in v1.1.0 — v1.4.0, documented in the README's "Known limitations and roadmap" section.
+
+A deeper question raised in the v1.5.0 review: had the published literature actually progressed enough to populate these priors with rigorously-verified primary-source values? Initial search suggested only cross-sectional data existed for the AA-2024 4×4 matrix (Mendes 2025, Strandberg 2025). However, expanded literature review identified multiple longitudinal primary sources publishing explicit annual conversion rates (ACR) for every forward Stage_N → Stage_N+1 transition.
+
+### What changed in v1.6.0
+
+The `ad/aa_2024` rule pack is bumped to `@1.2.0` with 13 transition priors, all citation-locked to primary sources. Every ACR is verified against the source paper's methods section to confirm it is annual (not cumulative-misinterpreted-as-annual, per E-2026-001 methodology). Six single-step Stage_N → Stage_N+1 transitions are anchored to primary publications; five derived Stage_N → Stage_N+2 transitions are computed as products with √2 CI inflation and marked `prior_type: "derived"` to distinguish from primary rates.
+
+Primary sources used:
+
+| Transition | Source |
+|---|---|
+| Stage_0 → Stage_1 (population) | Roberts 2018 *JAMA Neurol*, MCSA, PMID 29710225 |
+| Stage_0 → Stage_1 (clinical) | Jagust & Landau 2021 *Neurology*, ADNI, PMID 33408147 |
+| Stage_1 → Stage_2 | Karagianni 2025 *Alz & Dem* Suppl, multicenter, PMC12724900 |
+| Stage_2 → Stage_3 | Ossenkoppele 2022 *Nature Medicine*, 7-cohort, PMID 36357681 |
+| Stage_3 → Stage_4 | Ossenkoppele 2022 *Nature Medicine*, 7-cohort, PMID 36357681 |
+| Stage_4 → Stage_5 (clinical) | Tariot 2024 *Alz Res Ther*, NACC, PMID 38355706 |
+| Stage_4 → Stage_5 (population) | Salemme 2025 *Alz Dem DADM* (already verified in v1.5.0) |
+| Stage_5 → Stage_6 | Tariot 2024 *Alz Res Ther*, NACC, PMID 38355706 |
+
+### What is preserved
+
+The published Aim 1 ADNI and Aim 2 OASIS-3 cTCS findings are **unchanged**:
+
+- ADNI: cTCS = 0.9946 (using `niaaa_2018@1.2.0`)
+- OASIS-3: cTCS = 0.9942 (using `niaaa_2018@1.2.0`)
+- ΔcTCS = 0.0004
+
+The locked v1.5.0 ADNI invariant (audit_id `fa448b8f...`) is also unchanged because the ADNI audit does not use AA-2024.
+
+### Methodology change (cumulative E-2026-001 + E-2026-002 lessons)
+
+Starting v1.6.0, every numerical value in a NeuroTCS rule pack:
+
+1. Must be verified against a peer-reviewed primary source via DOI or PMID
+2. For ACR-type values, the source paper's methods section must explicitly state the rate is annual (not cumulative over follow-up)
+3. Where multiple cohort settings exist (clinical vs population), both must be encoded as separate priors
+4. Derived priors (products of two single-step rates) must be marked `prior_type: "derived"` and link to the underlying primary sources
+
+The verified evidence table for each rule pack is logged in `docs/transcription_audit/<pack>.md` so any reviewer can spot-check.
+
+### Acknowledgment
+
+Same as E-2026-001: the gap was flagged by Dr. Salokhiddinov asking whether the AD rule packs were sufficiently current and pushing for "world-class no partial fix" verification.

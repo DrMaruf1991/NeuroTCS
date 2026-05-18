@@ -696,6 +696,107 @@ def test_unsupported_schema_version_rejected():
 
 
 # ============================================================
+# AA-2024 v1.2.0 priors tests (ERRATA E-2026-002)
+# ============================================================
+
+def test_aa_2024_pack_is_v1_2_0():
+    pack = load_rulepack("ad/aa_2024")
+    assert pack.rulepack.rulepack_id == "ad/aa_2024@1.2.0"
+    print(f"  {PASS} test_aa_2024_pack_is_v1_2_0 (sha={pack.sha256[:8]})")
+
+
+def test_aa_2024_priors_populated():
+    """v1.2.0 must have 13 transition priors covering all 6 forward
+    Stage_N -> Stage_N+1 transitions plus 5 derived skip transitions
+    (Stage_N -> Stage_N+2), each citation-locked to a primary source."""
+    pack = load_rulepack("ad/aa_2024")
+    priors = pack.rulepack.transition_priors
+    assert len(priors) == 13, f"expected 13 priors, got {len(priors)}"
+    # Every prior must carry a real PMID or DOI
+    for p in priors:
+        c = p.citation
+        assert c.citation_pmid or c.citation_doi, (
+            f"Prior {p.from_state}->{p.to_state} missing citation"
+        )
+    print(f"  {PASS} test_aa_2024_priors_populated (13 priors, all cited)")
+
+
+def test_aa_2024_priors_include_all_forward_stages():
+    """Every Stage_N -> Stage_N+1 single-step transition must have at
+    least one (clinical or population) prior."""
+    pack = load_rulepack("ad/aa_2024")
+    priors = pack.rulepack.transition_priors
+    forward_pairs = {(f"Stage_{i}", f"Stage_{i+1}") for i in range(6)}
+    covered = {(p.from_state, p.to_state) for p in priors}
+    missing = forward_pairs - covered
+    assert not missing, f"missing forward priors: {missing}"
+    print(f"  {PASS} test_aa_2024_priors_include_all_forward_stages")
+
+
+def test_aa_2024_priors_clinical_vs_population_stratification():
+    """Stage_0->Stage_1 and Stage_4->Stage_5 must have both clinical and
+    population priors (the two transitions with established cohort-
+    setting differences)."""
+    pack = load_rulepack("ad/aa_2024")
+    priors = pack.rulepack.transition_priors
+
+    s0_to_s1 = [p for p in priors if p.from_state == "Stage_0" and p.to_state == "Stage_1"]
+    assert len(s0_to_s1) == 2
+    types_0 = {p.prior_type for p in s0_to_s1}
+    assert types_0 == {"clinical", "population"}
+
+    s4_to_s5 = [p for p in priors if p.from_state == "Stage_4" and p.to_state == "Stage_5"]
+    assert len(s4_to_s5) == 2
+    types_4 = {p.prior_type for p in s4_to_s5}
+    assert types_4 == {"clinical", "population"}
+
+    print(f"  {PASS} test_aa_2024_priors_clinical_vs_population_stratification")
+
+
+def test_aa_2024_derived_priors_marked():
+    """Skip transitions (Stage_N -> Stage_N+2) must be marked
+    prior_type='derived' to distinguish from primary-source rates."""
+    pack = load_rulepack("ad/aa_2024")
+    priors = pack.rulepack.transition_priors
+    skip_priors = [
+        p for p in priors
+        if int(p.to_state.split("_")[1]) - int(p.from_state.split("_")[1]) == 2
+    ]
+    assert len(skip_priors) == 5
+    for p in skip_priors:
+        assert p.prior_type == "derived", (
+            f"Skip prior {p.from_state}->{p.to_state} must be 'derived'"
+        )
+    print(f"  {PASS} test_aa_2024_derived_priors_marked (5 skip priors)")
+
+
+def test_aa_2024_priors_acr_within_published_ranges():
+    """Spot-check each primary-source ACR against the published value.
+    Tolerance 1e-4 since these are exact transcriptions."""
+    pack = load_rulepack("ad/aa_2024")
+    priors = pack.rulepack.transition_priors
+    by_key = {(p.from_state, p.to_state, p.prior_type): p.annual_probability for p in priors}
+
+    # Roberts 2018 MCSA population: Stage_0->Stage_1 ACR = 0.024
+    assert abs(by_key[("Stage_0", "Stage_1", "population")] - 0.024) < 1e-4
+    # Jagust 2021 ADNI: Stage_0->Stage_1 ACR = 1/6.4 = 0.156
+    assert abs(by_key[("Stage_0", "Stage_1", "clinical")] - 0.156) < 1e-3
+    # Karagianni 2025: Stage_1->Stage_2 ACR = 0.0675
+    assert abs(by_key[("Stage_1", "Stage_2", "clinical")] - 0.0675) < 1e-4
+    # Ossenkoppele 2022: Stage_2->Stage_3 ACR ~0.10
+    assert abs(by_key[("Stage_2", "Stage_3", "clinical")] - 0.10) < 1e-4
+    # Ossenkoppele 2022: Stage_3->Stage_4 ACR ~0.13
+    assert abs(by_key[("Stage_3", "Stage_4", "clinical")] - 0.13) < 1e-4
+    # Tariot 2024 NACC: Stage_4->Stage_5 ACR = 0.20
+    assert abs(by_key[("Stage_4", "Stage_5", "clinical")] - 0.20) < 1e-4
+    # Salemme 2025: Stage_4->Stage_5 ACR = 0.06
+    assert abs(by_key[("Stage_4", "Stage_5", "population")] - 0.06) < 1e-4
+    # Tariot 2024 NACC: Stage_5->Stage_6 ACR = 0.266
+    assert abs(by_key[("Stage_5", "Stage_6", "clinical")] - 0.266) < 1e-4
+    print(f"  {PASS} test_aa_2024_priors_acr_within_published_ranges")
+
+
+# ============================================================
 # Runner
 # ============================================================
 
@@ -738,6 +839,13 @@ def run_all():
         test_trac_admits_full_to_partial_post_discontinuation,
         test_existing_v1_1_packs_still_load_under_v1_2_schema,
         test_unsupported_schema_version_rejected,
+        # AA-2024 v1.2.0 priors (ERRATA E-2026-002)
+        test_aa_2024_pack_is_v1_2_0,
+        test_aa_2024_priors_populated,
+        test_aa_2024_priors_include_all_forward_stages,
+        test_aa_2024_priors_clinical_vs_population_stratification,
+        test_aa_2024_derived_priors_marked,
+        test_aa_2024_priors_acr_within_published_ranges,
     ]
     print(f"\nNeuroTCS Rule Pack v1.2 tests — running {len(tests)} tests:\n")
     failed = 0

@@ -229,12 +229,36 @@ def test_build_generator_population_priors():
     print(f"  {PASS} test_build_generator_population_priors")
 
 
-def test_build_generator_no_priors_returns_none():
-    """AA 2024 pack has no priors; generator must be None."""
+def test_build_generator_returns_generator_for_aa_2024():
+    """AA 2024 pack now has priors (v1.6.0 ERRATA E-2026-002);
+    build_generator must return a valid generator with 7-stage state
+    index (Stage_0..Stage_6)."""
     pack = load_rulepack("ad/aa_2024")
     gen = build_generator(pack, prior_type="clinical")
+    assert gen is not None
+    assert set(gen.state_index.keys()) == {
+        "Stage_0", "Stage_1", "Stage_2", "Stage_3",
+        "Stage_4", "Stage_5", "Stage_6",
+    }
+    # Rows sum to ~0 (generator property)
+    row_sums = gen.Q.sum(axis=1)
+    assert np.allclose(row_sums, 0, atol=1e-12)
+    # Off-diagonal >= 0
+    Q = gen.Q.copy()
+    np.fill_diagonal(Q, 0)
+    assert (Q >= 0).all()
+    print(f"  {PASS} test_build_generator_returns_generator_for_aa_2024 "
+          f"(priors_covered={gen.priors_covered})")
+
+
+def test_build_generator_no_priors_returns_none():
+    """Synthesizing a rule pack without priors (e.g. TRAC pack which has
+    empty transition_priors) returns None from build_generator."""
+    pack = load_rulepack("ad/aa_2024_trac")
+    gen = build_generator(pack, prior_type="clinical")
     assert gen is None
-    print(f"  {PASS} test_build_generator_no_priors_returns_none")
+    print(f"  {PASS} test_build_generator_no_priors_returns_none "
+          f"(verified on TRAC pack)")
 
 
 def test_ptcs_admissible_higher_than_inadmissible():
@@ -437,17 +461,35 @@ def test_audit_with_probabilities_utcs_differs_from_ctcs():
           f"(cTCS={result.ctcs.ci.point:.4f}, uTCS={result.utcs.ci.point:.4f})")
 
 
-def test_audit_ptcs_unavailable_on_aa_2024():
-    """AA 2024 has no priors; pTCS should report unavailable."""
+def test_audit_ptcs_available_on_aa_2024():
+    """AA 2024 v1.2.0 NOW has priors (ERRATA E-2026-002). Synthetic
+    Stage_1 -> Stage_2 trajectory should produce available pTCS."""
     pack = load_rulepack("ad/aa_2024")
     trajectories = [
         _make_traj(f"p{i}", ["Stage_1", "Stage_2"], [365]) for i in range(10)
     ]
     result = audit(trajectories, pack, bootstrap_B=100, seed=42)
     assert result.ctcs.available
+    assert result.ptcs.available, (
+        f"pTCS should be available with v1.2.0 priors; "
+        f"skipped_reason={result.ptcs.skipped_reason}"
+    )
+    print(f"  {PASS} test_audit_ptcs_available_on_aa_2024 "
+          f"(pTCS={result.ptcs.ci.point:.4f})")
+
+
+def test_audit_ptcs_unavailable_on_trac():
+    """TRAC pack has empty transition_priors (no published longitudinal
+    rates yet); pTCS should report unavailable."""
+    pack = load_rulepack("ad/aa_2024_trac")
+    trajectories = [
+        _make_traj(f"p{i}", ["A_pos", "Partial_TRAC"], [365]) for i in range(10)
+    ]
+    result = audit(trajectories, pack, bootstrap_B=100, seed=42)
+    assert result.ctcs.available
     assert not result.ptcs.available
     assert "transition_priors" in (result.ptcs.skipped_reason or "")
-    print(f"  {PASS} test_audit_ptcs_unavailable_on_aa_2024")
+    print(f"  {PASS} test_audit_ptcs_unavailable_on_trac")
 
 
 def test_audit_skeleton_rejected():
@@ -663,6 +705,7 @@ def run_all():
         test_ctcs_none_for_single_visit,
         test_build_generator_for_ad_niaaa_2018,
         test_build_generator_population_priors,
+        test_build_generator_returns_generator_for_aa_2024,
         test_build_generator_no_priors_returns_none,
         test_ptcs_admissible_higher_than_inadmissible,
         test_utcs_with_probabilities,
@@ -682,7 +725,8 @@ def run_all():
         test_audit_id_deterministic,
         test_audit_id_changes_with_seed,
         test_audit_with_probabilities_utcs_differs_from_ctcs,
-        test_audit_ptcs_unavailable_on_aa_2024,
+        test_audit_ptcs_available_on_aa_2024,
+        test_audit_ptcs_unavailable_on_trac,
         test_audit_skeleton_rejected,
         # TRAC (schema v1.2 conditional admissibility)
         test_trac_treated_patient_scores_perfect,

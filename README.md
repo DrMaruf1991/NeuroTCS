@@ -5,8 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.5.0](https://img.shields.io/badge/version-1.5.0-success.svg)](CHANGELOG.md)
-[![Tests 136/136](https://img.shields.io/badge/tests-136%2F136-success.svg)](tests/)
+[![Version 1.6.0](https://img.shields.io/badge/version-1.6.0-success.svg)](CHANGELOG.md)
+[![Tests 144/144](https://img.shields.io/badge/tests-144%2F144-success.svg)](tests/)
 [![Spec v1.6 FINAL](https://img.shields.io/badge/spec-v1.6_FINAL-success.svg)](docs/spec/temporalmetric_v1.6_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
@@ -22,7 +22,8 @@ The framework is anchored on Dr. Marufjon Salokhiddinov's ASNR 2026 presentation
 
 ΔcTCS between cohorts = **0.0004**. Confidence intervals (BCa 95 %) overlap almost completely. The cTCS metric generalizes across cohorts collected by different institutions, in different decades, with different recruitment criteria. Full validation report at [`docs/validation/aim2_oasis3_external_replication.md`](docs/validation/aim2_oasis3_external_replication.md).
 
-> **Note** (v1.5.0): pTCS values and audit IDs were corrected in v1.5.0 after a primary-source review of MCI→AD priors. See [`ERRATA.md`](ERRATA.md) E-2026-001 for details. cTCS and uTCS findings are unaffected (deterministic admissibility kernel, no priors used).
+> **Note** (v1.6.0): AA-2024 transition priors populated (ERRATA E-2026-002). pTCS is now computable on AA-2024 audits in addition to cTCS and uTCS.
+> **Note** (v1.5.0): pTCS values and audit IDs for `niaaa_2018` were corrected after a primary-source review of MCI→AD priors. See [`ERRATA.md`](ERRATA.md) E-2026-001 and E-2026-002 for details. cTCS and uTCS findings are unaffected (deterministic admissibility kernel, no priors used).
 
 ---
 
@@ -45,7 +46,7 @@ NeuroTCS is the umbrella for seven engineering pieces. Pieces 1–3 are shipped 
 | Pack | Disease | Anchor publication | Transitions |
 |---|---|---|---|
 | `ad/niaaa_2018@1.2.0` | Alzheimer's | Jack 2018 NIA-AA Framework (PMID 29653606) | 4 + 2 inadmissible |
-| `ad/aa_2024@1.1.0` | Alzheimer's | Jack 2024 AA Revised Criteria (PMID 38934362) | 11 monotone |
+| `ad/aa_2024@1.2.0` | Alzheimer's | Jack 2024 AA Revised Criteria (PMID 38934362) | 11 monotone + 13 transition priors (v1.6.0) |
 | `ad/aa_2024_trac@1.0.0` | Alzheimer's (anti-Aβ therapy) | **La Joie 2025 TRAC framework** (DOI 10.1002/alz.70997, PMCID PMC12657122) | 6 admissible + 3 inadmissible (5 require `treatment_status`) |
 | `pd/hoehn_yahr@1.0.0` | Parkinson's | Goetz 2008 MDS-UPDRS (DOI 10.1002/mds.22340) | 13 |
 | `ms/mcdonald_2024@1.0.0` | Multiple sclerosis | Montalban 2025 + Lublin 2014 | 13 (bidirectional RRMS) |
@@ -195,7 +196,7 @@ NeuroTCS publicly documents gaps so reviewers can assess fitness for purpose.
 - ✅ **Evidence-base verification methodology** — every FDA date and DOI in v1.4.0 documentation was verified at a primary source (Eisai/Biogen, Eli Lilly, FDA, PubMed/PMC) before commit. No claim relies on language-model memory.
 
 ### Open gaps (planned for v1.5.0)
-- ⚠️ **AA 2024 transition priors empty.** The `ad/aa_2024@1.1.0` rule pack has `transition_priors: []`. As a result, **pTCS is unavailable when auditing with AA 2024** (only cTCS and uTCS report). Source for priors: Mendes AJ et al., *Neurology* May 13 2025 (DOI 10.1212/WNL.0000000000213675, PMCID PMC12079574) — ADNI validation of the AA-2024 4×4 biological/clinical staging matrix — and similar emerging cohort studies.
+- ✅ **AA 2024 transition priors populated** (v1.6.0, ERRATA E-2026-002). The `ad/aa_2024@1.2.0` rule pack now ships with 13 citation-locked priors covering every forward Stage_N → Stage_N+1 transition plus 5 derived skip transitions. Primary sources triangulated across 5 cohorts (MCSA, ADNI, multicenter Karagianni 2025, BioFINDER-2 / Ossenkoppele 2022, NACC / Tariot 2024). pTCS is now computable on AA-2024 audits.
 - ⚠️ **Plasma biomarker reference range bindings.** The 2024 AA criteria put plasma p-tau217 and Aβ42/40 as Core 1 biomarkers sufficient for diagnostic confirmation of AD. Input contract v1.1 supports them via UCUM units, but specific reference range thresholds (e.g. p-tau217 "intermediate range" 0.186–0.324 pg/mL per La Joie 2025) are not yet bound. pTCS scoring works on the categorical state, not the raw biomarker value, so this gap does NOT affect current audit results — but downstream interoperability is incomplete.
 - ⚠️ **Tau PET tracers in clinical use.** Eli Lilly's Tauvid (flortaucipir F-18, AV-1451, FDA approved May 2020) is the currently-marketed tau tracer and is implicitly supported via the existing T2 biomarker states. **MK-6240 / florquinitau F-18** (Lantheus; NDA accepted 2025-10-28, PDUFA target **2026-08-13**) will be added on FDA approval if it succeeds.
 - ⚠️ **Aim 3 (MIRIAD test-retest)** — DUA email sent 2026-05-17, awaiting response.

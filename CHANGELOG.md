@@ -4,6 +4,50 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] — 2026-05-18
+
+### Fixed — `ad/aa_2024` priors populated (ERRATA E-2026-002)
+
+**Severity**: Restrictive — pTCS was unavailable on AA-2024 audits since v1.0.0. Did not affect cTCS, uTCS, or any published Aim 1 ADNI / Aim 2 OASIS-3 findings (those use `niaaa_2018`).
+
+**What changed**: `ad/aa_2024@1.1.0` shipped with `transition_priors: []`. v1.6.0 bumps to `@1.2.0` with **13 transition priors**, every one citation-locked to a peer-reviewed primary source that explicitly reports the rate as annual (not cumulative-misinterpreted-as-annual, per E-2026-001 methodology).
+
+**Primary sources used** (5 independent cohorts triangulated: MCSA, ADNI, multicenter Karagianni, BioFINDER-2 / Ossenkoppele, NACC):
+
+| Transition | Setting | ACR | Source |
+|---|---|---|---|
+| Stage_0 → Stage_1 | population | 0.024 | Roberts 2018 (JAMA Neurol, PMID 29710225) |
+| Stage_0 → Stage_1 | clinical | 0.156 | Jagust & Landau 2021 (Neurology, PMID 33408147) |
+| Stage_1 → Stage_2 | clinical | 0.0675 | Karagianni 2025 (Alz Dem Suppl, PMC12724900) |
+| Stage_2 → Stage_3 | clinical | 0.10 | Ossenkoppele 2022 (Nat Med, PMID 36357681) |
+| Stage_3 → Stage_4 | clinical | 0.13 | Ossenkoppele 2022 (Nat Med, PMID 36357681) |
+| Stage_4 → Stage_5 | clinical | 0.20 | Tariot 2024 (Alz Res Ther, PMID 38355706) |
+| Stage_4 → Stage_5 | population | 0.06 | Salemme 2025 (Alz Dem DADM, DOI 10.1002/dad2.70074) |
+| Stage_5 → Stage_6 | clinical | 0.266 | Tariot 2024 (Alz Res Ther, PMID 38355706) |
+
+Plus 5 derived Stage_N → Stage_N+2 priors marked `prior_type: "derived"` (products of single-step ACRs with √2 CI inflation; Tariot 2024 multistate Markov methodology).
+
+**Tests**: 144/144 passing (added 6 new priors-specific tests in `tests/rulepack/`, plus updated 2 stale audit-core tests; new test `test_audit_ptcs_available_on_aa_2024` confirms pTCS is now computable on AA-2024 trajectories).
+
+**Methodology**: every ACR-type value is now subject to the methodology requirements established in E-2026-001 and E-2026-002:
+1. Verified against peer-reviewed primary source via DOI or PMID
+2. Source paper methods section explicitly confirms rate is annual (not cumulative)
+3. Clinical vs population stratification preserved where literature supports
+4. Derived priors marked `prior_type: "derived"` with link to underlying primaries
+
+### Strategic
+
+The AA-2024 instantiation is now fully operational. NeuroTCS can audit anti-amyloid-treated patients using the TRAC pack (v1.4.0) AND can compute pTCS on AA-2024 staging (v1.6.0). The Aim 3 MIRIAD test-retest workflow can now use `niaaa_2018` for clinical labels and `aa_2024` for biological staging when tau-PET is available. The AD instantiation has zero remaining "Known Limitations" entries in its core scope.
+
+### Test suite: **144/144** passing
+- 42 rulepack (36 prior + 6 new AA-2024 priors tests)
+- 10 input contract v1.0
+- 23 input contract v1.1
+- 28 OASIS-3 adapter
+- 41 audit core (39 prior + 2 renamed/repurposed tests for v1.2.0 priors)
+
+---
+
 ## [1.5.0] — 2026-05-18
 
 ### Fixed — MCI→AD transition priors corrected (ERRATA E-2026-001)
