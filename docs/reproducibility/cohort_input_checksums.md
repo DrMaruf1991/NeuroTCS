@@ -83,5 +83,9 @@ implementation.
 Per-platform verification status:
 - Linux x86_64, Python 3.12.3, numpy 2.4.4, pandas 3.0.2: **confirmed**
 - Linux x86_64, Python 3.12.3, numpy 2.0.2: **confirmed** (cross-numpy-version)
-- Cross-platform (Windows, macOS): not yet independently verified;
-  formula is designed for portability via the byte-order forcing above.
+- Linux x86_64, Python 3.12.3, pyreadr 0.5.0 vs 0.5.6: **confirmed** (cross-pyreadr-version)
+- **Windows 10/11 x86_64, Python 3.12.7, pyreadr 0.5.x: confirmed (2026-05-24)**
+  All 5 locked audit_ids reproduce byte-exactly; full pytest 408/408 passes.
+  The pyreadr `datetime64[D]` cast RuntimeWarning is benign and does not affect
+  audit_id (downstream date handling normalizes via `pd.to_datetime`).
+- macOS: not yet independently verified.
