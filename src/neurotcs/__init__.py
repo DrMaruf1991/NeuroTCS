@@ -23,7 +23,7 @@ Public API (the most common imports):
     from neurotcs.silent_deployment import make_silent_deployment_evidence
 """
 
-__version__ = "1.9.0"
+__version__ = "1.9.1"
 __author__ = "Marufjon Salokhiddinov, MD PhD"
 __license__ = "Apache-2.0"
 
@@ -64,7 +64,7 @@ class _PlannedModuleFinder(_MetaPathFinder):
             raise ImportError(
                 f"`{name}` ({piece}) is a roadmap item planned for {version}. "
                 f"Track progress: {url}. "
-                f"It is intentionally NOT shipped in v1.8.x."
+                f"It is intentionally NOT shipped in the current v1.x release."
             )
         return None
 

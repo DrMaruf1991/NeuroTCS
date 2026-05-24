@@ -2,7 +2,7 @@ name: CI matrix (cross-platform × Python)
 
 # Runs the framework-only test suite across {ubuntu, windows} × {Python 3.10, 3.11, 3.12, 3.13}.
 # Cohort tests are excluded (they require DUA-controlled data not available in CI).
-# This complements ci.yml which runs the full suite on ubuntu-latest + Python 3.12.
+# This complements ci.yml which runs the full suite on ubuntu-latest + Python 3.11.
 
 on:
   push:
@@ -42,65 +42,18 @@ jobs:
         run: ruff check src/ tests/ scripts/
 
       - name: Framework-only pytest (cohort tests excluded — expect 397 passed)
-        run: |
-          python -m pytest tests/ -q --tb=short ^
-            --ignore=tests/audit_core/test_real_adni_audit.py ^
-            --ignore=tests/audit_core/test_real_oasis3_audit.py ^
-            --ignore=tests/audit_core/test_real_nacc_audit.py ^
-            --ignore=tests/audit_core/test_real_miriad_audit.py ^
-            --ignore=tests/audit_core/test_real_miriad_fairness_audit.py ^
-            --ignore=tests/audit_core/test_four_cohort_triangulation.py
-        if: runner.os == 'Windows'
-        shell: cmd
-
-      - name: Framework-only pytest (cohort tests excluded — expect 397 passed)
-        run: |
-          python -m pytest tests/ -q --tb=short \
-            --ignore=tests/audit_core/test_real_adni_audit.py \
-            --ignore=tests/audit_core/test_real_oasis3_audit.py \
-            --ignore=tests/audit_core/test_real_nacc_audit.py \
-            --ignore=tests/audit_core/test_real_miriad_audit.py \
-            --ignore=tests/audit_core/test_real_miriad_fairness_audit.py \
-            --ignore=tests/audit_core/test_four_cohort_triangulation.py
-        if: runner.os == 'Linux'
+        # Single-line pytest invocation is portable across Windows + Linux without
+        # shell-specific line-continuation characters. Cohort tests are excluded
+        # via --ignore because the underlying CSV/RDA files are DUA-controlled
+        # and not available in CI; those tests skip cleanly under ci.yml's full
+        # run but we ignore them explicitly here so the cell count is deterministic.
+        run: python -m pytest tests/ -q --tb=short --ignore=tests/audit_core/test_real_adni_audit.py --ignore=tests/audit_core/test_real_oasis3_audit.py --ignore=tests/audit_core/test_real_nacc_audit.py --ignore=tests/audit_core/test_real_miriad_audit.py --ignore=tests/audit_core/test_real_miriad_fairness_audit.py --ignore=tests/audit_core/test_four_cohort_triangulation.py
 
       - name: Smoke-test examples (syntax only)
-        run: |
-          python -c "import ast; ast.parse(open('examples/adni_audit_demo.py').read())"
-          python -c "import ast; ast.parse(open('examples/oasis3_audit_demo.py').read())"
+        run: python scripts/ci/smoke_test_examples.py
 
       - name: Verify planned-module import hook fires correctly
-        run: |
-          python -c "
-          import sys
-          import neurotcs
-          assert neurotcs.__version__.startswith('1.8.'), f'Bad version: {neurotcs.__version__}'
-          ok = 0
-          for mod in ['neurotcs.validation_harness', 'neurotcs.output_schema']:
-              try:
-                  __import__(mod)
-                  print(f'FAIL: {mod} should have raised ImportError')
-                  sys.exit(1)
-              except ImportError as e:
-                  if 'roadmap' in str(e) and 'v1.9' in str(e):
-                      ok += 1
-                  else:
-                      print(f'FAIL: {mod} raised wrong error: {e}')
-                      sys.exit(1)
-          print(f'Import hook OK: {ok}/2 planned modules raise helpful ImportError')
-          "
+        run: python scripts/ci/verify_import_hook.py
 
       - name: Verify reference_adapters reorganization (v1.8.1)
-        run: |
-          python -c "
-          # New path works
-          from neurotcs.reference_adapters.adni_categorical_submission import hash_patient_id as new_h
-          # Old path works via shim (with DeprecationWarning)
-          import warnings
-          with warnings.catch_warnings(record=True) as w:
-              warnings.simplefilter('always')
-              from neurotcs.input_contract.v1_1.adapters.adapter_adni import hash_patient_id as old_h
-              assert any(issubclass(x.category, DeprecationWarning) for x in w), 'shim did not emit DeprecationWarning'
-          assert new_h(1) == old_h(1), 'shim breaks identity'
-          print('reference_adapters reorganization OK')
-          "
+        run: python scripts/ci/verify_reference_adapters.py

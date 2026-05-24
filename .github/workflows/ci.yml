@@ -42,36 +42,11 @@ jobs:
       - name: Run full test suite (pytest auto-discovery)
         run: python -m pytest tests/ -q
 
-      - name: Verify all rule packs load
-        run: |
-          python -c "
-          from neurotcs import list_rulepacks
-          packs = list_rulepacks()
-          invalid = [p for p in packs if p.get('status') == 'INVALID']
-          assert not invalid, f'Invalid: {invalid}'
-          assert len(packs) == 3, f'Expected 3 AD packs, got {len(packs)}'
-          ad_packs = [p for p in packs if p['name'].startswith('ad/')]
-          assert len(ad_packs) == 3, f'All packs must be ad/*; got non-AD: {[p["name"] for p in packs if not p["name"].startswith("ad/")]}'
-          print(f'All {len(packs)} AD rule packs load as production')
-          "
+      - name: Verify all AD rule packs load
+        run: python scripts/ci/verify_rule_packs.py
 
-      - name: Verify audit_core public API
-        run: |
-          python -c "
-          from neurotcs import audit, load_rulepack, Trajectory, BootstrapCI
-          from neurotcs.audit_core import build_generator, cluster_bootstrap, huber_m_estimate
-          print('audit_core public API verified')
-          "
-
-      - name: Verify v1.7.0 + v1.7.1 module public API
-        run: |
-          python -c "
-          from neurotcs import binary_sample_size, fairness_audit, robustness_audit
-          from neurotcs import make_silent_deployment_evidence, scanner_factorial
-          from neurotcs import derive_threshold_distribution, derive_threshold_conformal
-          from neurotcs import AttributionType
-          print('v1.7.0 + v1.7.1 schema additions verified')
-          "
+      - name: Verify audit_core + v1.7.x public API
+        run: python scripts/ci/verify_public_api.py
 
       - name: Build wheel + sdist
         run: |

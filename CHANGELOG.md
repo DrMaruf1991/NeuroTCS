@@ -4,6 +4,80 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] — 2026-05-25
+
+### CI workflow fixes (PATCH release; no behavior change)
+
+A patch release fixing the GitHub Actions CI workflows that turned red on
+the v1.9.0 push. All 5 v1.8 / v1.9 locked audit invariants reproduce
+byte-exactly under v1.9.1 (verified before release).
+
+The CI matrix failure on the v1.9.0 push was caused by a stale version
+check in `.github/workflows/ci-matrix.yml` that hardcoded
+`__version__.startswith('1.8.')`. The check fired false on every matrix
+cell after the v1.8.1 → v1.9.0 version bump, and was the proximate
+cause of the 8 failing matrix cells.
+
+A parallel hygiene problem affected the planned-module ImportError text in
+`src/neurotcs/__init__.py` which still claimed "intentionally NOT shipped
+in v1.8.x" after the v1.9.0 bump.
+
+### Fixed
+
+- **`.github/workflows/ci-matrix.yml`**:
+  - Version check changed from `startswith('1.8.')` to `startswith('1.')`,
+    so the assertion does not need updating on every minor release.
+  - Import-hook check no longer requires the literal string `'v1.9'` in the
+    error message, only the marker word `'roadmap'`. Future minor releases
+    will not need to update this matcher.
+  - Collapsed the previously-split Windows `cmd` + Linux `bash` pytest steps
+    (which used shell-specific line-continuation characters `^` and `\`)
+    into a single portable invocation. The fragility around YAML-literal-block
+    `cmd` continuation is removed entirely.
+
+- **`src/neurotcs/__init__.py`** (`_PlannedModuleFinder` error message):
+  - Replaced "intentionally NOT shipped in v1.8.x" with
+    "intentionally NOT shipped in the current v1.x release", so the message
+    stays accurate across minor releases.
+
+### Added
+
+- **`scripts/ci/`** — five new standalone Python helper scripts replacing
+  the inline `python -c "..."` blocks in both CI workflows. Each script
+  is independently testable from the command line and avoids cross-platform
+  YAML/cmd quoting fragility:
+  - `verify_rule_packs.py` — asserts exactly 3 AD packs load
+  - `verify_public_api.py` — asserts audit_core + v1.7 public-API names import
+  - `verify_import_hook.py` — asserts the planned-module hook raises with a
+    `'roadmap'` marker
+  - `verify_reference_adapters.py` — asserts the v1.8.1 reference-adapters
+    reorganization (new path + deprecation shim) still agrees
+  - `smoke_test_examples.py` — `ast.parse` checks on `examples/*.py`
+
+### Changed
+
+- **`.github/workflows/ci.yml`** — verification steps now invoke the helper
+  scripts (`python scripts/ci/verify_rule_packs.py`, etc.) instead of inline
+  `python -c "..."` blocks. Same checks, fewer quoting layers.
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` → All checks passed.
+- `pytest tests/ -q` (clean env) → 397 passed, 7 skipped.
+- All 5 CI helper scripts → exit 0 locally.
+- All 5 v1.8 + v1.9 locked audit invariants reproduce byte-exactly under v1.9.1:
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` ✓
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` ✓
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` ✓
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` ✓
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` ✓
+
+### Note
+
+This release does not modify the AD audit pipeline, the rule pack registry,
+the input contracts, the four AD cohort adapters, or any locked invariant.
+It is a pure CI-workflow hygiene fix following the v1.9.0 scope contraction.
+
 ## [1.9.0] — 2026-05-24
 
 ### AD-only scope contraction
