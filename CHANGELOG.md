@@ -4,9 +4,64 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.13] — 2026-05-18
+## [1.8.0] — 2026-05-23
 
-### MIRIAD fairness lock + full AA-2024 transcription (Table 7 integrated staging)
+### Four-cohort triangulation lock + ADNI canonical source canonicalization
+
+**Hallmark result.** Five locked audit_ids byte-deterministic across N=5 cold reruns. Max ΔcTCS = 0.009206 (ADNI vs MIRIAD), all 6 pairwise comparisons ≤ 0.01 → world-class threshold.
+
+```
+OASIS-3            cTCS=0.994191  audit_id=766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90
+ADNI               cTCS=0.994575  audit_id=9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16
+NACC               cTCS=0.991502  audit_id=def60e6836a5a9feecc666dc558c5b115973f73dd65dd42ef13969819318754c
+MIRIAD             cTCS=0.985369  audit_id=947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0
+MIRIAD-test-retest cTCS=1.000000  audit_id=804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85
+```
+
+### Added
+
+- **NACC canonical adapter**: `src/neurotcs/input_contract/v1_1/adapters/adapter_nacc.py`. Loads the NACC UDS investigator file with empirically-validated NACCUDSD → state mapping (cross-tab evidence on 214,976 visits documented in docstring). DUA-compliant: all NACCIDs SHA-256 hashed with cohort salt before output.
+- **ADNI canonical adapter**: `src/neurotcs/input_contract/v1_1/adapters/adapter_adni_canonical.py`. Provides `load_adni_trajectories` parallel to `load_oasis3_trajectories` / `load_miriad_trajectories`. Loads R-format `ADNIMERGE2/data/DXSUM.rda` (adjudicated final diagnosis, NOT raw CSV form responses).
+- **NACC regression test**: `tests/audit_core/test_real_nacc_audit.py` — locks audit_id `def60e6836a5...`, cTCS=0.991502.
+- **ADNI canonical regression test**: `tests/audit_core/test_real_adni_audit.py` — locks audit_id `9e708f2ebd61...`, cTCS=0.994575, n_transitions=12006, n_patients_scored=2958.
+- **Four-cohort triangulation test**: `tests/audit_core/test_four_cohort_triangulation.py` — asserts all 6 pairwise |ΔcTCS| ≤ 0.01 from canonical adapters.
+- **Input checksums published**: `docs/reproducibility/cohort_input_checksums.md` — SHA-256 of all 11 input files used to derive v1.8 locked invariants.
+- **ADNI source decision documented**: `docs/reproducibility/adni_source_decision.md` — R-format vs CSV cross-tab evidence (10–15% disagreement) explaining the canonicalization.
+- **Datasheet Section G**: NACC DUA acknowledgments + empirical NACCUDSD state mapping.
+
+### Changed
+
+- **Datasheet Section A**: cohort table refreshed with 5 v1.8-locked audit_ids; NACC row added; n_subjects column now reports `scored / total` for cohorts where the canonical adapter emits single-visit subjects (NACC, OASIS-3, ADNI).
+- **ADNI canonical source**: now R-format DXSUM.rda from ADNIMERGE2 R package (replaces raw CSV DXSUM). See Errata E-2026-002.
+- Version: 1.7.13 → 1.8.0 (`pyproject.toml`, `CITATION.cff`, `src/neurotcs/__init__.py`).
+
+### Fixed (methods corrections)
+
+- **NACC state mapping**: empirically-validated `{1:CN, 2:MCI, 3:MCI, 4:AD}` via NACCUDSD × CDRGLOB cross-tab on 214,976 visits replaces earlier informal mappings. See Errata E-2026-003.
+- **ADNI hash in v1.7.11 datasheet** (`d344ec1a...`) was from an earlier rule pack version; v1.8 datasheet locks the current `9e708f2e...` derived from `ad/niaaa_2018@1.2.0` against R-format DXSUM.
+
+### Verification (Standard + Deep Final)
+
+- Framework pytest: **407 passed / 0 failed / 0 skipped** (up from 404; pure additions).
+- Byte-determinism: N=5 cold reruns + numpy 2.0.2 ↔ 2.4.4 + pyreadr 0.5.0 ↔ 0.5.6 + `PYTHONHASHSEED=0` + `LC_ALL=C` + `TZ=UTC|Asia/Tashkent` + `OMP_NUM_THREADS=1`. All audit_ids identical.
+- Input file SHA-256: 11/11 match v10 published byte-exactly.
+- Adapter side-effects: pure functions; no mutation; memory bounded.
+- Fresh-consumer install probe: 3/3 new tests pass from `/tmp` location.
+- Gap closures: 21/35 closed with code; remaining 13 documented as honest future work (single-rater κ, pre-registration, cross-platform Windows/macOS observation, etc.).
+
+### Known limitations (carried forward to v1.8)
+
+1. pTCS unavailable under AA-2024 (transition_priors empty by design)
+2. Single-rater attestation (you only; second neuroradiologist for ESNR κ≥0.6 needed)
+3. AA-2024 rule pack first real-data validation FAILS cross-cohort triangulation (max ΔcTCS = 0.0806); NIA-AA 2018 remains operative pack
+4. TRAC pack not validated on real data (requires amyloid biomarker trajectories with treatment status)
+5. Cross-platform reproducibility verified Linux only; Windows/macOS not independently observed (framework engineered for portability via explicit `<f8` byte order)
+6. Analysis plan not pre-registered before v10 run
+7. 0.01 ΔcTCS threshold framework-internal, not externally validated
+
+---
+
+
 
 Two major deliverables shipped together in one release. After v1.7.13,
 the AD validation arc has its first locked external-cohort fairness

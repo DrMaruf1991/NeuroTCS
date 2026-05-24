@@ -208,3 +208,101 @@ Per the cumulative ERRATA E-2026-001/2/3/4 record, every citation in every rule 
 ### Acknowledgment
 
 Same external audit that flagged Marras 2002. The auditor's specific signal — "the DOI resolves to a different paper" — is the strongest red flag in citation verification and is exactly what the Crossref/EUtils cross-resolver title check is designed to surface.
+
+---
+
+## E-2026-005 · ADNI canonical source switched from raw CSV DXSUM to R-format ADNIMERGE2/data/DXSUM.rda (fixed in v1.8.0)
+
+**Discovered:** 2026-05-23 during v1.8 four-cohort triangulation lock.
+
+### What was wrong
+
+Pre-v1.8 documentation and a previous Claude session used the raw CSV
+`All_Subjects_DXSUM_*.csv` as the ADNI longitudinal source. Cross-validation
+on 28,352 matched (PTID, EXAMDATE) rows showed ~10–15% disagreement between
+the raw CSV and the adjudicated R-format `ADNIMERGE2/data/DXSUM.rda`:
+
+| CSV DIAGNOSIS | R = CN | R = MCI | R = Dementia |
+|---|---:|---:|---:|
+| 1 (CN-form) | 7,456 | 737 | 420 |
+| 2 (MCI-form) | 702 | 6,902 | 240 |
+| 3 (Dementia-form) | 420 | 252 | 3,123 |
+
+The CSV contains raw clinical-form entries; the R file contains the adjudicated
+final diagnosis after consensus review. For longitudinal cTCS audit, the
+adjudicated final diagnosis is the clinically meaningful state.
+
+### Numerical consequence
+
+Using CSV DXSUM:
+- n_trajectories = 3,685; n_transitions = 12,321; cTCS = 0.994970
+
+Using canonical R-format DXSUM:
+- n_trajectories = 3,762; n_transitions = 12,006; cTCS = 0.994575
+
+The R-format reproduces the v1.7.13 published demo numbers
+(`examples/adni_audit_demo.py`: 12,006 transitions, cTCS = 0.9946) exactly.
+
+### What changed in v1.8.0
+
+1. New canonical loader `adapter_adni_canonical.load_adni_trajectories` reads
+   R-format DXSUM via pyreadr.
+2. New regression test `test_real_adni_audit.py` locks audit_id
+   `9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16`.
+3. New documentation `docs/reproducibility/adni_source_decision.md`.
+4. Datasheet Section A's stale ADNI audit_id `d344ec1a...` (from rule pack
+   v1.1.0) replaced with v1.2.0 lock `9e708f2e...`.
+
+### Acknowledgment
+
+Internal verification caught this during the v1.8 pre-lock cross-tab review.
+
+---
+
+## E-2026-006 · NACC state mapping empirically validated, replacing earlier informal mappings (new in v1.8.0)
+
+**Discovered:** 2026-05-23 during v1.8 NACC integration.
+
+### What was wrong
+
+An earlier prompt encoded the NACC state mapping as
+`{1: CN, 3: CN, 4: MCI, 5: Dementia}`. This is wrong in two ways:
+
+1. NACCUDSD=5 does not exist in the NACC UDS v73 data (highest valid code is 8).
+2. NACCUDSD=3 modal CDRGLOB is 0.5 (87% of n=37,957 visits) → MCI, not CN.
+
+The error was caught when applying the prompt's mapping produced
+cTCS=0.976 — failing the four-cohort triangulation by ~0.015.
+
+### Empirical validation
+
+A NACCUDSD × CDRGLOB cross-tab on 214,976 visits established the correct
+mapping:
+
+| NACCUDSD | n | modal CDRGLOB | majority | State |
+|---:|---:|---:|---:|---|
+| 1 | 106,475 | 0.0 | 91.4% | CN |
+| 2 | 9,575 | 0.5 | 65.9% | MCI |
+| 3 | 37,957 | 0.5 | 86.7% | MCI |
+| 4 | 60,945 | ≥1.0 (bucket) | 76.0% | AD |
+| 8 | 24 | mixed | — | dropped |
+
+NACCUDSD=4 is borderline under strict literal "single modal CDR with ≥50%
+majority" (modal CDR=1.0 at 39.1%); under the clinically-meaningful "CDR
+bucket ≥1.0" reading (76.0%, per Morris 1993 PMID 8232972), the 4 → AD
+mapping is clearly justified.
+
+### What changed in v1.8.0
+
+1. New canonical adapter `adapter_nacc.load_nacc_trajectories` uses the
+   empirical mapping with cross-tab evidence documented in the docstring.
+2. New regression test `test_real_nacc_audit.py` locks audit_id
+   `def60e6836a5a9feecc666dc558c5b115973f73dd65dd42ef13969819318754c`.
+3. Datasheet Section G documents the empirical mapping + the NACCUDSD=4
+   borderline finding.
+
+### Acknowledgment
+
+Internal verification during v1.8 NACC integration. The four-cohort
+triangulation test (`test_four_cohort_triangulation.py`) would catch any
+regression of this mapping at commit time.
