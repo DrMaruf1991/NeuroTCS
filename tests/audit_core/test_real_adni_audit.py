@@ -27,6 +27,11 @@ from neurotcs.input_contract.v1_1.adapters.adapter_adni_canonical import (
 LOCKED_AUDIT_ID = (
     "9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16"
 )
+# v1.8.1: also lock audit_id_v2 (C6 collision-resistant variant). Captured in
+# v1.8 deep-audit response run; reproduces byte-exactly under v1.8.x.
+LOCKED_AUDIT_ID_V2 = (
+    "7d08a227b6fe80b53adc0291fe9cda26bf4f1056b1a04cb47fd2afc63d0a7334"
+)
 LOCKED_CTCS = 0.994575  # rounds to 0.9946 (the published v1.7.13 invariant)
 LOCKED_N_TRAJECTORIES = 3762
 LOCKED_N_TRANSITIONS = 12006
@@ -35,16 +40,14 @@ ABS_TOL = 0.0005
 
 
 def _find_adni_dxsum_rda() -> Path | None:
-    candidates = [
-        os.environ.get("NEUROTCS_ADNI_DXSUM_RDA"),
-        "/home/claude/adnimerge2_extract/ADNIMERGE2/data/DXSUM.rda",
-        str(Path.home() / "Downloads" / "ADNIMERGE2" / "data" / "DXSUM.rda"),
-        "C:/Users/Dell/Downloads/ADNIMERGE2/data/DXSUM.rda",
-    ]
-    for c in candidates:
-        if c and Path(c).exists():
-            return Path(c)
-    return None
+    """Resolve ADNI DXSUM.rda path from the documented env-var contract.
+
+    Set NEUROTCS_ADNI_DXSUM_RDA to the path of the ADNIMERGE2 R-package
+    DXSUM.rda file (the canonical v1.8 source — see
+    docs/reproducibility/adni_source_decision.md).
+    """
+    p = os.environ.get("NEUROTCS_ADNI_DXSUM_RDA")
+    return Path(p) if p and Path(p).exists() else None
 
 
 def test_real_adni_audit_locked_invariant():
@@ -80,9 +83,16 @@ def test_real_adni_audit_locked_invariant():
         f"ADNI audit_id regression: got {result.audit_id}, "
         f"expected {LOCKED_AUDIT_ID}"
     )
+    # v1.8.1: also lock audit_id_v2 (C6 collision-resistant variant)
+    observed_v2 = getattr(result, "audit_id_v2", None)
+    assert observed_v2 == LOCKED_AUDIT_ID_V2, (
+        f"ADNI audit_id_v2 regression: got {observed_v2}, "
+        f"expected {LOCKED_AUDIT_ID_V2}"
+    )
 
     print(f"  [PASS] ADNI cTCS = {result.ctcs.ci.point:.6f}  "
-          f"audit_id = {result.audit_id[:16]}...")
+          f"audit_id = {result.audit_id[:16]}...  "
+          f"audit_id_v2 = {observed_v2[:16]}...")
 
 
 if __name__ == "__main__":

@@ -220,10 +220,17 @@ def test_l1_minimum_submission():
 
 def test_real_world_adni_adapter():
     """Convert a tiny slice of real ADNI data into a conforming submission.
-    This proves the contract handles real data, not just synthetic toys."""
+    This proves the contract handles real data, not just synthetic toys.
+
+    Resolves the DXSUM.rda path from NEUROTCS_ADNI_DXSUM_RDA. Skips cleanly
+    if the env var is unset or the file does not exist.
+    """
+    import os
+
     import pyreadr
-    adni_path = Path("/home/claude/adni_work/ADNIMERGE2/data/DXSUM.rda")
-    if not adni_path.exists():
+    adni_env = os.environ.get("NEUROTCS_ADNI_DXSUM_RDA")
+    adni_path = Path(adni_env) if adni_env else None
+    if adni_path is None or not adni_path.exists():
         print("  ⏭  test_real_world_adni_adapter (ADNI not accessible — skipped)")
         return
 

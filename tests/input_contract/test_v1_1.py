@@ -489,10 +489,16 @@ def test_reference_range_inverted():
 # ============================================================
 
 def test_real_adni_clinical():
-    """Real ADNI clinical labels — categorical only, v1.1."""
+    """Real ADNI clinical labels — categorical only, v1.1.
+
+    Resolves DXSUM.rda from NEUROTCS_ADNI_DXSUM_RDA. Skips if unset.
+    """
+    import os
+
     import pyreadr
-    adni = Path("/home/claude/adni_work/ADNIMERGE2/data/DXSUM.rda")
-    if not adni.exists():
+    adni_env = os.environ.get("NEUROTCS_ADNI_DXSUM_RDA")
+    adni = Path(adni_env) if adni_env else None
+    if adni is None or not adni.exists():
         print(f"  {SKIP} test_real_adni_clinical (ADNI not accessible)")
         return
 
@@ -559,12 +565,20 @@ def test_real_adni_clinical():
 
 
 def test_real_adni_volumetric():
-    """Real ADNI FreeSurfer volumes as continuous biomarkers (v1.1 capability)."""
+    """Real ADNI FreeSurfer volumes as continuous biomarkers (v1.1 capability).
+
+    Resolves DXSUM.rda from NEUROTCS_ADNI_DXSUM_RDA and UCSFFSX7.rda from
+    NEUROTCS_ADNI_UCSFFSX7_RDA. Skips if either env var is unset.
+    """
+    import os
+
     import pyreadr
-    fs = Path("/home/claude/adni_work/ADNIMERGE2/data/UCSFFSX7.rda")
-    dx = Path("/home/claude/adni_work/ADNIMERGE2/data/DXSUM.rda")
-    if not fs.exists() or not dx.exists():
-        print(f"  {SKIP} test_real_adni_volumetric (FreeSurfer data not accessible)")
+    fs_env = os.environ.get("NEUROTCS_ADNI_UCSFFSX7_RDA")
+    dx_env = os.environ.get("NEUROTCS_ADNI_DXSUM_RDA")
+    fs = Path(fs_env) if fs_env else None
+    dx = Path(dx_env) if dx_env else None
+    if fs is None or dx is None or not fs.exists() or not dx.exists():
+        print(f"  {SKIP} test_real_adni_volumetric (FreeSurfer/DXSUM env vars not set)")
         return
 
     fsdf = pyreadr.read_r(str(fs))["UCSFFSX7"]

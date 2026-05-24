@@ -637,10 +637,16 @@ def test_audit_skeleton_rejected():
 # ============================================================
 
 def test_real_adni_audit_end_to_end():
-    """Real ADNI run: 12,006 transitions, expect 65 flagged (0.54%)."""
-    dxsum = Path("/home/claude/adni_work/ADNIMERGE2/data/DXSUM.rda")
-    if not dxsum.exists():
-        print("  ⏭  test_real_adni_audit_end_to_end (skipped: no ADNI data)")
+    """Real ADNI run: 12,006 transitions, expect 65 flagged (0.54%).
+
+    Resolves the DXSUM.rda path from NEUROTCS_ADNI_DXSUM_RDA. Skips cleanly
+    if the env var is unset or the file does not exist.
+    """
+    import os
+    dxsum_env = os.environ.get("NEUROTCS_ADNI_DXSUM_RDA")
+    dxsum = Path(dxsum_env) if dxsum_env else None
+    if dxsum is None or not dxsum.exists():
+        print("  ⏭  test_real_adni_audit_end_to_end (skipped: NEUROTCS_ADNI_DXSUM_RDA not set or file missing)")
         return
     import warnings
     warnings.filterwarnings("ignore")

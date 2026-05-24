@@ -41,6 +41,7 @@ clinical_source_authority: >-
 reviewers: []
 
 anchor_citation:
+  # pmid_pending: recent paper (2025); recheck PubMed quarterly
   citation_pmid: null
   citation_doi: "10.1002/alz.70997"
   citation_text: >-

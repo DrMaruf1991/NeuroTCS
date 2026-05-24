@@ -114,6 +114,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
@@ -349,9 +350,9 @@ def _normalise_sex(value: Any) -> str:
 # the modality token. We use a strict regex so anything that doesn't
 # match returns None (signals "use this column as-is for join").
 
-_MIRIAD_LABEL_RE = __import__("re").compile(
+_MIRIAD_LABEL_RE = re.compile(
     r"^miriad_\d+_(?P<visit_num>\d+)_(?:MR_\d+|MMSE|.*)$",
-    __import__("re").IGNORECASE,
+    re.IGNORECASE,
 )
 
 

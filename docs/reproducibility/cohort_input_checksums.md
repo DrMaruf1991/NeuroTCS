@@ -29,14 +29,28 @@ Closes the v1.7.13 honest gap: *"Cohort CSV checksums not yet published."*
 
 | File | Size (bytes) | SHA-256 (first 16 chars) |
 |---|---:|---|
-| `investigator_nacc73.csv` (full) | 997,611,978 | `a21a8537dc8ca679` |
-| `investigator_nacc73_slim.csv` (used in audit) | 16,007,986 | `7a349eb84920d366` |
+| `investigator_nacc73.csv` (full, canonical) | 997,611,978 | `a21a8537dc8ca679` |
 
-The slim CSV contains only the columns needed for cTCS + fairness panel
-(NACCID, VISITDATE, NACCUDSD, NACCAGE, NACCSEX, NACCNIHR, NACCHISP,
-NACCEDULVL, NACCAPOE, NACCNE4S, CDRGLOB, CDRSUM, and a few additional
-diagnostic fields). It is generated from the full file with `pandas.read_csv(usecols=...)`
-followed by `to_csv(...)` and is a strict subset of the full file's content.
+**v1.8.1 manifest correction (see ERRATA E-2026-007).** Earlier versions
+of this manifest listed a slim subset file `investigator_nacc73_slim.csv`
+with a documented column whitelist that included `NACCAPOE`. That column
+is NOT in the adapter's `DEFAULT_USECOLS`, so the slim file as actually
+used by the v1.8 audit is not reproducible from the documented recipe.
+The slim file is therefore no longer published as a canonical input in
+this manifest; reviewers should derive the slim cohort themselves from
+the full `investigator_nacc73.csv` using the live `DEFAULT_USECOLS`:
+
+```python
+from neurotcs.input_contract.v1_1.adapters.adapter_nacc import DEFAULT_USECOLS
+import pandas as pd
+df = pd.read_csv("investigator_nacc73.csv", usecols=DEFAULT_USECOLS, low_memory=False)
+df.to_csv("investigator_nacc73_slim.csv", index=False)
+```
+
+The canonical audit invariant for NACC (`def60e68...`) was derived against
+the slim file Maruf produced from the May 2026 freeze; the SHA-256
+`7a349eb84920d366` is preserved as a historical artifact in test
+docstrings but is not published as a reproducible target.
 
 ### MIRIAD
 

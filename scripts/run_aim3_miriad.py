@@ -12,10 +12,10 @@ Runs both halves of the Aim 3 design on actual MIRIAD XNAT CSVs:
 
 Usage:
     python scripts/run_aim3_miriad.py \\
-        --clinical "C:/Users/Dell/Downloads/DrMaruf_5_18_2026_12_16_7.csv" \\
-        --sessions "C:/Users/Dell/Downloads/DrMaruf_5_18_2026_12_16_24.csv" \\
-        --subjects "C:/Users/Dell/Downloads/DrMaruf_5_18_2026_12_16_33.csv" \\
-        --out      "C:/Users/Dell/Downloads/MIRIAD_audit_results"
+        --clinical "$NEUROTCS_MIRIAD_DIR/DrMaruf_5_18_2026_12_16_7.csv" \\
+        --sessions "$NEUROTCS_MIRIAD_DIR/DrMaruf_5_18_2026_12_16_24.csv" \\
+        --subjects "$NEUROTCS_MIRIAD_DIR/DrMaruf_5_18_2026_12_16_33.csv" \\
+        --out      "$NEUROTCS_MIRIAD_DIR/MIRIAD_audit_results"
 
 The --subjects argument is optional (the adapter falls back to
 subject-ID-based group inference if no Subjects CSV is provided).

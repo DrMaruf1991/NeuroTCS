@@ -25,13 +25,20 @@ python tests/rulepack/test_rulepack.py    # 24/24 should pass
 NeuroTCS/
 ├── src/neurotcs/                    importable package
 │   ├── input_contract/{v1_0,v1_1}/  pieces 1-2 (SHIPPED)
-│   ├── rulepack/                    piece 3 (SHIPPED)
-│   ├── audit_core/                  piece 4 (PLANNED)
-│   ├── output_schema/               piece 5 (PLANNED)
-│   ├── adapters/                    piece 6 (PARTIAL)
-│   └── validation_harness/          piece 7 (PLANNED)
+│   ├── rulepack/                    piece 3 (SHIPPED, 9 rule packs)
+│   ├── audit_core/                  piece 4 (SHIPPED)
+│   ├── reference_adapters/          piece 6b (SHIPPED v1.8.1 — vendor templates)
+│   ├── fairness/                    v1.7.0+ methodological modules
+│   ├── sample_size/
+│   ├── silent_deployment/
+│   ├── scanner_factorial/
+│   └── threshold_derivation/
+│   # output_schema (piece 5) and validation_harness (piece 7) are
+│   # ROADMAP v1.9.x — importing them raises ImportError via the
+│   # _PlannedModuleFinder hook in src/neurotcs/__init__.py.
 ├── tests/                           all tests (mirrors src/ structure)
 ├── docs/spec/                       temporalmetric v1.7 FINAL spec
+├── docs/reviewer_package/           v2 reviewer protocol + Cursor + Colab
 ├── docs/transcription_audit/        per-rule-pack YAML <-> source verification
 └── examples/                        end-to-end usage scripts
 ```

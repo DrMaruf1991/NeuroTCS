@@ -7,13 +7,13 @@ Subpackages:
   neurotcs.rulepack               — Citation-locked clinical rule packs (Piece 3, SHIPPED)
   neurotcs.audit_core             — cTCS/pTCS/uTCS audit engine (Piece 4, SHIPPED v1.2.0)
   neurotcs.sample_size            — Riley 2024 sample-size calculator (NEW v1.7.0)
-  neurotcs.fairness               — FUTURE-AI Fairness + Robustness panels (NEW v1.7.0)
-  neurotcs.silent_deployment      — Kwong 2022 silent-trial methodology (NEW v1.7.0)
-  neurotcs.scanner_factorial      — Scanner × vendor × interval factorial (NEW v1.7.0)
-  neurotcs.threshold_derivation   — Empirical operational thresholds (NEW v1.7.0)
-  neurotcs.output_schema          — FHIR Observation interop schema (Piece 5, PLANNED v1.7.4)
-  neurotcs.adapters               — Dataset adapters: ADNI, PPMI, RIDER, MIRIAD (Piece 6, PLANNED)
-  neurotcs.validation_harness     — Synthetic-trajectory self-tests (Piece 7, PLANNED v1.7.1)
+  neurotcs.fairness               — FUTURE-AI Fairness + Robustness panels (v1.7.0+)
+  neurotcs.silent_deployment      — Kwong 2022 silent-trial methodology (v1.7.0+)
+  neurotcs.scanner_factorial      — Scanner × vendor × interval factorial (v1.7.0+)
+  neurotcs.threshold_derivation   — Empirical operational thresholds (v1.7.0+)
+  neurotcs.output_schema          — FHIR Observation interop schema (ROADMAP v1.9.x; raises ImportError until shipped)
+  neurotcs.adapters               — Dataset adapters: ADNI, PPMI, RIDER, MIRIAD (Piece 6, partial — see input_contract/v1_1/adapters/)
+  neurotcs.validation_harness     — Synthetic-trajectory self-tests (ROADMAP v1.9.x; raises ImportError until shipped)
 
 Public API (the most common imports):
     from neurotcs.rulepack import load_rulepack, list_rulepacks
@@ -23,9 +23,54 @@ Public API (the most common imports):
     from neurotcs.silent_deployment import make_silent_deployment_evidence
 """
 
-__version__ = "1.8.0"
+__version__ = "1.8.1"
 __author__ = "Marufjon Salokhiddinov, MD PhD"
 __license__ = "Apache-2.0"
+
+
+# ---------------------------------------------------------------------------
+# Roadmap-namespace import hook (Issues 17+18, v1.8.1)
+#
+# In v1.8.0, `neurotcs.validation_harness` (Piece 7) and `neurotcs.output_schema`
+# (Piece 5) shipped as empty stub subpackages that raised NotImplementedError
+# on every call. In v1.8.1 the stub directories are removed entirely; this
+# meta-path finder catches any import of the planned subpackages and raises
+# a helpful ImportError pointing to the roadmap, rather than the bare
+# ModuleNotFoundError users would otherwise see.
+# ---------------------------------------------------------------------------
+import sys as _sys
+from importlib.abc import MetaPathFinder as _MetaPathFinder
+
+
+class _PlannedModuleFinder(_MetaPathFinder):
+    """Replace ModuleNotFoundError with a roadmap-pointer ImportError."""
+
+    _PLANNED = {
+        "neurotcs.validation_harness": (
+            "Piece 7 of 7 (synthetic-trajectory self-tests)",
+            "v1.9.x",
+            "https://github.com/DrMaruf1991/NeuroTCS/issues",
+        ),
+        "neurotcs.output_schema": (
+            "Piece 5 of 7 (FHIR Observation emitter)",
+            "v1.9.x",
+            "https://github.com/DrMaruf1991/NeuroTCS/issues",
+        ),
+    }
+
+    def find_spec(self, name, path, target=None):  # noqa: D401, ARG002
+        if name in self._PLANNED:
+            piece, version, url = self._PLANNED[name]
+            raise ImportError(
+                f"`{name}` ({piece}) is a roadmap item planned for {version}. "
+                f"Track progress: {url}. "
+                f"It is intentionally NOT shipped in v1.8.x."
+            )
+        return None
+
+
+_sys.meta_path.insert(0, _PlannedModuleFinder())
+
 
 # Re-export the most-used names so users can write `from neurotcs import load_rulepack`.
 # Audit core (Piece 4 of 7, SHIPPED in v1.2.0)

@@ -38,13 +38,12 @@ from neurotcs.input_contract.v1_1.adapters.adapter_oasis3 import (
 PASS = "\033[32m\u2713\033[0m"
 FAIL = "\033[31m\u2717\033[0m"
 
-# Where to look for the OASIS-3 UDSb4 CSV. Searched in priority order.
+# Where to look for the OASIS-3 UDSb4 CSV. Set either env var to the path
+# of your DUA-approved OASIS3_UDSb4_cdr.csv. NEUROTCS_OASIS3_CDR is the
+# canonical name; NEUROTCS_OASIS3_UDSB4 is accepted as a legacy alias.
 SEARCH_PATHS = [
+    os.environ.get("NEUROTCS_OASIS3_CDR"),
     os.environ.get("NEUROTCS_OASIS3_UDSB4"),
-    "/home/claude/oasis3_work/OASIS3_UDSb4_cdr.csv",
-    str(Path.home() / "Downloads" / "OASIS3_data_files" / "OASIS3_data_files"
-         / "scans" / "UDSb4-Form_B4__Global_Staging__CDR__Standard_and_Supplemental"
-         / "resources" / "csv" / "files" / "OASIS3_UDSb4_cdr.csv"),
 ]
 
 # The locked invariant
@@ -59,6 +58,11 @@ EXPECTED_AUDIT_ID = (
     # v1.8.0 lock — rule pack v1.2.0 priors, canonical adapter, hash_ids=True.
     # Byte-deterministic across N=5 cold reruns, numpy 2.0.x↔2.4.x, pyreadr 0.5.0↔0.5.6.
     "766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90"
+)
+# v1.8.1: also lock audit_id_v2 (C6 collision-resistant variant). Captured in
+# v1.8 deep-audit response run; reproduces byte-exactly under v1.8.x.
+EXPECTED_AUDIT_ID_V2 = (
+    "265d99ee07172a645d566491401632d295e1a782922866c7dda10334f46f19c5"
 )
 EXPECTED_N_SUBJECTS_SCORED = 1247
 EXPECTED_N_TRANSITIONS = 7248
@@ -111,6 +115,12 @@ def test_real_oasis3_audit_locked_invariant():
     else:
         print(f"  [INFO] new audit_id (v1.2.0 priors): {result.audit_id}")
         print(f"  [INFO] previous (v1.1.0 priors): {EXPECTED_AUDIT_ID_V1_3_0}")
+    # v1.8.1: also lock audit_id_v2 (C6 collision-resistant variant)
+    observed_v2 = getattr(result, "audit_id_v2", None)
+    assert observed_v2 == EXPECTED_AUDIT_ID_V2, (
+        f"OASIS-3 audit_id_v2 drift: got {observed_v2}, "
+        f"expected {EXPECTED_AUDIT_ID_V2}"
+    )
     assert result.n_patients_scored == EXPECTED_N_SUBJECTS_SCORED, (
         f"n_patients_scored: got {result.n_patients_scored}, "
         f"expected {EXPECTED_N_SUBJECTS_SCORED}"

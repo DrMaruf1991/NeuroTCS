@@ -1,10 +1,11 @@
 """
 neurotcs.rulepack — Citation-locked clinical rule packs (Piece 3 of 7).
 
-The 8 production rule packs span 6 disease domains and are anchored to
-internationally endorsed published guidelines (NIA-AA, MDS-UPDRS, McDonald
-2024, RECIST 1.1, iRECIST, mRS, Fleischner 2017). See docs/transcription_audit/
-for per-pack YAML <-> source verification.
+The 9 production rule packs span 6 disease domains and are anchored to
+internationally endorsed published guidelines (NIA-AA 2018, AA 2024, AA 2024
+TRAC, MDS-UPDRS / Hoehn-Yahr, McDonald 2024, RECIST 1.1, iRECIST, mRS,
+Fleischner 2017). See docs/transcription_audit/ for per-pack YAML <-> source
+verification.
 
 Public API:
     load_rulepack("ad/niaaa_2018")          -> LoadedRulePack

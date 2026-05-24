@@ -35,15 +35,11 @@ from neurotcs.input_contract.v1_1.adapters.adapter_miriad import (
 
 PASS = "\033[32m\u2713\033[0m"
 
-# Where to look for the MIRIAD CSVs. The order matters: environment
-# variable wins, then a few sensible defaults.
+# Where to look for the MIRIAD CSVs. Set NEUROTCS_MIRIAD_DIR to the directory
+# containing the three UCL DRC XNAT export files
+# (DrMaruf_5_18_2026_12_16_{7,24,33}.csv).
 SEARCH_BASES = [
     os.environ.get("NEUROTCS_MIRIAD_DIR"),
-    "/home/claude/miriad",
-    str(Path.home() / "Downloads" / "MIRIAD"),
-    str(Path.home() / "Downloads" / "miriad"),
-    "C:/Users/Dell/Downloads/MIRIAD",
-    "C:/Users/Dell/Downloads/miriad",
 ]
 
 # Locked invariants — captured from Maruf's first real MIRIAD run on
@@ -249,6 +245,7 @@ def test_real_miriad_longitudinal_audit_locked_invariant():
         clinical_csv=clinical,
         sessions_csv=sessions,
         subjects_csv=subjects,
+        exclude_test_retest_rescans=True,  # explicit: lock depends on this being True (default is True)
     )
 
     pack = load_rulepack("ad/niaaa_2018")

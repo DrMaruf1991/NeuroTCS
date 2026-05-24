@@ -69,5 +69,12 @@ purposes:
 
 | Module | Purpose |
 |---|---|
-| `adapter_adni.py` | Builds NeuroTCS submission tables from ADNI data |
-| `adapter_adni_canonical.py` | Loads ADNI trajectories for `neurotcs.audit()` |
+| `neurotcs.reference_adapters.adni_categorical_submission` (v1.8.1+) | Builds NeuroTCS submission tables from ADNI data |
+| `neurotcs.input_contract.v1_1.adapters.adapter_adni_canonical` | Loads ADNI trajectories for `neurotcs.audit()` |
+
+**v1.8.1 path change.** Previously the submission-builder lived at
+`src/neurotcs/input_contract/v1_1/adapters/adapter_adni.py`. It was moved
+to `src/neurotcs/reference_adapters/adni_categorical_submission.py` to
+make the runtime-vs-reference distinction structurally explicit. A
+deprecation shim at the old path preserves backwards compatibility and
+will be removed in v1.9.x.

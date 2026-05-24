@@ -306,3 +306,46 @@ mapping is clearly justified.
 Internal verification during v1.8 NACC integration. The four-cohort
 triangulation test (`test_four_cohort_triangulation.py`) would catch any
 regression of this mapping at commit time.
+
+## E-2026-007 · NACC slim-file recipe in `cohort_input_checksums.md` was not reproducible from documented columns (fixed in v1.8.1)
+
+### Defect
+
+Versions of `docs/reproducibility/cohort_input_checksums.md` up to and
+including v1.8.0 listed `investigator_nacc73_slim.csv` with SHA-256
+`7a349eb84920d366` as a canonical input, accompanied by a column whitelist
+that explicitly included `NACCAPOE`.
+
+The actual v1.8 NACC adapter's `DEFAULT_USECOLS` constant
+(`src/neurotcs/input_contract/v1_1/adapters/adapter_nacc.py`) does NOT
+include `NACCAPOE`. The slim file Maruf personally produced from the May
+2026 freeze used a different (broader) column set than the one documented
+in the manifest.
+
+A reviewer following the documented recipe verbatim with
+`pandas.read_csv(usecols=...)` and `to_csv(...)` would therefore produce a
+file with a different SHA-256 than the manifest claimed.
+
+### Detection
+
+External audit reviewer flagged this on 2026-05-24 as Issue 2 of a 6-issue
+audit. Independent reviewer reproduction of NACC against the full
+`investigator_nacc73.csv` succeeded byte-exactly; the manifest discrepancy
+did not affect the locked audit_id, which is computed from
+adapter-emitted trajectories, not from the input file's SHA-256.
+
+### Fix in v1.8.1
+
+1. The slim file row is removed from `docs/reproducibility/cohort_input_checksums.md`.
+2. The full file `investigator_nacc73.csv` (SHA-256 `a21a8537dc8ca679`) is
+   the only canonical published input.
+3. The manifest now points reviewers to derive the slim file themselves
+   using the live `DEFAULT_USECOLS` constant, with code shown inline.
+4. The audit invariant `def60e6836a5a9feecc666dc558c5b115973f73dd65dd42ef13969819318754c`
+   continues to lock under v1.8.1 because it derives from the
+   adapter-emitted trajectories, not from the input file checksum.
+
+### Acknowledgment
+
+External reviewer who ran the v1.8 reviewer-package protocol and identified
+this in their FREE-RESPONSE diff section.

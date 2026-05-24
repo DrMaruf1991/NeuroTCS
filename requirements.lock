@@ -1,4 +1,4 @@
-# NeuroTCS v1.8.0 — locked dependency versions
+# NeuroTCS v1.8.1 — locked dependency versions
 # ================================================
 #
 # These are the EXACT versions used to produce the four-cohort triangulation
@@ -8,19 +8,28 @@
 #
 # Python: 3.12.3 (Ubuntu 24.04 stock build, GCC 13.3.0)
 # Generated:  2026-05-23 (v1.8.0 lock — four-cohort triangulation)
-# Verified:  408 passed, 0 failed on sandbox with all four cohort env vars set
+# Updated:    2026-05-24 (v1.8.1 — documentation, test hygiene, no dep changes)
 #
-# v1.8.0 changes vs v1.7.13:
+# Verified pytest counts (the count depends on whether cohort env vars are set):
+#   409 passed = framework-only (no NEUROTCS_* env vars set; cohort tests skip)
+#   416 passed = full suite (all four NEUROTCS_* env vars set + files exist)
+# Both outcomes are correct behavior. v1.8.0 framework count was 407 due to
+# a hardcoded fallback path that v1.8.1 removed (Issue 5+14+20).
+#
+# v1.8.0 → v1.8.1 changes:
 #   - same pinned versions (no dependency bumps; verified compatibility)
-#   - audit_id cross-version determinism re-verified: numpy 2.0.2↔2.4.4, pyreadr 0.5.0↔0.5.6
+#   - documentation, test hygiene, CI matrix, reference_adapters reorganization
+#   - audit invariants UNCHANGED — all 5 cohorts byte-exact under v1.8.1
 #
 # Usage:
 #     pip install -r requirements.lock --break-system-packages
 #     pip install -e .
+#     # framework-only (expect 409 passed):
+#     pytest tests/ -q
+#     # full suite (expect 416 passed):
 #     NEUROTCS_MIRIAD_DIR=<path> NEUROTCS_NACC_CSV=<path> \
 #     NEUROTCS_ADNI_DXSUM_RDA=<path> NEUROTCS_OASIS3_CDR=<path> \
 #     pytest tests/ -q
-#     # expect: 408 passed, 0 failed, 0 skipped
 #
 # Floor versions live in pyproject.toml; floors are what NeuroTCS DECLARES as
 # minimum compatible. Pins below are what NeuroTCS was TESTED with. The pins

@@ -30,10 +30,7 @@ jobs:
       - name: Install dev tools
         run: pip install pytest ruff
 
-      - name: Auto-fix lint debt (safe + unsafe ruff fixes)
-        run: ruff check src/ tests/ scripts/ --fix --unsafe-fixes || true
-
-      - name: Lint with ruff (post auto-fix)
+      - name: Lint with ruff (blocking — fails CI on any violation)
         run: ruff check src/ tests/ scripts/
 
       # --- Single source of truth for test discovery (v1.7.1 fix) ---

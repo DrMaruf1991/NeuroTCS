@@ -28,7 +28,7 @@ abstract: >-
   (cTCS = 0.9946, 12,006 transitions) and OASIS-3 (cTCS = 0.9942,
   7,248 transitions) — ΔcTCS = 0.0004.
 type: software
-version: "1.8.0"
+version: "1.8.1"
 date-released: "2026-05-23"
 license: Apache-2.0
 repository-code: "https://github.com/DrMaruf1991/NeuroTCS"

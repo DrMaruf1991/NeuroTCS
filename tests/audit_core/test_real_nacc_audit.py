@@ -27,6 +27,11 @@ from neurotcs.input_contract.v1_1.adapters.adapter_nacc import (
 LOCKED_AUDIT_ID = (
     "def60e6836a5a9feecc666dc558c5b115973f73dd65dd42ef13969819318754c"
 )
+# v1.8.1: also lock audit_id_v2 (C6 collision-resistant variant). Captured
+# in the v1.8 deep-audit response run; reproduces byte-exactly under v1.8.x.
+LOCKED_AUDIT_ID_V2 = (
+    "9c002cf653f8187c9c190293999b861e677f95ded8e1a4501fa47d928dac8648"
+)
 LOCKED_CTCS = 0.991502
 LOCKED_N_TRAJECTORIES_MIN = 50_000  # NACC is large; precise count varies with freeze
 LOCKED_N_TRANSITIONS_MIN = 140_000
@@ -34,17 +39,13 @@ ABS_TOL = 0.0005  # framework's standard cTCS abs tolerance
 
 
 def _find_nacc_csv() -> Path | None:
-    candidates = [
-        os.environ.get("NEUROTCS_NACC_CSV"),
-        "/home/claude/NeuroTCS_work/NeuroTCS/investigator_nacc73_slim.csv",
-        "/home/claude/NeuroTCS_work/NeuroTCS/investigator_nacc73.csv",
-        str(Path.home() / "Downloads" / "investigator_nacc73.csv"),
-        "C:/Users/Dell/Downloads/investigator_nacc73.csv",
-    ]
-    for c in candidates:
-        if c and Path(c).exists():
-            return Path(c)
-    return None
+    """Resolve NACC investigator CSV from the documented env-var contract.
+
+    Set NEUROTCS_NACC_CSV to the path of your DUA-approved NACC investigator
+    file (either the full investigator_nacc73.csv or the slim subset).
+    """
+    p = os.environ.get("NEUROTCS_NACC_CSV")
+    return Path(p) if p and Path(p).exists() else None
 
 
 def test_real_nacc_audit_locked_invariant():
@@ -87,8 +88,16 @@ def test_real_nacc_audit_locked_invariant():
         f"expected {LOCKED_AUDIT_ID}"
     )
 
+    # audit_id_v2 (C6 collision-resistant variant) must also lock byte-exactly
+    observed_v2 = getattr(result, "audit_id_v2", None)
+    assert observed_v2 == LOCKED_AUDIT_ID_V2, (
+        f"NACC audit_id_v2 regression: got {observed_v2}, "
+        f"expected {LOCKED_AUDIT_ID_V2}"
+    )
+
     print(f"  [PASS] NACC cTCS = {result.ctcs.ci.point:.6f}  "
-          f"audit_id = {result.audit_id[:16]}...")
+          f"audit_id = {result.audit_id[:16]}...  "
+          f"audit_id_v2 = {observed_v2[:16]}...")
 
 
 if __name__ == "__main__":

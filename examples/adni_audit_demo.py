@@ -1,81 +1,88 @@
 """
-End-to-end NeuroTCS audit demo on real ADNI clinical labels.
+End-to-end NeuroTCS audit demo on real ADNI clinical labels (v1.8 canonical pattern).
 
-This is the worked example for the Nature Medicine supplement, the FDA
-Q-Submission demonstration package, and the ASFNR Newport Beach workshop
-(October 2026). It uses the full audit_core pipeline:
+This is the worked example for the Nature Medicine supplement, the FDA Q-Submission
+demonstration package, and the ASFNR Newport Beach workshop (October 2026). It uses
+the v1.8 canonical loader pattern that produces the v1.8 locked audit invariant.
 
-  predictions DataFrame
-    -> trajectories_from_dataframe()
-       -> audit() with B = 10,000 cluster bootstrap
-          -> AuditResult with cTCS / pTCS / uTCS, BCa 95% CIs, audit_id
+Pipeline:
 
-Expected output (locked invariant across reruns with seed=42):
+    ADNIMERGE2/data/DXSUM.rda
+      -> load_adni_trajectories(hash_ids=False)
+         -> audit() with B=10,000 cluster bootstrap, seed=42, ci_method="bca"
+            -> AuditResult with cTCS / pTCS / uTCS, BCa 95% CIs, audit_id, audit_id_v2
 
-    NeuroTCS Audit Result
-      audit_id:    d344ec1a00f428a805556e82bbe74ef36fd5ad9a7a54499a01209e8fa693ac03
-      rulepack:    ad/niaaa_2018@1.1.0
-      transitions: 12,006 (65 flagged, 0.54%)
+Expected output (v1.8 locked invariant; reproduces byte-exactly across reruns):
 
-      cTCS  0.9946  (BCA 95% CI: 0.9924..0.9961; Huber: 1.0000)
-      pTCS  -0.3319 (BCA 95% CI: -0.3700..-0.3049; Huber: -0.2034)
-      uTCS  0.9946  (BCA 95% CI: 0.9924..0.9961; Huber: 1.0000)
+    cTCS:        0.994575  (BCA 95% CI: 0.9924..0.9961)
+    audit_id:    9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16
+    audit_id_v2: 7d08a227b6fe80b53adc0291fe9cda26bf4f1056b1a04cb47fd2afc63d0a7334
+    transitions: 12,006 (65 flagged, 0.54%)
+    patients_scored: 2,958 (of 3,762 total trajectories)
 
 ADNIMERGE2 access: adni.loni.usc.edu (4-6 week DUA). Not committed to repo.
+
+Usage:
+    # Set the env var
+    export NEUROTCS_ADNI_DXSUM_RDA=/path/to/ADNIMERGE2/data/DXSUM.rda
+    python examples/adni_audit_demo.py
+
+    # Or pass the path explicitly
+    python examples/adni_audit_demo.py /path/to/ADNIMERGE2/data/DXSUM.rda
 """
 
 from __future__ import annotations
 
+import os
 import sys
+import warnings
 from pathlib import Path
 
-import numpy as np
-
-try:
-    import pyreadr
-except ImportError:
-    print("This example requires `pyreadr`. Install with: pip install -e .")
-    sys.exit(1)
-
-from neurotcs import audit, load_rulepack, trajectories_from_dataframe
+from neurotcs import audit, load_rulepack
+from neurotcs.input_contract.v1_1.adapters.adapter_adni_canonical import (
+    load_adni_trajectories,
+)
 
 
 def run(dxsum_path: str | Path) -> None:
+    warnings.filterwarnings("ignore")
     pack = load_rulepack("ad/niaaa_2018")
 
-    dx = pyreadr.read_r(str(dxsum_path))["DXSUM"]
-    dx = dx[dx["DIAGNOSIS"].isin(["CN", "MCI", "Dementia"])].copy()
-
-    trajectories = trajectories_from_dataframe(
-        dx,
-        patient_id_col="RID",
-        visit_date_col="EXAMDATE",
-        state_col="DIAGNOSIS",
-        state_label_map={"Dementia": "AD"},
+    # Canonical v1.8 loader; hash_ids=False reproduces the locked audit_id
+    trajectories, report = load_adni_trajectories(
+        dxsum_rda_path=str(dxsum_path),
+        hash_ids=False,
         skip_invalid=True,
     )
 
-    result = audit(trajectories, pack, bootstrap_B=10_000, seed=42)
-    print(result.summary())
+    result = audit(trajectories, pack, bootstrap_B=10_000, seed=42, ci_method="bca")
+
+    print("NeuroTCS Audit Result")
+    print(f"  rulepack:        {pack.rulepack.name}@{pack.rulepack.ruleset_version}")
+    print(f"  trajectories:    {len(trajectories):,}")
+    print(f"  transitions:     {result.n_transitions:,} ({result.n_flagged} flagged, "
+          f"{100.0 * result.n_flagged / result.n_transitions:.2f}%)")
+    print(f"  patients_scored: {result.n_patients_scored:,}")
     print()
-    print(f"audit_id (citable): {result.audit_id}")
-    print(f"timestamp_utc:      {result.timestamp_utc}")
+    print(f"  cTCS:        {result.ctcs.ci.point:.6f}  "
+          f"(BCA 95% CI: {result.ctcs.ci.lo:.4f}..{result.ctcs.ci.hi:.4f})")
+    print(f"  audit_id:    {result.audit_id}")
+    if hasattr(result, "audit_id_v2"):
+        print(f"  audit_id_v2: {result.audit_id_v2}")
     print()
-    print("Per-patient distribution:")
-    pp = result.per_patient
-    print(f"  cTCS  median {float(np.median(pp.ctcs)):.4f}, "
-          f"min {pp.ctcs.min():.4f}, max {pp.ctcs.max():.4f}")
-    print(f"  uTCS  median {float(np.median(pp.utcs)):.4f}, "
-          f"min {pp.utcs.min():.4f}, max {pp.utcs.max():.4f}")
+    print("v1.8 locked invariant: cTCS=0.994575, audit_id=9e708f2ebd610e8f...")
+    print("If your output matches the locked invariant, reproducibility confirmed.")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        default = Path("/home/claude/adni_work/ADNIMERGE2/data/DXSUM.rda")
-        if default.exists():
-            run(default)
+    if len(sys.argv) >= 2:
+        run(sys.argv[1])
+    else:
+        env_path = os.environ.get("NEUROTCS_ADNI_DXSUM_RDA")
+        if env_path and Path(env_path).exists():
+            run(env_path)
         else:
             print(__doc__)
+            print("\nERROR: pass DXSUM.rda as argv[1] or set NEUROTCS_ADNI_DXSUM_RDA.",
+                  file=sys.stderr)
             sys.exit(1)
-    else:
-        run(sys.argv[1])

@@ -4,6 +4,139 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] — 2026-05-24
+
+### Documentation, test hygiene, CI matrix, reference-adapter reorganization
+
+A patch release responding to an external audit reviewer report and two
+additional in-depth audit passes. **No behavior change to the audit
+pipeline**; all five v1.8.0 locked invariants reproduce byte-exactly under
+v1.8.1 (verified end-to-end on this build before release).
+
+The audit cycle that produced this release:
+- External reviewer ran the v1.8.0 reviewer-package protocol and filed 6 issues.
+- Internal deep-audit pass #2 found 10 more (total 16).
+- Internal deep-audit pass #3 found 6 more + corrected prior findings (total 19 distinct issues after consolidation).
+- All 19 fixed in this release.
+
+### Added
+
+- **`src/neurotcs/reference_adapters/`** subpackage (Piece 6b). Houses
+  reference vendor adapters (submission-builders) clearly separated from
+  runtime trajectory loaders. New files:
+  `adni_categorical_submission.py` (was `adapter_adni.py`),
+  `adni_volumetric_submission.py` (was `adapter_adni_volumetric.py`),
+  plus `README.md` explaining the runtime-vs-reference distinction.
+- **`tests/reference_adapters/`** with smoke tests for both reference
+  adapters (4 tests total — hash determinism, distinguishability,
+  build_predictions filtering, deprecation-shim functionality).
+- **`docs/reviewer_package/`** — the v2 canonical reviewer protocol
+  (`reviewer_verification_prompt.md`), Cursor IDE prompt, Colab notebook,
+  synthetic demo data, and reviewer-package README are now committed in
+  the repo (previously only in /mnt/user-data/outputs/).
+- **`.github/workflows/ci-matrix.yml`** — cross-platform CI matrix:
+  `{ubuntu-latest, windows-latest} × {3.10, 3.11, 3.12, 3.13}`,
+  `fail-fast: false`, runs framework-only test suite (cohort tests
+  excluded since they require DUA-controlled data).
+- **`LOCKED_AUDIT_ID_V2`** constants in OASIS-3, ADNI, NACC tests with
+  byte-exact assertions. MIRIAD already locked audit_id_v2; the four-cohort
+  surface is now complete:
+  - OASIS-3: `265d99ee07172a64...`
+  - ADNI: `7d08a227b6fe80b5...`
+  - NACC: `9c002cf653f8187c...`
+  - MIRIAD: `aa178e836e8a3824...` (already locked in v1.8.0)
+  - MIRIAD test-retest: `dcf8b7de3ff9019e...` (already locked in v1.8.0)
+- **`_PlannedModuleFinder`** meta-path import hook in
+  `src/neurotcs/__init__.py`. Importing `neurotcs.validation_harness` or
+  `neurotcs.output_schema` now raises a helpful `ImportError` pointing to
+  the v1.9.x roadmap, instead of `NotImplementedError` from a shipped stub.
+- **3 anchor_citation_pmid backfills** in rule packs:
+  - `lung_nodule/fleischner_2017.yaml`: PMID 28240562 (MacMahon 2017)
+  - `pd/hoehn_yahr.yaml`: PMID 6067254 (Hoehn-Yahr 1967)
+  - `stroke/mrs_followup.yaml`: PMID 3363593 (van Swieten 1988)
+- **`pmid_pending` markers** in rule packs whose anchor is a recent paper
+  not yet in PubMed: `ms/mcdonald_2024.yaml`, `ad/aa_2024_trac.yaml`.
+- **ERRATA E-2026-007** — NACC slim-file recipe in
+  `cohort_input_checksums.md` was not reproducible from documented columns;
+  the slim file row is now removed from the manifest and reviewers derive
+  it locally from the live `DEFAULT_USECOLS`.
+
+### Changed
+
+- **README.md** — full rewrite. Version badge `1.7.1` → `1.8.1`; tests
+  badge `199/199` → `408/408`; rule pack count `8` → `9`; cohort count
+  `three` → `four` with NACC included; ADNI audit_id updated from the
+  v1.7.x value (`fa448b8f...`) to the v1.8 lock (`9e708f2e...`); roadmap
+  updated to point Pieces 5 + 7 at v1.9.x.
+- **Deprecation shims** at the old reference-adapter paths
+  (`src/neurotcs/input_contract/v1_1/adapters/adapter_adni.py` and
+  `adapter_adni_volumetric.py`) re-export from the new
+  `neurotcs.reference_adapters.*` location and emit `DeprecationWarning`.
+  Scheduled for removal in v1.9.x.
+- **`src/neurotcs/__init__.py:16`** — stale "PLANNED v1.7.1" comments
+  updated to reflect v1.8 reality and the v1.9.x roadmap framing.
+- **`src/neurotcs/rulepack/__init__.py:4`** — docstring "8 production rule
+  packs" → "9 production rule packs" with all 9 named.
+- **Examples rewritten** (`examples/adni_audit_demo.py`,
+  `examples/oasis3_audit_demo.py`) to use v1.8 canonical loaders
+  (`load_adni_trajectories`, `load_oasis3_trajectories`) and match the
+  v1.8 locked invariants in their "expected output" docstrings.
+- **`requirements.lock`** comment explains the 400 vs 408 pytest count
+  dependency on cohort env vars (resolves prior 401/407/408 confusion).
+- **Docs**: `docs/reproducibility/adni_source_decision.md` and
+  `docs/reproducibility/blind_validation_protocol.md` updated to point to
+  the new `reference_adapters/` location.
+
+### Fixed (test + doc hygiene)
+
+- **Issue 5+14+20**: All 28 hardcoded developer paths (`/home/claude/...`
+  and `C:/Users/Dell/...`) removed from 12 files. Tests now resolve cohort
+  data paths exclusively via `NEUROTCS_*` env vars and skip cleanly when
+  unset. This makes pytest-count behavior portable: 409 passed on any
+  clean install, 416 passed when all four env vars are set.
+- **Issue 3**: `tests/audit_core/test_real_miriad_audit.py` now passes
+  `exclude_test_retest_rescans=True` explicitly (defense in depth — the
+  default is True, but the locked invariant depends on it).
+- **Issue 7**: 6 pre-existing ruff errors fixed; `.github/workflows/ci.yml`
+  changed from `ruff check ... --fix --unsafe-fixes || true` (auto-fix and
+  swallow) to a blocking `ruff check`. New errors will fail CI.
+- **Issue 8**: `src/neurotcs/input_contract/v1_1/adapters/adapter_miriad.py`
+  replaced `__import__("re").compile(...)` inline calls with a normal
+  top-of-file `import re`.
+- **Issue 1**: Protocol docs (`reviewer_verification_prompt.md`,
+  `cursor_verification_prompt.md`) say `409 passed` on clean install
+  (corrects prior `401 passed` claim) with note about the 408 count
+  when env vars are set.
+- **Issue 2**: NACC slim file manifest row removed (see ERRATA E-2026-007).
+- **Issue 9**: Reviewer protocol now explicitly documents the
+  `hash_ids=False` ADNI parity exception (other three cohorts use `True`).
+
+### Removed
+
+- `src/neurotcs/validation_harness/` (Issue 17) — was a `NotImplementedError`
+  stub. The roadmap-namespace import hook now handles the rare case where
+  a user imports it.
+- `src/neurotcs/output_schema/` (Issue 18) — same pattern as above.
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` → All checks passed.
+- `pytest tests/ -q` (clean env, no cohort env vars) → 409 passed.
+- `pytest tests/ -q` (all four cohort env vars set) → 416 passed
+  (includes 4 new reference_adapters tests, balanced by removal of two
+  stub-module test paths — net 0 change).
+- All 5 v1.8 locked audit invariants reproduce byte-exactly under v1.8.1:
+  OASIS-3 `766ffc5f...`, ADNI `9e708f2e...`, NACC `def60e68...`,
+  MIRIAD `947ab24e...`, MIRIAD test-retest `80430399...`.
+
+### Note on v1.7.13
+
+v1.7.13 shipped 2026-05-18 with two major deliverables (MIRIAD fairness
+lock + AA-2024 Table 7 transcription). The work was rolled into the v1.8.0
+CHANGELOG entry rather than receiving a dedicated v1.7.13 entry. The
+v1.8.1 entry above explicitly notes that v1.7.13 to v1.8.0 was the major
+content release; v1.8.0 to v1.8.1 is a pure documentation/hygiene patch.
+
 ## [1.8.0] — 2026-05-23
 
 ### Four-cohort triangulation lock + ADNI canonical source canonicalization

@@ -24,9 +24,6 @@ from pathlib import Path
 import pytest
 
 from neurotcs import audit, load_rulepack
-from neurotcs.input_contract.v1_1.adapters.adapter_oasis3 import (
-    load_oasis3_trajectories,
-)
 from neurotcs.input_contract.v1_1.adapters.adapter_adni_canonical import (
     load_adni_trajectories,
 )
@@ -35,6 +32,9 @@ from neurotcs.input_contract.v1_1.adapters.adapter_miriad import (
 )
 from neurotcs.input_contract.v1_1.adapters.adapter_nacc import (
     load_nacc_trajectories,
+)
+from neurotcs.input_contract.v1_1.adapters.adapter_oasis3 import (
+    load_oasis3_trajectories,
 )
 
 WORLD_CLASS_THRESHOLD = 0.01
@@ -53,25 +53,20 @@ def _find(env_var: str, candidates: list[str]) -> Path | None:
 
 def test_four_cohort_triangulation_world_class():
     """v1.8 hallmark: all 6 pairwise |ΔcTCS| ≤ 0.01."""
-    oasis3 = _find("NEUROTCS_OASIS3_CDR", [
-        "/home/claude/NeuroTCS_work/NeuroTCS/OASIS3/OASIS3_data_files/scans/UDSb4-Form_B4__Global_Staging__CDR__Standard_and_Supplemental/resources/csv/files/OASIS3_UDSb4_cdr.csv",
-    ])
-    adni = _find("NEUROTCS_ADNI_DXSUM_RDA", [
-        "/home/claude/adnimerge2_extract/ADNIMERGE2/data/DXSUM.rda",
-    ])
-    miriad_dir = _find("NEUROTCS_MIRIAD_DIR", [
-        "/home/claude/miriad",
-    ])
-    nacc = _find("NEUROTCS_NACC_CSV", [
-        "/home/claude/NeuroTCS_work/NeuroTCS/investigator_nacc73_slim.csv",
-        "/home/claude/NeuroTCS_work/NeuroTCS/investigator_nacc73.csv",
-    ])
+    oasis3 = _find("NEUROTCS_OASIS3_CDR", [])
+    adni = _find("NEUROTCS_ADNI_DXSUM_RDA", [])
+    miriad_dir = _find("NEUROTCS_MIRIAD_DIR", [])
+    nacc = _find("NEUROTCS_NACC_CSV", [])
 
     missing = []
-    if oasis3 is None: missing.append("OASIS-3")
-    if adni is None: missing.append("ADNI (R-format DXSUM)")
-    if miriad_dir is None: missing.append("MIRIAD")
-    if nacc is None: missing.append("NACC")
+    if oasis3 is None:
+        missing.append("OASIS-3")
+    if adni is None:
+        missing.append("ADNI (R-format DXSUM)")
+    if miriad_dir is None:
+        missing.append("MIRIAD")
+    if nacc is None:
+        missing.append("NACC")
     if missing:
         pytest.skip(f"Cohorts not on disk: {missing}")
 

@@ -46,14 +46,10 @@ from neurotcs.input_contract.v1_1.adapters.adapter_miriad import (
 
 PASS = "\033[32m\u2713\033[0m"
 
-# Reuse the same search bases as test_real_miriad_audit.py
+# Set NEUROTCS_MIRIAD_DIR to the directory containing the three MIRIAD CSVs
+# (DrMaruf_5_18_2026_12_16_{7,24,33}.csv).
 SEARCH_BASES = [
     os.environ.get("NEUROTCS_MIRIAD_DIR"),
-    "/home/claude/miriad",
-    str(Path.home() / "Downloads" / "MIRIAD"),
-    str(Path.home() / "Downloads" / "miriad"),
-    "C:/Users/Dell/Downloads/MIRIAD",
-    "C:/Users/Dell/Downloads/miriad",
 ]
 
 

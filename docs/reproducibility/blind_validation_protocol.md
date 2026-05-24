@@ -191,8 +191,9 @@ metadata for each patient. Templates available in the repo:
   including demographic extraction).
 - `src/neurotcs/input_contract/v1_1/adapters/adapter_oasis3.py` —
   reference for a longitudinal CDR-based cohort.
-- `src/neurotcs/input_contract/v1_1/adapters/adapter_adni.py` —
-  reference for an ADNI-style DXSUM extraction.
+- `src/neurotcs/reference_adapters/adni_categorical_submission.py` —
+  reference for an ADNI-style DXSUM submission-builder (v1.8.1+;
+  previously at `input_contract/v1_1/adapters/adapter_adni.py`).
 
 Your adapter must:
 

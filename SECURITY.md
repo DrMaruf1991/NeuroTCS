@@ -37,8 +37,12 @@ You will receive an acknowledgement within 5 business days. Critical issues will
 
 - Dependency vulnerabilities in transitive deps (file upstream).
 - Cosmetic issues in documentation.
-- Issues in `output_schema` and `validation_harness` while these
-  subpackages are marked `__status__ = "planned"`. (Note: `audit_core`
-  is `__status__ = "production"` and `adapters` is `__status__ =
-  "partial"` — both ARE in scope as of v1.7.1, per the v1.7.1 SECURITY
-  fix to the prior over-broad clause.)
+- Roadmap items not yet shipped: `neurotcs.output_schema` (Piece 5, FHIR
+  Observation emitter) and `neurotcs.validation_harness` (Piece 7,
+  synthetic-trajectory self-tests) — both planned for v1.9.x. As of
+  v1.8.1, importing these raises `ImportError` with a roadmap pointer
+  (see the `_PlannedModuleFinder` hook in `src/neurotcs/__init__.py`);
+  there are no shipped stub directories that could harbor a vulnerability.
+  Other subpackages (`audit_core`, `input_contract`, `rulepack`, the v1.7.0
+  methodological modules, `reference_adapters`, the v1.1 trajectory adapters)
+  are all in production scope.
