@@ -46,12 +46,6 @@ ALL_PACKS = [
     "ad/niaaa_2018",
     "ad/aa_2024",
     "ad/aa_2024_trac",
-    "pd/hoehn_yahr",
-    "ms/mcdonald_2024",
-    "oncology/recist_1_1",
-    "oncology/irecist",
-    "stroke/mrs_followup",
-    "lung_nodule/fleischner_2017",
 ]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -309,12 +303,7 @@ def test_transcription_audit_exists_for_each_pack():
     expected = {
         "ad/niaaa_2018": "ad_niaaa_2018.md",
         "ad/aa_2024": "ad_aa_2024.md",
-        "pd/hoehn_yahr": "pd_hoehn_yahr.md",
-        "ms/mcdonald_2024": "ms_mcdonald_2024.md",
-        "oncology/recist_1_1": "oncology_recist_1_1.md",
-        "oncology/irecist": "oncology_irecist.md",
-        "stroke/mrs_followup": "stroke_mrs_followup.md",
-        "lung_nodule/fleischner_2017": "lung_nodule_fleischner_2017.md",
+        "ad/aa_2024_trac": "ad_aa_2024_trac.md",
     }
     for name, fname in expected.items():
         path = audit_dir / fname
@@ -378,152 +367,6 @@ def test_ad_aa_2024_monotone():
     ok, _ = rp.is_admissible("Stage_1A", "Stage_2A", 200)
     assert ok
     print(f"  {PASS} test_ad_aa_2024_monotone (17 states, Table 7 alphanumeric)")
-
-
-def test_pd_behaviors():
-    pack = load_rulepack("pd/hoehn_yahr")
-    rp = pack.rulepack
-
-    # Adjacent forward any interval
-    ok, _ = rp.is_admissible("HY_1", "HY_1_5", 10)
-    assert ok
-
-    # Two-step forward requires 365 days
-    ok, _ = rp.is_admissible("HY_1", "HY_2", 100)
-    assert not ok
-    ok, _ = rp.is_admissible("HY_1", "HY_2", 400)
-    assert ok
-
-    # Backward natural-history blocked
-    ok, _ = rp.is_admissible("HY_2", "HY_1", 100)
-    assert not ok
-
-    print(f"  {PASS} test_pd_behaviors")
-
-
-def test_ms_relapse_remission():
-    """MS is unique: adjacent backward admissible at any interval (RRMS)."""
-    pack = load_rulepack("ms/mcdonald_2024")
-    rp = pack.rulepack
-
-    # Backward adjacent admissible (relapse remission)
-    ok, _ = rp.is_admissible("EDSS_1_0_2_5", "EDSS_0", 30)
-    assert ok, "MS adjacent backward should be admissible (RRMS biology)"
-
-    ok, _ = rp.is_admissible("EDSS_3_0_4_5", "EDSS_1_0_2_5", 60)
-    assert ok
-
-    # Death absorbing
-    ok, _ = rp.is_admissible("EDSS_10", "EDSS_9_0_9_5", 10000)
-    assert not ok
-
-    # Two-band forward jump requires 180d
-    ok, _ = rp.is_admissible("EDSS_0", "EDSS_3_0_4_5", 90)
-    assert not ok
-    ok, _ = rp.is_admissible("EDSS_0", "EDSS_3_0_4_5", 200)
-    assert ok
-
-    print(f"  {PASS} test_ms_relapse_remission")
-
-
-def test_recist_bidirectional_with_confirmation():
-    pack = load_rulepack("oncology/recist_1_1")
-    rp = pack.rulepack
-
-    # Response confirmation requires 28d
-    ok, _ = rp.is_admissible("SD", "PR", 20)
-    assert not ok
-    ok, _ = rp.is_admissible("SD", "PR", 30)
-    assert ok
-
-    # CR->PD direct (over <56d) blocked
-    ok, _ = rp.is_admissible("CR", "PD", 30)
-    assert not ok
-    ok, _ = rp.is_admissible("CR", "PD", 60)
-    assert ok
-
-    # SD->PD any interval
-    ok, _ = rp.is_admissible("SD", "PD", 14)
-    assert ok
-
-    print(f"  {PASS} test_recist_bidirectional_with_confirmation")
-
-
-def test_irecist_pseudoprogression():
-    """The defining iRECIST feature: iUPD can resolve to iSD/iPR/iCR."""
-    pack = load_rulepack("oncology/irecist")
-    rp = pack.rulepack
-
-    # Pseudoprogression resolution: iUPD -> iPR admissible any interval
-    ok, _ = rp.is_admissible("iUPD", "iPR", 30)
-    assert ok, "iUPD->iPR pseudoprogression must be admissible"
-
-    ok, _ = rp.is_admissible("iUPD", "iCR", 60)
-    assert ok
-
-    # iUPD -> iCPD must be in 28-56 day window
-    ok, _ = rp.is_admissible("iUPD", "iCPD", 14)
-    assert not ok  # too short
-    ok, _ = rp.is_admissible("iUPD", "iCPD", 35)
-    assert ok      # in window
-    ok, _ = rp.is_admissible("iUPD", "iCPD", 90)
-    assert not ok  # too long (window expired)
-
-    # iCPD absorbing
-    ok, _ = rp.is_admissible("iCPD", "iSD", 10000)
-    assert not ok
-
-    print(f"  {PASS} test_irecist_pseudoprogression")
-
-
-def test_stroke_recovery_and_death():
-    pack = load_rulepack("stroke/mrs_followup")
-    rp = pack.rulepack
-
-    # Adjacent improvement
-    ok, _ = rp.is_admissible("mRS_5", "mRS_4", 10)
-    assert ok
-
-    # Death from any state
-    for s in ["mRS_0", "mRS_1", "mRS_2", "mRS_3", "mRS_4", "mRS_5"]:
-        ok, _ = rp.is_admissible(s, "mRS_6", 1)
-        assert ok, f"{s}->mRS_6 (death) must be admissible"
-
-    # Death absorbing
-    ok, _ = rp.is_admissible("mRS_6", "mRS_5", 1000)
-    assert not ok
-
-    # Two-band improvement needs 30 days
-    ok, _ = rp.is_admissible("mRS_5", "mRS_3", 10)
-    assert not ok
-    ok, _ = rp.is_admissible("mRS_5", "mRS_3", 40)
-    assert ok
-
-    print(f"  {PASS} test_stroke_recovery_and_death")
-
-
-def test_fleischner_growth_and_shrinkage():
-    pack = load_rulepack("lung_nodule/fleischner_2017")
-    rp = pack.rulepack
-
-    # Growth needs 90d minimum
-    ok, _ = rp.is_admissible("Nodule_lt_6mm", "Nodule_6_8mm", 30)
-    assert not ok
-    ok, _ = rp.is_admissible("Nodule_lt_6mm", "Nodule_6_8mm", 100)
-    assert ok
-
-    # Two-band growth needs 180d
-    ok, _ = rp.is_admissible("Nodule_lt_6mm", "Nodule_gt_8mm", 100)
-    assert not ok
-    ok, _ = rp.is_admissible("Nodule_lt_6mm", "Nodule_gt_8mm", 200)
-    assert ok
-
-    # Shrinkage admissible (override-allowed)
-    ok, t = rp.is_admissible("Nodule_6_8mm", "Nodule_lt_6mm", 100)
-    assert ok
-    assert t.override_allowed
-
-    print(f"  {PASS} test_fleischner_growth_and_shrinkage")
 
 
 # ============================================================
@@ -736,17 +579,14 @@ def test_existing_v1_1_packs_still_load_under_v1_2_schema():
 
     Note: this test does NOT hard-code each pack's declared version. Doing
     so would couple this backward-compat test to the rule-pack content,
-    which legitimately evolves (e.g. pd/hoehn_yahr.yaml was elevated from
-    1.1.0 to 1.3.0 in v1.7.9 to correctly declare its use of 1.3.0-only
-    `attribution_type: clinical_inference`). The schema-version declaration
-    policy is enforced separately by
+    which legitimately evolves (e.g. ad/aa_2024.yaml schema_version may be
+    elevated as new attribution mechanisms are added). The schema-version
+    declaration policy is enforced separately by
     tests/rulepack/test_schema_version_declaration.py.
     """
     from neurotcs.rulepack.schema import SUPPORTED_SCHEMA_VERSIONS
     for name in [
-        "ad/niaaa_2018", "ad/aa_2024", "pd/hoehn_yahr", "ms/mcdonald_2024",
-        "oncology/recist_1_1", "oncology/irecist", "stroke/mrs_followup",
-        "lung_nodule/fleischner_2017",
+        "ad/niaaa_2018", "ad/aa_2024", "ad/aa_2024_trac",
     ]:
         pack = load_rulepack(name)
         assert pack.rulepack.schema_version in SUPPORTED_SCHEMA_VERSIONS, (
@@ -755,7 +595,7 @@ def test_existing_v1_1_packs_still_load_under_v1_2_schema():
             f"supported set {sorted(SUPPORTED_SCHEMA_VERSIONS)}."
         )
     print(f"  {PASS} test_existing_v1_1_packs_still_load_under_v1_2_schema "
-          f"(8 packs)")
+          f"(3 AD packs)")
 
 
 def test_unsupported_schema_version_rejected():
@@ -1005,12 +845,6 @@ def run_all():
         test_transcription_audit_exists_for_each_pack,
         test_ad_niaaa_behaviors,
         test_ad_aa_2024_monotone,
-        test_pd_behaviors,
-        test_ms_relapse_remission,
-        test_recist_bidirectional_with_confirmation,
-        test_irecist_pseudoprogression,
-        test_stroke_recovery_and_death,
-        test_fleischner_growth_and_shrinkage,
         test_load_missing_file,
         test_yaml_with_missing_guideline_section_rejected,
         test_yaml_with_missing_transcribed_by_rejected,

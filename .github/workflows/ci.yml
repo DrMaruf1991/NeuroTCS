@@ -49,8 +49,10 @@ jobs:
           packs = list_rulepacks()
           invalid = [p for p in packs if p.get('status') == 'INVALID']
           assert not invalid, f'Invalid: {invalid}'
-          assert len(packs) == 9, f'Expected 9 packs, got {len(packs)}'
-          print(f'All {len(packs)} rule packs load as production')
+          assert len(packs) == 3, f'Expected 3 AD packs, got {len(packs)}'
+          ad_packs = [p for p in packs if p['name'].startswith('ad/')]
+          assert len(ad_packs) == 3, f'All packs must be ad/*; got non-AD: {[p["name"] for p in packs if not p["name"].startswith("ad/")]}'
+          print(f'All {len(packs)} AD rule packs load as production')
           "
 
       - name: Verify audit_core public API

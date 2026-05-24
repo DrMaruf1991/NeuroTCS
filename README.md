@@ -5,8 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.8.1](https://img.shields.io/badge/version-1.8.1-success.svg)](CHANGELOG.md)
-[![Tests 416/416](https://img.shields.io/badge/tests-416%2F416-success.svg)](tests/)
+[![Version 1.9.0](https://img.shields.io/badge/version-1.9.0-success.svg)](CHANGELOG.md)
+[![Tests 404/404](https://img.shields.io/badge/tests-404%2F404-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7_FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
@@ -37,7 +37,7 @@ NeuroTCS is the umbrella for seven engineering pieces plus five v1.7.0 methodolo
 |---|---|---|---|
 | 1 | `neurotcs.input_contract.v1_0` | ✅ shipped | Categorical input contract (8-step validation, fail-closed) |
 | 2 | `neurotcs.input_contract.v1_1` | ✅ shipped | Continuous-biomarker contract with UCUM unit enforcement |
-| 3 | `neurotcs.rulepack` | ✅ shipped | **9 production rule packs** across 6 disease domains |
+| 3 | `neurotcs.rulepack` | ✅ shipped | **3 production AD rule packs** (NIA-AA 2018, AA 2024, AA 2024 TRAC) |
 | 4 | `neurotcs.audit_core` | ✅ shipped | cTCS / pTCS / uTCS engine + cluster bootstrap + BCa + Huber |
 | 5 | `neurotcs.output_schema` | 🗺️ roadmap v1.9.x | FHIR Observation emitter (importing raises ImportError) |
 | 6a | `neurotcs.input_contract.v1_1.adapters` | ✅ shipped | OASIS-3, ADNI (canonical R-format), NACC, MIRIAD trajectory loaders |
@@ -54,17 +54,13 @@ Plus five methodological modules (all shipped in v1.7.0+, all with tests):
 
 ## Rule packs shipped
 
+NeuroTCS v1.x is scope-narrowed to **Alzheimer's disease** in preparation for FDA Q-Submission (target Q1 2027). The 3 AD rule packs encode the dominant diagnostic and trajectory frameworks. See [docs/SCOPE.md](docs/SCOPE.md) for the scope-decision rationale; non-AD packs that previously shipped in v1.7.x (PD/Hoehn-Yahr, MS/McDonald, oncology RECIST + iRECIST, stroke mRS, lung-nodule Fleischner) have been extracted to seed future per-disease repositories post-FDA-clearance.
+
 | Pack | Disease | Anchor publication | PMID | Transitions |
 |---|---|---|---|---|
 | `ad/niaaa_2018@1.2.0` | Alzheimer's | Jack 2018 NIA-AA Framework | 29653606 | 4 + 2 inadmissible |
 | `ad/aa_2024@2.0.0` | Alzheimer's | Jack 2024 AA Revised Criteria | 38934362 | 28 + 17 inadmissible (Table 7 integrated staging, 17 states) |
 | `ad/aa_2024_trac@1.0.0` | Alzheimer's (anti-Aβ) | La Joie 2025 TRAC framework | _pending — recent_ | 6 + 3 inadmissible (5 require `treatment_status`) |
-| `pd/hoehn_yahr@1.0.0` | Parkinson's | Hoehn-Yahr 1967 + MDS-UPDRS Goetz 2008 | 6067254 | 13 |
-| `ms/mcdonald_2024@1.0.0` | Multiple sclerosis | McDonald 2024 / Lublin 2014 | _pending — recent_ | 13 (bidirectional RRMS) |
-| `oncology/recist_1_1@1.0.0` | Oncology (solid tumor) | Eisenhauer 2009 RECIST 1.1 | 19097774 | 11 |
-| `oncology/irecist@1.0.0` | Oncology (immunotherapy) | Seymour 2017 iRECIST | 28271869 | 13 (pseudoprogression) |
-| `stroke/mrs_followup@1.0.0` | Stroke | van Swieten 1988 mRS + Banks-Marotta 2007 | 3363593 | 19 |
-| `lung_nodule/fleischner_2017@1.0.0` | Pulmonology | MacMahon 2017 Fleischner Society | 28240562 | 8 |
 
 Each rule pack is:
 
@@ -94,7 +90,7 @@ git clone https://github.com/DrMaruf1991/NeuroTCS.git
 cd NeuroTCS
 pip install -e .
 
-# Framework-only tests (no cohort data required) — expect 409 passed, 0 failed
+# Framework-only tests (no cohort data required) — expect 397 passed, 0 failed
 python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_adni_audit.py \
     --ignore=tests/audit_core/test_real_oasis3_audit.py \
@@ -103,7 +99,7 @@ python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_miriad_fairness_audit.py \
     --ignore=tests/audit_core/test_four_cohort_triangulation.py
 
-# Full suite with cohort data (set env vars first; expect 416 passed)
+# Full suite with cohort data (set env vars first; expect 404 passed)
 export NEUROTCS_OASIS3_CDR=/path/to/OASIS3_UDSb4_cdr.csv
 export NEUROTCS_ADNI_DXSUM_RDA=/path/to/ADNIMERGE2/data/DXSUM.rda
 export NEUROTCS_NACC_CSV=/path/to/investigator_nacc73_slim.csv
@@ -177,7 +173,7 @@ The canonical spec is [`docs/spec/temporalmetric_v1.7_FINAL.md`](docs/spec/tempo
 - §A.4 — Unified TCS (weighted ensemble)
 - §A.5 — Cluster bootstrap (B = 10,000) + Huber M-estimation (c = 1.345)
 - §B.1 — Aims 1–6 validation plan
-- §B.2 — Required datasets (ADNI, OASIS-3, NACC, MIRIAD, PPMI, RIDER, ALZ-NET)
+- §B.2 — Required datasets (ADNI, OASIS-3, NACC, MIRIAD; ALZ-NET planned)
 - §B.6 — Rule pack registry and engineering discipline
 - §C — Library architecture
 
@@ -185,6 +181,7 @@ The canonical spec is [`docs/spec/temporalmetric_v1.7_FINAL.md`](docs/spec/tempo
 
 - **v1.8.0** (May 2026) — Four-cohort triangulation lock + ADNI canonical source. ✅ shipped.
 - **v1.8.1** (May 2026) — Documentation, test hygiene, CI matrix, reference-adapter reorganization, citation backfill. ✅ shipped.
+- **v1.9.0** (May 2026) — **AD-only scope contraction**: non-AD rule packs (PD, MS, oncology, stroke, lung nodule) extracted to seed future per-disease repositories post-FDA-clearance. ✅ shipped.
 - **v1.9.x** (Q3 2026) — Piece 5 (FHIR output) + Piece 7 (validation harness) + cohort-specific transition priors.
 - **W22 (~Sept 2026)** — Nature Medicine submission with AD validation across ADNI + OASIS-3 + NACC + MIRIAD.
 - **Oct 2026** — ASFNR Newport Beach workshop demo.
@@ -196,10 +193,10 @@ The canonical spec is [`docs/spec/temporalmetric_v1.7_FINAL.md`](docs/spec/tempo
 @software{salokhiddinov2026neurotcs,
   author    = {Salokhiddinov, Marufjon},
   title     = {NeuroTCS: Citation-locked, fail-closed longitudinal medical AI audit framework},
-  version   = {1.8.1},
+  version   = {1.9.0},
   year      = {2026},
   url       = {https://github.com/DrMaruf1991/NeuroTCS},
-  note      = {temporalmetric v1.7 FINAL specification, 9 production rule packs, four-cohort triangulation lock}
+  note      = {temporalmetric v1.7 FINAL specification, 3 AD production rule packs, four-cohort triangulation lock; v1.9.0+ AD-only scope}
 }
 ```
 
@@ -207,7 +204,7 @@ See [`CITATION.cff`](CITATION.cff) for GitHub's citation widget.
 
 ## Known limitations (honestly disclosed)
 
-NeuroTCS publicly documents gaps so reviewers can assess fitness for purpose. As of v1.8.1, **13 open gaps** carry forward (see [`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md) for the full list):
+NeuroTCS publicly documents gaps so reviewers can assess fitness for purpose. As of v1.9.0, **13 open gaps** carry forward (see [`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md) for the full list):
 
 1. pTCS unavailable under AA-2024 (transition_priors empty by design)
 2. Single-rater attestation (ESNR κ ≥ 0.6 second-reader pending)

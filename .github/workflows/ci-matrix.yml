@@ -41,7 +41,7 @@ jobs:
       - name: Lint with ruff (blocking)
         run: ruff check src/ tests/ scripts/
 
-      - name: Framework-only pytest (cohort tests excluded — expect 409 passed)
+      - name: Framework-only pytest (cohort tests excluded — expect 397 passed)
         run: |
           python -m pytest tests/ -q --tb=short ^
             --ignore=tests/audit_core/test_real_adni_audit.py ^
@@ -53,7 +53,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: cmd
 
-      - name: Framework-only pytest (cohort tests excluded — expect 409 passed)
+      - name: Framework-only pytest (cohort tests excluded — expect 397 passed)
         run: |
           python -m pytest tests/ -q --tb=short \
             --ignore=tests/audit_core/test_real_adni_audit.py \

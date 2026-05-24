@@ -114,15 +114,22 @@ class RulePackStatus(str, Enum):
 
 
 class DiseaseDomain(str, Enum):
-    """Disease domain. Matches input contract v1.1 domains."""
+    """Disease domain (v1.9.0+ scope-narrowed to AD).
+
+    NeuroTCS v1.x is scope-narrowed to Alzheimer's disease in preparation for
+    FDA Q-Submission (target Q1 2027). The enum is intentionally restricted
+    to ALZHEIMERS + CUSTOM; non-AD domains that previously shipped in v1.7.x
+    have been extracted to seed future per-disease repositories. See
+    docs/SCOPE.md.
+
+    ``CUSTOM`` remains so vendor-specific or unreleased Alzheimer's variants
+    (e.g., research-only sub-staging schemas) can be validated. Note: a
+    rule pack declaring a non-AD domain such as ``parkinsons`` will fail
+    validation under v1.9.0; the future per-disease repos will ship their
+    own DiseaseDomain enums or import from a shared ``neurotcs-core``
+    package once that is split out.
+    """
     ALZHEIMERS = "alzheimers"
-    PARKINSONS = "parkinsons"
-    MULTIPLE_SCLEROSIS = "multiple_sclerosis"
-    GLIOBLASTOMA = "glioblastoma"
-    STROKE = "stroke"
-    CARDIOLOGY = "cardiology"
-    ONCOLOGY = "oncology"
-    PULMONOLOGY = "pulmonology"
     CUSTOM = "custom"
 
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurotcs"
-version = "1.8.1"
+version = "1.9.0"
 description = "Citation-locked, fail-closed longitudinal medical AI audit framework (NeuroTCS / temporalmetric)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,8 +14,8 @@ authors = [
 ]
 keywords = [
     "medical-ai", "longitudinal", "audit", "clinical-trial", "regulatory",
-    "neuroimaging", "alzheimer", "parkinson", "multiple-sclerosis",
-    "oncology", "recist", "irecist", "stroke", "fleischner", "fda", "fhir",
+    "neuroimaging", "alzheimer", "alzheimers-disease", "dementia",
+    "amyloid", "tau", "cdr", "mci", "fda", "fhir",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

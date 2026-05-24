@@ -4,6 +4,75 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] — 2026-05-24
+
+### AD-only scope contraction
+
+A scope-decision release: **NeuroTCS v1.x is now Alzheimer's-disease-only** in preparation for FDA Q-Submission (target Q1 2027). The 5 non-AD rule packs (PD/Hoehn-Yahr, MS/McDonald, oncology RECIST + iRECIST, stroke mRS, lung-nodule Fleischner) and their transcription audits are extracted from this repository to seed future per-disease repositories post-FDA-clearance.
+
+This is **not a quality issue** — every removed rule pack was citation-locked, schema-validated, and PMID-verified. It is a **focus decision**: the AD validation surface is the substantive one (byte-exact four-cohort triangulation across OASIS-3, ADNI, NACC, MIRIAD), and shipping a multi-disease library where 5 of 8 packs lacked cohort runs would blur the FDA-clearance narrative. See [`docs/SCOPE.md`](docs/SCOPE.md) for the full scope rationale and the recovery instructions for future per-disease repos.
+
+**No behavior change to the AD audit pipeline.** All 5 v1.8 locked audit invariants reproduce byte-exactly under v1.9.0 (verified before release):
+
+- OASIS-3 cTCS=0.994191, audit_id=`766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90`
+- ADNI cTCS=0.994575, audit_id=`9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16`
+- NACC cTCS=0.991502, audit_id=`def60e6836a5a9feecc666dc558c5b115973f73dd65dd42ef13969819318754c`
+- MIRIAD cTCS=0.985369, audit_id=`947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0`
+- MIRIAD test-retest cTCS=1.000000, audit_id=`804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85`
+
+### Removed
+
+- **5 non-AD rule pack YAMLs:**
+  - `src/neurotcs/rulepack/rules/pd/hoehn_yahr.yaml` (329 lines, PMID 6067254)
+  - `src/neurotcs/rulepack/rules/ms/mcdonald_2024.yaml` (213 lines, pmid_pending)
+  - `src/neurotcs/rulepack/rules/oncology/recist_1_1.yaml` (190 lines, PMID 19097774)
+  - `src/neurotcs/rulepack/rules/oncology/irecist.yaml` (211 lines, PMID 28271869)
+  - `src/neurotcs/rulepack/rules/stroke/mrs_followup.yaml` (259 lines, PMID 3363593)
+  - `src/neurotcs/rulepack/rules/lung_nodule/fleischner_2017.yaml` (163 lines, PMID 28240562)
+- **6 non-AD transcription audit docs** (all `docs/transcription_audit/{pd_hoehn_yahr,ms_mcdonald_2024,oncology_recist_1_1,oncology_irecist,stroke_mrs_followup,lung_nodule_fleischner_2017}.md`).
+- **6 non-AD test functions** in `tests/rulepack/test_rulepack.py`: `test_pd_behaviors`, `test_ms_relapse_remission`, `test_recist_bidirectional_with_confirmation`, `test_irecist_pseudoprogression`, `test_stroke_recovery_and_death`, `test_fleischner_growth_and_shrinkage`.
+- **DiseaseDomain enum non-AD values** (`src/neurotcs/rulepack/schema.py`): the enum is reduced from 9 values (ALZHEIMERS, PARKINSONS, MULTIPLE_SCLEROSIS, GLIOBLASTOMA, STROKE, CARDIOLOGY, ONCOLOGY, PULMONOLOGY, CUSTOM) to 2 values (ALZHEIMERS, CUSTOM). The future per-disease repos will ship their own DiseaseDomain enums.
+- **`__planned__` adapter entries** for PPMI and RIDER Lung PET-CT removed from `src/neurotcs/adapters/__init__.py`; only `alz_net` remains in the planned list as it is AD-relevant.
+- 5 empty rule pack subdirectories: `pd/`, `ms/`, `oncology/`, `stroke/`, `lung_nodule/`.
+
+### Added
+
+- **`docs/SCOPE.md`** — canonical v1.x AD-only scope statement, including:
+  - The scope decision rationale
+  - The full removal manifest (what was removed and where it went)
+  - The non-touched components (audit pipeline, 4 AD cohort adapters, locked invariants)
+  - Future recovery instructions for the per-disease repos
+- **Offline backup archive** (not committed to git but shipped alongside release): `NeuroTCS-non-AD-extracted-v1.8.1.zip` contains all 12 removed files organized by disease with seed READMEs for future-repo initialization.
+- **Spec scope-override notice** at the top of `docs/spec/temporalmetric_v1.7_FINAL.md` flagging Aim 5 and §B.6 as deferred to future repos.
+
+### Changed
+
+- **`README.md`** — rule pack table reduced from 9 rows to 3 (the 3 AD packs); architecture-table pack count `9` → `3 AD`; spec datasets list trimmed (PPMI + RIDER removed from §B.2 line); roadmap updated with v1.9.0 entry.
+- **`CITATION.cff`** — abstract rewritten to reflect AD-only scope; keywords trimmed (removed "RECIST"); version `1.8.1` → `1.9.0`.
+- **`pyproject.toml`** — keywords trimmed from multi-disease ("parkinson", "multiple-sclerosis", "oncology", "recist", "irecist", "stroke", "fleischner") to AD-relevant ("alzheimer", "alzheimers-disease", "dementia", "amyloid", "tau", "cdr", "mci"); version `1.8.1` → `1.9.0`.
+- **`src/neurotcs/__init__.py`** — `__version__` bumped to `1.9.0`.
+- **`src/neurotcs/rulepack/__init__.py`** — docstring updated from "9 production rule packs across 6 disease domains" to "3 production rule packs covering AD" with scope note.
+- **`src/neurotcs/rulepack/schema.py`** — `DiseaseDomain` enum reduced as described in **Removed**; docstring expanded with scope note.
+- **`src/neurotcs/adapters/__init__.py`** — `__shipped__` extended to reflect the 4 AD adapters that actually shipped in v1.8 (added `nacc`, `adni_canonical`); `__planned__` reduced to `alz_net` only.
+- **`.github/workflows/ci.yml`** — `assert len(packs) == 9` → `assert len(packs) == 3` plus a new assertion that all packs are AD (`name.startswith('ad/')`).
+- **`tests/rulepack/test_rulepack.py`** — `ALL_PACKS` list reduced to 3 AD packs; transcription audit mapping reduced; schema-version backward-compat test trimmed to AD-only.
+- **`requirements.lock` + `docs/reviewer_package/*.md`** — pytest expected counts updated: clean env `409 → 397`; full env `416 → 404`. (-12 tests because 6 non-AD-specific tests were removed + the 6 pack-iteration assertions × 6 deleted packs.)
+- **`docs/spec/temporalmetric_v1.7_FINAL.md`** — scope-override notice prepended (the spec body is preserved as historical design intent).
+
+### Migration notes (for anyone running NeuroTCS v1.8.x)
+
+**Breaking change:** any rule pack declaring a non-AD `disease_domain` (e.g., `parkinsons`, `oncology`) will now fail Pydantic validation. The supported domains are `alzheimers` and `custom` only.
+
+**Workaround for users with non-AD packs:** extract the relevant rule pack from `NeuroTCS-non-AD-extracted-v1.8.1.zip` (or recover from git history at tag `v1.8.1`), and ship it in a fork or a separate package while waiting for the future per-disease repo.
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` → All checks passed.
+- `pytest tests/ -q` (clean env) → 397 passed, 7 skipped.
+- `pytest tests/ -q` (all 4 cohort env vars set) → 404 passed.
+- `list_rulepacks()` returns exactly 3 AD packs (`ad/aa_2024`, `ad/aa_2024_trac`, `ad/niaaa_2018`).
+- All 5 v1.8 locked audit invariants reproduce byte-exactly under v1.9.0.
+
 ## [1.8.1] — 2026-05-24
 
 ### Documentation, test hygiene, CI matrix, reference-adapter reorganization

@@ -1,6 +1,10 @@
 # `temporalmetric` — Final Executable Project Specification v1.7 FINAL
 
-**A Model-Agnostic Temporal Coherence Audit Framework for Longitudinal Medical AI** — with **NeuroTCS** as the Alzheimer's Disease Instantiation and **PD / MS / Oncology-RECIST / Stroke / Lung-Nodule** Rule Packs Designed-For.
+> **⚠️ v1.9.0 scope-override notice (2026-05-24):** This spec was authored when NeuroTCS was scoped as a multi-disease platform with PD / MS / oncology / stroke / lung-nodule rule packs designed-for. As of v1.9.0 (this release), NeuroTCS v1.x is **scope-narrowed to Alzheimer's disease only** in preparation for FDA Q-Submission (target Q1 2027). The non-AD rule packs, Aim 5 multi-disease portability arm (PPMI + RIDER cohorts), and §B.6 multi-disease rule-pack registry are **deferred to future per-disease repositories** (NeuroTCS-PD, NeuroTCS-MS, NeuroTCS-Oncology, NeuroTCS-Stroke, NeuroTCS-LungNodule) that will be launched after the AD core achieves FDA clearance. The non-AD content in this spec is retained as historical record of the design intent but is **not** the operational scope of v1.x. The canonical scope statement for v1.x is [`docs/SCOPE.md`](../SCOPE.md). The §B.6 registry, Aim 5, and dataset table entries for PPMI / RIDER are explicitly out-of-scope for v1.x; the four cohorts that remain operational are ADNI, OASIS-3, NACC, and MIRIAD (all AD), which together produce the byte-exact four-cohort triangulation lock recorded in the v1.8.0 + v1.9.0 release notes.
+
+---
+
+**A Model-Agnostic Temporal Coherence Audit Framework for Longitudinal Medical AI** — with **NeuroTCS** as the Alzheimer's Disease Instantiation _(v1.9.0+ AD-only scope; designed-for non-AD packs deferred to future per-disease repos)_.
 
 Lead: Dr. Maruf Salokhiddinov (DrMaruf1991), ESOR-BRACCO-ESNR Neuroimaging Fellow, KIUT, Tashkent.
 Version 1.7 FINAL · 12 May 2026 · License: Apache-2.0 (library), CC-BY-4.0 (paper).

@@ -40,7 +40,7 @@
 
 **Why only 69 pairs of an expected ~207?** MIRIAD has back-to-back rescans at weeks 0, 6, and 38 (= 3 rescan visits × 69 subjects = 207 candidate pairs). However, per Malone 2013, MMSE is recorded at baseline + every 6 months only. The week-0 baseline rescan has same-visit MMSE; the week-6 and week-38 rescans do NOT have a clinical-assessment row with matching visit number. The adapter's per-visit Label-based join correctly excludes pairs without same-visit MMSE rather than fabricating values, leaving the **baseline rescan for each subject = 69 audit-ready pairs**.
 
-**Interpretation**: 69 independent same-session pairs flow through the audit kernel with zero flagged transitions. The kernel produces bit-identical decisions on bit-identical inputs across 69 independent test cases. This bounds **pipeline determinism**, not MMSE re-administration noise (which would require Malone 2013-style per-scan MMSE administration, not present in MIRIAD's protocol). True MMSE re-administration noise is deferred to RIDER (v0.2 roadmap).
+**Interpretation**: 69 independent same-session pairs flow through the audit kernel with zero flagged transitions. The kernel produces bit-identical decisions on bit-identical inputs across 69 independent test cases. This bounds **pipeline determinism**, not MMSE re-administration noise (which would require Malone 2013-style per-scan MMSE administration, not present in MIRIAD's protocol). True MMSE re-administration noise would require a dedicated AD test-retest cohort with per-scan cognitive scoring; in this AD-only v1.x scope (see [`docs/SCOPE.md`](../SCOPE.md)) this remains a documented gap.
 
 ### Adapter diagnostics (v1.7.6 round-2 audit fields)
 
@@ -132,7 +132,7 @@ The `group_mmse_disagreement_examples` field surfaces only state-discordant case
 
 For Nature Medicine framing this still has value: it's an end-to-end pipeline-determinism guarantee on independent data. But we will NOT claim it measures MMSE measurement noise per se. The honest claim is: "the audit kernel produces bit-identical decisions on bit-identical inputs, demonstrated on 207 independent same-session pairs."
 
-To measure actual MMSE re-administration noise, we would need ADNI's longitudinal cohort where MMSE IS sometimes re-administered within sessions, or a dedicated test-retest cohort like RIDER (planned for v0.2).
+To measure actual MMSE re-administration noise, we would need ADNI's longitudinal cohort where MMSE IS sometimes re-administered within sessions, or a dedicated AD-cohort with per-scan cognitive scoring. This is a documented limitation of MIRIAD-as-test-retest-reference under the v1.x AD-only scope.
 
 ## What this enables
 

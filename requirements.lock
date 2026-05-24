@@ -11,8 +11,8 @@
 # Updated:    2026-05-24 (v1.8.1 — documentation, test hygiene, no dep changes)
 #
 # Verified pytest counts (the count depends on whether cohort env vars are set):
-#   409 passed = framework-only (no NEUROTCS_* env vars set; cohort tests skip)
-#   416 passed = full suite (all four NEUROTCS_* env vars set + files exist)
+#   397 passed = framework-only (no NEUROTCS_* env vars set; cohort tests skip)
+#   404 passed = full suite (all four NEUROTCS_* env vars set + files exist)
 # Both outcomes are correct behavior. v1.8.0 framework count was 407 due to
 # a hardcoded fallback path that v1.8.1 removed (Issue 5+14+20).
 #
@@ -24,9 +24,9 @@
 # Usage:
 #     pip install -r requirements.lock --break-system-packages
 #     pip install -e .
-#     # framework-only (expect 409 passed):
+#     # framework-only (expect 397 passed):
 #     pytest tests/ -q
-#     # full suite (expect 416 passed):
+#     # full suite (expect 404 passed):
 #     NEUROTCS_MIRIAD_DIR=<path> NEUROTCS_NACC_CSV=<path> \
 #     NEUROTCS_ADNI_DXSUM_RDA=<path> NEUROTCS_OASIS3_CDR=<path> \
 #     pytest tests/ -q

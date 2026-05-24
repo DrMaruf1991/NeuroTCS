@@ -100,6 +100,8 @@ submission/
 
 `custom` remains the escape hatch for domains not yet enumerated. Submissions using `custom` MUST provide an inline rule pack.
 
+> **v1.9.0+ implementation scope note.** The input contract v1.1 *specification* enumerates all 8 disease domains plus `custom` as a stable wire format. The NeuroTCS v1.x *implementation* of the contract only validates `alzheimers` and `custom` (see [`docs/SCOPE.md`](../../../docs/SCOPE.md)): submissions declaring other domains will fail the Pydantic-level `DiseaseDomain` enum validation under v1.9.0+. The spec retains the broader enum because future per-disease NeuroTCS repositories (NeuroTCS-PD, NeuroTCS-MS, NeuroTCS-Oncology, NeuroTCS-Stroke, NeuroTCS-LungNodule) will accept the corresponding domain value when they ship post-FDA-clearance of the AD core. This is an intentional "implementation narrower than specification" pattern.
+
 ---
 
 ## 6. Predictions table
