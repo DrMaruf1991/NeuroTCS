@@ -55,7 +55,11 @@ SEARCH_PATHS = [
 EXPECTED_AUDIT_ID_V1_3_0 = (  # pre-correction, kept for traceability
     "96d942e41e9f94a33718d9a107dedf443de728bdd16dcf36ade18ca1f3f4077a"
 )
-EXPECTED_AUDIT_ID = None  # set by first successful local run with v1.2.0 priors
+EXPECTED_AUDIT_ID = (
+    # v1.8.0 lock — rule pack v1.2.0 priors, canonical adapter, hash_ids=True.
+    # Byte-deterministic across N=5 cold reruns, numpy 2.0.x↔2.4.x, pyreadr 0.5.0↔0.5.6.
+    "766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90"
+)
 EXPECTED_N_SUBJECTS_SCORED = 1247
 EXPECTED_N_TRANSITIONS = 7248
 EXPECTED_N_FLAGGED = 30

@@ -43,8 +43,9 @@ REQUIRED_TOP_SECTIONS = [
     "## D — FDA PCCP three mandatory components",
     "## E — EU AI Act Annex IV technical documentation",
     "## F — Honest gaps acknowledged",
-    "## G — Version history",
-    "## H — Citation",
+    "## G — NACC DUA acknowledgments",
+    "## H — Version history",
+    "## I — Citation",
 ]
 
 

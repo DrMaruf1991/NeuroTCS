@@ -42,8 +42,9 @@ version and obtain bit-identical hashes.
 
 | Cohort | n_subjects | n_transitions | n_flagged | cTCS (BCa 95% CI) | audit_id (SHA-256) | audit_id_v2 |
 |---|---|---|---|---|---|---|
-| ADNI-2/3/4 (longitudinal) | per ADNI registry | 12,006 | 65 (0.54%) | 0.9946 | `d344ec1a...` | (locked locally on Maruf's machine) |
-| OASIS-3 (external replication) | 1,377 | 7,248 | 30 (0.41%) | 0.9942 (0.9902–0.9964) | (locked locally) | (locked locally) |
+| OASIS-3 (external replication) | 1,377 | 7,248 | 30 (0.41%) | 0.9942 (0.9902–0.9964) | `766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90` | (locked locally) |
+| ADNI-2/3/4 (longitudinal, canonical R-format DXSUM) | 2,958 (scored) / 3,762 (total) | 12,006 | 65 (0.54%) | 0.9946 (0.9924–0.9961) | `9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16` | (locked locally) |
+| NACC UDS v73 (longitudinal, new in v1.8) | 39,361 (scored) / 56,529 (total) | 158,423 | 1,217 (0.77%) | 0.9915 | `def60e6836a5a9feecc666dc558c5b115973f73dd65dd42ef13969819318754c` | (locked locally) |
 | MIRIAD longitudinal (Aim 3 A) | 69 | 454 | 7 (1.54%) | 0.9854 (0.9715–0.9937) | `947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0` | `aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da` |
 | MIRIAD test-retest (Aim 3 B) | 69 (pairs) | 69 | 0 | 1.0000 | `804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85` | `dcf8b7de3ff9019e9cda703064039e3a71193566d1f5082ce96646188fd52fc4` |
 
@@ -51,7 +52,9 @@ version and obtain bit-identical hashes.
 **Schema version**: 1.1.0 (per Step 2.1 schema-version declaration policy).
 **Seed**: 42. **Bootstrap B**: 10,000. **CI method**: BCa.
 
-Three-cohort consistency (ADNI 0.9946, OASIS-3 0.9942, MIRIAD 0.9854): all within ΔcTCS ≤ 0.01.
+**Four-cohort triangulation (v1.8 hallmark result)**: max ΔcTCS = 0.009206 (ADNI vs MIRIAD), all 6 pairwise comparisons ≤ 0.01 world-class threshold. Audit_ids byte-deterministic across N=5 cold reruns and across numpy 2.0.2 ↔ 2.4.4 / pyreadr 0.5.0 ↔ 0.5.6.
+
+**Note on `n_subjects`:** the canonical adapters emit trajectories for ALL eligible subjects including those with a single visit (e.g., NACC 56,529 total, of which 39,361 contribute ≥1 transition and are "scored"). The audit_id is computed over scored patients only — single-visit subjects contribute 0 transitions and do not affect the hash.
 
 ---
 
@@ -709,8 +712,67 @@ This section is the single source of truth for what is NOT yet covered.
 
 ---
 
-## G — Version history
+## G — NACC DUA acknowledgments (new in v1.8)
 
+The NACC cohort row in Section A was derived from data obtained under the NACC
+Uniform Data Set (UDS) Data Use Agreement. The following acknowledgments are
+required per NACC DUA terms:
+
+> The NACC database is funded by NIA/NIH Grant U24 AG072122. NACC data are
+> contributed by the NIA-funded ADRCs: P30 AG062429, P30 AG066468, P30 AG062421,
+> P30 AG066509, P30 AG066514, P30 AG066530, P30 AG066507, P30 AG066444, P30
+> AG066518, P30 AG066512, P30 AG066462, P30 AG072979, P30 AG072972, P30 AG072976,
+> P30 AG072975, P30 AG072978, P30 AG072977, P30 AG066519, P30 AG062677, P30
+> AG079280, P30 AG062422, P30 AG066511, P30 AG072946, P30 AG062715, P30 AG072973,
+> P30 AG066506, P30 AG066508, P30 AG066515, P30 AG072947, P30 AG072931, P30
+> AG066546, P20 AG068024, P20 AG068053, P20 AG068077, P20 AG068082, P30 AG072958,
+> P30 AG072959.
+
+**DUA compliance technical safeguards in v1.8:**
+- All NACCIDs are SHA-256 hashed with cohort salt `nacc_dua_2026_v1_7_13` before
+  any framework output (`adapter_nacc.py:hash_patient_id`). Raw NACCIDs never
+  appear in any committed artifact, audit_id, audit_id_v2, or test output.
+- Cell counts < 10 are suppressed by the caller in any aggregated table per
+  NACC DUA.
+- The pytest suite has been verified to produce zero raw-NACCID leaks in console
+  output (Step 14 of v1.8 pre-lock verification, attestation hash on file).
+
+**Empirical NACCUDSD → state mapping (methods deviation from prompt):**
+
+The v1.8 NACC adapter uses an empirically-validated state mapping derived from a
+NACCUDSD × CDRGLOB cross-tab on 214,976 visits:
+
+| NACCUDSD | n | modal CDRGLOB | majority | State |
+|---:|---:|---:|---:|---|
+| 1 | 106,475 | 0.0 | 91.4% | CN |
+| 2 | 9,575 | 0.5 | 65.9% | MCI |
+| 3 | 37,957 | 0.5 | 86.7% | MCI |
+| 4 | 60,945 | ≥1.0 (bucket) | 76.0% | AD |
+| 8 | 24 | mixed | — | dropped (n<10) |
+
+NACCUDSD=5 does not exist in the data (highest valid code is 8). Earlier
+informal mappings claiming `{1:CN, 3:CN, 4:MCI, 5:Dementia}` are empirically
+wrong. Under the strict literal reading of a "single modal CDR with ≥50%
+majority" rule, NACCUDSD=4 has modal CDR=1.0 at 39.1% (borderline); under the
+clinically-meaningful reading (CDR bucket ≥1.0 at 76.0%, per Morris 1993 PMID
+8232972), the 4 → AD mapping is clearly justified.
+
+---
+
+## H — Version history
+
+- **v1.8.0 (four-cohort triangulation lock)**: NACC added as fourth cohort.
+  Five locked audit_ids byte-deterministic across N=5 cold reruns. Max ΔcTCS
+  = 0.009206 (ADNI vs MIRIAD), all 6 pairwise comparisons ≤ 0.01 world-class
+  threshold. ADNI source canonicalized to R-format `ADNIMERGE2/data/DXSUM.rda`
+  (NOT the raw CSV; see Errata E-2026-002). NACC state map empirically derived
+  from CDRGLOB cross-tab (Section G; see Errata E-2026-003). New framework
+  artifacts: `adapter_nacc.py`, `adapter_adni_canonical.py`,
+  `test_real_nacc_audit.py`, `test_real_adni_audit.py`,
+  `test_four_cohort_triangulation.py`, `docs/reproducibility/cohort_input_checksums.md`,
+  `docs/reproducibility/adni_source_decision.md`.
+- **v1.7.13 (deprecated for ADNI lock)**: this datasheet shipped at v1.7.11;
+  the v1.7.13 release added the OASIS-3 external replication test.
 - **v1.7.11 (AD-lock Step 2.3)**: this datasheet shipped. Four-framework
   consolidation document, structural regression test, citation lock.
 - **v1.7.10 (AD-lock Step 2.2)**: demographic fairness pipeline shipped.
@@ -719,7 +781,7 @@ This section is the single source of truth for what is NOT yet covered.
 - **v1.7.7**: real-MIRIAD audit_ids locked. Three-cohort consistency
   established (ADNI 0.9946 / OASIS-3 0.9942 / MIRIAD 0.9854).
 
-## H — Citation
+## I — Citation
 
 Salokhiddinov M. NeuroTCS: a citation-locked temporal coherence audit
 framework for Alzheimer's disease cohort validation. Version 1.7.11.
