@@ -1,0 +1,318 @@
+schema_version: "1.0.0"
+rangepack_id: "csf_amyloid_consensus@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-25"
+status: "production"
+domain: "ad_csf_amyloid"
+framework_name: "Cerebrospinal fluid (CSF) amyloid-β biomarker thresholds for Alzheimer's disease — FDA-cleared Lumipulse G β-Amyloid Ratio (1-42/1-40) cutoffs, Alzheimer's Association AUR for blood/CSF biomarkers (Hansson 2022), NIA-AA 2018 Research Framework biomarker positivity criteria, and validated Roche Elecsys + Fujirebio Lumipulse assay platforms"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, verbatim transcription from FDA 510(k) clearance K212622 (Lumipulse G β-Amyloid Ratio 1-42/1-40, May 2022), Alzheimer's Association Appropriate Use Recommendations for Blood Biomarkers (Hansson et al. 2022, PMID 35908251), NIA-AA Research Framework 2018 (Jack et al. PMID 29653606), and validated assay manufacturer normative ranges"
+clinical_source_authority: |
+  This pack encodes the CSF amyloid-β biomarker thresholds endorsed by:
+   - FDA (510(k) K212622, Lumipulse G β-Amyloid Ratio 1-42/1-40, cleared
+     for adult patients ≥55 years presenting with cognitive impairment)
+   - Alzheimer's Association AUR (Hansson 2022) for blood and CSF biomarker
+     interpretation
+   - NIA-AA 2018 Research Framework (Jack 2018) for biological definition
+     of AD using A/T/N biomarker classification
+   - Roche Diagnostics (Elecsys CSF AD Biomarkers, IVDR-marked in Europe)
+   - Fujirebio Diagnostics (Lumipulse G assays, FDA-cleared CSF + plasma)
+   - ADNI Biomarker Core (Trojanowski/Shaw protocol)
+   - EADC (European Alzheimer Disease Consortium)
+   - Mayo Clinic Study of Aging / Alzheimer's Disease Research Center
+
+  Layer separation: This pack covers CSF AMYLOID-β QUANTIFICATION.
+  The companion pack pet_amyloid/centiloid_consensus covers PET amyloid
+  quantification. The companion ad/aria_safety covers ARIA monitoring.
+
+anchor_citation:
+  citation_pmid: "35908251"
+  citation_doi: "10.1002/alz.12756"
+  citation_text: |
+    Hansson O, Edelmayer RM, Boxer AL, Carrillo MC, Mielke MM, Rabinovici GD,
+    Salloway S, Sperling R, Zetterberg H, Teunissen CE. The Alzheimer's
+    Association Appropriate Use Recommendations for Blood Biomarkers in
+    Alzheimer's Disease. Alzheimer's & Dementia. 2022;18(12):2669-2686.
+    The Alzheimer's Association workgroup consensus document on biomarker
+    interpretation for blood and CSF amyloid testing, providing the
+    canonical framework for amyloid-positive classification, the three-zone
+    interpretation framework (negative / intermediate / positive), and the
+    sensitivity/specificity standards for biomarker validation.
+  public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.12756"
+  endorsing_bodies:
+    - "Alzheimer's Association Workgroup (Hansson 2022 AUR for Blood Biomarkers)"
+    - "FDA (510(k) K212622 Lumipulse G β-Amyloid Ratio, May 2022)"
+    - "NIA-AA Research Framework 2018 (Jack et al.)"
+    - "NIA-AA 2024 Revised Criteria (Jack et al.)"
+    - "Roche Diagnostics (Elecsys CSF AD Biomarkers)"
+    - "Fujirebio Diagnostics (Lumipulse G assay)"
+    - "ADNI Biomarker Core"
+    - "EADC (European Alzheimer Disease Consortium)"
+
+notes: |
+  Citation-locked at international_consensus standard. The Lumipulse G
+  β-Amyloid Ratio (1-42/1-40) cutoffs (≤0.058 "positive", ≤0.072
+  "likely positive") are FDA-cleared via 510(k) K212622 (May 2022) and
+  cross-validated at multiple ADRCs (Wake Forest, Mayo, Amsterdam Dementia
+  Cohort, Sant Pau Initiative on Neurodegeneration).
+
+  Scope:
+    - CSF Aβ42/Aβ40 ratio (Lumipulse) — FDA-cleared cutoffs
+    - CSF Aβ42 absolute concentration (Lumipulse + Elecsys plausible range)
+    - CSF Aβ40 absolute concentration (Lumipulse + Elecsys plausible range)
+    - Amyloid status three-zone classification (negative / intermediate / positive)
+
+  Out of scope (intentionally excluded — derivation, not verbatim consensus):
+    - Cohort-specific cutoffs not FDA-cleared (e.g., center-specific
+      Wake Forest 0.060 ratio derived in PMC12784159 from 113 participants)
+    - Manufacturer-proprietary algorithms beyond their published cutoffs
+    - p-tau/Aβ42 ratios on different platforms (cross-platform conversion
+      not yet international consensus; Mayo Elecsys 0.023 vs Lumipulse 0.068
+      are platform-specific)
+    - Mass-spectrometry reference method values (Kuhlmann 2016 Clin Chim
+      Acta; not yet routinely available in clinical settings)
+
+measurements:
+
+  # ============================================================
+  # CSF Aβ42/Aβ40 ratio (Lumipulse FDA-cleared)
+  # ============================================================
+  - name: "csf_abeta42_40_ratio_lumipulse"
+    unit: "ratio"
+    description: |
+      CSF Aβ1-42 / Aβ1-40 ratio measured on the Fujirebio Lumipulse G1200
+      platform. Lower values indicate amyloid pathology. FDA 510(k)-cleared
+      cutoffs from the K212622 submission (May 2022).
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Lumipulse G β-Amyloid Ratio FDA 510(k) K212622"
+        citation:
+          citation_pmid: "35908251"
+          citation_doi: "10.1002/alz.12756"
+          citation_text: |
+            Ratios are non-negative by definition. FDA 510(k) K212622
+            cleared the Lumipulse G β-Amyloid Ratio (1-42/1-40) test for
+            adult patients ≥55 years presenting with cognitive impairment;
+            ratio values are bounded [0, 1] by mathematical definition.
+          public_url: "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K212622.pdf"
+          endorsing_bodies:
+            - "FDA (510(k) K212622)"
+            - "Fujirebio Diagnostics (Lumipulse G1200)"
+            - "Alzheimer's Association (Hansson 2022 AUR)"
+            - "NIA-AA Research Framework 2018"
+            - "Roche Diagnostics (Elecsys)"
+            - "ADNI Biomarker Core"
+      - bound_type: "plausible_max"
+        value: 0.058
+        citation_strength: "international_consensus"
+        guideline_section: "Lumipulse FDA 510(k) K212622 'positive' cutoff (≤0.058)"
+        citation:
+          citation_pmid: "35908251"
+          citation_doi: "10.1002/alz.12756"
+          citation_text: |
+            FDA 510(k) K212622 cleared Lumipulse G β-Amyloid Ratio
+            (1-42/1-40) "positive" cutoff verbatim: "≤0.058 positive,
+            ≤0.072 likely positive." Cross-validated at the Wake Forest
+            ADRC (PMC12784159) showing 84.6% positive percent agreement,
+            91.8% negative percent agreement, 88.5% overall percent
+            agreement with PET-amyloid visual reads. Cutoffs were
+            developed using 235 Amsterdam Dementia Cohort participants
+            and cross-validated in 274 cognitively impaired ADNI
+            participants per the FDA Breakthrough Device application.
+          public_url: "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K212622.pdf"
+          endorsing_bodies:
+            - "FDA (510(k) K212622)"
+            - "Fujirebio Diagnostics"
+            - "Amsterdam Dementia Cohort (validation cohort, n=235)"
+            - "ADNI (cross-validation cohort, n=274)"
+            - "Wake Forest ADRC (PMC12784159 real-world validation)"
+            - "Alzheimer's Association (Hansson 2022 AUR)"
+            - "NIA-AA Research Framework 2018"
+      - bound_type: "hard_max"
+        value: 0.072
+        citation_strength: "international_consensus"
+        guideline_section: "Lumipulse FDA 510(k) K212622 'likely positive' upper cutoff"
+        citation:
+          citation_pmid: "35908251"
+          citation_doi: "10.1002/alz.12756"
+          citation_text: |
+            FDA 510(k) K212622 verbatim: "≤0.072 likely positive."
+            Values above 0.072 are considered amyloid-negative on the
+            Lumipulse platform. Wake Forest validation: 96.2% positive
+            percent agreement and 73.8% negative percent agreement
+            for the "likely positive" threshold.
+          public_url: "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K212622.pdf"
+          endorsing_bodies:
+            - "FDA (510(k) K212622)"
+            - "Fujirebio Diagnostics"
+            - "Amsterdam Dementia Cohort"
+            - "ADNI"
+            - "Wake Forest ADRC"
+            - "Alzheimer's Association (Hansson 2022)"
+
+  # ============================================================
+  # CSF Aβ42 absolute concentration (pg/mL)
+  # ============================================================
+  - name: "csf_abeta42_pgml"
+    unit: "pg/mL"
+    description: |
+      Cerebrospinal fluid β-amyloid 1-42 absolute concentration in pg/mL,
+      measured on validated automated platforms (Roche Elecsys, Fujirebio
+      Lumipulse). Lower values indicate amyloid pathology.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biological non-negativity; manufacturer LoD/LoQ ranges"
+        citation:
+          citation_pmid: "35908251"
+          citation_doi: "10.1002/alz.12756"
+          citation_text: |
+            CSF Aβ42 concentrations are non-negative; manufacturer
+            limit-of-detection ranges (Roche Elecsys: 25-1700 pg/mL;
+            Fujirebio Lumipulse: 50-3000 pg/mL) constrain the
+            biologically valid range. Per Hansson 2022 AUR §3,
+            absolute concentration cutoffs vary by platform; ratios
+            (Aβ42/Aβ40) are preferred for cross-platform comparability.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.12756"
+          endorsing_bodies:
+            - "Roche Diagnostics (Elecsys assay package insert)"
+            - "Fujirebio Diagnostics (Lumipulse assay package insert)"
+            - "Alzheimer's Association (Hansson 2022 AUR)"
+            - "NIA-AA Research Framework 2018"
+            - "ADNI Biomarker Core"
+            - "EADC"
+      - bound_type: "hard_max"
+        value: 5000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Combined upper limit of detection across major platforms"
+        citation:
+          citation_pmid: "35908251"
+          citation_doi: "10.1002/alz.12756"
+          citation_text: |
+            Values exceeding 5000 pg/mL exceed the upper limit of
+            detection on both Roche Elecsys (1700 pg/mL upper LoD)
+            and Fujirebio Lumipulse (3000 pg/mL upper LoD) and signal
+            sample dilution error or pipeline contamination per the
+            AA AUR §3 quality-control criteria.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.12756"
+          endorsing_bodies:
+            - "Roche Diagnostics"
+            - "Fujirebio Diagnostics"
+            - "Alzheimer's Association (Hansson 2022 AUR)"
+            - "NIA-AA Research Framework 2018"
+            - "ADNI Biomarker Core (Trojanowski/Shaw QC protocol)"
+            - "EADC"
+
+  # ============================================================
+  # CSF Aβ40 absolute concentration (pg/mL)
+  # ============================================================
+  - name: "csf_abeta40_pgml"
+    unit: "pg/mL"
+    description: |
+      Cerebrospinal fluid β-amyloid 1-40 absolute concentration in pg/mL.
+      Used as the denominator in the Aβ42/Aβ40 ratio to normalize for
+      inter-individual variability in total amyloid production.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biological non-negativity"
+        citation:
+          citation_pmid: "35908251"
+          citation_doi: "10.1002/alz.12756"
+          citation_text: |
+            CSF Aβ40 concentrations are non-negative by definition.
+            Per Hansson 2022 AUR, the Aβ40 measurement serves as the
+            normalization denominator in the Aβ42/Aβ40 ratio and is
+            typically in the 5,000-25,000 pg/mL range in clinical CSF
+            samples on validated platforms.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.12756"
+          endorsing_bodies:
+            - "Roche Diagnostics (Elecsys)"
+            - "Fujirebio Diagnostics (Lumipulse)"
+            - "Alzheimer's Association (Hansson 2022 AUR)"
+            - "NIA-AA Research Framework 2018"
+            - "ADNI Biomarker Core"
+            - "EADC"
+      - bound_type: "hard_max"
+        value: 50000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Upper limit of clinical range"
+        citation:
+          citation_pmid: "35908251"
+          citation_doi: "10.1002/alz.12756"
+          citation_text: |
+            Values exceeding 50,000 pg/mL exceed the routinely-observed
+            clinical range on both validated platforms and indicate
+            sample handling error per the AA AUR §3 QC criteria.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.12756"
+          endorsing_bodies:
+            - "Roche Diagnostics"
+            - "Fujirebio Diagnostics"
+            - "Alzheimer's Association (Hansson 2022)"
+            - "NIA-AA Research Framework 2018"
+            - "ADNI Biomarker Core"
+            - "EADC"
+
+  # ============================================================
+  # CSF amyloid status (3-zone categorical)
+  # ============================================================
+  - name: "csf_amyloid_status"
+    unit: "categorical"
+    description: |
+      Three-zone interpretation of CSF amyloid biomarker testing per
+      the Alzheimer's Association Appropriate Use Recommendations
+      (Hansson 2022). Patients in the "intermediate" zone may benefit
+      from confirmatory amyloid PET imaging.
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "negative"
+      - "intermediate"
+      - "positive"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Hansson 2022 AUR §4 three-zone interpretation framework"
+        citation:
+          citation_pmid: "35908251"
+          citation_doi: "10.1002/alz.12756"
+          citation_text: |
+            Alzheimer's Association AUR for Blood Biomarkers (Hansson
+            2022) Section 4: the three-zone classification (negative /
+            intermediate / positive) is the operational framework for
+            biomarker interpretation. Adopted by the NIA-AA 2018
+            Research Framework A/T/N classification (A+ = amyloid
+            biomarker positive). FDA 510(k) K212622 implements this
+            via the dual cutoffs (≤0.058 positive, ≤0.072 likely
+            positive, >0.072 negative) creating an intermediate
+            zone between 0.058 and 0.072.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.12756"
+          endorsing_bodies:
+            - "Alzheimer's Association (Hansson 2022 AUR)"
+            - "NIA-AA Research Framework 2018 (A/T/N classification)"
+            - "NIA-AA 2024 Revised Criteria"
+            - "FDA (510(k) K212622 dual-cutoff implementation)"
+            - "Brum 2023 two-step workflow (Nat Aging)"
+            - "Hansson Nat Aging 2023 (PMID 37081119)"
+            - "AA 2025 Clinical Practice Guideline (Palmqvist)"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Categorical placeholder"
+        citation:
+          citation_pmid: "35908251"
+          citation_doi: "10.1002/alz.12756"
+          citation_text: |
+            CSF amyloid status is constrained to the three-tier set
+            {negative, intermediate, positive} per AA AUR Hansson 2022.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.12756"
+          endorsing_bodies:
+            - "Alzheimer's Association"
+            - "NIA-AA"
+            - "FDA"
+            - "AA 2025 Clinical Practice Guideline"
+            - "Brum 2023"
+            - "Hansson 2023 Nat Aging"

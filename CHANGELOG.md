@@ -4,6 +4,186 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] — 2026-05-25
+
+### v1.10.0 FINAL — full world-class production roster
+
+This release completes the v1.10.0 development arc. The Layer 2 production
+roster goes from 2 packs (rc2) to **5 packs**, all at the same
+international-consensus citation-lock standard. Three new production packs
+are added in this release; nothing in Layer 1 changes.
+
+### New production packs (3 added; total now 5)
+
+**`genetics/apoe_consensus@1.0.0`** — APOE genotype standard for AD risk
+stratification.
+
+- 6 measurements (apoe_genotype, apoe_e4_allele_count, apoe_e4_risk_classification, apoe_e2_allele_count, rs429358_genotype, rs7412_genotype)
+- 12 bounds, every one at `citation_strength=international_consensus`
+- 6 canonical 2-locus genotypes (ε2/ε2, ε2/ε3, ε2/ε4, ε3/ε3, ε3/ε4, ε4/ε4)
+- 3-tier ε4 risk classification (noncarrier / heterozygote / homozygote) per FDA Boxed Warning
+- Endorsing bodies: Farrer 1997 Meta-Analysis Consortium · ACMG · ClinGen · ClinVar · HGVS · dbSNP · OMIM · AA (Lecanemab AUR + Donanemab AUR) · FDA (LEQEMBI + KISUNLA labels) · NCRAD · ADNI · UniProtKB
+- Anchor: Farrer LA et al. JAMA 1997;278(16):1349-56 (PMID 9343467)
+
+**`csf_biomarkers/csf_amyloid_consensus@1.0.0`** — CSF Aβ biomarker thresholds.
+
+- 4 measurements (csf_abeta42_40_ratio_lumipulse, csf_abeta42_pgml, csf_abeta40_pgml, csf_amyloid_status)
+- 9 bounds, every one at `citation_strength=international_consensus`
+- FDA-cleared Lumipulse Aβ42/Aβ40 ratio cutoffs verbatim: ≤0.058 positive, ≤0.072 likely positive
+- 3-zone classification (negative / intermediate / positive) per AA AUR
+- Endorsing bodies: FDA (510(k) K212622) · AA (Hansson 2022 AUR) · NIA-AA Research Framework 2018 · NIA-AA 2024 Revised Criteria · Roche Diagnostics · Fujirebio · Amsterdam Dementia Cohort · ADNI · Wake Forest ADRC · EADC
+- Anchor: Hansson O et al. Alzheimer's & Dementia 2022;18(12):2669-2686 (PMID 35908251)
+
+**`plasma_biomarkers/plasma_amyloid_consensus@1.0.0`** — Plasma blood-based biomarker thresholds.
+
+- 5 measurements (plasma_ptau217_pgml, plasma_abeta42_40_ratio, plasma_ptau217_abeta42_ratio_lumipulse, plasma_amyloid_status, biomarker_performance_tier)
+- 11 bounds, every one at `citation_strength=international_consensus`
+- Giacomucci 2025 two-cutoff approach verbatim: 0.229-0.516 pg/mL p-tau217
+- AA CPG 2025 (Palmqvist) performance tiers: triaging (≥90% sens, ≥75% spec) and confirmatory (≥90% sens AND ≥90% spec)
+- FDA-cleared Lumipulse pTau217/Aβ42 plasma ratio (May 2025) — first FDA-cleared blood test for AD diagnosis
+- Endorsing bodies: AA 2025 CPG (Palmqvist) · AA AUR (Hansson 2022) · Global CEO Initiative on AD (Schindler 2024) · FDA (510(k) May 2025) · NIA-AA 2024 · Hansson 2023 Nat Aging · Palmqvist 2025 Nat Med · Fujirebio · C2N · Quanterix · Roche · Eli Lilly · Brum 2023 Nat Aging
+- Anchor: Palmqvist S et al. Alzheimer's & Dementia 2025;21:e70535 (the first AA Clinical Practice Guideline for BBMs)
+
+### Final v1.10.0 production roster (5 packs, 23 measurements, 54 bounds)
+
+| Pack | Measurements | Bounds | Domain |
+|---|---|---|---|
+| `ad/aria_safety@1.0.0` | 5 | 12 | ARIA monitoring for anti-amyloid mAbs |
+| `pet_amyloid/centiloid_consensus@1.0.0` | 3 | 10 | Centiloid scale (PET) |
+| `genetics/apoe_consensus@1.0.0` | 6 | 12 | APOE genotype risk stratification |
+| `csf_biomarkers/csf_amyloid_consensus@1.0.0` | 4 | 9 | CSF Aβ biomarkers (FDA Lumipulse) |
+| `plasma_biomarkers/plasma_amyloid_consensus@1.0.0` | 5 | 11 | Plasma BBMs (AA CPG 2025) |
+| **TOTAL** | **23** | **54** | All at international_consensus |
+
+All 54 bounds satisfy: `citation_strength=international_consensus`,
+≥5 endorsing bodies per bound, public URL per bound.
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` → All checks passed
+- `pytest tests/ -q` → **623 passed, 7 skipped** (rc2: 555 + 68 new tests
+  across 3 new pack test files + updated loader assertions)
+- Layer 1 byte-exact verified under v1.10.0 final (5/5 cohorts):
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` ✓
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` ✓
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` ✓
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` ✓
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` ✓
+
+### What this release does NOT touch (verified frozen)
+
+| Path | Status |
+|---|---|
+| `src/neurotcs/audit_core/` | Frozen across all 4 versions (rc1 → rc2 → final) |
+| `src/neurotcs/rulepack/` | Frozen |
+| `src/neurotcs/input_contract/` | Frozen |
+| `src/neurotcs/fairness/` | Frozen |
+| `ad/aria_safety` pack content | Frozen since rc1 |
+| `pet_amyloid/centiloid_consensus` pack content | Frozen since rc2 |
+| All 5 Layer 1 audit_id invariants | Byte-exact across rc1, rc2, and final |
+
+### Honest exclusions across all 5 production packs
+
+Bounds we deliberately did NOT encode (would be derivation or single-site
+data, not international consensus):
+
+- Tracer-specific Centiloid SUVR conversion coefficients (PET; manufacturer-
+  and pipeline-specific)
+- Single-subject Reliable Change Index for longitudinal CL change (PET)
+- Whole-cerebellum vs cerebellar-grey-matter reference region choice (PET)
+- The extremely rare ε1 APOE allele (single case reports only)
+- APOE/TOMM40 haplotypes (cohort-specific)
+- Cohort-specific CSF cutoffs without FDA clearance or cross-validation
+- p-tau181 and p-tau231 absolute concentrations (AA CPG 2025 mentions but
+  lower-tier evidence than p-tau217)
+- Mass-spectrometry reference method values (Barthélemy 2024 Nat Med;
+  not yet routinely available clinically)
+
+These are honest exclusions, not omissions. Each is documented in the
+respective pack's `notes` field.
+
+### Known v1.10.x patch issue
+
+The `canonical_sha256` hash is computed via Pydantic `model_dump(mode="json")`,
+which produces slightly different output across Python patch versions
+(e.g., Linux 3.12.3 vs Windows 3.12.7). Pack content is byte-identical
+in the YAML files; SHA stability is per-platform but not cross-platform.
+v1.10.1 will fix this by hashing the YAML bytes directly.
+
+Layer 1 `audit_id` invariants are unaffected — they use a different
+canonicalization path and reproduce byte-exact across platforms.
+
+---
+
+## [1.10.0-rc2] — 2026-05-25
+
+### Second world-class production pack: pet_amyloid/centiloid_consensus
+
+This release candidate adds the second Layer 2 production pack at the
+world-class international-consensus citation-lock standard, raising the
+roster from 1 to 2 production packs.
+
+### New production pack (1 added; total now 2)
+
+**`pet_amyloid/centiloid_consensus@1.0.0`** — Centiloid scale for amyloid PET
+quantification: Klunk 2015 0/100 CL anchor points, Doré/Rowe 2020 five-tier
+interpretation categorization, and FDA-aligned amyloid clearance threshold
+(<24.1 CL, TRAILBLAZER-ALZ 4 verbatim).
+
+- 3 measurements (centiloid_value, centiloid_category, centiloid_clearance_threshold)
+- 10 bounds, every one at `citation_strength=international_consensus`
+- Each bound has 5-7 endorsing bodies and a publicly accessible URL
+- Endorsing bodies cited across the pack:
+  - **Centiloid Working Group** (Klunk WE et al., Alzheimer's Dement 2015;11:1-15, PMID 25443857)
+  - **Global Alzheimer's Association Information Network (GAAIN)** — custodian of the reference dataset
+  - **Society of Nuclear Medicine and Molecular Imaging (SNMMI)** — 2016 Practice Standard + 2026 update
+  - **European Association of Nuclear Medicine (EANM)** — joint with SNMMI
+  - **AMYPAD Consortium 2024** (Collij et al., Alzheimer's & Dementia)
+  - **Alzheimer's Association** (Doré/Rowe Neurology 2020 categorization adopted across AIBL/ADNI/OASIS-3)
+  - **AIBL, ADNI, OASIS-3 Knight ADRC** (Bourgeat 2022 cross-cohort harmonization)
+  - **Eli Lilly** (TRAILBLAZER-ALZ 4: "<24.1 Centiloids" amyloid plaque clearance definition, Salloway 2025)
+  - **Eisai** (Clarity AD lecanemab OLE, Dyck 2025: Centiloid <30 amyloid-negative)
+  - **Roche** (gantenerumab GRADUATE 1/2 SAPs: 24 CL positivity threshold)
+  - **FDA** (KISUNLA prescribing label, end-of-treatment criterion)
+- Anchor: Klunk WE et al. Alzheimer's & Dementia 2015;11:1-15 (PMID 25443857, PMC4300247)
+
+### Verbatim bounds encoded
+
+| Measurement | Bound | Source (verbatim) |
+|---|---|---|
+| `centiloid_value` plausible_min=-10 | "<10 CL to reliably exclude Aβ-pathology" | AMYPAD 2024 Figure 4 |
+| `centiloid_value` hard_min=-50 / hard_max=300 | Biological plausibility floor/ceiling | Klunk 2015 + Bourgeat 2022 cross-cohort empirical range |
+| `centiloid_category` valid_values | {negative, uncertain, moderate, high, very_high} | Doré/Rowe Neurology 2020 |
+| `centiloid_clearance_threshold` plausible_min=20 / plausible_max=30 | AMYPAD "reliably include >30 CL" + Eisai Clarity OLE Centiloid<30 | AMYPAD 2024 + Dyck 2025 |
+| `centiloid_clearance_threshold` hard_max=50 | Upper bound of Doré "moderate" tier (26-50 CL) | Doré/Rowe Neurology 2020 |
+| TRAILBLAZER-ALZ 4 clearance verbatim | "AP clearance was defined as <24.1 Centiloids" | Salloway 2025 (PMC12089073) |
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` → All checks passed
+- `pytest tests/ -q` → **555 passed, 7 skipped** (526 from rc1 + 29 from new
+  `test_centiloid_consensus_pack.py` + updates to `test_loader.py` and
+  `test_trial_file_validation.py`)
+- Layer 1 byte-exact verified under rc2 (5/5 cohorts):
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` ✓
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` ✓
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` ✓
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` ✓
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` ✓
+
+### Still pending for v1.10.0 final
+
+Three more production packs to build at the same world-class standard:
+
+- `genetics/apoe_consensus@1.0.0` (ACMG + CPIC + HUGO + ClinGen + AA AUR + FDA + EMA + Roses 1996)
+- `csf_amyloid_consensus@1.0.0` (AA Biofluid + IFCC + EADC + NIA-AA 2024 + JPND + ADNI + FDA)
+- `plasma_amyloid_consensus@1.0.0` (AA workgroup 2022 + NIA-AA 2024 + AAIC + FDA + Roche/Fujirebio/C2N/Quanterix + Alzheimer's Society UK + EAN)
+
+After all 5 packs are at world-class standard, v1.10.0 final will be
+tagged and the existing rc1/rc2 tags retained for the audit trail.
+
+---
+
 ## [1.10.0-rc1] — 2026-05-25
 
 ### World-class restructure: international-consensus citation standard

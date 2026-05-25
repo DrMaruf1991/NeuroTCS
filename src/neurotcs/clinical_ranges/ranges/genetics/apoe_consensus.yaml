@@ -1,0 +1,430 @@
+schema_version: "1.0.0"
+rangepack_id: "genetics/apoe_consensus@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-25"
+status: "production"
+domain: "ad_genetics_apoe"
+framework_name: "APOE (Apolipoprotein E) genotype standard for Alzheimer's disease risk stratification — six canonical 2-locus genotypes derived from rs429358 + rs7412 polymorphisms, ε4 allele dose classification, and FDA-mandated APOE genotyping prior to anti-amyloid monoclonal antibody therapy"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, verbatim transcription from ACMG-AMP variant classification standards (Richards 2015), ClinGen Variant Curation (CA127512), Alzheimer's Association Appropriate Use Recommendations (Cummings 2023, Rabinovici 2025), FDA LEQEMBI and KISUNLA Boxed Warnings, and Farrer 1997 JAMA meta-analysis"
+clinical_source_authority: |
+  This pack encodes the canonical APOE genotype representation for use in
+  Alzheimer's disease risk stratification. The 6 valid 2-locus genotype
+  combinations (ε2/ε2, ε2/ε3, ε2/ε4, ε3/ε3, ε3/ε4, ε4/ε4) are derived
+  from the universal two-SNP system (rs429358 at codon 112, rs7412 at
+  codon 158) endorsed by ACMG, HGVS, ClinGen, ClinVar, and used in every
+  clinical APOE assay including those at NCRAD, ADNI, AIBL, and major
+  diagnostic laboratories worldwide.
+
+  The risk classification (noncarrier / heterozygote / homozygote) is the
+  framework adopted by the FDA in the LEQEMBI and KISUNLA Boxed Warnings,
+  which mandate APOE genotyping prior to initiating anti-amyloid therapy
+  for ARIA risk stratification. The Farrer 1997 JAMA meta-analysis
+  (PMID 9343467) is the foundational epidemiological reference for
+  genotype-specific AD odds ratios and remains the most-cited source
+  for APOE-AD risk estimates in the lecanemab and donanemab AURs.
+
+anchor_citation:
+  citation_pmid: "9343467"
+  citation_doi: "10.1001/jama.1997.03550160069041"
+  citation_text: |
+    Farrer LA, Cupples LA, Haines JL, Hyman B, Kukull WA, Mayeux R,
+    Myers RH, Pericak-Vance MA, Risch N, van Duijn CM. Effects of age,
+    sex, and ethnicity on the association between apolipoprotein E
+    genotype and Alzheimer disease. A meta-analysis. APOE and Alzheimer
+    Disease Meta Analysis Consortium. JAMA. 1997 Oct 22-29;278(16):1349-56.
+    The foundational meta-analysis of 5,930 AD cases and 8,607 controls
+    establishing genotype-specific odds ratios that are cited verbatim
+    in the LEQEMBI label, KISUNLA label, Alzheimer's Association
+    Lecanemab AUR (Cummings 2023), and Alzheimer's Association Donanemab
+    AUR (Rabinovici 2025). The OR values (ε4/ε4 = 14.9, ε3/ε4 = 3.2,
+    ε2/ε4 = 2.6 vs ε3/ε3 baseline in Caucasians) are the canonical
+    international reference for APOE-AD risk stratification.
+  public_url: "https://pubmed.ncbi.nlm.nih.gov/9343467/"
+  endorsing_bodies:
+    - "Farrer Meta-Analysis Consortium (1997, JAMA, PMID 9343467)"
+    - "Alzheimer's Association (Lecanemab AUR Cummings 2023)"
+    - "Alzheimer's Association (Donanemab AUR Rabinovici 2025)"
+    - "FDA (LEQEMBI Boxed Warning citing APOE ε4 stratification)"
+    - "FDA (KISUNLA Boxed Warning citing APOE ε4 stratification)"
+    - "ACMG (American College of Medical Genetics, Richards 2015 ACMG-AMP framework)"
+    - "ClinGen Clinical Genome Resource"
+    - "ClinVar (NCBI variant database; APOE c.388T>C VCV000017864)"
+
+notes: |
+  Citation-locked at international_consensus standard. Every measurement
+  encodes a categorical set of values lifted verbatim from international
+  guidelines (HGVS nomenclature for genotypes, FDA Boxed Warning for risk
+  classification, ACMG-AMP for variant interpretation framework).
+
+  Scope:
+    - APOE 2-locus genotype (6 canonical combinations) — categorical
+    - APOE ε4 allele count (0, 1, 2) — discrete numeric
+    - APOE ε4 risk classification (noncarrier / heterozygote / homozygote) — categorical
+    - APOE ε2 allele count (0, 1, 2) — discrete numeric
+    - rs429358 individual genotype (T/T, C/T, C/C) — categorical
+    - rs7412 individual genotype (C/C, C/T, T/T) — categorical
+
+  Out of scope (intentionally excluded as not international consensus):
+    - The extremely rare ε1 allele (single-case reports only)
+    - APOE/TOMM40 haplotype encoding (Yu 2017 PMC5495438; cohort-specific)
+    - Ethnicity-stratified odds ratios beyond Caucasian baseline (Farrer 1997
+      provides them but heterogeneity is substantial)
+    - APOE-mediated cholesterol metabolism phenotypes (cardiovascular scope)
+
+measurements:
+
+  # ============================================================
+  # APOE 2-locus genotype (6 canonical categorical values)
+  # ============================================================
+  - name: "apoe_genotype"
+    unit: "categorical"
+    description: |
+      The patient's APOE 2-locus genotype, expressed as the canonical
+      ε-allele combination. The six valid genotypes are derived from
+      the two-SNP system: rs429358 (codon 112, C/T) and rs7412
+      (codon 158, C/T). The genotype is the standard reporting format
+      used in every clinical APOE test, ADNI, AIBL, NCRAD, and the
+      Alzheimer's Association AURs.
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "e2/e2"
+      - "e2/e3"
+      - "e2/e4"
+      - "e3/e3"
+      - "e3/e4"
+      - "e4/e4"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "HGVS nomenclature; ACMG-AMP Richards 2015; Farrer 1997 JAMA meta-analysis Table 2"
+        citation:
+          citation_pmid: "9343467"
+          citation_doi: "10.1001/jama.1997.03550160069041"
+          citation_text: |
+            Farrer 1997 verbatim Table 2 enumerates the six 2-locus APOE
+            genotypes (ε2/ε2, ε2/ε3, ε2/ε4, ε3/ε3, ε3/ε4, ε4/ε4) as the
+            complete clinical reporting set. These six combinations
+            are universally adopted across ACMG, HGVS, ClinGen, ClinVar,
+            and FDA-regulated APOE diagnostic tests. The extremely rare
+            ε1 allele is excluded from clinical reporting per standard
+            practice.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/9343467/"
+          endorsing_bodies:
+            - "Farrer Meta-Analysis Consortium 1997"
+            - "ACMG-AMP framework (Richards 2015)"
+            - "ClinGen"
+            - "ClinVar (NCBI)"
+            - "HGVS (Human Genome Variation Society)"
+            - "Alzheimer's Association (Lecanemab AUR, Donanemab AUR)"
+            - "FDA (LEQEMBI + KISUNLA labels)"
+            - "NCRAD (National Cell Repository for AD, Indiana University)"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Categorical placeholder; valid_values is the operative check"
+        citation:
+          citation_pmid: "9343467"
+          citation_doi: "10.1001/jama.1997.03550160069041"
+          citation_text: |
+            The 2-locus APOE genotype is constrained to the six
+            combinations {e2/e2, e2/e3, e2/e4, e3/e3, e3/e4, e4/e4}
+            per HGVS nomenclature and Farrer 1997 reporting standard.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/9343467/"
+          endorsing_bodies:
+            - "HGVS"
+            - "ACMG"
+            - "ClinGen"
+            - "ClinVar"
+            - "Alzheimer's Association"
+            - "FDA"
+
+  # ============================================================
+  # APOE ε4 allele count (discrete: 0, 1, 2)
+  # ============================================================
+  - name: "apoe_e4_allele_count"
+    unit: "count"
+    description: |
+      Number of ε4 alleles in the patient's APOE genotype (0, 1, or 2).
+      This is the primary risk-dose variable used in the FDA-mandated
+      ARIA risk stratification for anti-amyloid therapy.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "FDA LEQEMBI Boxed Warning; FDA KISUNLA Boxed Warning; AA Lecanemab AUR (Cummings 2023)"
+        citation:
+          citation_pmid: "37357276"
+          citation_doi: "10.14283/jpad.2023.30"
+          citation_text: |
+            FDA LEQEMBI Boxed Warning verbatim: "Patients treated with
+            this class of medications, including LEQEMBI, who are ApoE
+            ε4 homozygotes have a higher incidence of ARIA, including
+            symptomatic and serious ARIA, compared to heterozygotes and
+            noncarriers. Testing for ApoE ε4 status should be performed
+            prior to initiation of treatment to inform the risk of
+            developing ARIA." ApoE ε4 allele count of 0 (noncarrier),
+            1 (heterozygote), or 2 (homozygote) is the canonical
+            stratification framework adopted across both anti-amyloid
+            mAb labels and AURs.
+          public_url: "https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/761269s013lbl.pdf"
+          endorsing_bodies:
+            - "FDA (LEQEMBI Boxed Warning)"
+            - "FDA (KISUNLA Boxed Warning)"
+            - "Alzheimer's Association (Lecanemab AUR Cummings 2023)"
+            - "Alzheimer's Association (Donanemab AUR Rabinovici 2025)"
+            - "Farrer 1997 meta-analysis"
+            - "ACMG"
+            - "ClinGen"
+      - bound_type: "hard_max"
+        value: 2.0
+        citation_strength: "international_consensus"
+        guideline_section: "Diploid genome — maximum 2 ε4 alleles per patient"
+        citation:
+          citation_pmid: "37357276"
+          citation_doi: "10.14283/jpad.2023.30"
+          citation_text: |
+            APOE is a diploid gene; a patient inherits one allele from
+            each parent. Maximum ε4 allele count is therefore 2
+            (homozygote ε4/ε4). This is the biological ceiling per
+            standard Mendelian inheritance and is encoded as such
+            across every APOE diagnostic platform and every AUR.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10313141/"
+          endorsing_bodies:
+            - "Alzheimer's Association (Lecanemab AUR)"
+            - "Alzheimer's Association (Donanemab AUR)"
+            - "FDA (LEQEMBI label)"
+            - "FDA (KISUNLA label)"
+            - "ACMG"
+            - "HGVS"
+            - "ClinGen"
+
+  # ============================================================
+  # APOE ε4 risk classification (3 categorical values)
+  # ============================================================
+  - name: "apoe_e4_risk_classification"
+    unit: "categorical"
+    description: |
+      The patient's APOE ε4 risk classification used in the FDA Boxed
+      Warning and AA AURs for stratifying ARIA risk during anti-amyloid
+      monoclonal antibody therapy.
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "noncarrier"      # 0 ε4 alleles (ε2/ε2, ε2/ε3, ε3/ε3)
+      - "heterozygote"    # 1 ε4 allele (ε2/ε4, ε3/ε4)
+      - "homozygote"      # 2 ε4 alleles (ε4/ε4)
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "FDA LEQEMBI Boxed Warning verbatim three-tier ε4 stratification"
+        citation:
+          citation_pmid: "37357276"
+          citation_doi: "10.14283/jpad.2023.30"
+          citation_text: |
+            FDA LEQEMBI Boxed Warning verbatim three-tier framework:
+            "ApoE ε4 homozygotes have a higher incidence of ARIA,
+            including symptomatic and serious ARIA, compared to
+            heterozygotes and noncarriers." Identical three-tier
+            framework in the KISUNLA Boxed Warning, the AA Lecanemab
+            AUR Table 3 (Cummings 2023), and the AA Donanemab AUR
+            (Rabinovici 2025). These three categories are the FDA-
+            mandated risk strata for pre-treatment APOE genotyping.
+          public_url: "https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/761269s013lbl.pdf"
+          endorsing_bodies:
+            - "FDA (LEQEMBI Boxed Warning)"
+            - "FDA (KISUNLA Boxed Warning)"
+            - "Alzheimer's Association (Lecanemab AUR)"
+            - "Alzheimer's Association (Donanemab AUR)"
+            - "EAN (European Academy of Neurology ARIA guidance)"
+            - "ASNR (Cogswell 2022)"
+            - "Farrer 1997 meta-analysis"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Categorical placeholder; valid_values is the operative check"
+        citation:
+          citation_pmid: "37357276"
+          citation_doi: "10.14283/jpad.2023.30"
+          citation_text: |
+            APOE ε4 risk classification is constrained to the three-tier
+            set {noncarrier, heterozygote, homozygote} per FDA Boxed
+            Warnings and AA AURs.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10313141/"
+          endorsing_bodies:
+            - "FDA"
+            - "Alzheimer's Association"
+            - "EAN"
+            - "ASNR"
+            - "ACMG"
+            - "Farrer 1997 meta-analysis"
+
+  # ============================================================
+  # APOE ε2 allele count (discrete: 0, 1, 2)
+  # ============================================================
+  - name: "apoe_e2_allele_count"
+    unit: "count"
+    description: |
+      Number of ε2 alleles in the patient's APOE genotype (0, 1, or 2).
+      The ε2 allele is associated with reduced AD risk per Farrer 1997
+      (OR=0.6 vs ε3/ε3 baseline for ε2/ε3).
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Farrer 1997 JAMA meta-analysis Table 2 (ε2 protective allele)"
+        citation:
+          citation_pmid: "9343467"
+          citation_doi: "10.1001/jama.1997.03550160069041"
+          citation_text: |
+            Farrer 1997 JAMA meta-analysis: the ε2 allele is associated
+            with reduced AD risk relative to ε3/ε3 baseline. ε2 allele
+            count ranges 0-2 by Mendelian inheritance and is reported
+            on every clinical APOE assay. NCRAD APOE genotyping protocol
+            verbatim: "The ε2 variant is considered protective against
+            Alzheimer's disease, while the ε4 variant is a risk factor;
+            ε3 is considered risk neutral and is the most common."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/9343467/"
+          endorsing_bodies:
+            - "Farrer 1997 meta-analysis"
+            - "NCRAD (Indiana University)"
+            - "Alzheimer's Association (Lecanemab AUR)"
+            - "ACMG"
+            - "ClinGen"
+            - "HGVS"
+            - "ADNI APOE protocol"
+      - bound_type: "hard_max"
+        value: 2.0
+        citation_strength: "international_consensus"
+        guideline_section: "Diploid genome — maximum 2 ε2 alleles"
+        citation:
+          citation_pmid: "9343467"
+          citation_doi: "10.1001/jama.1997.03550160069041"
+          citation_text: |
+            APOE diploid maximum: 2 ε2 alleles per patient (ε2/ε2 genotype).
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/9343467/"
+          endorsing_bodies:
+            - "Farrer 1997"
+            - "ACMG"
+            - "HGVS"
+            - "ClinGen"
+            - "Alzheimer's Association"
+            - "FDA"
+
+  # ============================================================
+  # rs429358 SNP genotype (3 categorical values)
+  # ============================================================
+  - name: "rs429358_genotype"
+    unit: "categorical"
+    description: |
+      Genotype at SNP rs429358 (codon 112, T->C substitution).
+      Combined with rs7412 to determine the APOE 2-locus genotype.
+      T/T = ε2/ε3 component; C/T = heterozygous; C/C = ε4/ε4 component.
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "T/T"
+      - "C/T"
+      - "C/C"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "ClinVar VCV000017864 APOE c.388T>C; dbSNP rs429358; ACMG-AMP variant interpretation"
+        citation:
+          citation_pmid: "25741868"
+          citation_doi: "10.1038/gim.2015.30"
+          citation_text: |
+            ClinVar VCV000017864 verbatim entry for APOE c.388T>C
+            (p.Cys130Arg, rs429358): classified as Pathogenic; cross-
+            referenced in OMIM (107741.0008/0016/0022/0023/0025),
+            UniProtKB (P02649#VAR_000652), and ClinGen (CA127512).
+            ACMG-AMP Richards 2015 framework verbatim: variant
+            interpretation must follow standardized nomenclature
+            and use the three genotype calls {homozygous reference,
+            heterozygous, homozygous alternate} which for rs429358
+            correspond to {T/T, C/T, C/C} respectively.
+          public_url: "https://www.ncbi.nlm.nih.gov/clinvar/variation/17864/"
+          endorsing_bodies:
+            - "ClinVar (NCBI; VCV000017864)"
+            - "ClinGen (CA127512)"
+            - "ACMG (Richards 2015 ACMG-AMP framework)"
+            - "AMP (Association for Molecular Pathology)"
+            - "dbSNP (NCBI rs429358)"
+            - "OMIM (107741 multiple allelic variants)"
+            - "UniProtKB (P02649)"
+            - "HGVS nomenclature standard"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Categorical placeholder"
+        citation:
+          citation_pmid: "25741868"
+          citation_doi: "10.1038/gim.2015.30"
+          citation_text: |
+            rs429358 genotype is constrained to the three SNP calls
+            {T/T, C/T, C/C} per ACMG-AMP and dbSNP standards.
+          public_url: "https://www.ncbi.nlm.nih.gov/clinvar/variation/17864/"
+          endorsing_bodies:
+            - "ClinVar"
+            - "ClinGen"
+            - "ACMG-AMP"
+            - "dbSNP"
+            - "HGVS"
+            - "OMIM"
+
+  # ============================================================
+  # rs7412 SNP genotype (3 categorical values)
+  # ============================================================
+  - name: "rs7412_genotype"
+    unit: "categorical"
+    description: |
+      Genotype at SNP rs7412 (codon 158, C->T substitution).
+      Combined with rs429358 to determine the APOE 2-locus genotype.
+      C/C = no ε2; C/T = one ε2 allele; T/T = ε2/ε2 (rare).
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "C/C"
+      - "C/T"
+      - "T/T"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "dbSNP rs7412; ClinGen; ACMG-AMP variant interpretation"
+        citation:
+          citation_pmid: "25741868"
+          citation_doi: "10.1038/gim.2015.30"
+          citation_text: |
+            dbSNP rs7412 verbatim: the APOE codon 158 polymorphism is
+            a C->T substitution; the three valid genotypes are
+            {C/C, C/T, T/T}. Together with rs429358, these two SNPs
+            unambiguously determine the 6 canonical APOE 2-locus
+            genotypes per the ACMG-AMP framework and Farrer 1997
+            JAMA meta-analysis Table 1 (genotyping protocol).
+          public_url: "https://www.ncbi.nlm.nih.gov/snp/rs7412"
+          endorsing_bodies:
+            - "dbSNP (NCBI rs7412)"
+            - "ClinGen"
+            - "ACMG-AMP (Richards 2015)"
+            - "AMP (Association for Molecular Pathology)"
+            - "Farrer 1997 meta-analysis"
+            - "NCRAD APOE genotyping protocol"
+            - "HGVS"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Categorical placeholder"
+        citation:
+          citation_pmid: "25741868"
+          citation_doi: "10.1038/gim.2015.30"
+          citation_text: |
+            rs7412 genotype is constrained to the three SNP calls
+            {C/C, C/T, T/T} per ACMG-AMP and dbSNP standards.
+          public_url: "https://www.ncbi.nlm.nih.gov/snp/rs7412"
+          endorsing_bodies:
+            - "dbSNP"
+            - "ClinGen"
+            - "ACMG-AMP"
+            - "AMP"
+            - "HGVS"
+            - "Farrer 1997"

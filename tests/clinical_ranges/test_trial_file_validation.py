@@ -100,13 +100,22 @@ class TestResearchPreviewPacksRejectAudit:
 
 
 class TestPacksListAccurate:
-    """In v1.10.0-rc1, exactly one pack is production."""
+    """In v1.10.0 final, exactly five packs are production:
+    ad/aria_safety, pet_amyloid/centiloid_consensus, genetics/apoe_consensus,
+    csf_biomarkers/csf_amyloid_consensus, plasma_biomarkers/plasma_amyloid_consensus."""
 
-    def test_exactly_one_production_pack(self):
+    def test_exactly_five_production_packs(self):
         packs = list_rangepacks()
         production = [p for p in packs if p.get("status") == "production"]
-        assert len(production) == 1
-        assert production[0]["name"] == "ad/aria_safety"
+        assert len(production) == 5
+        names = {p["name"] for p in production}
+        assert names == {
+            "ad/aria_safety",
+            "pet_amyloid/centiloid_consensus",
+            "genetics/apoe_consensus",
+            "csf_biomarkers/csf_amyloid_consensus",
+            "plasma_biomarkers/plasma_amyloid_consensus",
+        }
 
     def test_six_research_preview_packs(self):
         packs = list_rangepacks()

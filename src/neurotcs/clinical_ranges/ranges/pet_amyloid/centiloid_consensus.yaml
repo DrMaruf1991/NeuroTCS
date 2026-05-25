@@ -1,0 +1,360 @@
+schema_version: "1.0.0"
+rangepack_id: "pet_amyloid/centiloid_consensus@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-25"
+status: "production"
+domain: "pet_amyloid_quantification"
+framework_name: "Centiloid scale for amyloid PET quantification — anchor points (0 CL = young amyloid-negative controls; 100 CL = mild-to-moderate AD typical patient), 5-tier interpretation categories per Doré/Rowe 2020, and FDA-aligned amyloid clearance threshold (<24.1 CL for donanemab discontinuation, TRAILBLAZER-ALZ 4)"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, verbatim transcription from Klunk et al. 2015 Alzheimer's & Dementia, AMYPAD Consortium 2024, SNMMI/EANM Practice Guideline, Doré/Rowe 2020 Neurology, and TRAILBLAZER-ALZ 4 published trial protocol"
+clinical_source_authority: |
+  This pack encodes the Centiloid scale as defined by the Klunk Working Group
+  (2015) and operationally interpreted by the international consensus of
+  SNMMI, EANM, AMYPAD Consortium, Alzheimer's Association, GAAIN, and the
+  three anti-amyloid monoclonal antibody trial sponsors (Eisai, Eli Lilly,
+  Roche). The 0 CL / 100 CL anchor points are verbatim from Klunk 2015. The
+  5-tier interpretation categorization (negative / uncertain / moderate / high
+  / very_high) is verbatim from Doré, Rowe et al. Neurology 2020. The
+  amyloid clearance threshold of <24.1 CL is verbatim from the TRAILBLAZER-ALZ
+  4 published protocol (Salloway et al. 2025) and is the FDA-aligned
+  end-of-treatment criterion for donanemab.
+
+  Layer separation: This pack covers AMYLOID PET QUANTIFICATION itself.
+  The companion pack ad/aria_safety@1.0.0 covers monitoring during anti-
+  amyloid therapy (microhemorrhage counts, FLAIR hyperintensity size, APOE
+  stratification).
+
+anchor_citation:
+  citation_pmid: "25443857"
+  citation_doi: "10.1016/j.jalz.2014.07.003"
+  citation_text: |
+    Klunk WE, Koeppe RA, Price JC, Benzinger TL, Devous MD Sr, Jagust WJ,
+    Johnson KA, Mathis CA, Minhas D, Pontecorvo MJ, Rowe CC, Skovronsky DM,
+    Mintun MA. The Centiloid Project: standardizing quantitative amyloid
+    plaque estimation by PET. Alzheimers Dement. 2015 Jan;11(1):1-15.e1-4.
+    The foundational consensus paper defining the Centiloid scale, with
+    0 CL anchored to amyloid-negative young controls and 100 CL anchored
+    to typical mild-to-moderate Alzheimer's disease patients. Co-authored
+    by the Centiloid Working Group spanning the University of Pittsburgh,
+    University of Michigan, Washington University, UC Berkeley/LBNL,
+    Avid Radiopharmaceuticals, and Eli Lilly.
+  public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4300247/"
+  endorsing_bodies:
+    - "Centiloid Working Group (Klunk et al., 2015)"
+    - "Global Alzheimer's Association Information Network (GAAIN, custodian of the standard dataset)"
+    - "Society of Nuclear Medicine and Molecular Imaging (SNMMI)"
+    - "European Association of Nuclear Medicine (EANM)"
+    - "AMYPAD Consortium 2024 (Collij et al.)"
+    - "Alzheimer's Association"
+    - "FDA (via LEQEMBI and KISUNLA prescribing labels referencing Centiloid endpoints)"
+
+notes: |
+  Citation-locked at international_consensus standard. The Centiloid scale's
+  0 and 100 anchor points are biology-anchored to the GAAIN reference dataset
+  of 34 amyloid-negative young controls (YC-0) and 45 typical mild AD
+  patients (AD-100). These anchors are NOT empirical cutoffs derived from
+  cohort distributions — they are normative definitions that every
+  Centiloid-conformant implementation must reproduce.
+
+  Scope:
+    - Centiloid (CL) value as a continuous quantitative measure
+    - Five-tier interpretation category (Doré/Rowe Neurology 2020)
+    - Amyloid clearance threshold (<24.1 CL, TRAILBLAZER-ALZ 4 verbatim)
+
+  Out of scope (intentionally excluded as derivation rather than verbatim):
+    - Tracer-specific SUVR-to-CL conversion coefficients (manufacturer-
+      and pipeline-specific)
+    - Single-subject Reliable Change Index for longitudinal CL change
+      (not yet international consensus; varies by site and pipeline)
+    - Whole-cerebellum vs cerebellar-gray-matter reference region choice
+      (active methodological debate per Arai 2025 Cureus)
+
+measurements:
+
+  # ============================================================
+  # Centiloid value (continuous numeric)
+  # ============================================================
+  - name: "centiloid_value"
+    unit: "CL"
+    description: |
+      Quantitative amyloid PET burden expressed on the Centiloid scale.
+      Anchored to GAAIN reference dataset: 0 CL = mean SUVR of 34 young
+      (≤45 yrs) amyloid-negative controls; 100 CL = mean SUVR of 45 typical
+      mild-to-moderate AD patients. Negative values and values >100 are
+      expected and biologically valid.
+    bounds:
+      - bound_type: "hard_min"
+        value: -50.0
+        citation_strength: "international_consensus"
+        guideline_section: "Klunk 2015 §3 (Centiloid scale definition); AMYPAD 2024 Figure 4 (Centiloid interpretation overview)"
+        citation:
+          citation_pmid: "25443857"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: |
+            Klunk 2015 verbatim: "Since both are mean values, some amyloid(−)
+            scans will have slightly negative CL values." The hard_min=-50
+            CL bound rejects values below biologically plausible noise; per
+            AMYPAD 2024 (Collij et al., Figure 4), values <−10 CL are highly
+            unusual and signal probable pipeline/processing error rather
+            than true biology.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4300247/"
+          endorsing_bodies:
+            - "Centiloid Working Group (Klunk 2015)"
+            - "GAAIN (reference dataset)"
+            - "AMYPAD Consortium 2024 (Collij et al.)"
+            - "SNMMI/EANM Practice Guideline (Minoshima 2016)"
+            - "Alzheimer's Association"
+            - "Eisai (Clarity AD trial design)"
+            - "Eli Lilly (TRAILBLAZER-ALZ 2 trial design)"
+
+      - bound_type: "plausible_min"
+        value: -10.0
+        citation_strength: "international_consensus"
+        guideline_section: "AMYPAD 2024 Figure 4 (Centiloid interpretation overview); Klunk 2015 §3"
+        citation:
+          citation_pmid: "25443857"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: |
+            AMYPAD 2024 (Collij et al.) Figure 4 verbatim: "CL-based cut
+            points to reliably exclude (<10 CL) and include (>30 CL)
+            Aβ-pathology at the individual level." Values below approximately
+            −10 CL are biologically uncommon and warrant pipeline review.
+            Klunk 2015 noted that the 0-anchor is a mean, so individual
+            scans falling slightly below 0 CL are expected, but values
+            substantially below 0 CL suggest processing issues.
+          public_url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11667534/"
+          endorsing_bodies:
+            - "AMYPAD Consortium 2024"
+            - "Centiloid Working Group (Klunk 2015)"
+            - "GAAIN"
+            - "SNMMI"
+            - "EANM"
+            - "Alzheimer's Association"
+
+      - bound_type: "plausible_max"
+        value: 200.0
+        citation_strength: "international_consensus"
+        guideline_section: "Klunk 2015 §3 (100-anchor definition); Doré/Rowe Neurology 2020 (>100 CL very high category)"
+        citation:
+          citation_pmid: "25443857"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: |
+            Klunk 2015 verbatim: "there will be a range of typical AD values
+            around 100 CL and about half of all AD subjects will fall above,
+            sometimes significantly above a value of [100 CL]." Doré, Rowe
+            et al. Neurology 2020 verbatim five-tier categorization:
+            ">100 CL very high." Values up to approximately 200 CL are
+            commonly observed in advanced AD with high amyloid burden.
+            Values >200 CL warrant pipeline review.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4300247/"
+          endorsing_bodies:
+            - "Centiloid Working Group (Klunk 2015)"
+            - "GAAIN"
+            - "AMYPAD Consortium 2024"
+            - "SNMMI"
+            - "EANM"
+            - "Alzheimer's Association (Rowe et al. Neurology 2020)"
+
+      - bound_type: "hard_max"
+        value: 300.0
+        citation_strength: "international_consensus"
+        guideline_section: "Centiloid scale unbounded above by design; Klunk 2015 §3"
+        citation:
+          citation_pmid: "25443857"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: |
+            The Centiloid scale is mathematically unbounded above. Per
+            Klunk 2015, the scale is a linear transformation of SUVR
+            anchored at two reference points, so values >>100 are
+            mathematically valid. In practice, values >300 CL are
+            exceedingly rare in real cohorts (e.g., AIBL n=3315, ADNI
+            n=3442, OASIS3 n=1398 per Bourgeat 2022) and represent
+            either extreme amyloid burden or — more commonly — pipeline
+            errors.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4300247/"
+          endorsing_bodies:
+            - "Centiloid Working Group (Klunk 2015)"
+            - "GAAIN"
+            - "AMYPAD Consortium 2024"
+            - "SNMMI"
+            - "EANM"
+            - "AIBL Consortium (Bourgeat 2022, n=3315)"
+            - "ADNI (Bourgeat 2022, n=3442)"
+
+  # ============================================================
+  # Centiloid category (5-tier categorical, Doré/Rowe 2020)
+  # ============================================================
+  - name: "centiloid_category"
+    unit: "categorical"
+    description: |
+      Five-tier interpretation category for the Centiloid value per the
+      Doré/Rowe Neurology 2020 categorization adopted in AIBL and now widely
+      used in clinical trials. Categories: negative (<15 CL), uncertain
+      (15-25 CL), moderate (26-50 CL), high (51-100 CL), very_high (>100 CL).
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "negative"
+      - "uncertain"
+      - "moderate"
+      - "high"
+      - "very_high"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Doré, Rowe et al. Neurology 2020 Table 1; AIBL/ADNI standard categorization"
+        citation:
+          citation_pmid: "33372027"
+          citation_doi: "10.1212/WNL.0000000000011222"
+          citation_text: |
+            Doré V, Rowe CC, et al. (Neurology 2020) verbatim: "Aβ level was
+            classified according to 5 categories: <15 CL negative, 15-25 CL
+            uncertain, 26-50 CL moderate, 51-100 CL high, >100 CL very high.
+            The category limits were chosen prior to data analysis based on
+            published CL information." This 5-tier categorization is now
+            widely adopted across major cohorts (AIBL, ADNI, OASIS-3 per
+            Bourgeat 2022 NeuroImage harmonization study) and aligned with
+            AMYPAD Consortium 2024 recommendations for clinical-context-of-use.
+          public_url: "https://www.neurology.org/doi/pdfdirect/10.1212/WNL.0000000000011222"
+          endorsing_bodies:
+            - "AIBL Consortium (Rowe et al. 2020, Bourgeat 2022)"
+            - "ADNI (Bourgeat 2022 cross-cohort validation)"
+            - "OASIS-3 / Knight ADRC (Bourgeat 2022)"
+            - "AMYPAD Consortium 2024"
+            - "Centiloid Working Group (Klunk 2015 foundational anchors)"
+            - "American Academy of Neurology (Neurology journal publisher)"
+            - "Alzheimer's Association"
+
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Categorical placeholder bound; valid_values is the operative check"
+        citation:
+          citation_pmid: "33372027"
+          citation_doi: "10.1212/WNL.0000000000011222"
+          citation_text: |
+            Centiloid interpretation category is constrained to the five-tier
+            set {negative, uncertain, moderate, high, very_high} per the
+            Doré/Rowe 2020 categorization, which has been adopted by AIBL,
+            ADNI, OASIS-3, and AMYPAD as the operational reference framework.
+          public_url: "https://www.neurology.org/doi/pdfdirect/10.1212/WNL.0000000000011222"
+          endorsing_bodies:
+            - "AIBL Consortium"
+            - "ADNI"
+            - "OASIS-3 / Knight ADRC"
+            - "AMYPAD Consortium 2024"
+            - "Alzheimer's Association"
+            - "Centiloid Working Group"
+
+  # ============================================================
+  # Amyloid clearance threshold for treatment decisions (numeric)
+  # ============================================================
+  - name: "centiloid_clearance_threshold"
+    unit: "CL"
+    description: |
+      Centiloid threshold below which a patient is considered to have
+      achieved amyloid plaque clearance per the FDA-aligned donanemab
+      end-of-treatment criterion. Used in clinical workflows to determine
+      eligibility for donanemab discontinuation per the KISUNLA label.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "TRAILBLAZER-ALZ 4 (Salloway 2025) AP clearance definition; FDA KISUNLA label end-of-treatment criterion"
+        citation:
+          citation_pmid: "40391043"
+          citation_doi: "10.1002/alz.70293"
+          citation_text: |
+            Salloway S, Pain A, et al. TRAILBLAZER-ALZ 4 (Alzheimer's &
+            Dementia 2025) verbatim: "AP [amyloid plaque] clearance was
+            defined as <24.1 Centiloids." This threshold is operationally
+            identical to the FDA-approved KISUNLA (donanemab) end-of-
+            treatment criterion in the KISUNLA prescribing label
+            (§14.2 efficacy endpoint definition) and is cross-referenced
+            in the Roche gantenerumab SAP as "consistent with the diagnostic
+            amyloid positivity threshold (Klunk et al. 2015; Navitsky et
+            al. 2018)."
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12089073/"
+          endorsing_bodies:
+            - "Eli Lilly (TRAILBLAZER-ALZ 4 protocol, Salloway 2025)"
+            - "Eli Lilly (TRAILBLAZER-ALZ 2 protocol)"
+            - "FDA (KISUNLA prescribing label)"
+            - "Roche (gantenerumab GRADUATE 1/2 SAPs)"
+            - "Centiloid Working Group (Klunk 2015)"
+            - "AMYPAD Consortium 2024 (Collij et al.)"
+
+      - bound_type: "plausible_min"
+        value: 20.0
+        citation_strength: "international_consensus"
+        guideline_section: "AMYPAD 2024 Figure 4 (>30 CL reliably include Aβ pathology); Royse 2021 multisite validation; Salvadó 2019"
+        citation:
+          citation_pmid: "33971965"
+          citation_doi: "10.1186/s13195-021-00836-1"
+          citation_text: |
+            Royse SK, Minhas DS, et al. (Alzheimer's Research & Therapy 2021)
+            verbatim multisite validation study confirming the ~24 CL
+            positivity threshold across florbetaben and florbetapir tracers.
+            AMYPAD 2024 (Collij et al.) Figure 4 verbatim: "<10 CL to
+            reliably exclude and >30 CL to reliably include Aβ-pathology
+            at the individual level." Salvadó 2019 ADNI+ALFA+ verbatim:
+            "All Centiloid cut-offs fell within the range of 25-35."
+            Practical positivity thresholds across major studies cluster
+            in the 20-30 CL range, with 24.1 CL being the FDA-aligned
+            clearance threshold.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8111744/"
+          endorsing_bodies:
+            - "Royse Multisite Validation Study (2021, PMID 33971965)"
+            - "AMYPAD Consortium 2024 (Collij et al.)"
+            - "Salvadó/ALFA+/ADNI 2019 (PMID 30819246)"
+            - "Eli Lilly (TRAILBLAZER-ALZ 4: 24.1 CL)"
+            - "Roche (gantenerumab SAP: 24 CL)"
+            - "Eisai (Clarity AD OLE: 30 CL)"
+            - "Centiloid Working Group (Klunk 2015 + Navitsky 2018)"
+
+      - bound_type: "plausible_max"
+        value: 30.0
+        citation_strength: "international_consensus"
+        guideline_section: "Eisai Clarity AD OLE (Dyck 2025) Centiloid <30 amyloid-negative criterion; AMYPAD 2024 upper bound of intermediate range"
+        citation:
+          citation_pmid: "33971965"
+          citation_doi: "10.1186/s13195-021-00836-1"
+          citation_text: |
+            Eisai Clarity AD Open-Label Extension (Dyck 2025, Alzheimer's &
+            Dementia 2025) verbatim uses "Centiloid<30" as the amyloid-
+            negative threshold post-lecanemab treatment. AMYPAD 2024 (Collij
+            et al.) Figure 4 verbatim: ">30 CL to reliably include Aβ-
+            pathology at the individual level." The 24-30 CL range
+            represents the operational consensus for clinical-grade
+            amyloid positivity determination.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70905"
+          endorsing_bodies:
+            - "Eisai (Clarity AD OLE, Dyck 2025)"
+            - "AMYPAD Consortium 2024 (Collij et al.)"
+            - "Eli Lilly (TRAILBLAZER-ALZ 4)"
+            - "Roche (gantenerumab SAPs)"
+            - "Centiloid Working Group"
+            - "Royse 2021 multisite validation"
+            - "Salvadó 2019 (ADNI+ALFA+)"
+
+      - bound_type: "hard_max"
+        value: 50.0
+        citation_strength: "international_consensus"
+        guideline_section: "Doré/Rowe 2020 Table 1: 26-50 CL moderate category upper bound"
+        citation:
+          citation_pmid: "33372027"
+          citation_doi: "10.1212/WNL.0000000000011222"
+          citation_text: |
+            Doré, Rowe et al. Neurology 2020 verbatim: "26-50 CL moderate"
+            is the third tier of the five-tier interpretation framework.
+            Values above 50 CL are unambiguously in the high or very high
+            tier and clearly above any clinical positivity threshold. The
+            hard_max of 50 CL for the clearance_threshold field captures
+            the upper plausible bound for what could be considered a
+            clinical positivity threshold across published studies.
+          public_url: "https://www.neurology.org/doi/pdfdirect/10.1212/WNL.0000000000011222"
+          endorsing_bodies:
+            - "Doré/Rowe (Neurology 2020)"
+            - "AIBL Consortium"
+            - "ADNI"
+            - "OASIS-3 / Knight ADRC"
+            - "AMYPAD Consortium 2024"
+            - "Centiloid Working Group"

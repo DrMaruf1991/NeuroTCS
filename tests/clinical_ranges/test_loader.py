@@ -11,12 +11,15 @@ from neurotcs.clinical_ranges.loader import (
 )
 from neurotcs.clinical_ranges.schema import RangePack, RangePackStatus
 
-# v1.10.0-rc1: the only pack shipping at status=production is ad/aria_safety,
-# which meets the world-class international-consensus citation-lock bar.
-# The 6 v1.10.0-draft packs are demoted to research_preview pending
-# their own citation-trace upgrade to international_consensus standard.
+# v1.10.0 final: 5 world-class production packs covering the AD biomarker landscape.
+# All 6 v1.10.0-draft packs remain at research_preview status, retained for
+# historical context and future upgrade work.
 EXPECTED_PRODUCTION_PACKS = {
     "ad/aria_safety",
+    "pet_amyloid/centiloid_consensus",
+    "genetics/apoe_consensus",
+    "csf_biomarkers/csf_amyloid_consensus",
+    "plasma_biomarkers/plasma_amyloid_consensus",
 }
 
 EXPECTED_RESEARCH_PREVIEW_PACKS = {
