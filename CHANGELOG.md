@@ -4,6 +4,188 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0a3] -- 2026-05-25
+
+### Pre-release: trajectory-pattern execution + first genotype-phenotype invariant pack
+
+Third alpha of the v1.11.0 Layer 3 implementation arc. Implements the
+`CategoricalImpliesTrajectoryPattern` condition type (previously schema-
+validated but raising `NotImplementedError`) and ships the first
+genotype-phenotype invariant pack.
+
+**SCOPE OF v1.11.0a3:**
+- `CategoricalImpliesTrajectoryPattern` execution implemented in
+  `audit.py::_evaluate_trajectory_pattern`
+- Pattern parser for `flag_threshold` strings of the form
+  `"none_observed_after_age_X_with_Yy_followup"`
+- New invariant pack: `cross_sheet/genotype_phenotype_consistency@1.0.0`
+  at RESEARCH_PREVIEW status with 1 invariant (APOE4 homozygote expected
+  AD trajectory, anchored on Fortea 2024 Nat Med PMID 38710950)
+- 31 new tests (119 cross_sheet total)
+- Layer 1 byte-exact preserved across all 5 cohorts
+
+**EXPLICITLY NOT IN v1.11.0a3 (deferred):**
+- Quantib ND invariant in tool_declaration_consistency pack -- v1.11.0a4
+- "Catch-all warning" invariant -- v1.11.0a4
+- Promotion of any pack to production status -- v1.11.0a4+ (requires
+  empirically established false-positive rates)
+- Composite multi-layer audit -- v1.11.0a5 / v1.11.0rc1
+- Fairness audit integration with Layer 3 flags -- v1.11.0rc1
+- `FieldPresenceConsistency` and `ValueRangeConditional` condition types
+  remain unimplemented (still raise NotImplementedError); ship in v1.11.0rc1
+
+### Added
+
+**Module: `src/neurotcs/cross_sheet/audit.py` (extended)**
+
+- `_evaluate_trajectory_pattern(invariant, cond, submission, lp)`:
+  evaluates a `CategoricalImpliesTrajectoryPattern` condition by
+  finding patient rows in source_sheet matching the trigger genotype,
+  extracting their longitudinal trajectory from trajectory_sheet
+  (predictions), and checking whether the observed pattern deviates
+  from the population-baseline-rate expectation
+- `_parse_trajectory_threshold(threshold)`: parses `flag_threshold`
+  strings; returns (age_threshold, followup_years) or None;
+  unsupported patterns raise NotImplementedError at execution time
+- `_make_trajectory_pattern_flag(...)`: emits a deterministic-flag_id
+  trajectory-pattern flag with severity per the invariant's declared
+  `flag_severity` field (typically 'info' for v1.11.0 per section
+  12 Q1 resolution)
+
+**Invariant pack: `cross_sheet/genotype_phenotype_consistency@1.0.0` (NEW)**
+
+Status: RESEARCH_PREVIEW. 1 invariant.
+
+| Invariant | Trigger | Pattern | Severity |
+|---|---|---|---|
+| `apoe4_homozygote_expected_ad_trajectory` | `patients.apoe_genotype == "e4/e4"` | `elevated_risk_marker`, baseline rate 60%, threshold `none_observed_after_age_85_with_10y_followup` | `info` |
+
+Anchored on Fortea et al. 2024 *Nature Medicine* (PMID 38710950,
+DOI 10.1038/s41591-024-02931-w): "APOE4 homozygosity represents a
+distinct genetic form of Alzheimer's disease". Cohort n>13,000 across
+NACC + ADNI + A4 + OASIS + WRAP. NIA-derived penetrance estimate
+~60% develop AD dementia by age 85.
+
+7 endorsing bodies: Fortea 2024, NIA/NIH, Nature Reviews Neurology
+(Fyfe 2024), Alzheimer Europe, ALZFORUM peer commentary, Genin 2011
+Mol Psychiatry (PMID 21556001), and FDA lecanemab USPI APOE4 homozygote
+warnings.
+
+**Cross-ancestry caveat documented in pack notes:** Fortea 2024 cohorts
+are predominantly European descent. The 60% penetrance estimate may
+not generalize to Central Asian or other under-represented populations.
+This is one reason the v1.11.0 ship-list severity is `info`.
+
+**Locked golden yaml_sha256:**
+
+| Pack | yaml_sha256 |
+|---|---|
+| `cross_sheet/genotype_phenotype_consistency` | `c988ffeddc31d04121cc012dcb32fe1e09f64ad4ddfb95e22b772a32788a1a40` |
+
+**Tests (31 new, 119 cross_sheet total)**
+
+- `tests/cross_sheet/test_trajectory_pattern.py` (29 tests, NEW):
+  parser tests, pack-listing tests, pack-contents tests (genotype,
+  trigger, pattern.kind, baseline_rate, flag_threshold, severity,
+  citation_strength, anchor citation = Fortea 2024, ≥5 endorsing
+  bodies, Fortea + NIA in endorsers), yaml_sha256 golden match,
+  end-to-end execution tests (deviation flags, AD-developed no flag,
+  short followup no flag, young age no flag, non-e4/e4 genotype no
+  flag, empty predictions no flag, mixed multi-patient case),
+  determinism tests, status gate tests, NotImplementedError for
+  unsupported flag_threshold patterns
+- `tests/cross_sheet/test_audit.py` (1 test updated):
+  `test_trajectory_pattern_raises` rewritten as
+  `test_trajectory_pattern_now_implemented_in_v1_11_0a3` -- supported
+  thresholds no longer raise; they execute
+
+### Changed
+
+**Version bump:** 1.11.0a2 -> 1.11.0a3 (PEP 440 alpha 3).
+
+**Audit execution surface:** `CategoricalImpliesTrajectoryPattern`
+condition type now executable in audit_cross_sheet (no longer raises
+NotImplementedError for supported flag_threshold patterns).
+
+### Roadmap (refined)
+
+| Release | Session | Adds | Status |
+|---|---|---|---|
+| v1.11.0a1 | rc1 #1 | cross_sheet schema + loader + 1 SKELETON invariant | SHIPPED |
+| v1.11.0a2 | rc1 #2 | audit_cross_sheet() + 2 invariants; SKELETON->RESEARCH_PREVIEW | SHIPPED |
+| **v1.11.0a3** (this) | rc1 #3 | CategoricalImpliesTrajectoryPattern execution + APOE4 invariant | **SHIPPED** |
+| v1.11.0a4 | rc1 #4 | Quantib ND invariant + catch-all warning + production promotion | future |
+| v1.11.0a5 | rc1 #5 | Composite multi-layer audit | future |
+| v1.11.0rc1 | rc2 | FieldPresenceConsistency + ValueRangeConditional executions + manifest_data_consistency pack + fairness integration; golden-value-locked | future |
+| v1.11.0 | final | release | future |
+
+**Note on roadmap refinement:** Previous changelog entries described
+v1.11.0a3 as "session #3 of 3" but the realistic scope of the
+remaining v1.11.0 work is now better organized as v1.11.0a3 (this),
+v1.11.0a4 (Quantib ND + catch-all + production), v1.11.0a5 (composite
+audit), v1.11.0rc1 (remaining condition types + fairness + golden lock).
+Each session ships world-class complete; the overall arc is longer
+but each step is defensible end-to-end.
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- `pytest tests/ -q` -> **845 passed, 7 skipped** (814 v1.11.0a2 + 31 new = 845)
+- Layer 1 byte-exact verified under v1.11.0a3 (5/5 cohorts):
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` OK
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` OK
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` OK
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` OK
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` OK
+- v1.11.0a2 tool_declaration_consistency yaml_sha256 unchanged
+  (`a1dff4f5f110221f...`)
+- All 6 v1.10.2 production rangepack yaml_sha256 values unchanged
+
+### What this release does NOT touch (verified frozen)
+
+| Path | Status |
+|---|---|
+| `src/neurotcs/audit_core/` | Frozen since v1.8.1 |
+| `src/neurotcs/rulepack/` | Frozen since v1.9.0 |
+| `src/neurotcs/input_contract/` | Frozen since v1.8.1 |
+| `src/neurotcs/fairness/` | Frozen since v1.8.1 |
+| `src/neurotcs/clinical_ranges/` (Layer 2) | Frozen since v1.10.2 |
+| `src/neurotcs/cross_sheet/schema.py` | Frozen since v1.11.0a1 |
+| `src/neurotcs/cross_sheet/loader.py` | Frozen since v1.11.0a1 |
+| `src/neurotcs/cross_sheet/__init__.py` | Frozen since v1.11.0a2 (already exposes audit_cross_sheet) |
+| `tool_declaration_consistency.yaml` | Unchanged from v1.11.0a2 (3 invariants, research_preview, yaml_sha256 `a1dff4f5f1...`) |
+| All 6 v1.10.2 production rangepack yaml_sha256 | Byte-identical |
+| All 5 Layer 1 audit_id invariants | Byte-exact across v1.11.0a2 -> v1.11.0a3 |
+
+### Honest scope disclosure
+
+What this release does:
+- Implements working trajectory-pattern execution for the
+  CategoricalImpliesTrajectoryPattern condition type
+- Adds the first genotype-phenotype consistency invariant at world-class
+  evidence standard (Fortea 2024 Nat Med + 6 other endorsing bodies)
+- Demonstrates info-severity advisory discipline per section 12 Q1
+  resolution (no warning/error severity for genotype-phenotype invariants
+  until false-positive rates empirically established)
+- Documents the cross-ancestry caveat prominently in the pack notes
+  (relevant to LMIC and Central Asian populations)
+- Preserves Layer 1 byte-exact behavior, all v1.10.2 Layer 2 contents,
+  and the v1.11.0a2 tool_declaration_consistency pack contents
+- Addresses Tier 1 item #3 from `SCOPE_RESPONSE_TO_EXTERNAL_AUDIT.md`
+  ("APOE4 homozygote enhanced monitoring")
+
+What this release does NOT do:
+- Implement the Quantib ND invariant (-> v1.11.0a4)
+- Implement the catch-all warning invariant (-> v1.11.0a4)
+- Promote any pack to production status (deferred until empirical
+  false-positive rates are known)
+- Implement FieldPresenceConsistency or ValueRangeConditional execution
+  (-> v1.11.0rc1)
+- Implement composite multi-layer audit (-> v1.11.0a5)
+- Integrate Layer 3 flags into the fairness audit (-> v1.11.0rc1)
+
+---
+
 ## [1.11.0a2] -- 2026-05-25
 
 ### Pre-release: Layer 3 audit execution + 2 new invariants

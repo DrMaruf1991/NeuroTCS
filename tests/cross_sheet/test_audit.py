@@ -353,7 +353,11 @@ class TestUnimplementedConditionTypes:
         with pytest.raises(NotImplementedError, match="ValueRangeConditional"):
             audit_cross_sheet(submission, [lp], dry_run=True)
 
-    def test_trajectory_pattern_raises(self):
+    def test_trajectory_pattern_now_implemented_in_v1_11_0a3(self):
+        """v1.11.0a3 implements CategoricalImpliesTrajectoryPattern execution.
+        A supported flag_threshold no longer raises NotImplementedError -- it
+        evaluates. (The unsupported-threshold case is tested in
+        test_trajectory_pattern.py::TestUnsupportedTrajectoryThresholdRaises.)"""
         lp = _build_pack(
             status=InvariantPackStatus.RESEARCH_PREVIEW,
             condition=CategoricalImpliesTrajectoryPatternCondition(
@@ -367,13 +371,20 @@ class TestUnimplementedConditionTypes:
                 ),
             ),
         )
+        # _build_pack hardcodes sheets_required = [manifest, biomarkers], so
+        # provide those (plus patients + predictions for the actual evaluation
+        # which uses different sheets via the condition spec).
         submission = {
             "manifest": {},
             "biomarkers": [],
-            "patients": [{"apoe_genotype": "e4/e4"}],
+            "patients": [{"patient_id": "p1", "apoe_genotype": "e4/e4"}],
+            "predictions": [
+                {"patient_id": "p1", "age_years": 80, "ad_dementia_status": 0},
+            ],
         }
-        with pytest.raises(NotImplementedError, match="CategoricalImpliesTrajectoryPattern"):
-            audit_cross_sheet(submission, [lp], dry_run=True)
+        # Should execute (no NotImplementedError)
+        result = audit_cross_sheet(submission, [lp], dry_run=True)
+        assert result.n_invariants_evaluated == 1
 
 
 class TestFlagIdDeterminism:

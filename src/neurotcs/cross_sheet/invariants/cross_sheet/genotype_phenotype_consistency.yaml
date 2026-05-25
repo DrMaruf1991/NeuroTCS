@@ -1,0 +1,176 @@
+schema_version: "1.0.0"
+invariantpack_id: "cross_sheet/genotype_phenotype_consistency@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-25"
+status: "research_preview"
+domain: "genotype_phenotype_consistency"
+framework_name: "Cross-sheet consistency between patient genotype and observed clinical trajectory phenotype"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, v1.11.0a3 session #3 of rc1 arc; verbatim transcription from Fortea et al. 2024 Nature Medicine (PMID 38710950, DOI 10.1038/s41591-024-02931-w), NIH NIA press release on APOE4 homozygosity as distinct genetic AD form, Genin et al. 2011 Mol Psychiatry semi-dominant inheritance reference, and NACC/ADNI/A4/OASIS/WRAP combined cohort data analyzed in Fortea 2024 (n>13,000)"
+clinical_source_authority: |
+  This pack encodes cross-sheet invariants linking patient genotype
+  (sourced from the patients sheet) with observed longitudinal
+  clinical trajectory (sourced from the predictions sheet).
+
+  STATUS = RESEARCH_PREVIEW in v1.11.0a3: one invariant encoded
+  (APOE4 homozygote expected AD trajectory pattern). The audit
+  execution function audit_cross_sheet() now supports the
+  CategoricalImpliesTrajectoryPattern condition type via the
+  _evaluate_trajectory_pattern() implementation shipped in v1.11.0a3.
+
+  Per the v1.11.0-design.2 fail-closed discipline + section 12 Q1
+  resolution: all genotype-phenotype invariants in v1.11.0 use
+  flag_severity='info' (advisory only). Promotion to 'warning' or
+  'error' deferred until observed false-positive rates are
+  established empirically against synthetic and real cohort data.
+
+  Design trace:
+  - LAYER_3_DESIGN.md section 4.4.4 (CategoricalImpliesTrajectoryPattern)
+  - LAYER_3_DESIGN.md section 12 Q1 resolution (info severity for
+    genotype-phenotype invariants in v1.11.0)
+  - SCOPE_RESPONSE_TO_EXTERNAL_AUDIT.md section 6.1 Tier 1 item #3
+    (APOE4 homozygote enhanced monitoring)
+
+anchor_citation:
+  citation_pmid: "38710950"
+  citation_doi: "10.1038/s41591-024-02931-w"
+  citation_text: |
+    Fortea J, Pegueroles J, Alcolea D, et al. APOE4 homozygosity
+    represents a distinct genetic form of Alzheimer's disease.
+    Nature Medicine. 2024;30(5):1284-1291. doi:10.1038/s41591-024-02931-w.
+    PMID: 38710950.
+
+    Key findings encoded in this pack:
+    - APOE4 homozygotes have near-full penetrance of AD biology
+    - By age 65: ~75% have positive amyloid PET; nearly all have
+      abnormal CSF amyloid
+    - Mean age of symptom onset: 65.1 years (narrower 95% prediction
+      interval than APOE3 homozygotes)
+    - By age 85: NIA estimates ~60% develop AD dementia
+    - APOE4 homozygotes: 2% of general population but 15% of AD cases
+    - Sequence of biomarker changes mirrors autosomal-dominant AD
+      and Down syndrome AD
+
+    Important caveat encoded in the pack notes: Fortea acknowledged
+    the cohort under-represents non-European-ancestry populations.
+    The penetrance estimates may be less accurate for other
+    ancestries (e.g., Central Asian populations). This invariant
+    is advisory only (info severity) until cross-ancestry data matures.
+  public_url: "https://www.nature.com/articles/s41591-024-02931-w"
+  endorsing_bodies:
+    - "Fortea et al. 2024 (Nat Med, PMID 38710950, n>13,000 from NACC + ADNI + A4 + OASIS + WRAP)"
+    - "NIA / NIH (National Institute on Aging press release confirming findings)"
+    - "Nature Reviews Neurology (Fyfe 2024, PMID 38831096)"
+    - "Alzheimer Europe (2024 statement)"
+    - "ALZFORUM (peer commentary on Fortea 2024 by multiple AD researchers)"
+    - "Genin et al. 2011 Mol Psychiatry (PMID 21556001, APOE semi-dominant inheritance reference)"
+    - "FDA lecanemab USPI (boxed warning on APOE4 homozygote ARIA risk)"
+
+notes: |
+  v1.11.0a3 ships ONE invariant: apoe4_homozygote_expected_ad_trajectory.
+
+  Severity discipline: flag_severity='info' per LAYER_3_DESIGN.md
+  section 12 Q1 resolution. This is an ADVISORY-ONLY flag. It does
+  not assert that the patient's trajectory is wrong; it asserts that
+  the observed pattern deviates from the population-baseline-rate
+  established by Fortea 2024, which is itself a research finding,
+  not a clinical decision rule.
+
+  Promotion path:
+    v1.11.0a3 (this release): research_preview, 1 invariant, info severity
+    v1.11.0a4 (next): research_preview, may add additional genotype-phenotype
+                      invariants (e.g., PSEN1/2 expected EARLY-onset AD pattern)
+    v1.11.0a5: production promotion considered if false-positive rate
+                      empirically established
+    v1.11.0rc1: golden-value-locked against synthetic + real cohorts
+    v1.11.0 final: release
+
+  CROSS-ANCESTRY CAVEAT: Fortea 2024 cohorts are predominantly of
+  European descent. The 60% penetrance-by-age-85 figure may not
+  generalize to Central Asian or other under-represented populations.
+  This is one reason the v1.11.0 ship-list severity is 'info' rather
+  than 'warning' or 'error'. Future v1.x packs may add ancestry-
+  stratified versions if non-European cohort data becomes available.
+
+invariants:
+
+  - name: "apoe4_homozygote_expected_ad_trajectory"
+    description: |
+      If the patients sheet declares a patient with apoe_genotype ==
+      'e4/e4' (APOE4 homozygote), then their longitudinal trajectory
+      in the predictions sheet should typically show AD dementia
+      development by age 85, per Fortea 2024 Nature Medicine
+      (~60% penetrance by age 85 per NIA estimate). Patients with
+      this genotype observed cognitively normal at age 85+ with
+      10+ years of follow-up represent a pattern deviation from
+      the population baseline rate; flag for reviewer attention.
+
+      The flag is INFO-level (advisory only). The deviation may
+      reflect: (a) genuine genetic resilience (per Huq 2019 Alz Dem
+      systematic review), (b) ancestry-specific penetrance differences,
+      (c) data quality issues (incorrect genotype, missed dementia
+      diagnosis), or (d) protective lifestyle/environmental factors.
+      The flag does NOT assert any of these; it asserts deviation
+      from baseline expectation and requests human review.
+    sheets_required:
+      - role: "patients"
+        required: true
+      - role: "predictions"
+        required: true
+    join_keys:
+      - "patient_id"
+    condition:
+      type: "categorical_implies_trajectory_pattern"
+      source_sheet: "patients"
+      source_field: "apoe_genotype"
+      source_value: "e4/e4"
+      trajectory_sheet: "predictions"
+      pattern:
+        kind: "elevated_risk_marker"
+        population_baseline_rate: 0.60
+        flag_threshold: "none_observed_after_age_85_with_10y_followup"
+    flag_severity: "info"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      Fortea et al. 2024 (Nat Med 30:1284-1291, PMID 38710950):
+      'APOE4 homozygosity represents a distinct genetic form of
+      Alzheimer's disease'. Near-full penetrance of AD biology by
+      age 65 (75% amyloid PET positive). Mean clinical symptom
+      onset age 65.1 years. NIA derived penetrance estimate ~60%
+      AD dementia by age 85. Threshold rationale: 85 years +
+      10y followup represents the upper-bound of expected onset
+      window per Fortea 2024 Fig 2 survival curves.
+    citation:
+      citation_pmid: "38710950"
+      citation_doi: "10.1038/s41591-024-02931-w"
+      citation_text: |
+        Fortea J, Pegueroles J, Alcolea D, et al. APOE4 homozygosity
+        represents a distinct genetic form of Alzheimer's disease.
+        Nat Med. 2024;30(5):1284-1291. PMID: 38710950.
+
+        Primary findings encoded in this invariant:
+        1. APOE4 homozygotes show near-full penetrance of AD biology
+           by age 65 (~75% amyloid PET positive; nearly all have
+           abnormal CSF amyloid)
+        2. Mean age of clinical symptom onset: 65.1 years (narrower
+           95% prediction interval than APOE3 homozygotes)
+        3. Sequence of biomarker changes mirrors autosomal-dominant
+           AD and Down syndrome AD trajectories
+        4. NIA-derived penetrance estimate: ~60% develop AD dementia
+           by age 85
+
+        Cohort: n>13,000 across NACC + ADNI + A4 + OASIS + WRAP
+        (pathological n=3,297; clinical n=10,039), predominantly
+        European descent.
+
+        Cross-ancestry caveat: Fortea acknowledged limited
+        non-European representation. Penetrance may differ in
+        Central Asian, African, East Asian populations.
+      public_url: "https://www.nature.com/articles/s41591-024-02931-w"
+      endorsing_bodies:
+        - "Fortea et al. 2024 (Nat Med, PMID 38710950)"
+        - "National Institute on Aging (NIA, press release)"
+        - "NIH (Research Matters statement)"
+        - "Nature Reviews Neurology (Fyfe 2024, PMID 38831096)"
+        - "Alzheimer Europe (2024 official statement)"
+        - "Genin et al. 2011 Mol Psychiatry (PMID 21556001, semi-dominant inheritance)"
+        - "Huq et al. 2019 Alz Dem (PMID 31499106, genetic resilience systematic review)"

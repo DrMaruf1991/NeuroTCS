@@ -254,11 +254,7 @@ def _evaluate_invariant(
             f"is not yet implemented in v1.11.0a2. It is schema-validated only."
         )
     elif isinstance(cond, CategoricalImpliesTrajectoryPatternCondition):
-        raise NotImplementedError(
-            f"CategoricalImpliesTrajectoryPatternCondition (invariant "
-            f"{invariant.name!r}) is not yet implemented in v1.11.0a2. "
-            f"Execution lands in v1.11.0a3 with the genotype_phenotype_consistency pack."
-        )
+        flags.extend(_evaluate_trajectory_pattern(invariant, cond, submission, lp))
     else:
         raise NotImplementedError(
             f"Unknown condition type for invariant {invariant.name!r}: "
@@ -266,6 +262,193 @@ def _evaluate_invariant(
         )
 
     return flags
+
+
+def _evaluate_trajectory_pattern(
+    invariant: CrossSheetInvariant,
+    cond: CategoricalImpliesTrajectoryPatternCondition,
+    submission: dict[str, Any],
+    lp: LoadedInvariantPack,
+) -> list[CrossSheetFlag]:
+    """Evaluate a categorical_implies_trajectory_pattern condition.
+
+    Semantics (per LAYER_3_DESIGN.md section 4.4.4 + section 12 Q1 resolution):
+    For each patient row in source_sheet whose source_field == source_value
+    (e.g., apoe_genotype == 'e4/e4'), find that patient's longitudinal
+    trajectory in trajectory_sheet (typically 'predictions') and check
+    whether the observed pattern matches expectations from
+    pattern.flag_threshold.
+
+    v1.11.0a3 implements ONE flag_threshold pattern:
+      'none_observed_after_age_X_with_Y_followup'
+
+    This pattern fires when:
+      - The patient is over age X at the last observed visit
+      - The follow-up duration spans >= Y years
+      - The expected outcome (the population-baseline-rate event,
+        e.g., AD dementia for elevated_risk_marker kind) was NOT
+        observed
+
+    The flag is emitted at the severity declared by the invariant
+    (per Q1 resolution, v1.11.0 packs use 'info' severity for these
+    advisory-only invariants -- 'warning' or 'error' deferred until
+    observed false-positive rates are known).
+
+    Other flag_threshold strings are accepted by the schema but
+    raise NotImplementedError at execution time, with a pointer to
+    the future session that ships them.
+    """
+    flags: list[CrossSheetFlag] = []
+
+    source = submission.get(cond.source_sheet)
+    if source is None:
+        return flags
+
+    trajectory = submission.get(cond.trajectory_sheet)
+    if trajectory is None:
+        return flags
+
+    # Parse the flag_threshold pattern string to extract age threshold
+    # and followup duration.
+    pattern_parsed = _parse_trajectory_threshold(cond.pattern.flag_threshold)
+    if pattern_parsed is None:
+        raise NotImplementedError(
+            f"flag_threshold pattern {cond.pattern.flag_threshold!r} "
+            f"(invariant {invariant.name!r}) is not yet implemented "
+            f"in v1.11.0a3. Supported patterns: "
+            f"'none_observed_after_age_X_with_Y_followup'."
+        )
+    age_threshold, followup_years = pattern_parsed
+
+    # For each matching source row, find their trajectory and evaluate
+    patient_rows = _iter_rows(source)
+    trajectory_rows = _iter_rows(trajectory)
+
+    for patient_row in patient_rows:
+        declared = patient_row.get(cond.source_field)
+        if declared is None or declared != cond.source_value:
+            continue
+
+        patient_id = patient_row.get("patient_id")
+        if patient_id is None:
+            continue
+
+        # Find this patient's trajectory rows
+        their_rows = [r for r in trajectory_rows if r.get("patient_id") == patient_id]
+        if not their_rows:
+            continue
+
+        # Extract ages and outcomes
+        ages = []
+        outcomes = []
+        for r in their_rows:
+            age = r.get("age_years")
+            outcome = r.get("ad_dementia_status")  # truthy if AD dementia observed
+            if age is None:
+                continue
+            try:
+                ages.append(float(age))
+            except (TypeError, ValueError):
+                continue
+            outcomes.append(outcome)
+
+        if not ages:
+            continue
+
+        last_age = max(ages)
+        first_age = min(ages)
+        followup_span = last_age - first_age
+
+        # Check the trigger conditions
+        any_outcome_observed = any(o for o in outcomes if o)
+
+        if (
+            last_age >= age_threshold
+            and followup_span >= followup_years
+            and not any_outcome_observed
+        ):
+            # Pattern: elevated risk marker but no event observed -> flag
+            join_keys_values = {"patient_id": patient_id}
+            flag = _make_trajectory_pattern_flag(
+                invariant=invariant,
+                lp=lp,
+                cond=cond,
+                patient_id=patient_id,
+                last_age=last_age,
+                followup_span=followup_span,
+                age_threshold=age_threshold,
+                followup_threshold=followup_years,
+                join_key_values=join_keys_values,
+            )
+            flags.append(flag)
+
+    return flags
+
+
+def _parse_trajectory_threshold(threshold: str) -> tuple[float, float] | None:
+    """Parse flag_threshold patterns like
+    'none_observed_after_age_85_with_10y_followup'.
+
+    Returns (age_threshold, followup_years) or None if the pattern is
+    not one of the v1.11.0a3-supported forms.
+    """
+    import re
+    m = re.match(
+        r"^none_observed_after_age_(\d+)_with_(\d+)y_followup$",
+        threshold,
+    )
+    if m is None:
+        return None
+    return float(m.group(1)), float(m.group(2))
+
+
+def _make_trajectory_pattern_flag(
+    invariant: CrossSheetInvariant,
+    lp: LoadedInvariantPack,
+    cond: CategoricalImpliesTrajectoryPatternCondition,
+    patient_id: Any,
+    last_age: float,
+    followup_span: float,
+    age_threshold: float,
+    followup_threshold: float,
+    join_key_values: dict[str, Any],
+) -> CrossSheetFlag:
+    """Emit a trajectory-pattern flag (typically 'info' severity)."""
+    payload = {
+        "yaml_sha256": lp.yaml_sha256,
+        "invariant_name": invariant.name,
+        "kind": "trajectory_pattern_deviation",
+        "source_value": cond.source_value,
+        "last_age": float(last_age),
+        "followup_span_years": float(followup_span),
+        "age_threshold": float(age_threshold),
+        "followup_threshold_years": float(followup_threshold),
+        "expected_baseline_rate": float(cond.pattern.population_baseline_rate),
+        "pattern_kind": cond.pattern.kind,
+        "join_key_values": _stringify_for_hash(join_key_values),
+        "contract_version": "1.2.0",
+    }
+    flag_id = _derive_flag_id(payload)
+    return CrossSheetFlag(
+        flag_id=flag_id,
+        pack_id=lp.invariantpack.invariantpack_id,
+        invariant_name=invariant.name,
+        severity=invariant.flag_severity,
+        join_key_values=dict(join_key_values),
+        observed_value=last_age,
+        declared_tool=cond.source_value,
+        flag_reason=(
+            f"Patient with {cond.source_field}={cond.source_value!r} "
+            f"observed cognitively normal at age {last_age} with "
+            f"{followup_span:.1f}y follow-up; population baseline rate for "
+            f"AD dementia in this group is {cond.pattern.population_baseline_rate:.0%} "
+            f"by age {age_threshold:.0f} (Fortea 2024); pattern deviation "
+            f"flagged for review (advisory only)."
+        ),
+        citation_pmid=invariant.citation.citation_pmid,
+        citation_doi=invariant.citation.citation_doi,
+        citation_public_url=invariant.citation.public_url,
+    )
 
 
 def _evaluate_categorical_implies_range(
