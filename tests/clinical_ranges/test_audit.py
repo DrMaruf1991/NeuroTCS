@@ -349,7 +349,7 @@ class TestFailClosed:
 
     def test_non_production_pack_blocks_audit(self):
         """All non-production packs must refuse audit.
-        In v1.10.1: 1 research_preview (FreeSurfer) + 5 deprecated."""
+        In v1.10.2: 1 research_preview (freesurfer_extended) + 6 deprecated."""
         for name in [
             # Deprecated in v1.10.1 (superseded by world-class production packs)
             "vital_signs/standard",
@@ -357,8 +357,10 @@ class TestFailClosed:
             "plasma_biomarkers/aa_2024",
             "pet_amyloid/centiloid",
             "genetics/apoe_valid_genotypes",
-            # Still research_preview, candidate for v1.10.2 upgrade
+            # Deprecated in v1.10.2 (superseded by structural_volumetry_consensus + freesurfer_extended)
             "mri_volumetrics/freesurfer",
+            # Still research_preview in v1.10.2 (long-tail FreeSurfer regions)
+            "mri_volumetrics/freesurfer_extended",
         ]:
             lp = load_rangepack(name)
             df = pd.DataFrame({

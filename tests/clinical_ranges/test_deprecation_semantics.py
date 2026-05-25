@@ -24,11 +24,14 @@ from neurotcs.clinical_ranges import (
 
 # Map of deprecated pack -> successor (None means scope-based deprecation)
 EXPECTED_DEPRECATIONS: dict[str, str | None] = {
+    # Deprecated in v1.10.1:
     "vital_signs/standard": None,
     "csf_biomarkers/aa_2024": "csf_biomarkers/csf_amyloid_consensus@1.0.0",
     "plasma_biomarkers/aa_2024": "plasma_biomarkers/plasma_amyloid_consensus@1.0.0",
     "genetics/apoe_valid_genotypes": "genetics/apoe_consensus@1.0.0",
     "pet_amyloid/centiloid": "pet_amyloid/centiloid_consensus@1.0.0",
+    # Deprecated in v1.10.2:
+    "mri_volumetrics/freesurfer": "mri_volumetrics/structural_volumetry_consensus@1.0.0",
 }
 
 
@@ -134,33 +137,40 @@ class TestDeprecatedPacksRefuseAudit:
 
 
 class TestRosterCounts:
-    """In v1.10.1 the lifecycle counts shift from rc1 (1 prod, 6 preview)
-    and v1.10.0 (5 prod, 6 preview) to (5 prod, 1 preview, 5 deprecated)."""
+    """In v1.10.2 the lifecycle counts evolve from v1.10.1 (5 prod, 1 preview,
+    5 deprecated, 11 total) to (6 prod, 1 preview, 6 deprecated, 13 total):
+    + mri_volumetrics/structural_volumetry_consensus to production,
+    + mri_volumetrics/freesurfer_extended replacing the deprecated freesurfer at preview."""
 
-    def test_five_production_packs(self) -> None:
+    def test_six_production_packs(self) -> None:
         packs = list_rangepacks()
         prod = [p for p in packs if p.get("status") == "production"]
-        assert len(prod) == 5
+        assert len(prod) == 6
 
     def test_one_research_preview_pack(self) -> None:
-        """Only mri_volumetrics/freesurfer remains at research_preview in
-        v1.10.1. The other 5 research_preview packs were deprecated."""
+        """Only mri_volumetrics/freesurfer_extended remains at research_preview
+        in v1.10.2. The other 5 v1.10.0-era research_preview packs were
+        deprecated in v1.10.1; the old mri_volumetrics/freesurfer pack was
+        deprecated in v1.10.2 in favor of structural_volumetry_consensus
+        (production) and freesurfer_extended (this preview pack)."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
         assert len(preview) == 1
-        assert preview[0]["name"] == "mri_volumetrics/freesurfer"
+        assert preview[0]["name"] == "mri_volumetrics/freesurfer_extended"
 
-    def test_five_deprecated_packs(self) -> None:
+    def test_six_deprecated_packs(self) -> None:
         packs = list_rangepacks()
         deprecated = [p for p in packs if p.get("status") == "deprecated"]
-        assert len(deprecated) == 5
+        assert len(deprecated) == 6
         names = {p["name"] for p in deprecated}
         assert names == set(EXPECTED_DEPRECATIONS.keys())
 
-    def test_total_pack_count_unchanged(self) -> None:
-        """v1.10.1 does not add or remove packs; it only reclassifies 5."""
+    def test_total_pack_count(self) -> None:
+        """v1.10.2 adds 2 packs (structural_volumetry_consensus production,
+        freesurfer_extended research_preview) and reclassifies 1 (old
+        freesurfer to deprecated). Net: 13 total packs."""
         packs = list_rangepacks()
-        assert len(packs) == 11  # 5 prod + 1 preview + 5 deprecated
+        assert len(packs) == 13  # 6 prod + 1 preview + 6 deprecated
 
 
 class TestDeprecationSchemaValidator:

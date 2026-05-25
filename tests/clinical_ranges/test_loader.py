@@ -11,26 +11,27 @@ from neurotcs.clinical_ranges.loader import (
 )
 from neurotcs.clinical_ranges.schema import RangePack, RangePackStatus
 
-# v1.10.1: 5 world-class production packs + 1 research_preview (FreeSurfer)
-# + 5 deprecated (superseded by v1.10.0 production roster, or out-of-scope).
+# v1.10.2: 6 world-class production packs + 1 research_preview + 6 deprecated.
 EXPECTED_PRODUCTION_PACKS = {
     "ad/aria_safety",
     "pet_amyloid/centiloid_consensus",
     "genetics/apoe_consensus",
     "csf_biomarkers/csf_amyloid_consensus",
     "plasma_biomarkers/plasma_amyloid_consensus",
+    "mri_volumetrics/structural_volumetry_consensus",  # NEW in v1.10.2
 }
 
 EXPECTED_RESEARCH_PREVIEW_PACKS = {
-    "mri_volumetrics/freesurfer",  # Only one remaining; candidate for v1.10.2 upgrade.
+    "mri_volumetrics/freesurfer_extended",  # NEW in v1.10.2 (replaces freesurfer)
 }
 
 EXPECTED_DEPRECATED_PACKS = {
-    "vital_signs/standard",            # Scope-deprecated (v1.9.0 contraction)
-    "csf_biomarkers/aa_2024",          # Superseded by csf_amyloid_consensus
-    "plasma_biomarkers/aa_2024",       # Superseded by plasma_amyloid_consensus
-    "genetics/apoe_valid_genotypes",   # Superseded by apoe_consensus
-    "pet_amyloid/centiloid",           # Superseded by centiloid_consensus
+    "vital_signs/standard",
+    "csf_biomarkers/aa_2024",
+    "plasma_biomarkers/aa_2024",
+    "genetics/apoe_valid_genotypes",
+    "pet_amyloid/centiloid",
+    "mri_volumetrics/freesurfer",  # NEW in v1.10.2 (superseded by 2 new packs)
 }
 
 # All packs on disk (production + research_preview + deprecated)

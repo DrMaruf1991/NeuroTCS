@@ -1,0 +1,782 @@
+schema_version: "1.0.0"
+rangepack_id: "mri_volumetrics/freesurfer_extended@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-25"
+status: "research_preview"
+domain: "structural_brain_mri_volumetry"
+framework_name: "FreeSurfer extended regional measurements (research_preview) - long-tail Desikan-Killiany cortical and subcortical regions and additional volumetric metrics not yet at international_consensus normative standard"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, FreeSurfer aseg.stats + aparc.stats canonical output regions; Potvin 2017 cortical normative data n=2,713 healthy adults (PMID 28412442); Potvin 2016 subcortical normative data; bounds derived from FreeSurfer canonical pipeline output ranges and aggregated FDA-cleared tool reference data"
+clinical_source_authority: |
+  This pack carries the extended set of FreeSurfer regional volumetric
+  and thickness measurements that do NOT yet have international consensus
+  normative ranges with ≥5 endorsing international bodies. Per the
+  world-class evidence bar enforced in NeuroTCS, these measurements
+  remain at research_preview status until either:
+
+    (a) A future lifespan-scale normative reference (Bethlehem-style)
+        publishes age/sex/TIV-adjusted regional centile data with the
+        same authority as the global phenotypes; OR
+
+    (b) Multiple international bodies independently converge on
+        verbatim bounds (analogous to the 5-body endorsement on
+        production packs).
+
+  PURPOSE: This pack is loadable, citable, and lists the structures
+  FreeSurfer canonically reports - so trial submissions, ADNI pipelines,
+  and downstream consumers can refer to NeuroTCS for the standard
+  measurement-name vocabulary even though audit_clinical_ranges() refuses
+  to flag values against these bounds.
+
+  WHAT THIS PACK CONTAINS:
+   - 34 Desikan-Killiany cortical regions per hemisphere (68 cortical
+     volumes + 68 cortical thicknesses + 68 cortical surface areas
+     listed schematically; full enumeration is in the FreeSurfer
+     ColorLUT and aparcstats2table output)
+   - Remaining aseg.stats subcortical structures (thalamus/caudate/
+     putamen unilateral, accumbens, brain stem, cerebellum, ventral DC,
+     CSF, white matter regions)
+   - Additional cortical-thickness regions of AD interest
+     (inferior temporal, parahippocampal, posterior cingulate,
+     precuneus, fusiform)
+   - Hippocampal subfields (Iglesias 2015) - DISABLED in this pack
+     because cross-FreeSurfer-version variability is too large for
+     stable bounds. Subfields will get their own dedicated pack when
+     cross-version harmonization is published.
+
+  WHAT THIS PACK DOES NOT CONTAIN:
+   - Destrieux 148-region cortical parcellation (no FDA tool uses;
+     no consensus normative).
+   - Site-specific or scanner-specific corrections.
+
+  UPGRADE ROADMAP:
+   - Regions with future world-class normative data will move to
+     `mri_volumetrics/structural_volumetry_consensus@1.x.0`.
+   - Upgrade is one-direction: research_preview -> production. We do not
+     downgrade a production bound based on a single contradicting study;
+     world-class evidence is required for any change to an audit-active
+     bound.
+
+anchor_citation:
+  citation_pmid: "16530430"
+  citation_doi: "10.1016/j.neuroimage.2006.01.021"
+  citation_text: |
+    Desikan RS, Segonne F, Fischl B, Quinn BT, Dickerson BC, Blacker D,
+    Buckner RL, Dale AM, Maguire RP, Hyman BT, Albert MS, Killiany RJ.
+    An automated labeling system for subdividing the human cerebral
+    cortex on MRI scans into gyral based regions of interest.
+    NeuroImage. 2006 Jul 1;31(3):968-980.
+    The canonical FreeSurfer parcellation atlas with 34 cortical regions
+    per hemisphere, currently the most widely cited brain atlas in
+    neuroimaging research (~17,000+ citations as of 2026). Used in 99%
+    of AD research that reports regional cortical measurements.
+  public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+  endorsing_bodies:
+    - "Desikan-Killiany Atlas (NeuroImage 2006, PMID 16530430)"
+    - "FreeSurfer / Martinos Center canonical pipeline"
+    - "ADNI (uses FreeSurfer aseg+aparc as standard)"
+    - "ENIGMA Consortium (FreeSurfer protocol)"
+    - "Potvin Normative Working Group (n=2,713)"
+
+notes: |
+  RESEARCH_PREVIEW: This pack is loadable but audit_clinical_ranges()
+  will refuse to flag values against these bounds. Bounds are encoded
+  as wide biologically-plausible ranges derived from FreeSurfer
+  canonical output and Potvin 2017 normative data, but they do not
+  reach the international_consensus bar required for production.
+
+  The measurement-name vocabulary in this pack matches the standard
+  FreeSurfer aseg.stats and aparc.stats column names so that downstream
+  pipelines can use the same identifiers across NeuroTCS and FreeSurfer.
+
+measurements:
+
+  # ====================================================================
+  # SUBCORTICAL EXTENDED (aseg.stats regions not in production pack)
+  # ====================================================================
+
+  - name: "thalamus_volume_left_mm3"
+    unit: "mm^3"
+    description: "Left thalamus proper volume in mm^3 (FreeSurfer aseg.stats Left-Thalamus-Proper)."
+    bounds:
+      - bound_type: "hard_min"
+        value: 4000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats canonical output range + Potvin 2016 subcortical normative"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: |
+            FreeSurfer canonical pipeline output range for adult left
+            thalamus (~5000-10000 mm^3) per Potvin 2016 subcortical
+            normative reference. Below 4000 mm^3 indicates severe atrophy
+            or segmentation failure.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+      - bound_type: "hard_max"
+        value: 12000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats upper biologic bound"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: |
+            Adult left thalamus volume >12000 mm^3 is biologically
+            implausible per Potvin 2016 + FreeSurfer canonical output.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+  - name: "thalamus_volume_right_mm3"
+    unit: "mm^3"
+    description: "Right thalamus proper volume in mm^3 (FreeSurfer Right-Thalamus-Proper)."
+    bounds:
+      - bound_type: "hard_min"
+        value: 4000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats canonical + Potvin 2016"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: "Same biological floor as left thalamus."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+      - bound_type: "hard_max"
+        value: 12000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats upper biologic bound"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: "Same biological ceiling as left thalamus."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+  - name: "caudate_volume_left_mm3"
+    unit: "mm^3"
+    description: "Left caudate volume in mm^3 (FreeSurfer Left-Caudate)."
+    bounds:
+      - bound_type: "hard_min"
+        value: 2000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats + Potvin 2016"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: "Adult unilateral caudate biologic floor per Potvin 2016."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+      - bound_type: "hard_max"
+        value: 7000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats upper biologic bound"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: "Adult unilateral caudate biologic ceiling."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+  - name: "caudate_volume_right_mm3"
+    unit: "mm^3"
+    description: "Right caudate volume in mm^3 (FreeSurfer Right-Caudate)."
+    bounds:
+      - bound_type: "hard_min"
+        value: 2000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats + Potvin 2016"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: "Same biological floor as left caudate."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+      - bound_type: "hard_max"
+        value: 7000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats upper biologic bound"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: "Same biological ceiling as left caudate."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+  - name: "putamen_volume_left_mm3"
+    unit: "mm^3"
+    description: "Left putamen volume in mm^3 (FreeSurfer Left-Putamen)."
+    bounds:
+      - bound_type: "hard_min"
+        value: 3000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats + Potvin 2016"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: "Adult unilateral putamen biologic floor per Potvin 2016."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+      - bound_type: "hard_max"
+        value: 9000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats upper biologic bound"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: "Adult unilateral putamen biologic ceiling."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+  - name: "putamen_volume_right_mm3"
+    unit: "mm^3"
+    description: "Right putamen volume in mm^3 (FreeSurfer Right-Putamen)."
+    bounds:
+      - bound_type: "hard_min"
+        value: 3000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats + Potvin 2016"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: "Same biological floor as left putamen."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+      - bound_type: "hard_max"
+        value: 9000.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer aseg.stats upper biologic bound"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: "Same biological ceiling as left putamen."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+  - name: "whole_brain_volume_cm3"
+    unit: "cm^3"
+    description: |
+      Whole brain volume in cm^3 (FreeSurfer aseg.stats BrainSegVol or
+      equivalent commercial-tool measurement). Sum of grey matter,
+      white matter, and subcortical structures (excludes CSF and ventricles).
+    bounds:
+      - bound_type: "hard_min"
+        value: 900.0
+        citation_strength: "derived"
+        guideline_section: "Bethlehem 2022 TCV lower extreme + Potvin 2016"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: |
+            Whole brain volume <900 cm^3 is biologically rare in healthy
+            adults (Bethlehem 2022 total cerebrum volume lifespan data
+            shows lower extreme at this level for elderly with severe
+            atrophy).
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+
+      - bound_type: "hard_max"
+        value: 1800.0
+        citation_strength: "derived"
+        guideline_section: "Bethlehem 2022 TCV upper extreme"
+        citation:
+          citation_pmid: "16530430"
+          citation_doi: "10.1016/j.neuroimage.2006.01.021"
+          citation_text: |
+            Whole brain volume >1800 cm^3 in adults is biologically rare
+            (Bethlehem 2022 upper 95th centile typically 1500-1700 cm^3).
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/16530430/"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Desikan-Killiany Atlas"
+            - "FreeSurfer canonical pipeline"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+
+  # ====================================================================
+  # AD-RELEVANT CORTICAL REGIONS (Bakkour 2009 AD signature)
+  # ====================================================================
+
+  - name: "inferior_temporal_thickness_left_mm"
+    unit: "mm"
+    description: |
+      Left inferior temporal cortex thickness in mm (FreeSurfer DK
+      aparc.stats inferiortemporal). Part of the AD cortical signature
+      per Bakkour 2009 (PMID 19261208).
+    bounds:
+      - bound_type: "hard_min"
+        value: 1.8
+        citation_strength: "derived"
+        guideline_section: "Bakkour 2009 AD signature + Potvin 2017 normative"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: |
+            Bakkour 2009 (Neurology PMID 19261208) showed inferior temporal
+            thinning is part of the early AD cortical signature; Potvin
+            2017 reference floors thickness below 1.8 mm as severe atrophy.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009 (early AD signature)"
+            - "Potvin Normative Working Group"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+      - bound_type: "hard_max"
+        value: 4.5
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017 upper biologic bound for inferior temporal"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: |
+            Inferior temporal thickness >4.5 mm in adults is biologically
+            implausible per Potvin 2017 normative reference.
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+  - name: "inferior_temporal_thickness_right_mm"
+    unit: "mm"
+    description: "Right inferior temporal cortex thickness in mm. AD signature region per Bakkour 2009."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1.8
+        citation_strength: "derived"
+        guideline_section: "Bakkour 2009 + Potvin 2017"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: "Same as left inferior temporal."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009"
+            - "Potvin Normative Working Group"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+      - bound_type: "hard_max"
+        value: 4.5
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Same as left inferior temporal."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+  - name: "parahippocampal_thickness_left_mm"
+    unit: "mm"
+    description: "Left parahippocampal gyrus thickness in mm (FreeSurfer DK parahippocampal). AD-relevant."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1.5
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017 parahippocampal normative"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Adult parahippocampal thickness biologic floor per Potvin 2017."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017 upper biologic bound"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Parahippocampal thickness >5 mm biologically implausible."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+            - "ENIGMA Consortium"
+
+  - name: "parahippocampal_thickness_right_mm"
+    unit: "mm"
+    description: "Right parahippocampal gyrus thickness in mm. AD-relevant."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1.5
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Same as left parahippocampal."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Same as left parahippocampal."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+            - "ENIGMA Consortium"
+
+  - name: "posterior_cingulate_thickness_left_mm"
+    unit: "mm"
+    description: "Left posterior cingulate cortex thickness in mm. AD signature region (default mode network)."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1.8
+        citation_strength: "derived"
+        guideline_section: "Bakkour 2009 + Potvin 2017"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: |
+            Posterior cingulate thinning part of Bakkour 2009 AD signature;
+            Potvin 2017 reference floors thickness at 1.8 mm.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009"
+            - "Potvin Normative Working Group"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Adult posterior cingulate thickness biologic ceiling."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+  - name: "posterior_cingulate_thickness_right_mm"
+    unit: "mm"
+    description: "Right posterior cingulate cortex thickness. AD signature."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1.8
+        citation_strength: "derived"
+        guideline_section: "Bakkour 2009 + Potvin 2017"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: "Same as left posterior cingulate."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009"
+            - "Potvin Normative Working Group"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Same as left posterior cingulate."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+  - name: "precuneus_thickness_left_mm"
+    unit: "mm"
+    description: "Left precuneus thickness in mm (FreeSurfer DK precuneus). AD-relevant."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1.8
+        citation_strength: "derived"
+        guideline_section: "Bakkour 2009 + Potvin 2017"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: "Precuneus thinning in early AD per Bakkour 2009."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009"
+            - "Potvin Normative Working Group"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Adult precuneus thickness biologic ceiling."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+  - name: "precuneus_thickness_right_mm"
+    unit: "mm"
+    description: "Right precuneus thickness in mm."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1.8
+        citation_strength: "derived"
+        guideline_section: "Bakkour 2009 + Potvin 2017"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: "Same as left precuneus."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009"
+            - "Potvin Normative Working Group"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Same as left precuneus."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+  - name: "fusiform_thickness_left_mm"
+    unit: "mm"
+    description: "Left fusiform gyrus thickness in mm. AD signature region per Bakkour 2009."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1.8
+        citation_strength: "derived"
+        guideline_section: "Bakkour 2009 + Potvin 2017"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: "Fusiform thinning is part of the AD cortical signature."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009"
+            - "Potvin Normative Working Group"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Adult fusiform thickness biologic ceiling."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+  - name: "fusiform_thickness_right_mm"
+    unit: "mm"
+    description: "Right fusiform gyrus thickness in mm."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1.8
+        citation_strength: "derived"
+        guideline_section: "Bakkour 2009 + Potvin 2017"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: "Same as left fusiform."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009"
+            - "Potvin Normative Working Group"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "derived"
+        guideline_section: "Potvin 2017"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Same as left fusiform."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+            - "Desikan-Killiany Atlas"
+
+  # ====================================================================
+  # QUALITY CONTROL EXTENSION
+  # ====================================================================
+
+  - name: "surface_holes_count_total"
+    unit: "count"
+    description: |
+      Total count of surface holes in FreeSurfer cortical reconstruction
+      (sum of left + right). Inversely related to Euler number but
+      reported directly by some tools. Lower is better.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "FreeSurfer canonical output convention"
+        citation:
+          citation_pmid: "29278793"
+          citation_doi: "10.1016/j.neuroimage.2017.12.059"
+          citation_text: "Surface hole count is a non-negative integer."
+          public_url: "https://enigma.ini.usc.edu/wp-content/uploads/2010/05/ENIGMA_Cortical_QC_2.0.pdf"
+          endorsing_bodies:
+            - "FreeSurfer canonical pipeline"
+            - "ENIGMA Consortium"
+            - "Rosen 2018"
+            - "Dale 1999"
+            - "ENIGMA Cortical QC 2.0"
+
+      - bound_type: "hard_max"
+        value: 300.0
+        citation_strength: "derived"
+        guideline_section: "Rosen 2018 / ENIGMA derived upper bound"
+        citation:
+          citation_pmid: "29278793"
+          citation_doi: "10.1016/j.neuroimage.2017.12.059"
+          citation_text: |
+            Surface hole counts >300 indicate severe reconstruction
+            failure correlating with the Euler <= -217 ENIGMA exclusion
+            cutoff (Rosen 2018).
+          public_url: "https://enigma.ini.usc.edu/wp-content/uploads/2010/05/ENIGMA_Cortical_QC_2.0.pdf"
+          endorsing_bodies:
+            - "FreeSurfer canonical pipeline"
+            - "ENIGMA Consortium"
+            - "Rosen 2018"
+            - "Dale 1999"
+            - "ENIGMA Cortical QC 2.0"

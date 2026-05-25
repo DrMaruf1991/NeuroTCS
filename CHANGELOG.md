@@ -4,7 +4,144 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.10.1] — 2026-05-25
+## [1.10.2] -- 2026-05-25
+
+### Minor release: structural MRI volumetry consensus pack at world-class standard
+
+A focused minor release adding one production pack and one research_preview
+pack covering structural brain MRI volumetry. No Layer 1 changes, no
+audit_id changes. Tool-agnostic, anchored on Bethlehem 2022 lifespan brain
+charts (n=101,457) + Desikan-Killiany atlas + Potvin 2017 normative
++ ENIGMA QC protocol + FDA 510(k)-cleared volumetric AI tools.
+
+### Added
+
+**Production pack: `mri_volumetrics/structural_volumetry_consensus@1.0.0`**
+
+12 measurements, 46 bounds, all at `citation_strength=international_consensus`
+with at least 5 endorsing international bodies and public URLs per bound.
+
+Subcortical volumes (10 measurements):
+- `hippocampal_volume_total_mm3` (4 bounds)
+- `hippocampal_volume_left_mm3` (4 bounds)
+- `hippocampal_volume_right_mm3` (4 bounds)
+- `amygdala_volume_total_mm3` (4 bounds)
+- `lateral_ventricle_volume_total_mm3` (4 bounds)
+- `total_intracranial_volume_eTIV_cm3` (4 bounds)
+
+Cortical thickness (3 measurements):
+- `mean_cortical_thickness_mm` (4 bounds)
+- `entorhinal_cortex_thickness_left_mm` (4 bounds) -- Bakkour 2009 AD signature
+- `entorhinal_cortex_thickness_right_mm` (4 bounds)
+
+Quality control (2 measurements):
+- `euler_number_left_hemisphere` (4 bounds) -- ENIGMA QC, Rosen 2018 -217 cutoff
+- `euler_number_right_hemisphere` (4 bounds)
+
+Tool declaration (1 measurement):
+- `upstream_volumetry_tool` (categorical_set, 2 bounds) -- enumerates
+  FDA-cleared volumetric AI tools (NeuroQuant 5.0, NeuroReader, icometrix,
+  Quantib ND, VUNO Med-DeepBrain, Pixyl.Neuro, NeuroShield) plus
+  FreeSurfer 6.0/7.x; sets up the Layer 3 cross-sheet rule for
+  v1.11.0.
+
+**Research preview pack: `mri_volumetrics/freesurfer_extended@1.0.0`**
+
+18 measurements covering the long-tail FreeSurfer Desikan-Killiany
+regional data (thalamus L/R, caudate L/R, putamen L/R, whole brain,
+inferior temporal L/R, parahippocampal L/R, posterior cingulate L/R,
+precuneus L/R, fusiform L/R, surface holes count). Bounds at
+`derived` strength. Cannot be used in `audit_clinical_ranges()`.
+
+This pack documents the standard FreeSurfer measurement-name vocabulary
+for downstream consumers while honestly disclosing that international
+consensus normative ranges do not yet exist for these regions.
+
+**Locked golden yaml_sha256 (new pack):**
+
+| Pack | yaml_sha256 (full) |
+|---|---|
+| `mri_volumetrics/structural_volumetry_consensus` | `70710ccf013b36e5941a440a46df1b169bb505e0787a3163945e880db354191f` |
+
+### Changed
+
+**1 pack deprecated**
+
+| Deprecated pack | Successor |
+|---|---|
+| `mri_volumetrics/freesurfer@1.0.0` | `mri_volumetrics/structural_volumetry_consensus@1.0.0` (with `freesurfer_extended` as the research-preview companion for long-tail regions) |
+
+The v1.10.0-era `mri_volumetrics/freesurfer` pack mixed production-grade
+and research-grade bounds without proper separation. The v1.10.2 two-pack
+strategy enforces world-class evidence discipline: production-grade bounds
+at `international_consensus` strength in `structural_volumetry_consensus`,
+research-grade bounds at `derived` strength in `freesurfer_extended`.
+
+### Roster after v1.10.2
+
+| Status | Count | Change vs v1.10.1 |
+|---|---|---|
+| production | 6 | +1 (`structural_volumetry_consensus`) |
+| research_preview | 1 | unchanged (was `freesurfer`; now `freesurfer_extended`) |
+| deprecated | 6 | +1 (old `freesurfer`) |
+| total | 13 | +2 (new packs added) |
+
+Total production bounds: 54 (v1.10.1) -> 100 (v1.10.2, +46).
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- `pytest tests/ -q` -> **726 passed, 7 skipped** (678 from v1.10.1 + 48 new tests)
+- Layer 1 byte-exact verified under v1.10.2 (5/5 cohorts):
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` OK
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` OK
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` OK
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` OK
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` OK
+- yaml_sha256 of the 5 v1.10.1 production packs unchanged (proves
+  cross-platform stability working as designed)
+
+### Primary evidence anchors
+
+| Pack section | Anchor | Reference |
+|---|---|---|
+| Pack-level | Bethlehem RAI et al. Nature 2022;604:525-533 | PMID 35388223, DOI 10.1038/s41586-022-04554-y |
+| Subcortical/cortical naming | Desikan RS et al. NeuroImage 2006;31:968-980 | PMID 16530430 |
+| Cortical thickness | Potvin O et al. NeuroImage 2017 | PMID 28412442 |
+| Euler QC thresholds | Rosen AFG et al. NeuroImage 2018 (ENIGMA Cortical QC 2.0) | PMID 29278793 |
+| Entorhinal AD signature | Bakkour A et al. Neurology 2009;72:1048 | PMID 19261208 |
+| Tool declaration | FDA 510(k) NeuroQuant 5.0 (Cortechs.ai, Sept 2024) | + NeuroReader, icometrix, Quantib ND, VUNO, Pixyl, NeuroShield |
+
+### Honest scope disclosure
+
+What this release does:
+- Covers the AD-relevant baseline structural volumetry at world-class evidence standard
+- Encodes tool-agnostic biologically plausible bounds wide enough to accommodate cross-tool variation (Suarez-Garcia 2022 PMC8962257)
+- Documents which FDA-cleared volumetric AI tools are accepted via the categorical `upstream_volumetry_tool` field
+
+What this release does NOT do:
+- Cover hippocampal subfields (Iglesias 2015): cross-version FreeSurfer variability too large for stable bounds
+- Cover Destrieux 148-region cortical parcellation: no FDA tool uses it, no consensus normative
+- Verify tool-declaration consistency across submission sheets: that's Layer 3 (v1.11.0)
+- Audit volumetric trajectories over time: that's a future Layer (v1.12.0+)
+- Bundle FDA-cleared tool APIs: NeuroTCS audits values, it does not measure them
+- Cover ARIA-volumetric monitoring: those bounds stay in `ad/aria_safety@1.0.0` (already production); no duplication
+
+### What this release does NOT touch (verified frozen)
+
+| Path | Status |
+|---|---|
+| `src/neurotcs/audit_core/` | Frozen since v1.8.1 |
+| `src/neurotcs/rulepack/` | Frozen since v1.9.0 |
+| `src/neurotcs/input_contract/` | Frozen since v1.8.1 |
+| `src/neurotcs/fairness/` | Frozen since v1.8.1 |
+| All 5 v1.10.1 production packs (content) | Unchanged (yaml_sha256 stable) |
+| All 5 Layer 1 audit_id invariants | Byte-exact across v1.10.1 -> v1.10.2 |
+
+---
+
+## [1.10.1] -- 2026-05-25
+
 
 ### Patch release: cross-platform SHA stability + 5 pack deprecations + minor schema upgrade
 

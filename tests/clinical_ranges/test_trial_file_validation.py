@@ -82,18 +82,19 @@ class TestProductionPackOnTrialFile:
 
 
 class TestResearchPreviewAndDeprecatedPacksRejectAudit:
-    """In v1.10.1: 1 research_preview + 5 deprecated packs must all refuse audit.
+    """In v1.10.2: 1 research_preview + 6 deprecated packs must all refuse audit.
     The framework refuses to silently emit flags from a non-production pack."""
 
     @pytest.mark.parametrize("pack_name", [
         # Research preview (still valid for future upgrade)
-        "mri_volumetrics/freesurfer",
+        "mri_volumetrics/freesurfer_extended",
         # Deprecated (superseded or out-of-scope)
         "vital_signs/standard",
         "csf_biomarkers/aa_2024",
         "plasma_biomarkers/aa_2024",
         "pet_amyloid/centiloid",
         "genetics/apoe_valid_genotypes",
+        "mri_volumetrics/freesurfer",  # v1.10.2 deprecation
     ])
     def test_non_production_pack_refuses_audit(self, trial_long_format, pack_name):
         lp = load_rangepack(pack_name)
@@ -102,12 +103,12 @@ class TestResearchPreviewAndDeprecatedPacksRejectAudit:
 
 
 class TestPacksListAccurate:
-    """In v1.10.1: 5 production + 1 research_preview + 5 deprecated."""
+    """In v1.10.2: 6 production + 1 research_preview + 6 deprecated."""
 
-    def test_exactly_five_production_packs(self):
+    def test_exactly_six_production_packs(self):
         packs = list_rangepacks()
         production = [p for p in packs if p.get("status") == "production"]
-        assert len(production) == 5
+        assert len(production) == 6
         names = {p["name"] for p in production}
         assert names == {
             "ad/aria_safety",
@@ -115,20 +116,22 @@ class TestPacksListAccurate:
             "genetics/apoe_consensus",
             "csf_biomarkers/csf_amyloid_consensus",
             "plasma_biomarkers/plasma_amyloid_consensus",
+            "mri_volumetrics/structural_volumetry_consensus",  # NEW v1.10.2
         }
 
     def test_one_research_preview_pack(self):
-        """v1.10.1 leaves only mri_volumetrics/freesurfer at research_preview.
-        The other 5 v1.10.0-era preview packs were deprecated in v1.10.1."""
+        """v1.10.2 leaves only mri_volumetrics/freesurfer_extended at
+        research_preview (the long-tail FreeSurfer regions). The old
+        freesurfer pack was deprecated in v1.10.2."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
         assert len(preview) == 1
-        assert preview[0]["name"] == "mri_volumetrics/freesurfer"
+        assert preview[0]["name"] == "mri_volumetrics/freesurfer_extended"
 
-    def test_five_deprecated_packs(self):
+    def test_six_deprecated_packs(self):
         packs = list_rangepacks()
         deprecated = [p for p in packs if p.get("status") == "deprecated"]
-        assert len(deprecated) == 5
+        assert len(deprecated) == 6
         names = {p["name"] for p in deprecated}
         assert names == {
             "vital_signs/standard",
@@ -136,4 +139,5 @@ class TestPacksListAccurate:
             "plasma_biomarkers/aa_2024",
             "genetics/apoe_valid_genotypes",
             "pet_amyloid/centiloid",
+            "mri_volumetrics/freesurfer",  # NEW v1.10.2
         }

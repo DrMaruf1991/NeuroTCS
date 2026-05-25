@@ -50,6 +50,8 @@ PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
         "ef9b4e3c75020e618c894e52f68700fa14bd09f079ed971a25fea30d3d8c021b",
     "plasma_biomarkers/plasma_amyloid_consensus":
         "cec8f0fa928b744068fb45e5ef406a49f5b2217db8ef0be95c066d9394e4da2f",
+    "mri_volumetrics/structural_volumetry_consensus":
+        "70710ccf013b36e5941a440a46df1b169bb505e0787a3163945e880db354191f",
 }
 
 
