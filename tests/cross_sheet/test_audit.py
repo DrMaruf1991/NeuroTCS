@@ -432,9 +432,9 @@ class TestFlagIdDeterminism:
 class TestEndToEndWithShippedPack:
     """Use the actual shipped tool_declaration_consistency pack."""
 
-    def test_shipped_pack_loads_with_4_invariants_at_research_preview(self):
+    def test_shipped_pack_loads_with_4_invariants_at_production(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
-        assert lp.status == InvariantPackStatus.RESEARCH_PREVIEW
+        assert lp.status == InvariantPackStatus.PRODUCTION
         assert len(lp.invariantpack.invariants) == 4
 
     def test_shipped_pack_neuroquant_in_range(self):
@@ -492,11 +492,21 @@ class TestEndToEndWithShippedPack:
         assert len(result.flags) == 1
         assert result.flags[0].observed_value == 5.5
 
-    def test_shipped_pack_production_mode_refused(self):
-        """The shipped pack is research_preview; production audit refused."""
+    def test_shipped_pack_production_mode_accepted(self):
+        """The shipped pack is PRODUCTION in v1.11.0a5; audit_cross_sheet
+        must accept dry_run=False without raising. n_dry_run is False
+        because no research_preview pack was admitted via dry-run."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        result = audit_cross_sheet({"manifest": {}, "biomarkers": []}, [lp], dry_run=False)
+        assert result.n_dry_run is False
+        assert result.n_invariants_evaluated == 4
+
+    def test_research_preview_packs_still_refused_in_production_mode(self):
+        """The fail-closed gate remains; genotype_phenotype_consistency
+        is still research_preview and must refuse production audit."""
+        lp_rp = load_invariantpack("cross_sheet/genotype_phenotype_consistency")
         with pytest.raises(ValueError, match="research_preview"):
-            audit_cross_sheet({}, [lp], dry_run=False)
+            audit_cross_sheet({}, [lp_rp], dry_run=False)
 
     def test_audit_result_diagnostics(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")

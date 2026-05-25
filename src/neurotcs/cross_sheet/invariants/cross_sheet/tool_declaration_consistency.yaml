@@ -2,10 +2,10 @@ schema_version: "1.0.0"
 invariantpack_id: "cross_sheet/tool_declaration_consistency@1.0.0"
 pack_version: "1.0.0"
 effective_date: "2026-05-25"
-status: "research_preview"
+status: "production"
 domain: "tool_declaration_consistency"
 framework_name: "Cross-sheet consistency between declared FDA-cleared volumetric tool and observed biomarker values"
-transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, v1.11.0a4 session #4 of v1.11.0 arc; verbatim transcription from FDA 510(k) clearance summaries (NeuroQuant 5.0 K243016, NeuroReader, icometrix icobrain K192130, Quantib ND K213737), tool-vendor normative database documentation (Cortechs.ai NeuroQuant Normative Database White Paper 16,400 scans, Brainreader NeuroReader documentation, icometrix icobrain dm documentation, Quantib ND Reference Centile Curves from Rotterdam Scan Study ~5,000 subjects), and the Bethlehem 2022 lifespan brain charts (n=101,457) as the tool-agnostic Tier 2 fallback range"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, v1.11.0a5 session #5 of v1.11.0 arc; verbatim transcription from FDA 510(k) clearance summaries (NeuroQuant 5.0 K243016, NeuroReader, icometrix icobrain K192130, Quantib ND K213737), tool-vendor normative database documentation (Cortechs.ai NeuroQuant Normative Database White Paper 16,400 scans, Brainreader NeuroReader documentation, icometrix icobrain dm documentation, Quantib ND Reference Centile Curves from Rotterdam Scan Study ~5,000 subjects), and the Bethlehem 2022 lifespan brain charts (n=101,457) as the tool-agnostic Tier 2 fallback range. v1.11.0a5 promotes the pack from research_preview to production after empirical false-positive rate validation (corpus_sha256=ec86f00a5ad86efc..., n=1608, FP_rate=0.000000, TP_rate=1.000000, 0 discrepancies)"
 clinical_source_authority: |
   This pack encodes cross-sheet invariants linking the declared
   upstream_volumetry_tool field (in submission manifest) with the
@@ -66,10 +66,33 @@ anchor_citation:
     - "De Francesco et al. 2021 (PMC8273578, ADNI hippocampal norms FS+AA)"
 
 notes: |
-  RESEARCH_PREVIEW STATUS RATIONALE: This pack ships at research_preview
-  because the four invariants encoded are evidence-locked but the
-  catch-all warning invariant (5th and final) is not yet shipped.
-  Production promotion is the v1.11.0a5 milestone.
+  PRODUCTION STATUS RATIONALE: This pack is promoted from RESEARCH_PREVIEW
+  to PRODUCTION in v1.11.0a5 after empirical false-positive rate validation
+  established the pack's invariants behave correctly under a 1608-case
+  synthetic submission corpus.
+
+  EMPIRICAL VALIDATION SUMMARY (v1.11.0a5, locked):
+    Validation script: scripts/run_empirical_validation_tool_declaration.py
+    Corpus seed: 42 (deterministic; locked)
+    Corpus SHA-256: ec86f00a5ad86efc95491d6b721fad4cf8089d4f19a1b4fc5c597e4c0beb6525
+    Corpus design:
+      n=800 known-good submissions (200 per tool, interior of declared range)
+      n=400 known-bad-below submissions (100 per tool, below range lo)
+      n=400 known-bad-above submissions (100 per tool, above range hi)
+      n=8  edge-case submissions (4 tools x 2 boundaries; inclusive range)
+    Results:
+      CORPUS-GOOD:      FP_rate = 0.000000 (0 flags / 800)
+      CORPUS-BAD-BELOW: TP_rate = 1.000000 (400 flags / 400)
+      CORPUS-BAD-ABOVE: TP_rate = 1.000000 (400 flags / 400)
+      CORPUS-EDGE:      FP_rate = 0.000000 (0 flags / 8)
+      Discrepancies:    0
+
+  Production promotion is a metadata-only change: it changes only the
+  status field of this YAML file. No invariant contents or audit
+  semantics change. Layer 1 byte-exact preserved. v1.11.0a4
+  tool_declaration_consistency yaml_sha256 (7f33dc13318f2b59...)
+  changes ONCE to lock the production status; this is the v1.11.0a5
+  production-locked golden value.
 
   TOOL-SPECIFIC CUTOFF PHILOSOPHIES (preserved verbatim):
     NeuroQuant 5.0: 5th percentile cutoff on Cortechs database (16,400 ages 3-100)
@@ -78,21 +101,36 @@ notes: |
     icometrix icobrain: percentile reported, no fixed cutoff published
     Quantib ND:     5th percentile cutoff on Rotterdam Scan Study (~5,000 subjects)
                     -- same cutoff convention as NeuroQuant but different population
-    -> The four ranges reflect different tool philosophies. NeuroReader's
-       narrower normal range is its design choice; the others use 5th-
-       percentile cutoffs at structurally similar plausible ranges.
 
-  Promotion path:
+  THE 5TH "CATCH-ALL" INVARIANT EXPLICITLY NOT SHIPPED:
+    During v1.11.0a5 design review, the lead investigator identified that
+    the proposed "catch-all" 5th invariant (fire if value outside ALL
+    4 known tool ranges) conflated Layer 2 (clinical_ranges, biological
+    plausibility) with Layer 3 (cross_sheet, declaration consistency).
+    Layer 3 invariants ask: "is the submission internally consistent?"
+    They make no claim about what is in the patient. Layer 2 invariants
+    ask: "is this value clinically plausible?" The proposed catch-all
+    was a Layer 2 question dressed as a Layer 3 question.
+
+    The right question for this pack -- "is this declared tool one we
+    recognize?" -- is a manifest-roster-completeness check, not a
+    per-tool value-range check. That question is queued for v1.11.0rc1
+    where it will properly live in a separate manifest_data_consistency
+    invariant pack.
+
+    This pack therefore stays at 4 per-tool invariants. The pack now
+    accurately covers what it claims to cover: cross-sheet consistency
+    between the declared upstream volumetry tool and the submitted
+    hippocampal volume value, for each of the 4 known tools.
+
+  Promotion path summary:
     v1.11.0a1: skeleton, 1 invariant, no audit function
-    v1.11.0a2: research_preview, 3 invariants (NeuroQuant + NeuroReader + icometrix), audit_cross_sheet() implemented
-    v1.11.0a3: research_preview, 3 invariants UNCHANGED (this pack); the v1.11.0a3 release added the new genotype_phenotype_consistency pack
-    v1.11.0a4 (THIS): research_preview, 4 invariants (adds Quantib ND)
-    v1.11.0a5: production, 5 invariants (adds catch-all warning); pack-level empirical validation against synthetic + real cohort data
-    v1.11.0rc1: golden-value-locked
+    v1.11.0a2: research_preview, 3 invariants, audit_cross_sheet() implemented
+    v1.11.0a3: research_preview, 3 invariants UNCHANGED (genotype_phenotype pack added)
+    v1.11.0a4: research_preview, 4 invariants (added Quantib ND)
+    v1.11.0a5 (THIS): PRODUCTION, 4 invariants, empirical FP/TP validation locked
+    v1.11.0rc1: manifest_data_consistency pack (unknown-tool check etc.); golden-value-locked
     v1.11.0 final: release
-
-  Each promotion step requires its own world-class evidence pack and
-  Layer 1 byte-exact gate. No promotion before discipline is met.
 
 invariants:
 

@@ -4,6 +4,181 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0a5] -- 2026-05-25
+
+### Pre-release: production promotion of tool_declaration_consistency pack
+
+Fifth alpha of the v1.11.0 Layer 3 implementation arc. Promotes
+`cross_sheet/tool_declaration_consistency` from RESEARCH_PREVIEW to
+PRODUCTION after an empirical false-positive rate validation run
+established zero discrepancies across a 1608-case synthetic submission
+corpus. This is the first Layer 3 pack promoted to production.
+
+**SCOPE OF v1.11.0a5:**
+- Run empirical FP/TP validation (n=1608, seed=42, locked golden hashes)
+- Promote `tool_declaration_consistency` status: research_preview -> production
+- Add 29 new tests covering production promotion + validation harness
+- Layer 1 byte-exact preserved across all 5 cohorts
+
+**EXPLICITLY NOT IN v1.11.0a5 (with clear rationale):**
+
+The originally-planned "catch-all 5th invariant" was scoped OUT during
+session-5 design review. The proposed catch-all -- "fire if value
+outside ALL 4 known tool ranges" -- conflated Layer 2 (clinical
+plausibility) with Layer 3 (declaration consistency). Layer 3
+invariants ask "is the submission internally consistent?"; they make
+no claim about what is in the patient. The proposed catch-all was a
+Layer 2 question dressed as a Layer 3 question. NeuroTCS does not
+measure brain volumes -- it receives them and audits declared
+consistency.
+
+The right "5th-ish" check -- *"is this declared tool one we
+recognize?"* -- is a manifest-roster-completeness check, not a
+per-tool value-range check. That question is queued for v1.11.0rc1
+where it will properly live in a separate `manifest_data_consistency`
+invariant pack.
+
+This pack therefore stays at 4 per-tool invariants. The pack now
+accurately covers what it claims to cover: cross-sheet consistency
+between the declared upstream volumetry tool and the submitted
+hippocampal volume value, for each of 4 known tools.
+
+### Added
+
+**Script: `scripts/run_empirical_validation_tool_declaration.py` (NEW)**
+
+Standalone empirical FP/TP validation harness. Builds a deterministic
+1608-case synthetic submission corpus (seed=42, locked), runs each
+case through `audit_cross_sheet()`, and reports:
+- false-positive rate on n=800 known-good submissions (interior values)
+- true-positive rate on n=400 known-bad-below + n=400 known-bad-above
+- false-positive rate on n=8 exact-boundary edge cases (inclusive
+  range per schema)
+
+**Validation results (locked):**
+
+```
+Pack:               cross_sheet/tool_declaration_consistency
+Pack status:        production
+Corpus seed:        42 (locked)
+Corpus SHA-256:     ec86f00a5ad86efc95491d6b721fad4cf8089d4f19a1b4fc5c597e4c0beb6525
+Corpus size:        1608
+
+CORPUS-GOOD       (n= 800): FP_rate = 0.000000 (0 flags)
+CORPUS-BAD-BELOW  (n= 400): TP_rate = 1.000000 (400 flags)
+CORPUS-BAD-ABOVE  (n= 400): TP_rate = 1.000000 (400 flags)
+CORPUS-EDGE       (n=   8): FP_rate = 0.000000 (0 flags)
+
+Total discrepancies: 0 -> PASSED (production-ready discipline)
+```
+
+**Tests: `tests/cross_sheet/test_production_promotion.py` (NEW, 29 tests)**
+
+Verifies:
+- Production status, locked yaml_sha256, 4 invariants, dry_run-mode behavior
+- Validation script imports, seed is locked at 42, corpus is
+  deterministic, corpus SHA-256 matches golden value, corpus size = 1608
+- A representative slice of the 1608-case corpus (interior values,
+  below-range, above-range, exact boundaries) produces expected flag
+  counts (full corpus runs only via the standalone script)
+- All 4 invariants' ranges and severities unchanged from v1.11.0a4
+- Multi-invariant evaluation still works
+
+### Changed
+
+**Version bump:** 1.11.0a4 -> 1.11.0a5 (PEP 440 alpha 5).
+
+**Pack status:**
+`cross_sheet/tool_declaration_consistency` RESEARCH_PREVIEW -> PRODUCTION.
+
+This is a metadata-only change. No invariant contents change. The
+yaml_sha256 changes ONCE to lock the production status, then becomes
+the new golden value.
+
+**yaml_sha256 of `cross_sheet/tool_declaration_consistency`:**
+
+| Release | yaml_sha256 |
+|---|---|
+| v1.11.0a4 (research_preview) | `7f33dc13318f2b591305f2ec43139201709dafb476cf739a77947ea1af26f95f` |
+| **v1.11.0a5 (production)** | **`6f457cb80e05ac8fc377cfa0c1b783fa25abfc76426d8c0ea5860b252766d024`** |
+
+**Test refactoring for production status:**
+
+`TestResearchPreviewFailClosedGate` in `test_loader.py` was using
+`tool_declaration_consistency` as its research_preview specimen. With
+that pack now production, the test class was refactored to use
+`genotype_phenotype_consistency` (still research_preview) as the
+research_preview specimen. Same gate semantics verified; same
+fail-closed discipline. A new `TestProductionStatusGate` class was
+added to verify the production-status discipline (production packs
+must pass `assert_usable_for_audit()` without raising).
+
+Same refactoring pattern applied to `test_audit.py`:
+`test_shipped_pack_production_mode_refused` (v1.11.0a4) became
+`test_shipped_pack_production_mode_accepted` (v1.11.0a5), and a new
+`test_research_preview_packs_still_refused_in_production_mode`
+verifies the gate using `genotype_phenotype_consistency`.
+
+### Roadmap
+
+| Release | Adds | Status |
+|---|---|---|
+| v1.11.0a1 | Layer 3 schema + loader + 1 SKELETON invariant | SHIPPED |
+| v1.11.0a2 | audit_cross_sheet() + 2 invariants -> RESEARCH_PREVIEW | SHIPPED |
+| v1.11.0a3 | trajectory pattern execution + APOE4 invariant pack | SHIPPED |
+| v1.11.0a4 | Quantib ND invariant (4th of 4) | SHIPPED |
+| **v1.11.0a5** (this) | empirical FP validation + research_preview -> production promotion of tool_declaration_consistency | **SHIPPED** |
+| v1.11.0rc1 | FieldPresenceConsistency + ValueRangeConditional executions; manifest_data_consistency pack (incl. unknown-tool check); composite multi-layer audit; fairness integration; golden-value-locked | future |
+| v1.11.0 final | release | future |
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- `pytest tests/ -q` -> **897 passed, 7 skipped** (868 v1.11.0a4 + 29 new = 897)
+- Empirical validation: 0 discrepancies / 1608 cases
+- Layer 1 byte-exact verified under v1.11.0a5 (5/5 cohorts):
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` OK
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` OK
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` OK
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` OK
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` OK
+- All 6 v1.10.2 production rangepack yaml_sha256 values unchanged
+- v1.11.0a3 `genotype_phenotype_consistency` yaml_sha256 unchanged
+
+### What this release does NOT touch (verified frozen)
+
+| Path | Status |
+|---|---|
+| `src/neurotcs/audit_core/` | Frozen since v1.8.1 |
+| `src/neurotcs/rulepack/` | Frozen since v1.9.0 |
+| `src/neurotcs/input_contract/` | Frozen since v1.8.1 |
+| `src/neurotcs/fairness/` | Frozen since v1.8.1 |
+| `src/neurotcs/clinical_ranges/` (Layer 2) | Frozen since v1.10.2 |
+| `src/neurotcs/cross_sheet/schema.py`, `loader.py`, `__init__.py`, `audit.py` | Frozen since v1.11.0a3 |
+| `genotype_phenotype_consistency.yaml` | Unchanged from v1.11.0a3 |
+| 4 invariant contents in tool_declaration_consistency.yaml | Unchanged from v1.11.0a4 (only status field changed + notes updated) |
+| All 6 v1.10.2 production rangepack yaml_sha256 | Byte-identical |
+| All 5 Layer 1 audit_id invariants | Byte-exact across v1.11.0a4 -> v1.11.0a5 |
+
+### Significance
+
+This is the first production-status invariant pack in Layer 3. It
+unlocks downstream consumers of NeuroTCS to call `audit_cross_sheet()`
+with `dry_run=False` for the tool declaration check. The empirical
+validation pattern shipped here (deterministic seed-locked corpus,
+locked corpus SHA-256, FP/TP rates recorded in pack notes) becomes
+the template for promoting the remaining v1.11.0 packs to production
+in v1.11.0rc1.
+
+The catch-all design discussion documented in `notes:` of the pack
+YAML is itself an architecturally-significant outcome of this session:
+it draws an explicit line between Layer 2 (clinical plausibility,
+"what's in the patient") and Layer 3 (declaration consistency, "what
+the submission says about itself"). Future invariants should respect
+that boundary.
+
+---
+
 ## [1.11.0a4] -- 2026-05-25
 
 ### Pre-release: Quantib ND invariant added to tool_declaration_consistency pack

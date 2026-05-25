@@ -31,7 +31,7 @@ from neurotcs.cross_sheet import (
 # ============================================================
 
 GOLDEN_YAML_SHA256_TOOL_DECL = (
-    "7f33dc13318f2b591305f2ec43139201709dafb476cf739a77947ea1af26f95f"
+    "6f457cb80e05ac8fc377cfa0c1b783fa25abfc76426d8c0ea5860b252766d024"
 )
 
 
@@ -49,10 +49,10 @@ class TestListInvariantPacks:
             assert "name" in p
             assert "status" in p
 
-    def test_tool_declaration_pack_listed_at_research_preview(self):
+    def test_tool_declaration_pack_listed_at_production(self):
         packs = list_invariantpacks()
         td = next(p for p in packs if p["name"] == "cross_sheet/tool_declaration_consistency")
-        assert td["status"] == "research_preview"
+        assert td["status"] == "production"
         assert td["schema_version"] == "1.0.0"
         assert td["pack_version"] == "1.0.0"
         assert td["n_invariants"] == 4
@@ -63,7 +63,7 @@ class TestLoadInvariantPack:
     def test_loads_tool_declaration_consistency(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         assert lp.invariantpack.invariantpack_id == "cross_sheet/tool_declaration_consistency@1.0.0"
-        assert lp.status == InvariantPackStatus.RESEARCH_PREVIEW
+        assert lp.status == InvariantPackStatus.PRODUCTION
 
     def test_canonical_sha256_present(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
@@ -258,24 +258,25 @@ class TestWorldClassDiscipline:
 
 class TestResearchPreviewFailClosedGate:
     """Layer 3 fail-closed discipline parallel to Layer 2: a non-production
-    pack must refuse audit. In v1.11.0a2, the shipped pack is RESEARCH_PREVIEW,
-    so the pack-level assert_usable_for_audit() must still refuse (only
-    audit_cross_sheet() in dry_run mode accepts research_preview)."""
+    pack must refuse audit. In v1.11.0a5, the tool_declaration_consistency
+    pack was promoted to PRODUCTION, so we use the still-research_preview
+    genotype_phenotype_consistency pack to test the research_preview
+    fail-closed gate semantics."""
 
     def test_load_succeeds_for_research_preview(self):
         """A research_preview pack must load and validate."""
-        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        lp = load_invariantpack("cross_sheet/genotype_phenotype_consistency")
         assert lp is not None
         assert lp.status == InvariantPackStatus.RESEARCH_PREVIEW
 
     def test_assert_usable_for_audit_refuses_research_preview(self):
         """The fail-closed gate on the loaded pack must refuse."""
-        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        lp = load_invariantpack("cross_sheet/genotype_phenotype_consistency")
         with pytest.raises(ValueError, match="research_preview"):
             lp.assert_usable_for_audit()
 
     def test_assert_usable_for_audit_message_mentions_production_requirement(self):
-        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        lp = load_invariantpack("cross_sheet/genotype_phenotype_consistency")
         try:
             lp.assert_usable_for_audit()
             pytest.fail("expected ValueError")
@@ -283,3 +284,18 @@ class TestResearchPreviewFailClosedGate:
             msg = str(e)
             assert "production" in msg.lower()
             assert "research_preview" in msg.lower()
+
+
+class TestProductionStatusGate:
+    """v1.11.0a5: tool_declaration_consistency is the first Layer 3 pack
+    promoted to PRODUCTION. Verify it loads as production, accepts
+    dry_run=False, and assert_usable_for_audit() does NOT raise."""
+
+    def test_loads_as_production(self):
+        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        assert lp.status == InvariantPackStatus.PRODUCTION
+
+    def test_assert_usable_for_audit_accepts_production(self):
+        """Production pack must not raise from the fail-closed gate."""
+        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        lp.assert_usable_for_audit()  # must not raise
