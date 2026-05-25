@@ -11,9 +11,8 @@ from neurotcs.clinical_ranges.loader import (
 )
 from neurotcs.clinical_ranges.schema import RangePack, RangePackStatus
 
-# v1.10.0 final: 5 world-class production packs covering the AD biomarker landscape.
-# All 6 v1.10.0-draft packs remain at research_preview status, retained for
-# historical context and future upgrade work.
+# v1.10.1: 5 world-class production packs + 1 research_preview (FreeSurfer)
+# + 5 deprecated (superseded by v1.10.0 production roster, or out-of-scope).
 EXPECTED_PRODUCTION_PACKS = {
     "ad/aria_safety",
     "pet_amyloid/centiloid_consensus",
@@ -23,16 +22,23 @@ EXPECTED_PRODUCTION_PACKS = {
 }
 
 EXPECTED_RESEARCH_PREVIEW_PACKS = {
-    "vital_signs/standard",
-    "csf_biomarkers/aa_2024",
-    "plasma_biomarkers/aa_2024",
-    "mri_volumetrics/freesurfer",
-    "pet_amyloid/centiloid",
-    "genetics/apoe_valid_genotypes",
+    "mri_volumetrics/freesurfer",  # Only one remaining; candidate for v1.10.2 upgrade.
 }
 
-# All packs on disk (production + research_preview)
-EXPECTED_PACKS = EXPECTED_PRODUCTION_PACKS | EXPECTED_RESEARCH_PREVIEW_PACKS
+EXPECTED_DEPRECATED_PACKS = {
+    "vital_signs/standard",            # Scope-deprecated (v1.9.0 contraction)
+    "csf_biomarkers/aa_2024",          # Superseded by csf_amyloid_consensus
+    "plasma_biomarkers/aa_2024",       # Superseded by plasma_amyloid_consensus
+    "genetics/apoe_valid_genotypes",   # Superseded by apoe_consensus
+    "pet_amyloid/centiloid",           # Superseded by centiloid_consensus
+}
+
+# All packs on disk (production + research_preview + deprecated)
+EXPECTED_PACKS = (
+    EXPECTED_PRODUCTION_PACKS
+    | EXPECTED_RESEARCH_PREVIEW_PACKS
+    | EXPECTED_DEPRECATED_PACKS
+)
 
 
 class TestLoadRangepack:
@@ -45,6 +51,9 @@ class TestLoadRangepack:
         assert lp.status == RangePackStatus.PRODUCTION
         assert len(lp.canonical_sha256) == 64
         assert all(c in "0123456789abcdef" for c in lp.canonical_sha256)
+        # v1.10.1: yaml_sha256 must also be present and well-formed
+        assert len(lp.yaml_sha256) == 64
+        assert all(c in "0123456789abcdef" for c in lp.yaml_sha256)
 
     @pytest.mark.parametrize("name", sorted(EXPECTED_RESEARCH_PREVIEW_PACKS))
     def test_each_research_preview_pack_loads(self, name: str):
@@ -52,6 +61,14 @@ class TestLoadRangepack:
         lp = load_rangepack(name)
         assert isinstance(lp, LoadedRangePack)
         assert lp.status == RangePackStatus.RESEARCH_PREVIEW
+
+    @pytest.mark.parametrize("name", sorted(EXPECTED_DEPRECATED_PACKS))
+    def test_each_deprecated_pack_loads(self, name: str):
+        """Deprecated packs must load with deprecated status and carry
+        either deprecated_in_favor_of OR deprecation_reason."""
+        lp = load_rangepack(name)
+        assert lp.status == RangePackStatus.DEPRECATED
+        assert lp.rangepack.deprecated_in_favor_of or lp.rangepack.deprecation_reason
 
     @pytest.mark.parametrize("name", sorted(EXPECTED_PACKS))
     def test_each_pack_has_anchor_citation(self, name: str):
@@ -151,6 +168,12 @@ class TestListRangepacks:
             if p["name"] in EXPECTED_RESEARCH_PREVIEW_PACKS:
                 assert p["status"] == "research_preview"
 
+    def test_deprecated_packs_are_deprecated(self):
+        packs = list_rangepacks()
+        for p in packs:
+            if p["name"] in EXPECTED_DEPRECATED_PACKS:
+                assert p["status"] == "deprecated"
+
     def test_no_invalid_packs(self):
         packs = list_rangepacks()
         invalid = [p for p in packs if p["status"] == "INVALID"]
@@ -165,6 +188,9 @@ class TestListRangepacks:
                 assert "n_measurements" in p
                 assert "sha256" in p
                 assert len(p["sha256"]) == 16  # truncated
+                # v1.10.1: yaml_sha256 also present
+                assert "yaml_sha256" in p
+                assert len(p["yaml_sha256"]) == 16
 
 
 class TestLoaderDeterminism:

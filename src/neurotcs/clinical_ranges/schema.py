@@ -66,6 +66,14 @@ class RangePackStatus(str, Enum):
     PLANNED = "planned"
     """Roadmap-only; not present on disk. Reserved for future packs."""
 
+    DEPRECATED = "deprecated"
+    """The pack has been formally retired in favor of a successor pack
+    (typically a world-class production pack covering the same domain at
+    a higher evidence bar). A deprecated pack MUST declare its successor
+    via the `deprecated_in_favor_of` field. Loadable for historical
+    reference, but `audit_clinical_ranges()` refuses to run a deprecated
+    pack. Introduced in v1.10.1."""
+
 
 class CitationStrength(str, Enum):
     """How directly a numeric bound traces to its cited source.
@@ -387,6 +395,23 @@ class RangePack(BaseModel):
         default=None,
         description="Optional pack-level notes (e.g. assumed adult population).",
     )
+    deprecated_in_favor_of: str | None = Field(
+        default=None,
+        description="When status=DEPRECATED, the rangepack_id of the successor "
+                    "pack that supersedes this one (e.g. "
+                    "'csf_biomarkers/csf_amyloid_consensus@1.0.0'). Either "
+                    "this OR `deprecation_reason` must be set when status=DEPRECATED. "
+                    "Introduced in v1.10.1.",
+    )
+    deprecation_reason: str | None = Field(
+        default=None,
+        description="When status=DEPRECATED and no direct successor exists "
+                    "(e.g. the pack falls outside the project's current scope), "
+                    "a human-readable reason for deprecation. Either this OR "
+                    "`deprecated_in_favor_of` must be set when status=DEPRECATED. "
+                    "Introduced in v1.10.1.",
+        min_length=10,
+    )
 
     @model_validator(mode="after")
     def _schema_supported_and_status_gate(self) -> RangePack:
@@ -402,6 +427,16 @@ class RangePack(BaseModel):
             raise ValueError(
                 f"Duplicate measurement name(s) in pack {self.rangepack_id}: {dupes}"
             )
+        # Deprecation discipline: status=DEPRECATED requires either a successor
+        # pointer OR an explicit reason (for scope-based deprecation).
+        if self.status == RangePackStatus.DEPRECATED:
+            if not (self.deprecated_in_favor_of or self.deprecation_reason):
+                raise ValueError(
+                    f"Pack {self.rangepack_id} has status=deprecated but neither "
+                    f"deprecated_in_favor_of nor deprecation_reason is set. "
+                    f"Every deprecated pack must declare either a successor "
+                    f"pack ID or a human-readable reason for deprecation."
+                )
         return self
 
     # ------------------------------------------------------------
@@ -444,7 +479,25 @@ class RangePack(BaseModel):
 
         Mirrors LoadedRulePack.assert_usable_for_audit() — the framework
         refuses to silently emit flags from a non-production pack.
+
+        Deprecated packs (introduced in v1.10.1) raise a more specific
+        error pointing to the successor pack or deprecation reason.
         """
+        if self.status == RangePackStatus.DEPRECATED:
+            if self.deprecated_in_favor_of:
+                raise ValueError(
+                    f"RangePack {self.rangepack_id} is DEPRECATED. "
+                    f"Use {self.deprecated_in_favor_of!r} instead. "
+                    f"Deprecated packs are kept on disk for historical "
+                    f"reference but cannot be used in audit_clinical_ranges()."
+                )
+            else:
+                raise ValueError(
+                    f"RangePack {self.rangepack_id} is DEPRECATED. "
+                    f"Reason: {self.deprecation_reason}. "
+                    f"This pack has no successor and is kept on disk for "
+                    f"historical reference only."
+                )
         if self.status != RangePackStatus.PRODUCTION:
             raise ValueError(
                 f"RangePack {self.rangepack_id} has status={self.status.value!r}; "

@@ -4,6 +4,141 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.1] — 2026-05-25
+
+### Patch release: cross-platform SHA stability + 5 pack deprecations + minor schema upgrade
+
+A clean patch release. No new production packs, no Layer 1 changes,
+no audit_id changes. Two fixes, one schema addition, five pack deprecations.
+
+### Added
+
+**Cross-platform-stable YAML SHA-256 hashing**
+
+- New module `neurotcs.clinical_ranges.yaml_hash` with three functions:
+  - `normalize_yaml_bytes(raw_bytes)` — deterministic CRLF/CR→LF
+    normalization, trailing-whitespace stripping, single-trailing-newline
+  - `yaml_sha256_of_path(yaml_path)` — convenience hash of a file on disk
+  - `yaml_sha256_of_bytes(raw_bytes)` — hash from in-memory bytes
+- `LoadedRangePack` now exposes `yaml_sha256` alongside legacy `canonical_sha256`
+- `list_rangepacks()` now returns `yaml_sha256` (truncated 16 chars)
+  alongside legacy `sha256`
+- Public API exports added to `neurotcs.clinical_ranges.__init__`
+
+The new `yaml_sha256` is computed by hashing the YAML file bytes directly
+(after normalization), bypassing the pydantic-dump path that caused
+cross-platform drift in v1.10.0. Identical hashes on Linux, Windows, macOS
+for the same canonical YAML content.
+
+**Locked golden YAML SHAs (Linux 3.12.3, verified identical on all platforms):**
+
+| Pack | yaml_sha256 (full) |
+|---|---|
+| `ad/aria_safety` | `0f5c3275c5eaaaa7e45f3636cd3a29ec7ff193d03024f624ad93ec6638af4912` |
+| `pet_amyloid/centiloid_consensus` | `bfcc5f5d8ca773d9781bc99cd057f4888728b4870ae147103dfdc07f2bb92fc2` |
+| `genetics/apoe_consensus` | `3d9cdca055b4b9049c9ee7636987231001c9a93d716920d630afb52016087c8f` |
+| `csf_biomarkers/csf_amyloid_consensus` | `ef9b4e3c75020e618c894e52f68700fa14bd09f079ed971a25fea30d3d8c021b` |
+| `plasma_biomarkers/plasma_amyloid_consensus` | `cec8f0fa928b744068fb45e5ef406a49f5b2217db8ef0be95c066d9394e4da2f` |
+
+These values are pinned in `tests/clinical_ranges/test_yaml_sha256_cross_platform.py`
+and tested on every CI run. Any drift triggers a hard failure.
+
+**Deprecation discipline (schema upgrade)**
+
+- New `RangePackStatus.DEPRECATED` enum value
+- New optional fields on `RangePack`:
+  - `deprecated_in_favor_of`: rangepack_id of the successor pack
+  - `deprecation_reason`: human-readable reason (for scope-deprecated packs)
+- Model validator: status=DEPRECATED requires at least one of the two
+- `assert_usable_for_audit()` raises with specific error messages pointing
+  to the successor pack OR the deprecation reason
+- `audit_clinical_ranges()` refuses to run on a DEPRECATED pack
+
+### Changed
+
+**5 research_preview packs deprecated**
+
+The 5 v1.10.0-draft packs superseded by world-class production packs in
+v1.10.0 are now formally retired:
+
+| Deprecated pack | Successor / Reason |
+|---|---|
+| `csf_biomarkers/aa_2024` | → `csf_biomarkers/csf_amyloid_consensus@1.0.0` |
+| `plasma_biomarkers/aa_2024` | → `plasma_biomarkers/plasma_amyloid_consensus@1.0.0` |
+| `genetics/apoe_valid_genotypes` | → `genetics/apoe_consensus@1.0.0` |
+| `pet_amyloid/centiloid` | → `pet_amyloid/centiloid_consensus@1.0.0` |
+| `vital_signs/standard` | Scope-deprecated per v1.9.0 AD-only contraction (no successor) |
+
+Deprecated packs remain on disk for historical reference but raise
+`ValueError` if passed to `audit_clinical_ranges()`. `mri_volumetrics/freesurfer`
+remains at `research_preview` as a candidate for v1.10.2 upgrade.
+
+**Rangepack ID corrections**
+
+The CSF and plasma consensus packs had inconsistent `rangepack_id` values
+missing their domain prefix:
+
+- `csf_amyloid_consensus@1.0.0` → `csf_biomarkers/csf_amyloid_consensus@1.0.0`
+- `plasma_amyloid_consensus@1.0.0` → `plasma_biomarkers/plasma_amyloid_consensus@1.0.0`
+
+The other three production packs (`ad/aria_safety`, `pet_amyloid/centiloid_consensus`,
+`genetics/apoe_consensus`) already used the correct format. This is a bug fix,
+not a content change — all bounds, citations, and endorsing-body lists are
+unchanged across all 5 production packs.
+
+### Roster after v1.10.1
+
+| Status | Count | Packs |
+|---|---|---|
+| production | 5 | ad/aria_safety, pet_amyloid/centiloid_consensus, genetics/apoe_consensus, csf_biomarkers/csf_amyloid_consensus, plasma_biomarkers/plasma_amyloid_consensus |
+| research_preview | 1 | mri_volumetrics/freesurfer (v1.10.2 upgrade candidate) |
+| deprecated | 5 | vital_signs/standard, csf_biomarkers/aa_2024, plasma_biomarkers/aa_2024, genetics/apoe_valid_genotypes, pet_amyloid/centiloid |
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` → All checks passed
+- `pytest tests/ -q` → **678 passed, 7 skipped** (623 from v1.10.0 + 55 new:
+  25 yaml_sha256 tests + 16 deprecation_semantics tests + 14 updated
+  loader/audit/trial-file-validation tests)
+- Layer 1 byte-exact verified under v1.10.1 (5/5 cohorts):
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` ✓
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` ✓
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` ✓
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` ✓
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` ✓
+
+### Important note on `canonical_sha256` change
+
+The Layer 2 `canonical_sha256` values changed for ALL 5 production packs in
+v1.10.1 (relative to v1.10.0) because:
+
+1. The schema added two new optional fields (`deprecated_in_favor_of`,
+   `deprecation_reason`) which are serialized in pydantic `model_dump()`
+   even when `None`, altering the canonical-JSON form.
+2. The CSF and plasma packs additionally got their `rangepack_id` corrected.
+
+This is exactly the cross-version brittleness the new `yaml_sha256` fixes.
+**Layer 1 `audit_id` values are unaffected** — they derive from
+`rulepack.canonical_sha256()` (Layer 1), not `rangepack.canonical_sha256()`
+(Layer 2). The 5 locked Layer 1 audit_ids reproduce byte-exact under v1.10.1.
+
+If you have a v1.10.0 audit record that captured Layer 2 `rangepack_sha256`
+in a `flag_id`, those flag_ids will not match v1.10.1 flag_ids on the same
+input. Use `yaml_sha256` for any new audit records.
+
+### What this release does NOT touch (verified frozen)
+
+| Path | Status |
+|---|---|
+| `src/neurotcs/audit_core/` | Frozen since v1.8.1 |
+| `src/neurotcs/rulepack/` | Frozen since v1.9.0 |
+| `src/neurotcs/input_contract/` | Frozen since v1.8.1 |
+| `src/neurotcs/fairness/` | Frozen since v1.8.1 |
+| All 5 production-pack measurement / bound / citation content | Unchanged from v1.10.0 |
+| All 5 Layer 1 audit_id invariants | Byte-exact across v1.10.0 → v1.10.1 |
+
+---
+
 ## [1.10.0] — 2026-05-25
 
 ### v1.10.0 FINAL — full world-class production roster

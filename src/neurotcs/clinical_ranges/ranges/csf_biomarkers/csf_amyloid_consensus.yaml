@@ -1,5 +1,5 @@
 schema_version: "1.0.0"
-rangepack_id: "csf_amyloid_consensus@1.0.0"
+rangepack_id: "csf_biomarkers/csf_amyloid_consensus@1.0.0"
 pack_version: "1.0.0"
 effective_date: "2026-05-25"
 status: "production"

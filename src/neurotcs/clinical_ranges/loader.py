@@ -21,6 +21,7 @@ from typing import Any
 import yaml
 
 from neurotcs.clinical_ranges.schema import RangePack, RangePackStatus
+from neurotcs.clinical_ranges.yaml_hash import yaml_sha256_of_path
 
 # ============================================================
 # On-disk layout
@@ -31,18 +32,24 @@ _RANGES_ROOT = Path(__file__).resolve().parent / "ranges"
 
 @dataclass(frozen=True)
 class LoadedRangePack:
-    """A loaded range pack plus its derived hash and status.
+    """A loaded range pack plus its derived hashes and status.
 
     Attributes:
         name: The 'domain/name' identifier used by load_rangepack().
         rangepack: The parsed Pydantic RangePack model.
-        canonical_sha256: SHA-256 of the canonical-JSON form (used as the
-            rangepack_sha component in flag_id).
+        canonical_sha256: SHA-256 of the canonical-JSON form (legacy hash,
+            used as the rangepack_sha component in flag_id for v1.10.x
+            audit_id compatibility). May vary across Python patch versions.
+        yaml_sha256: SHA-256 of the normalized YAML file bytes (cross-
+            platform-stable, introduced in v1.10.1). Identical on Linux,
+            Windows, and macOS for the same canonical YAML content.
+            Will become the primary identifier in v1.11.0+.
         status: Lifecycle status (production / skeleton / planned).
     """
     name: str
     rangepack: RangePack
     canonical_sha256: str
+    yaml_sha256: str
     status: RangePackStatus
 
     def assert_usable_for_audit(self) -> None:
@@ -78,10 +85,12 @@ def load_rangepack(name: str) -> LoadedRangePack:
 
     pack = RangePack.model_validate(raw)
     sha = pack.canonical_sha256()
+    yaml_sha = yaml_sha256_of_path(yaml_path)
     return LoadedRangePack(
         name=name,
         rangepack=pack,
         canonical_sha256=sha,
+        yaml_sha256=yaml_sha,
         status=pack.status,
     )
 
@@ -90,7 +99,9 @@ def list_rangepacks() -> list[dict[str, Any]]:
     """Enumerate every range pack on disk with its load status.
 
     Returns a list of dicts with keys: name, status, schema_version,
-    pack_version, n_measurements, sha256 (truncated to 16 chars).
+    pack_version, n_measurements, sha256 (truncated to 16 chars, legacy
+    canonical_sha256), yaml_sha256 (truncated to 16 chars, cross-platform-
+    stable hash introduced in v1.10.1).
     A pack that fails to parse is included with status='INVALID' and
     an error message; the loader does NOT raise on listing.
     """
@@ -110,6 +121,7 @@ def list_rangepacks() -> list[dict[str, Any]]:
                 "pack_version": lp.rangepack.pack_version,
                 "n_measurements": len(lp.rangepack.measurements),
                 "sha256": lp.canonical_sha256[:16],
+                "yaml_sha256": lp.yaml_sha256[:16],
             })
         except Exception as e:
             out.append({

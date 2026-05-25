@@ -281,9 +281,13 @@ class TestMultiPackAudit:
             ],
         )
         lpa = LoadedRangePack(name="a/test", rangepack=pack_a,
-                              canonical_sha256=pack_a.canonical_sha256(), status=pack_a.status)
+                              canonical_sha256=pack_a.canonical_sha256(),
+                              yaml_sha256="a" * 64,
+                              status=pack_a.status)
         lpb = LoadedRangePack(name="b/test", rangepack=pack_b,
-                              canonical_sha256=pack_b.canonical_sha256(), status=pack_b.status)
+                              canonical_sha256=pack_b.canonical_sha256(),
+                              yaml_sha256="b" * 64,
+                              status=pack_b.status)
         df = pd.DataFrame({
             "patient_id": ["P1"], "visit_id": ["V1"],
             "measurement_name": ["overlap_meas"], "value": [1.0], "unit": ["x"],
@@ -333,7 +337,9 @@ class TestFailClosed:
             ],
         )
         lp = LoadedRangePack(name="x/test", rangepack=pack,
-                             canonical_sha256=pack.canonical_sha256(), status=pack.status)
+                             canonical_sha256=pack.canonical_sha256(),
+                             yaml_sha256="0" * 64,
+                             status=pack.status)
         df = pd.DataFrame({
             "patient_id": ["P1"], "visit_id": ["V1"],
             "measurement_name": ["x"], "value": [5.0], "unit": ["x"],
@@ -341,20 +347,25 @@ class TestFailClosed:
         with pytest.raises(ValueError, match="status="):
             audit_clinical_ranges(df, lp)
 
-    def test_research_preview_pack_blocks_audit(self):
-        """All 6 demoted packs must refuse audit."""
+    def test_non_production_pack_blocks_audit(self):
+        """All non-production packs must refuse audit.
+        In v1.10.1: 1 research_preview (FreeSurfer) + 5 deprecated."""
         for name in [
+            # Deprecated in v1.10.1 (superseded by world-class production packs)
             "vital_signs/standard",
             "csf_biomarkers/aa_2024",
             "plasma_biomarkers/aa_2024",
-            "mri_volumetrics/freesurfer",
             "pet_amyloid/centiloid",
             "genetics/apoe_valid_genotypes",
+            # Still research_preview, candidate for v1.10.2 upgrade
+            "mri_volumetrics/freesurfer",
         ]:
             lp = load_rangepack(name)
             df = pd.DataFrame({
                 "patient_id": ["P1"], "visit_id": ["V1"],
                 "measurement_name": ["sbp"], "value": [120.0], "unit": ["mmHg"],
             })
-            with pytest.raises(ValueError, match="status="):
+            # ValueError raised either with "status=" (research_preview path)
+            # or "DEPRECATED" (deprecated path); both are acceptable.
+            with pytest.raises(ValueError, match="status=|DEPRECATED"):
                 audit_clinical_ranges(df, lp)

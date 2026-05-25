@@ -51,5 +51,10 @@ from neurotcs.clinical_ranges.schema import (  # noqa: F401
     RangePack,
     RangePackStatus,
 )
+from neurotcs.clinical_ranges.yaml_hash import (  # noqa: F401
+    normalize_yaml_bytes,
+    yaml_sha256_of_bytes,
+    yaml_sha256_of_path,
+)
 
 __status__ = "production"
