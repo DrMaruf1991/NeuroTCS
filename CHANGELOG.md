@@ -4,6 +4,116 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0a8.post1] -- 2026-05-26
+
+### Post-release: audit-trail correction for v1.11.0a7 tag situation
+
+This is a **PEP 440 post-release** (`a8.post1`) that introduces NO code
+changes. Its sole purpose is to honestly document an audit-trail gap
+that arose during the rapid v1.11.0 development arc, in keeping with
+the standing mandate "no step back in future" applied to the
+historical record itself.
+
+### The situation
+
+On 2026-05-26, the v1.11.0a7 release (ValueRangeConditional execution)
+was developed, locally deployed, and validated against the standard
+gates (994 tests on Linux at the time, ruff clean, Layer 1 byte-exact,
+all 8 pack yaml_sha256 values verified). However, the Step-10
+commit+tag+push block from the v1.11.0a7 deploy script was NOT
+executed on the Windows working copy before v1.11.0a8 development
+began on top of it.
+
+As a consequence:
+
+- The v1.11.0a7 code (specifically `tests/cross_sheet/test_value_range_conditional.py`
+  and the corresponding additions to `src/neurotcs/cross_sheet/audit.py`
+  for the `_evaluate_value_range_conditional()` execution function) was
+  merged into the working tree alongside v1.11.0a8's additions before
+  any commit was made.
+- The single commit `2501f20` on origin/main is titled v1.11.0a8 and
+  contains BOTH the v1.11.0a7 and v1.11.0a8 changes combined.
+- No commit on origin is titled v1.11.0a7.
+- No v1.11.0a7 tag exists on origin.
+- The tag list on origin reads: v1.11.0a1, v1.11.0a2, v1.11.0a3,
+  v1.11.0a4, v1.11.0a5, v1.11.0a6, v1.11.0a8.
+
+### Decision rationale: why post-release rather than history rewrite
+
+Two paths were considered:
+
+**Path A (rejected): `git rebase -i` to split commit `2501f20` into
+separate "v1.11.0a7" and "v1.11.0a8" commits and force-push.**
+
+This was rejected because force-pushing IS the kind of "step back"
+the standing mandate prohibits. It rewrites history that has been
+published to origin and that any cloned copy now disagrees with.
+The audit trail of a force-push is itself worse than the gap it
+would fix.
+
+**Path B (chosen): PEP 440 post-release that documents the truth.**
+
+This adds a new commit and tag (`v1.11.0a8.post1`) without rewriting
+any prior commit. The post-release is allowed by PEP 440 specifically
+for "post-release corrections that do not introduce new features or
+fix bugs in the code." It is the standard mechanism for the situation
+at hand.
+
+### What v1.11.0a8.post1 records
+
+1. **The CHANGELOG sections for v1.11.0a7 (ValueRangeConditional) and
+   v1.11.0a8 (categorical_not_in_known_set) remain authoritative** as
+   the scope record for what was shipped. Both sections accurately
+   describe the work done at each conceptual release.
+
+2. **Commit `2501f20` on origin/main contains the code for BOTH
+   v1.11.0a7 and v1.11.0a8.** Anyone reviewing the diff against
+   `be137b2` (v1.11.0a6) sees the union of both alphas' changes.
+
+3. **The annotated tag `v1.11.0a7-merged-into-a8` is created at
+   commit `2501f20`** to provide a git-level pointer to the v1.11.0a7
+   content. Tools that traverse tags will now see all expected alphas
+   in sequence (a1, a2, a3, a4, a5, a6, a7-merged-into-a8, a8,
+   a8.post1) with the a7 tag clearly marked as a merged-content tag.
+
+4. **The v1.11.0a8.post1 tag is created at the new post-release commit**
+   that introduces this CHANGELOG entry.
+
+### What this release does NOT do
+
+- Change any code, schema, or pack content.
+- Rewrite, amend, or modify any prior commit.
+- Force-push to origin.
+- Change any of the 8 pack yaml_sha256 values, the 5 Layer 1 audit_id
+  invariants, the empirical validation corpus, or the test count.
+
+### Verification
+
+All gates remain green at the same numbers as v1.11.0a8 proper:
+
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- `pytest tests/ -q` -> 994 passed, 7 skipped
+- Layer 1 byte-exact (5/5 cohorts) under v1.11.0a8.post1
+- 8 pack yaml_sha256 values byte-identical to v1.11.0a8
+
+### Process correction for future releases
+
+Going forward, deploy scripts will:
+
+1. Refuse to mirror a new alpha onto a working copy whose `git status`
+   shows uncommitted changes from a prior alpha that has not been
+   committed and tagged. The Step 1 sanity check will fail loudly
+   rather than silently merging.
+
+2. Verify that the last tag on origin matches the immediate predecessor
+   of the alpha being deployed (e.g., a v1.11.0a9 deploy script will
+   verify origin's latest tag is v1.11.0a8 or v1.11.0a8.post1).
+
+This change to the deploy script template will land in the v1.11.0a9
+script and forward.
+
+---
+
 ## [1.11.0a8] -- 2026-05-26
 
 ### Pre-release: unknown-tool coverage-gap invariant + 5th condition type
