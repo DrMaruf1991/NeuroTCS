@@ -137,15 +137,18 @@ class TestDeprecatedPacksRefuseAudit:
 
 
 class TestRosterCounts:
-    """In v1.10.2 the lifecycle counts evolve from v1.10.1 (5 prod, 1 preview,
+    """In v1.10.2 the lifecycle counts evolved from v1.10.1 (5 prod, 1 preview,
     5 deprecated, 11 total) to (6 prod, 1 preview, 6 deprecated, 13 total):
     + mri_volumetrics/structural_volumetry_consensus to production,
-    + mri_volumetrics/freesurfer_extended replacing the deprecated freesurfer at preview."""
+    + mri_volumetrics/freesurfer_extended replacing the deprecated freesurfer at preview.
 
-    def test_six_production_packs(self) -> None:
+    v1.13.0 adds mri_volumetrics/wmh_fazekas_consensus to production:
+    (7 prod, 1 preview, 6 deprecated, 14 total)."""
+
+    def test_seven_production_packs(self) -> None:
         packs = list_rangepacks()
         prod = [p for p in packs if p.get("status") == "production"]
-        assert len(prod) == 6
+        assert len(prod) == 7
 
     def test_one_research_preview_pack(self) -> None:
         """Only mri_volumetrics/freesurfer_extended remains at research_preview
@@ -166,11 +169,10 @@ class TestRosterCounts:
         assert names == set(EXPECTED_DEPRECATIONS.keys())
 
     def test_total_pack_count(self) -> None:
-        """v1.10.2 adds 2 packs (structural_volumetry_consensus production,
-        freesurfer_extended research_preview) and reclassifies 1 (old
-        freesurfer to deprecated). Net: 13 total packs."""
+        """v1.13.0 adds mri_volumetrics/wmh_fazekas_consensus to production.
+        Net: 14 total packs (7 prod + 1 preview + 6 deprecated)."""
         packs = list_rangepacks()
-        assert len(packs) == 13  # 6 prod + 1 preview + 6 deprecated
+        assert len(packs) == 14  # 7 prod + 1 preview + 6 deprecated
 
 
 class TestDeprecationSchemaValidator:

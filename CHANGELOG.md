@@ -4,6 +4,225 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] -- 2026-05-27
+
+### New Layer 2 pack: WMH/Fazekas consensus
+
+Adds `mri_volumetrics/wmh_fazekas_consensus@1.0.0` — a production-status
+Layer 2 rangepack encoding the international consensus standards for
+white matter hyperintensity (WMH) quantification and visual rating in
+Alzheimer's disease and cerebral small vessel disease.
+
+This is the first new Layer 2 pack since v1.10.x. Closes one item from
+the v1.12.1-corrected Section 6.1 Tier 1 roadmap ("WMH / Fazekas Layer 2
+pack -- Future Layer 2 pack. Has consensus normative... Estimated 1-2
+sessions"). Delivered in 1 session.
+
+### Anchor
+
+Fazekas F, Chawluk JB, Alavi A, Hurtig HI, Zimmerman RA. **MR signal
+abnormalities at 1.5 T in Alzheimer's dementia and normal aging.** AJR
+Am J Roentgenol 1987;149(2):351-356. PMID 3496763, DOI
+10.2214/ajr.149.2.351. The foundational 39-year-old four-point ordinal
+scale (0-3) for periventricular and deep white-matter hyperintensities,
+ratified by STRIVE-2 (Duering et al. Lancet Neurology 2023) as the
+current international consensus reporting standard.
+
+### Scope
+
+The pack encodes 6 measurements with 13 total bounds:
+
+**Visual rating (Fazekas 1987 verbatim):**
+- `fazekas_periventricular_score` — PVH ordinal 0-3 (hard_min=0, hard_max=3)
+- `fazekas_deep_white_matter_score` — DWMH ordinal 0-3 (hard_min=0, hard_max=3)
+- `fazekas_combined_score` — max(PVH, DWMH), 0-3 (international_consensus via STRIVE-2)
+
+**Volumetric (STRIVE-2 + Meta VCI Map):**
+- `wmh_total_volume_ml` — total WMH volume (hard_min=0.0, plausible_max=100.0, hard_max=250.0)
+- `wmh_periventricular_volume_ml` — PVH-component volume (hard_min=0.0, plausible_max=60.0)
+- `wmh_deep_volume_ml` — DWMH-component volume (hard_min=0.0, plausible_max=50.0)
+
+Volumetric plausible_max values derive from Meta VCI Map Consortium
+normative data (de Kort et al. Neurobiology of Aging 2024;145:78-88,
+PMID 39602940, DOI 10.1016/j.neurobiolaging.2024.11.006) — the n=14,876
+multi-cohort 99th-percentile envelope across 15 population-based cohorts
+covering ages 18-97 (Rotterdam, Framingham, UK Biobank, SHIP-TREND, and
+11 others). Hard_max at 250 mL is derived as a QC failsafe (whole-cerebrum
+WM volume is ~450-550 mL; >50% hyperintense is biologically extreme).
+
+### Endorsing bodies
+
+Pack-level (anchor citation) has 8 endorsers; every individual bound
+citation has 6-8 endorsers, all >=5 production floor. Representative set:
+
+- American Journal of Roentgenology (Fazekas 1987 original publication)
+- STRIVE-2 Consortium (Duering et al. Lancet Neurology 2023)
+- European Stroke Organisation (ESO endorsement at ESOC 2023)
+- Meta VCI Map Consortium (de Kort 2024, n=14,876 normative reference)
+- FDA (NeuroQuant Microvascular Report 510(k) — automated Fazekas + WMH volume)
+- MarkVCID Consortium (NIH-funded SVD biomarker validation network)
+- ENIGMA Consortium (harmonized multi-site WMH protocols)
+- Alzheimer's Association 2024 Revised Criteria (WMH as N-supportive in AT(N))
+- Cortechs.ai (NeuroQuant 5.0 with FLAIR-based WMH segmentation)
+- Icometrix (icobrain WMH, CE-marked + FDA-cleared)
+- Quantib ND (FDA-cleared brain volumetric analysis)
+- LADIS Study (Leukoaraiosis And Disability foundational longitudinal cohort)
+- Wahlund 2001 (Stroke 32:1318-1322 ARWMC combined rating, for combined score)
+- Rotterdam Study (Ikram, Vernooij — Meta VCI Map contributor)
+- Framingham Heart Study (Beiser, Seshadri — Meta VCI Map contributor)
+- UK Biobank Imaging Substudy (Meta VCI Map contributor)
+
+### Methodology discipline
+
+Following the v1.12.0 schema-extension precedent and the v1.12.1 docs-only
+discipline, this pack was constructed under "world-class no partial fix"
+constraints:
+
+- **Primary-source-first**: every bound traces to a peer-reviewed
+  publication via PMID + DOI, NOT to derivative sources or LLM memory.
+  Fazekas 1987 PMID 3496763, STRIVE-2 PMID 37236211 (Duering 2023 Lancet
+  Neurology), Meta VCI Map PMID 39602940 (de Kort 2024 Neurobiology of
+  Aging), NeuroQuant FDA 510(k) K170981.
+- **Honest scope boundary**: pack documents what is OUT of scope in its
+  `notes` section (sub-Fazekas lobar regional WMH, lacunes, microbleeds,
+  perivascular spaces, DTI metrics, atrophy-corrected WMH, 7T-only features).
+  Not "we cover everything"; the pack explicitly defers these to future
+  packs or to research-grade status.
+- **Verbatim vs derived discrimination**: visual rating bounds (Fazekas
+  scale floor/ceiling) carry `citation_strength: verbatim` because the
+  numeric values appear in the original paper. Volume plausible_max bounds
+  carry `citation_strength: derived` because they're derived from the
+  Meta VCI Map empirical 99th percentile, not stated as a guideline cutoff.
+  Combined-score bounds carry `citation_strength: international_consensus`
+  because the max(PVH, DWMH) derivation post-dates Fazekas 1987.
+- **Pre-discovery of the p-tau217 dead end**: an earlier session attempted
+  a CSF p-tau217 pack but discovered during research that (a) no FDA-cleared
+  CSF p-tau217 cutoff exists (the May 2025 clearance is plasma, not CSF),
+  and (b) plasma p-tau217 is already covered in
+  `plasma_amyloid_consensus@1.0.0`. The pivot to WMH/Fazekas was made
+  BEFORE writing any YAML, not after shipping a redundant pack. World-class
+  means the work is allowed to change direction when research demands it.
+
+### Added
+
+**New rangepack** (`src/neurotcs/clinical_ranges/ranges/mri_volumetrics/wmh_fazekas_consensus.yaml`):
+
+- Schema version 1.0.0 (rangepack schema, unchanged from v1.12.x)
+- pack_version 1.0.0
+- effective_date 2026-05-27
+- status: production
+- 6 measurements, 13 bounds
+- yaml_sha256: `d4fee2be22ce6780490dc90989dde3aaef66d760a2b5b3a90f0b8753e98df0c6`
+
+**New test suite** (`tests/clinical_ranges/test_wmh_fazekas_consensus_pack.py`,
+27 tests):
+
+- 7 pack-level invariants (loads, status, measurement count + names,
+  anchor citation has >=5 endorsers, anchor PMID is Fazekas 1987,
+  yaml_sha256 reproducibility)
+- 9 Fazekas scale tests (parametrized across PVH/DWMH/combined for
+  floor=0 and ceiling=3; verbatim citation strength on visual ratings;
+  international_consensus on combined score)
+- 7 WMH volume tests (parametrized floor=0 across 3 volume measurements;
+  total plausible_max=100, hard_max=250; periventricular plausible_max=60;
+  deep plausible_max=50; non-additivity documentation)
+- 3 citation rigor tests (every bound has >=5 endorsers, Meta VCI Map
+  cited on every volume bound, STRIVE-2 cited on combined score)
+- 1 cross-reference validity test (PVH+deep envelope vs total)
+
+### Modified
+
+- `tests/clinical_ranges/test_deprecation_semantics.py`:
+  TestRosterCounts updated for v1.13.0 lifecycle counts: 7 production
+  (was 6) + 1 research_preview + 6 deprecated = 14 total (was 13).
+  Renamed test_six_production_packs -> test_seven_production_packs.
+- `pyproject.toml`, `src/neurotcs/__init__.py`, `CITATION.cff`: version
+  1.12.1 -> 1.13.0.
+- `CHANGELOG.md`: this entry.
+
+### Verification
+
+- `pytest tests/ -q` -> **1031 passed, 7 skipped** (1004 v1.12.1 + 27 new)
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- **All 9 existing pack hashes byte-identical to v1.12.x** (6 Layer 2
+  rangepacks + 2 Layer 3 invariantpacks + niaaa_2018 Layer 1 rulepack
+  spot-check). The new pack is correctly isolated.
+- **All 5 Layer 1 cohort audit_ids byte-identical to v1.12.x**
+  (OASIS-3 `77f1945358e6b1db...`, ADNI `5a52facd1e679f56...`, NACC
+  `f233935d7a1c2d72...`, MIRIAD `59ac763dfc4cd009...`, MIRIAD-test-retest
+  `94126769ef6c468e...`). Layer 1 audit unaffected by Layer 2 pack addition.
+- **All 5 cTCS scores byte-identical** (0.994191, 0.994575, 0.991502,
+  0.985369, 1.000000).
+- 27/27 new pack tests pass.
+
+### Endorsement audit summary (post-v1.13.0)
+
+**12 production+research_preview packs total** (was 11 in v1.12.1).
+All >=5 endorsing bodies:
+
+| Pack | Status | Unique endorsers (anchor citation) |
+|---|---|---|
+| `mri_volumetrics/structural_volumetry_consensus@1.0.0` | production | 65 |
+| `genetics/apoe_consensus@1.0.0` | production | 50 |
+| `pet_amyloid/centiloid_consensus@1.0.0` | production | 44 |
+| `csf_biomarkers/csf_amyloid_consensus@1.0.0` | production | 39 |
+| `plasma_biomarkers/plasma_amyloid_consensus@1.0.0` | production | 38 |
+| `ad/aria_safety@1.0.0` | production | 37 |
+| `cross_sheet/tool_declaration_consistency@1.1.0` | production | 37 |
+| `ad/aa_2024@2.1.0` | production | 17 |
+| `ad/aa_2024_trac@1.1.0` | production | 16 |
+| `mri_volumetrics/freesurfer_extended@1.0.0` | research_preview | 16 |
+| `ad/niaaa_2018@1.3.0` | production | 14 |
+| `cross_sheet/genotype_phenotype_consistency@1.0.0` | research_preview | 13 |
+| **`mri_volumetrics/wmh_fazekas_consensus@1.0.0`** | **production** | **8 (NEW)** |
+
+### Roadmap impact
+
+Reduces the Section 6.1 Tier 1 future-pack count from 10 to 9. WMH/Fazekas
+was Tier 1 item #7. The 9 remaining Tier 1 items:
+
+1. ARIA-related dose pause/discontinuation Layer 3 invariant (Group 8)
+2. Anticoagulation contraindication Layer 3 invariant (Group 8)
+3. APOE4 homozygote enhanced monitoring Layer 3 invariant (Group 8)
+4. ARIA symptoms vs MRI-grade Layer 3 invariant (Group 8)
+5. Macrohemorrhage events Layer 3 invariant (Group 8)
+6. Tau PET regional SUVR + Braak Layer 2 pack (Group 2)
+7. ~~WMH / Fazekas Layer 2 pack~~ **DONE in v1.13.0**
+8. CSF p-tau217 Layer 2 pack -- DOWNGRADED to (c) status pending: no
+   FDA-cleared CSF cutoff exists; plasma p-tau217 already covered in
+   `plasma_amyloid_consensus@1.0.0`. To be reflected in next scope doc revision.
+9. NfL Layer 2 pack (CSF + plasma) (Group 3)
+10. GFAP Layer 2 pack (CSF + plasma) (Group 3)
+
+### Migration notes
+
+- **Existing code using NeuroTCS Layer 2 packs**: no migration needed.
+  The new pack adds new measurements but does not modify any existing
+  pack's bounds or yaml_sha256.
+- **Downstream systems caching pack lists**: refresh pack listings; the
+  total count went from 13 to 14, production count from 6 to 7.
+- **Trial data validators using NeuroTCS Layer 2**: the new measurements
+  are opt-in -- a validator that doesn't reference `fazekas_*` or
+  `wmh_*_volume_ml` keys will see no behavior change.
+
+### Process correction documented
+
+The v1.13.0 release demonstrates the gap-check-corrected discipline
+applied to forward biomarker work. Earlier in this session, the
+originally-recommended next item (CSF p-tau217 Layer 2 pack) was
+correctly rejected during web-search research BEFORE writing any YAML,
+because: (a) the May 2025 FDA-cleared product is the Lumipulse plasma
+ratio, not CSF; (b) plasma p-tau217 was already covered in the shipped
+`plasma_amyloid_consensus@1.0.0` pack. Shipping a redundant or
+under-evidenced CSF pack would have been the "partial fix" pattern the
+standing mandate prohibits. The pivot to WMH/Fazekas was the correct
+world-class call. Documenting this so future sessions remember: research
+the primary sources FIRST; if the evidence doesn't support an
+international_consensus production pack, either drop it (skeleton),
+defer it (research_preview), or pivot to a stronger target.
+
+---
+
 ## [1.12.1] -- 2026-05-27
 
 ### Documentation arithmetic correction (closes gap-check Finding B)
