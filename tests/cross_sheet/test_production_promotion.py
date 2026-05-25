@@ -21,7 +21,7 @@ from neurotcs.cross_sheet.schema import InvariantPackStatus
 
 # Locked golden yaml_sha256 for the v1.11.0a5 production-promoted pack
 GOLDEN_YAML_SHA256_PROD_TOOL_DECL = (
-    "6f457cb80e05ac8fc377cfa0c1b783fa25abfc76426d8c0ea5860b252766d024"
+    "cf148e31edce12e9b856a226bd598970431013ebd72d2c05897360dc4b9edba4"
 )
 
 # Locked corpus SHA-256 from the v1.11.0a5 empirical validation
@@ -44,7 +44,7 @@ class TestProductionPromotionStatus:
         """Production promotion is a metadata-only change. No invariant
         content changes between v1.11.0a4 and v1.11.0a5."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
-        assert len(lp.invariantpack.invariants) == 4
+        assert len(lp.invariantpack.invariants) == 5  # v1.11.0a8: + unknown-tool catch-all
 
     def test_production_mode_accepts_dry_run_false(self):
         """Production pack does not require dry_run=True. The call must
@@ -67,7 +67,7 @@ class TestProductionPromotionStatus:
         )
         # Production pack -> n_dry_run is False regardless of caller arg
         assert result.n_dry_run is False
-        assert result.n_invariants_evaluated == 4
+        assert result.n_invariants_evaluated == 5  # v1.11.0a8: + unknown-tool catch-all
 
     def test_assert_usable_for_audit_does_not_raise(self):
         """Production pack must pass the fail-closed gate."""
@@ -231,7 +231,7 @@ class TestProductionGateRegression:
              "biomarkers": [{"patient_id": "p1", "visit_id": "v1", "hippocampal_volume_total_cm3": 3.5}]},
             [lp], dry_run=False,
         )
-        assert result.n_invariants_evaluated == 4
+        assert result.n_invariants_evaluated == 5  # v1.11.0a8: + unknown-tool catch-all
 
     def test_neuroquant_invariant_range_unchanged(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
@@ -259,6 +259,11 @@ class TestProductionGateRegression:
         assert inv.condition.target_range.hi == 5.0
 
     def test_all_severities_still_warning(self):
+        """The 4 known-tool invariants are warning severity. v1.11.0a8's
+        catch-all uses info severity (coverage-gap signal, not clinical
+        violation); excluded from this assertion."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         for inv in lp.invariantpack.invariants:
+            if inv.condition.type != "categorical_implies_range":
+                continue
             assert inv.flag_severity == "warning"

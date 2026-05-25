@@ -31,7 +31,7 @@ from neurotcs.cross_sheet import (
 # ============================================================
 
 GOLDEN_YAML_SHA256_TOOL_DECL = (
-    "6f457cb80e05ac8fc377cfa0c1b783fa25abfc76426d8c0ea5860b252766d024"
+    "cf148e31edce12e9b856a226bd598970431013ebd72d2c05897360dc4b9edba4"
 )
 
 
@@ -54,15 +54,15 @@ class TestListInvariantPacks:
         td = next(p for p in packs if p["name"] == "cross_sheet/tool_declaration_consistency")
         assert td["status"] == "production"
         assert td["schema_version"] == "1.0.0"
-        assert td["pack_version"] == "1.0.0"
-        assert td["n_invariants"] == 4
+        assert td["pack_version"] == "1.1.0"  # v1.11.0a8: pack bumped
+        assert td["n_invariants"] == 5  # v1.11.0a8: + unknown-tool catch-all
 
 
 class TestLoadInvariantPack:
 
     def test_loads_tool_declaration_consistency(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
-        assert lp.invariantpack.invariantpack_id == "cross_sheet/tool_declaration_consistency@1.0.0"
+        assert lp.invariantpack.invariantpack_id == "cross_sheet/tool_declaration_consistency@1.1.0"
         assert lp.status == InvariantPackStatus.PRODUCTION
 
     def test_canonical_sha256_present(self):
@@ -99,7 +99,7 @@ class TestShippedPackContents:
         """v1.11.0a4 ships exactly 4 invariants: NeuroQuant 5.0, NeuroReader,
         icometrix icobrain, Quantib ND. Session 5 adds the catch-all warning."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
-        assert len(lp.invariantpack.invariants) == 4
+        assert len(lp.invariantpack.invariants) == 5  # v1.11.0a8: + unknown-tool catch-all
 
     def test_shipped_invariants_names(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
@@ -109,6 +109,7 @@ class TestShippedPackContents:
             "neuroreader_implies_hippocampal_volume_in_normative_range",
             "icometrix_icobrain_implies_hippocampal_volume_in_plausible_range",
             "quantib_nd_implies_hippocampal_volume_in_normative_range",
+            "upstream_volumetry_tool_in_known_set",  # v1.11.0a8: unknown-tool catch-all
         ]
 
     def test_quantib_nd_invariant_range_2_8_to_5_0(self):
@@ -162,22 +163,40 @@ class TestShippedPackContents:
         assert inv.condition.target_range.hi == 5.0
 
     def test_all_shipped_invariants_are_categorical_implies_range(self):
+        """The 4 known-tool invariants are categorical_implies_range.
+        v1.11.0a8 added a 5th invariant (categorical_not_in_known_set) for
+        coverage-gap signaling; it is excluded from this assertion."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
-        for inv in lp.invariantpack.invariants:
+        known_tool_invariants = [
+            inv for inv in lp.invariantpack.invariants
+            if inv.condition.type == "categorical_implies_range"
+        ]
+        assert len(known_tool_invariants) == 4
+        for inv in known_tool_invariants:
             assert inv.condition.type == "categorical_implies_range"
 
     def test_all_shipped_invariants_target_hippocampal_volume(self):
+        """The 4 known-tool invariants target biomarkers.hippocampal_volume_total_cm3.
+        v1.11.0a8's catch-all invariant has no target_sheet (different condition
+        type); excluded."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         for inv in lp.invariantpack.invariants:
+            if inv.condition.type != "categorical_implies_range":
+                continue
             assert inv.condition.target_sheet == "biomarkers"
             assert inv.condition.target_field == "hippocampal_volume_total_cm3"
             assert inv.condition.target_unit == "cm3"
 
     def test_all_shipped_invariants_at_warning_severity(self):
-        """Tier 1 (within Bethlehem +/-10%) uses warning severity."""
+        """Tier 1 (within Bethlehem +/-10%) uses warning severity for the
+        4 known-tool invariants. v1.11.0a8's catch-all uses info severity
+        (coverage gap, not clinical violation); excluded."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         for inv in lp.invariantpack.invariants:
+            if inv.condition.type != "categorical_implies_range":
+                continue
             assert inv.flag_severity == "warning"
+        # The first invariant (NeuroQuant) is still categorical_implies_range
         inv = lp.invariantpack.invariants[0]
         assert inv.condition.type == "categorical_implies_range"
 

@@ -29,7 +29,7 @@ Per the v1.11.0-design.2 lock:
   - status enum (production / research_preview / skeleton / planned / deprecated)
     identical to Layer 2
   - per-invariant citation (citation_pmid or citation_doi) + guideline_section
-  - closed taxonomy of exactly 4 ConditionSpec types -- no code execution in YAML
+  - closed taxonomy of exactly 5 ConditionSpec types -- no code execution in YAML
 """
 
 from __future__ import annotations
@@ -294,12 +294,80 @@ class CategoricalImpliesTrajectoryPatternCondition(BaseModel):
     pattern: TrajectoryPattern
 
 
-# Discriminated union for the 4 condition types
+# --- Condition type 5: categorical_not_in_known_set --------------------
+
+class CategoricalNotInKnownSetCondition(BaseModel):
+    """If a categorical field in source_sheet is set but its value is
+    NOT in the known_values set, emit a flag.
+
+    Per v1.11.0a8 extension to design section 4.4: this condition type
+    encodes "coverage gap" semantics -- the invariant author declares
+    the taxonomy of values they can validate, and the audit flags
+    submissions that declare values outside that taxonomy. The audit
+    is not asserting the value is wrong; it is asserting the audit
+    cannot validate it. Flag severity should typically be "info".
+
+    Canonical use case: the manifest declares an upstream_volumetry_tool
+    that is not one of the known tools whose normative ranges are
+    encoded elsewhere in the same pack. The audit flags the submission
+    so reviewers know that downstream value-range checks for that tool
+    are unreachable.
+
+    Trigger semantics:
+    - If source_sheet does not contain source_field, no flag (silent).
+    - If source_sheet.source_field is null or empty string, no flag.
+    - If source_sheet.source_field is in known_values, no flag.
+    - Otherwise: emit one flag describing the unknown value.
+
+    The known_values list is part of the invariant's declared yaml
+    content and is therefore covered by the pack's yaml_sha256. Adding
+    a value to known_values requires bumping the pack version.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    type: Literal["categorical_not_in_known_set"] = "categorical_not_in_known_set"
+    source_sheet: Literal["manifest", "predictions", "patients", "biomarkers", "attribution"] = Field(
+        ..., description="Sheet containing the categorical field to check.")
+    source_field: str = Field(
+        ..., min_length=1, description="Categorical field name in source_sheet.")
+    known_values: list[str] = Field(
+        ..., min_length=1,
+        description="Closed taxonomy of values this pack can validate. "
+                    "If source_field value is set but not in this list, the "
+                    "invariant fires. Ordering is documentation-only; "
+                    "values must be unique.",
+    )
+
+    @model_validator(mode="after")
+    def _check_known_values_unique(self) -> CategoricalNotInKnownSetCondition:
+        if len(set(self.known_values)) != len(self.known_values):
+            seen: set[str] = set()
+            dupes: list[str] = []
+            for v in self.known_values:
+                if v in seen and v not in dupes:
+                    dupes.append(v)
+                seen.add(v)
+            raise ValueError(
+                f"CategoricalNotInKnownSetCondition.known_values must be "
+                f"unique; duplicates: {dupes}"
+            )
+        for v in self.known_values:
+            if not v or not v.strip():
+                raise ValueError(
+                    "CategoricalNotInKnownSetCondition.known_values entries "
+                    "must be non-empty strings."
+                )
+        return self
+
+
+# Discriminated union for the 5 condition types
 ConditionSpec = (
     CategoricalImpliesRangeCondition
     | FieldPresenceConsistencyCondition
     | ValueRangeConditionalCondition
     | CategoricalImpliesTrajectoryPatternCondition
+    | CategoricalNotInKnownSetCondition
 )
 
 

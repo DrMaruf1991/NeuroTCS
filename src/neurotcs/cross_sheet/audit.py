@@ -39,6 +39,8 @@ from neurotcs.cross_sheet.loader import LoadedInvariantPack
 from neurotcs.cross_sheet.schema import (
     CategoricalImpliesRangeCondition,
     CategoricalImpliesTrajectoryPatternCondition,
+    CategoricalNotInKnownSetCondition,
+    ConditionalRangeCase,
     CrossSheetInvariant,
     FieldPresenceConsistencyCondition,
     InvariantPackStatus,
@@ -245,12 +247,11 @@ def _evaluate_invariant(
     elif isinstance(cond, FieldPresenceConsistencyCondition):
         flags.extend(_evaluate_field_presence_consistency(invariant, cond, submission, lp))
     elif isinstance(cond, ValueRangeConditionalCondition):
-        raise NotImplementedError(
-            f"ValueRangeConditionalCondition (invariant {invariant.name!r}) "
-            f"is not yet implemented in v1.11.0a2. It is schema-validated only."
-        )
+        flags.extend(_evaluate_value_range_conditional(invariant, cond, submission, lp))
     elif isinstance(cond, CategoricalImpliesTrajectoryPatternCondition):
         flags.extend(_evaluate_trajectory_pattern(invariant, cond, submission, lp))
+    elif isinstance(cond, CategoricalNotInKnownSetCondition):
+        flags.extend(_evaluate_categorical_not_in_known_set(invariant, cond, submission, lp))
     else:
         raise NotImplementedError(
             f"Unknown condition type for invariant {invariant.name!r}: "
@@ -661,6 +662,321 @@ def _make_field_presence_unmatched_row_flag(
             f"requires each row in {cond.required_per_row_in_sheet!r} to have "
             f"a matching entry in {cond.required_sheet!r} (keyed on {invariant.join_keys}), "
             f"but row with {join_key_values} has no matching entry."
+        ),
+        citation_pmid=invariant.citation.citation_pmid,
+        citation_doi=invariant.citation.citation_doi,
+        citation_public_url=invariant.citation.public_url,
+    )
+
+
+def _evaluate_value_range_conditional(
+    invariant: CrossSheetInvariant,
+    cond: ValueRangeConditionalCondition,
+    submission: dict[str, Any],
+    lp: LoadedInvariantPack,
+) -> list[CrossSheetFlag]:
+    """Evaluate a value_range_conditional condition.
+
+    Per v1.11.0-design.2 section 4.4.3: "A numeric field's valid bounds
+    depend on a categorical field in another sheet."
+
+    Canonical use case: age-conditional normative ranges. E.g., if
+    patients.age_band == "pediatric", biomarkers.hippocampal_volume must
+    be in [1.5, 3.5]; if "adult", in [2.8, 5.0]; if "geriatric", in [2.2, 4.5].
+
+    Semantics:
+    - source_sheet must be a row-shaped sheet (NOT manifest).
+      For each row in source_sheet, look up the source_field value and
+      find the matching case in cases. If no case matches, the row is
+      skipped (no flag -- absence of a case is not a violation; if the
+      invariant author wants to flag unknown values, they declare a
+      catch-all case or use a different condition type).
+    - For each matched source row:
+        * If target_sheet == source_sheet: same-row check.
+          The target_field is read from the same row; the range check
+          applies in place.
+        * If target_sheet != source_sheet: cross-sheet check.
+          The source row is joined to target rows via the invariant's
+          join_keys; for each matching target row, target_field is
+          checked against the case's target_range.
+    - Range bounds are inclusive (consistent with categorical_implies_range
+      and the NumericRange schema).
+    - Source rows with incomplete join keys are skipped in the cross-sheet
+      case (same discipline as field_presence_consistency Mode B).
+    - manifest as source_sheet is NOT supported in v1.11.0a7. If encountered,
+      raises NotImplementedError pointing the author to
+      categorical_implies_range (which handles whole-submission triggers).
+
+    On violation: one flag per (source_row, target_row, case) violation.
+    """
+    flags: list[CrossSheetFlag] = []
+
+    source = submission.get(cond.source_sheet)
+    if source is None:
+        return flags
+
+    if cond.source_sheet == "manifest":
+        raise NotImplementedError(
+            f"value_range_conditional with source_sheet='manifest' is not "
+            f"supported in v1.11.0a7 (invariant {invariant.name!r}). The "
+            f"manifest-source semantics (one trigger value applies to all "
+            f"target rows) are already handled by the "
+            f"categorical_implies_range condition type. Use "
+            f"categorical_implies_range for manifest-trigger checks."
+        )
+
+    # Build case index: source_value -> case
+    case_index = {case.source_value: case for case in cond.cases}
+
+    source_rows = _iter_rows(source)
+    if not source_rows:
+        return flags
+
+    # Determine target rows
+    same_sheet = (cond.cases[0].target_sheet == cond.source_sheet)
+    # Note: all cases must reference the same target_sheet (it's part of the
+    # condition's semantic contract). The schema does not enforce this, but
+    # an invariant where cases point at different target sheets is malformed.
+    # We sanity-check it.
+    target_sheets = {case.target_sheet for case in cond.cases}
+    if len(target_sheets) > 1:
+        raise NotImplementedError(
+            f"value_range_conditional with cases pointing at multiple "
+            f"target_sheets ({sorted(target_sheets)}) is not supported in "
+            f"v1.11.0a7 (invariant {invariant.name!r}). All cases must "
+            f"reference the same target_sheet."
+        )
+
+    target_sheet_name = cond.cases[0].target_sheet
+    target = submission.get(target_sheet_name)
+    if target is None:
+        # No target data; nothing to check.
+        return flags
+
+    target_rows = _iter_rows(target)
+    if not target_rows:
+        return flags
+
+    # For each source row, find matching case and matching target row(s)
+    join_keys = invariant.join_keys
+
+    for src_row in source_rows:
+        src_value = src_row.get(cond.source_field)
+        if src_value is None:
+            continue  # No trigger value on this row
+
+        case = case_index.get(str(src_value))
+        if case is None:
+            continue  # No matching case; row is silent
+
+        if same_sheet:
+            # Same-row check: target_field is on this same row
+            tgt_value = src_row.get(case.target_field)
+            if tgt_value is None:
+                continue
+            try:
+                tgt_value_f = float(tgt_value)
+            except (TypeError, ValueError):
+                continue
+
+            if not (case.target_range.lo <= tgt_value_f <= case.target_range.hi):
+                join_key_values = {k: src_row.get(k) for k in join_keys}
+                # Drop None join values for cleaner flag identity
+                join_key_values = {k: v for k, v in join_key_values.items() if v is not None}
+                flag = _make_value_range_conditional_flag(
+                    invariant=invariant,
+                    lp=lp,
+                    cond=cond,
+                    case=case,
+                    observed=tgt_value_f,
+                    join_key_values=join_key_values,
+                    source_value=str(src_value),
+                )
+                flags.append(flag)
+        else:
+            # Cross-sheet check: join src_row to target rows via join_keys
+            src_key = tuple(src_row.get(k) for k in join_keys)
+            if any(v is None for v in src_key):
+                continue  # Incomplete source key, skip
+
+            # Find matching target rows
+            for tgt_row in target_rows:
+                tgt_key = tuple(tgt_row.get(k) for k in join_keys)
+                if tgt_key != src_key:
+                    continue
+
+                tgt_value = tgt_row.get(case.target_field)
+                if tgt_value is None:
+                    continue
+                try:
+                    tgt_value_f = float(tgt_value)
+                except (TypeError, ValueError):
+                    continue
+
+                if not (case.target_range.lo <= tgt_value_f <= case.target_range.hi):
+                    join_key_values = dict(zip(join_keys, src_key, strict=True))
+                    flag = _make_value_range_conditional_flag(
+                        invariant=invariant,
+                        lp=lp,
+                        cond=cond,
+                        case=case,
+                        observed=tgt_value_f,
+                        join_key_values=join_key_values,
+                        source_value=str(src_value),
+                    )
+                    flags.append(flag)
+
+    return flags
+
+
+def _make_value_range_conditional_flag(
+    invariant: CrossSheetInvariant,
+    lp: LoadedInvariantPack,
+    cond: ValueRangeConditionalCondition,
+    case: ConditionalRangeCase,
+    observed: float,
+    join_key_values: dict[str, Any],
+    source_value: str,
+) -> CrossSheetFlag:
+    """Emit a value-range-conditional violation flag."""
+    payload = {
+        "yaml_sha256": lp.yaml_sha256,
+        "invariant_name": invariant.name,
+        "kind": "value_range_conditional",
+        "source_sheet": cond.source_sheet,
+        "source_field": cond.source_field,
+        "source_value": source_value,
+        "target_sheet": case.target_sheet,
+        "target_field": case.target_field,
+        "target_range_lo": case.target_range.lo,
+        "target_range_hi": case.target_range.hi,
+        "observed_value": observed,
+        "join_key_values": _stringify_for_hash(join_key_values),
+        "contract_version": "1.2.0",
+    }
+    flag_id = _derive_flag_id(payload)
+    return CrossSheetFlag(
+        flag_id=flag_id,
+        pack_id=lp.invariantpack.invariantpack_id,
+        invariant_name=invariant.name,
+        severity=invariant.flag_severity,
+        join_key_values=dict(join_key_values),
+        observed_value=observed,
+        declared_tool=source_value,
+        expected_range_lo=case.target_range.lo,
+        expected_range_hi=case.target_range.hi,
+        flag_reason=(
+            f"{cond.source_sheet}.{cond.source_field}={source_value!r} requires "
+            f"{case.target_sheet}.{case.target_field} in "
+            f"[{case.target_range.lo}, {case.target_range.hi}], "
+            f"observed {observed}."
+        ),
+        citation_pmid=invariant.citation.citation_pmid,
+        citation_doi=invariant.citation.citation_doi,
+        citation_public_url=invariant.citation.public_url,
+    )
+
+
+def _evaluate_categorical_not_in_known_set(
+    invariant: CrossSheetInvariant,
+    cond: CategoricalNotInKnownSetCondition,
+    submission: dict[str, Any],
+    lp: LoadedInvariantPack,
+) -> list[CrossSheetFlag]:
+    """Evaluate a categorical_not_in_known_set condition.
+
+    Per v1.11.0a8 extension to design section 4.4: encodes coverage-gap
+    semantics. If source_sheet.source_field is set but its value is not
+    in cond.known_values, emit one flag per occurrence.
+
+    Silent on:
+    - source_sheet missing from submission
+    - source_field missing from source row
+    - source_field value is None or empty string
+    - source_field value IS in known_values
+
+    The manifest case (source_sheet=='manifest') checks the manifest
+    dict directly (single occurrence). For row-shaped sheets, each
+    row is checked independently and emits its own flag if violating.
+
+    Flag IDs include the observed unknown value so distinct unknowns
+    in different rows produce distinct flag_ids (deterministic).
+    """
+    flags: list[CrossSheetFlag] = []
+
+    source = submission.get(cond.source_sheet)
+    if source is None:
+        return flags
+
+    known_set = set(cond.known_values)
+
+    if isinstance(source, dict):
+        # Manifest case: single occurrence check
+        value = source.get(cond.source_field)
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return flags
+        if str(value) in known_set:
+            return flags
+        # Unknown value -> flag
+        flags.append(_make_not_in_known_set_flag(
+            invariant=invariant, lp=lp, cond=cond,
+            observed_value=str(value), join_key_values={},
+        ))
+        return flags
+
+    # Row-shaped sheet: per-row check
+    rows = _iter_rows(source)
+    for row in rows:
+        value = row.get(cond.source_field)
+        if value is None or (isinstance(value, str) and not value.strip()):
+            continue
+        if str(value) in known_set:
+            continue
+        # Unknown value on this row -> flag
+        join_key_values = {k: row.get(k) for k in invariant.join_keys}
+        join_key_values = {k: v for k, v in join_key_values.items() if v is not None}
+        flags.append(_make_not_in_known_set_flag(
+            invariant=invariant, lp=lp, cond=cond,
+            observed_value=str(value), join_key_values=join_key_values,
+        ))
+
+    return flags
+
+
+def _make_not_in_known_set_flag(
+    invariant: CrossSheetInvariant,
+    lp: LoadedInvariantPack,
+    cond: CategoricalNotInKnownSetCondition,
+    observed_value: str,
+    join_key_values: dict[str, Any],
+) -> CrossSheetFlag:
+    """Emit a not-in-known-set coverage-gap flag."""
+    payload = {
+        "yaml_sha256": lp.yaml_sha256,
+        "invariant_name": invariant.name,
+        "kind": "categorical_not_in_known_set",
+        "source_sheet": cond.source_sheet,
+        "source_field": cond.source_field,
+        "observed_value": observed_value,
+        "known_values": sorted(cond.known_values),
+        "join_key_values": _stringify_for_hash(join_key_values),
+        "contract_version": "1.2.0",
+    }
+    flag_id = _derive_flag_id(payload)
+    return CrossSheetFlag(
+        flag_id=flag_id,
+        pack_id=lp.invariantpack.invariantpack_id,
+        invariant_name=invariant.name,
+        severity=invariant.flag_severity,
+        join_key_values=dict(join_key_values),
+        observed_value=None,
+        declared_tool=observed_value,
+        flag_reason=(
+            f"{cond.source_sheet}.{cond.source_field}={observed_value!r} is "
+            f"not in the known taxonomy of this pack "
+            f"({sorted(cond.known_values)}). The audit cannot validate "
+            f"submissions declaring this value against vendor-specific "
+            f"normative ranges; reviewer should verify the declaration."
         ),
         citation_pmid=invariant.citation.citation_pmid,
         citation_doi=invariant.citation.citation_doi,

@@ -24,8 +24,6 @@ from __future__ import annotations
 
 from datetime import date
 
-import pytest
-
 from neurotcs.clinical_ranges.schema import Citation, CitationStrength
 from neurotcs.cross_sheet import audit_cross_sheet
 from neurotcs.cross_sheet.audit import (
@@ -438,14 +436,17 @@ class TestNoRegressionsFromFieldPresenceImplementation:
 
 
 # ============================================================
-# ValueRangeConditional NOT yet implemented (still raises)
+# ValueRangeConditional was implemented in v1.11.0a7 (no longer raises
+# for row-shaped source sheets). The manifest-source case still raises;
+# that's tested in test_value_range_conditional.py.
 # ============================================================
 
-class TestValueRangeConditionalStillRaises:
-    """ValueRangeConditional execution lands in v1.11.0a7 (next session).
-    For now it must still raise NotImplementedError."""
+class TestValueRangeConditionalNowImplemented:
+    """ValueRangeConditional execution shipped in v1.11.0a7. The
+    condition no longer raises NotImplementedError for the canonical
+    row-shaped source case; it evaluates."""
 
-    def test_value_range_conditional_raises(self):
+    def test_value_range_conditional_now_evaluates(self):
         from neurotcs.cross_sheet.schema import (
             ConditionalRangeCase,
             ValueRangeConditionalCondition,
@@ -471,11 +472,14 @@ class TestValueRangeConditionalStillRaises:
             citation=cit,
             citation_strength=CitationStrength.INTERNATIONAL_CONSENSUS,
             guideline_section="Test guideline",
+            join_keys=["patient_id"],
         )
         lp = _make_pack([inv], "value_range_test")
         submission = {
             "patients": [{"patient_id": "p1", "age_band": "adult"}],
             "biomarkers": [{"patient_id": "p1", "visit_id": "v1", "age_years": 35}],
         }
-        with pytest.raises(NotImplementedError, match="ValueRangeConditional"):
-            audit_cross_sheet(submission, [lp], dry_run=True)
+        # adult age_band -> age_years should be in [18, 120]; 35 is in range -> no flag
+        result = audit_cross_sheet(submission, [lp], dry_run=True)
+        assert result.n_invariants_evaluated == 1
+        assert len(result.flags) == 0

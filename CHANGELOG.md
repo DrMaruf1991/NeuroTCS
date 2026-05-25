@@ -4,6 +4,432 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0a8] -- 2026-05-26
+
+### Pre-release: unknown-tool coverage-gap invariant + 5th condition type
+
+Eighth alpha of the v1.11.0 Layer 3 implementation arc. Adds a new
+condition type (`categorical_not_in_known_set`) encoding coverage-gap
+semantics, and revises `tool_declaration_consistency` from pack
+version 1.0.0 to 1.1.0 by adding the unknown-tool catch-all invariant
+that was originally scoped on Day 1 of the v1.11.0 arc but deferred
+when the Layer 2/3 boundary was clarified.
+
+**SCOPE OF v1.11.0a8:**
+- **Schema extension**: 5th condition type `CategoricalNotInKnownSetCondition`
+  with uniqueness validator on `known_values` list
+- **Audit execution**: `_evaluate_categorical_not_in_known_set()` +
+  `_make_not_in_known_set_flag()` in audit.py
+- **Pack revision**: `tool_declaration_consistency` 1.0.0 → 1.1.0
+  adds the 5th invariant `upstream_volumetry_tool_in_known_set`
+  (severity=info, condition=categorical_not_in_known_set, known_values
+  derived from the 4 FDA 510(k) cleared tools whose per-tool ranges
+  are transcribed in invariants 1-4 of the same pack)
+- **Empirical re-validation**: corpus_seed=42 byte-identical
+  (corpus_sha256=`ec86f00a5ad86efc...`); original 4 invariants
+  unchanged (FP=0.000000 on 800 known-good + 8 edge; TP=1.000000
+  on 800 known-bad); new invariant validated on n=100 unknown-tool
+  sub-corpus (TP=1.000000, 0 spurious warnings); 4 known tools
+  verified silent for the new invariant
+- 35 new tests; 994 total (959 → 994 = +35)
+- **5 of 5 condition types now executable in v1.11.0**
+
+**EXPLICITLY NOT IN v1.11.0a8 (deferred):**
+- New invariant packs using the new condition type (none added)
+- Composite multi-layer audit (`audit_all_layers()`) -- new public API
+- Fairness audit integration with Layer 3 flags
+- Production promotion of `genotype_phenotype_consistency`
+- `manifest_data_consistency` as a separate pack (decided NOT to ship;
+  the unknown-tool check belonged in `tool_declaration_consistency`
+  itself, semantically)
+
+### Why this design (and what was rejected)
+
+The Day 1 of v1.11.0 arc dropped the "5th invariant" (unknown-tool
+catch-all) because of an apparent Layer 2/3 confusion. Re-examination
+in v1.11.0a8 established:
+
+1. **The unknown-tool check belongs in `tool_declaration_consistency`,
+   not a separate pack.** Its semantic axis is "what tools can this
+   pack validate" -- the same axis as invariants 1-4 of the same pack.
+   Putting it in a separate `manifest_data_consistency` pack would
+   have misclassified it.
+
+2. **None of the 4 existing condition types fits the "value NOT in
+   set" semantic.** All four fire on positive trigger (categorical
+   equality, range membership, pattern match, field presence). The
+   inverted-trigger case needed a 5th primitive.
+
+3. **Schema extension is non-disruptive.** Verified empirically:
+   adding `CategoricalNotInKnownSetCondition` to the discriminated
+   union does not change canonical-JSON serialization of any prior
+   pack. All 8 prior pack yaml_sha256 values are byte-identical
+   before vs. after the schema extension (proved by loading each
+   pack and comparing hashes pre- and post-extension).
+
+4. **The `manifest_data_consistency` pack was rejected for v1.11.0.**
+   Its semantic territory (manifest structural claims verified against
+   data) is real, but its citation anchor is NeuroTCS's own input
+   contract, which doesn't fit any value of the `CitationStrength`
+   enum (verbatim/derived/international_consensus). Resolving that
+   requires either extending the enum (high-stakes schema change
+   affecting all 8 packs) or anchoring to external standards we have
+   not yet researched. Deferred until that architectural question
+   is resolved.
+
+### Added
+
+**Module: `src/neurotcs/cross_sheet/schema.py` (extended)**
+
+- `CategoricalNotInKnownSetCondition`: new condition type. Fields:
+  - `type: Literal["categorical_not_in_known_set"]`
+  - `source_sheet`: one of {manifest, predictions, patients, biomarkers, attribution}
+  - `source_field`: non-empty string
+  - `known_values`: list of unique non-empty strings (min 1; uniqueness
+    enforced by model_validator)
+- `ConditionSpec` union extended to include the 5th type
+- Module docstring updated: "closed taxonomy of exactly 5 ConditionSpec types"
+
+**Module: `src/neurotcs/cross_sheet/audit.py` (extended)**
+
+- `_evaluate_categorical_not_in_known_set(invariant, cond, submission, lp)`:
+  main execution path. Handles both manifest (dict-shaped) and
+  row-shaped source sheets. Silent on missing field, null value, empty
+  string, whitespace-only, or value in known_values; emits one flag per
+  occurrence of unknown value.
+- `_make_not_in_known_set_flag(...)`: flag emitter with deterministic
+  flag_id via SHA-256 over canonical-JSON payload that includes
+  sorted(known_values) (so YAML ordering of known_values is
+  documentation-only and doesn't affect flag_id reproducibility).
+- Added `CategoricalNotInKnownSetCondition` to module imports.
+- Added dispatch case in main evaluation loop.
+
+**Pack: `tool_declaration_consistency.yaml` (revised 1.0.0 → 1.1.0)**
+
+- `invariantpack_id`: `cross_sheet/tool_declaration_consistency@1.1.0`
+- `pack_version`: `1.1.0`
+- `effective_date`: `2026-05-26`
+- `status`: production (unchanged)
+- New 5th invariant `upstream_volumetry_tool_in_known_set`:
+  - condition_type: `categorical_not_in_known_set`
+  - source_sheet: manifest
+  - source_field: upstream_volumetry_tool
+  - known_values: [neuroquant_5.0, neuroreader, icometrix, quantib_nd]
+  - severity: info (coverage-gap, not clinical violation)
+  - citation_strength: derived (taxonomy derived from invariants 1-4
+    of this same pack; anchored to FDA 510(k) Database + Brainreader
+    review article + PMC9177657 cross-tool comparison)
+- `transcribed_by` updated to capture the v1.11.0a8 re-run with
+  measured numbers
+- New yaml_sha256: `cf148e31edce12e9b856a226bd598970431013ebd72d2c05897360dc4b9edba4`
+
+**Script: `scripts/run_empirical_validation_tool_declaration.py` (extended)**
+
+- Added `N_UNKNOWN_PER_RUN = 100` and `UNKNOWN_TOOLS_FOR_VALIDATION`
+  taxonomy of out-of-set tools (VUNO Med-DeepBrain, Pixyl.Neuro,
+  NeuroShield, FreeSurfer, FSL FIRST, SPM VBM, ANTs Atroposn4,
+  DeepBrainNet, manual segmentation, octave FreeSurfer)
+- Main block: after the 1608-case validation against the original
+  4 invariants, runs an additional validation of the new 5th
+  invariant against the unknown-tool sub-corpus, plus a silence
+  check on the 4 known tools.
+- Output file changed from
+  `validation_results/tool_declaration_consistency_v1.11.0a5.json` to
+  `validation_results/tool_declaration_consistency_v1.11.0a8.json`
+  (the v1.11.0a5 file is preserved as historical record).
+
+### Tests (35 new, all suites)
+
+- `tests/cross_sheet/test_categorical_not_in_known_set.py` (NEW):
+  - 6 schema validation tests (construction, empty rejected,
+    duplicates rejected, empty string rejected, whitespace rejected,
+    single value allowed)
+  - 10 manifest-source execution tests (known/unknown variants,
+    missing/null/empty/whitespace field, source sheet missing,
+    severity respects warning/info/error, all 4 known tools silent)
+  - 7 row-shaped execution tests (all known, one unknown, multiple
+    unknowns, missing field, null field, empty sheet, partial join
+    key handling)
+  - 4 determinism tests (flag_id reproducible, distinct unknowns
+    produce distinct flag_ids, hex SHA-256, known_values ordering
+    doesn't affect flag_id)
+  - 6 integration tests against shipped v1.1.0 pack (5 invariants,
+    known tool clean audit, unknown tool emits info, yaml_sha256
+    locked, pack_version is 1.1.0, status is production)
+  - 2 regression tests (genotype_phenotype pack hash unchanged + still works)
+- `tests/cross_sheet/test_audit.py`, `test_loader.py`,
+  `test_production_promotion.py`, `test_quantib_nd.py`: updated
+  in-place to reflect:
+  - Pack invariant count 4 → 5
+  - Pack version 1.0.0 → 1.1.0
+  - Pack id `@1.0.0` → `@1.1.0`
+  - New yaml_sha256 hash
+  - Severity-uniformity tests now filter to `categorical_implies_range`
+    invariants (the 4 known-tool ones); the info-severity catch-all
+    is excluded with a clear comment
+  - Quantib-doesn't-fire-for-other-tools test now asserts no warning
+    flag fires (the new info flag is expected, not a regression)
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` → All checks passed
+- `pytest tests/ -q` → **994 passed, 7 skipped** (959 v1.11.0a7 + 35 new)
+- Layer 1 byte-exact verified under v1.11.0a8 (5/5 cohorts)
+- All 6 v1.10.2 production rangepack yaml_sha256 values unchanged
+- `cross_sheet/genotype_phenotype_consistency` yaml_sha256 unchanged
+- `cross_sheet/tool_declaration_consistency` yaml_sha256 changed
+  to reflect the v1.1.0 pack revision (expected and intended)
+- Empirical re-validation passes:
+  - Corpus seed: 42 (locked)
+  - Corpus SHA-256: `ec86f00a5ad86efc...` (byte-identical to v1.11.0a5)
+  - 4 known-tool invariants: FP=0.000000, TP=1.000000 (unchanged)
+  - 5th catch-all invariant: TP=1.000000 on n=100 unknown-tool
+    cases; 0 spurious warnings; 4/4 known tools silent
+
+### Condition type executable coverage (NOW COMPLETE, 5/5)
+
+| Condition type | Status | Shipped in |
+|---|---|---|
+| `categorical_implies_range` | EXECUTABLE | v1.11.0a2 |
+| `categorical_implies_trajectory_pattern` | EXECUTABLE | v1.11.0a3 |
+| `field_presence_consistency` | EXECUTABLE | v1.11.0a6 |
+| `value_range_conditional` | EXECUTABLE | v1.11.0a7 |
+| **`categorical_not_in_known_set`** | **EXECUTABLE** | **v1.11.0a8 (this)** |
+
+### Roadmap
+
+| Release | Adds | Status |
+|---|---|---|
+| v1.11.0a1 → v1.11.0a7 | Layer 3 module + first production pack + 4 condition types | SHIPPED |
+| **v1.11.0a8** (this) | 5th condition type + unknown-tool invariant + pack 1.1.0 + re-validation | **SHIPPED** |
+| v1.11.0a9+ | Composite multi-layer audit (`audit_all_layers()`); fairness × Layer 3 integration | future |
+| v1.11.0rc1 | Golden-value-locked | future |
+| v1.11.0 final | Release | future |
+
+### Significance
+
+The v1.11.0 audit runtime is feature-complete with respect to
+condition-type semantics: all 5 primitives in the closed taxonomy
+are executable. The shipped `tool_declaration_consistency` pack
+now has full coverage of the FDA-cleared tool roster (4 with per-tool
+normative ranges, 1 catch-all for the rest). Future Layer 3 work
+focuses on:
+
+1. Composite multi-layer audit (`audit_all_layers()`) -- a new public
+   API surface running Layer 1 + Layer 2 + Layer 3 in one call.
+2. Fairness audit integration -- Layer 3 flags flowing into the
+   existing stratified fairness analysis.
+3. Future pack expansions adding per-tool normative ranges for VUNO
+   Med-DeepBrain, Pixyl.Neuro, and other newer FDA-cleared tools
+   (each requires verbatim transcription from vendor normative
+   documentation + corresponding `known_values` expansion in the
+   catch-all).
+
+---
+
+## [1.11.0a7] -- 2026-05-26
+
+### Pre-release: ValueRangeConditional execution
+
+Seventh alpha of the v1.11.0 Layer 3 implementation arc. Implements
+the `ValueRangeConditional` condition type (previously schema-
+validated since v1.11.0a1 but raising `NotImplementedError` on
+execution). This was the **last unimplemented condition type**;
+v1.11.0a7 brings the audit runtime to full condition-type coverage
+(4 of 4 executable).
+
+**SCOPE OF v1.11.0a7:**
+- `_evaluate_value_range_conditional()` implementation in audit.py
+- Two execution patterns: cross-sheet (with join_keys) and same-sheet
+- `_make_value_range_conditional_flag()` flag emitter
+- Deterministic flag_id generation following existing pattern
+- Manifest-as-source-sheet raises NotImplementedError pointing the
+  invariant author to `categorical_implies_range` (which handles
+  whole-submission triggers)
+- Mixed-target-sheets case raises NotImplementedError (malformed input)
+- 29 new tests (233 cross_sheet total)
+- Layer 1 byte-exact preserved across all 5 cohorts
+- All 8 pack yaml_sha256 values byte-identical to v1.11.0a6
+
+**EXPLICITLY NOT IN v1.11.0a7 (deferred):**
+- `manifest_data_consistency` pack design + invariants (design-heavy session)
+- Composite multi-layer audit (`audit_all_layers()`) -- new public API surface
+- Fairness audit integration with Layer 3 flags
+- Production promotion of `genotype_phenotype_consistency`
+
+### Added
+
+**Module: `src/neurotcs/cross_sheet/audit.py` (extended)**
+
+- `_evaluate_value_range_conditional(invariant, cond, submission, lp)`:
+  main execution path for `ValueRangeConditional` conditions
+- `_make_value_range_conditional_flag(...)`: emits violation flags
+  with deterministic flag_id
+- Added `ConditionalRangeCase` to module imports
+
+Removed: `NotImplementedError` for `ValueRangeConditionalCondition`
+(now executes for row-shaped source sheets).
+
+### Semantics
+
+**CROSS-SHEET pattern** (canonical use case, per design section 4.4.3):
+- `source_sheet != target_sheet`
+- For each row in `source_sheet`, look up the matching case by
+  `source_value`. If no case matches, the row is silent (no flag --
+  absence of a case is not a violation).
+- For each matched source row, join to target rows via the invariant's
+  `join_keys`; for each matching target row, check `target_field`
+  against the case's `target_range` (inclusive).
+- On violation: one flag per (source_row, target_row, case) violation.
+- Source rows with incomplete join keys are skipped (same discipline
+  as field_presence_consistency Mode B).
+
+**SAME-SHEET pattern**:
+- `source_sheet == target_sheet`
+- Range check applies in place; `target_field` is read from the same
+  source row. No join.
+- One flag per violating row.
+
+**Manifest as source NOT supported**:
+- If `source_sheet == "manifest"`, raises `NotImplementedError` with a
+  clear message pointing the author to `categorical_implies_range`,
+  which handles whole-submission triggers. The manifest is dict-shaped,
+  not row-shaped; if a single trigger value applies to all target rows,
+  that's exactly what `categorical_implies_range` is for.
+
+**Mixed-target-sheets NOT supported**:
+- All `cases` in a single condition must reference the same `target_sheet`.
+- If a condition has cases with different `target_sheet` values, raises
+  `NotImplementedError`. This is treated as malformed input.
+
+### Canonical use case
+
+```yaml
+condition:
+  type: "value_range_conditional"
+  source_sheet: "patients"
+  source_field: "age_band"
+  cases:
+    - source_value: "pediatric"
+      target_sheet: "biomarkers"
+      target_field: "hippocampal_volume_total_cm3"
+      target_range: {lo: 1.5, hi: 3.5}
+    - source_value: "adult"
+      target_sheet: "biomarkers"
+      target_field: "hippocampal_volume_total_cm3"
+      target_range: {lo: 2.8, hi: 5.0}
+    - source_value: "geriatric"
+      target_sheet: "biomarkers"
+      target_field: "hippocampal_volume_total_cm3"
+      target_range: {lo: 2.2, hi: 4.5}
+join_keys: ["patient_id"]
+```
+
+This implements age-conditional normative ranges -- a per-row check
+where the valid hippocampal volume range depends on the patient's
+age band. Layer 2's wide plausibility ranges partially handle this,
+but ValueRangeConditional provides the formal per-row variant.
+
+### Tests (29 new, 233 cross_sheet total)
+
+- `tests/cross_sheet/test_value_range_conditional.py` (NEW):
+  - 14 cross-sheet pattern tests: in-range, below-range, above-range
+    (multiple bands), unknown source value silent, missing source field
+    silent, missing target field silent, no join match silent,
+    incomplete join key skipped, multi-patient mixed, multiple violations
+    per source row, severity respects warning/error/info declarations
+  - 5 same-sheet pattern tests: in-range, too-tall pediatric, too-short
+    adult, unknown age_band silent, missing target field silent
+  - 4 boundary tests: exact lo in-range, exact hi in-range, just-below-lo
+    flags, just-above-hi flags (inclusive range semantics)
+  - 2 manifest-source-raises tests: helpful error message + mixed
+    target sheets raises
+  - 2 determinism tests: flag_id deterministic, hex SHA-256 format
+  - 2 regression tests: shipped tool_declaration + genotype_phenotype
+    packs still work unchanged
+- `tests/cross_sheet/test_audit.py` (1 test rewritten):
+  `test_value_range_conditional_raises` ->
+  `test_value_range_conditional_now_implemented_in_v1_11_0a7`
+- `tests/cross_sheet/test_field_presence_consistency.py` (1 test rewritten):
+  `TestValueRangeConditionalStillRaises` ->
+  `TestValueRangeConditionalNowImplemented`
+
+### Changed
+
+**Version bump:** 1.11.0a6 -> 1.11.0a7 (PEP 440 alpha 7).
+
+**Audit execution surface:** `ValueRangeConditional` condition type
+now executable for the canonical row-shaped source case; no longer
+raises NotImplementedError unconditionally. Three of four condition
+types now executable; the fourth (`field_presence_consistency`) was
+shipped in v1.11.0a6, making ALL FOUR condition types executable in
+v1.11.0a7.
+
+### Condition type executable coverage
+
+After v1.11.0a7, ALL 4 condition types are executable:
+
+| Condition type | Status | Shipped in |
+|---|---|---|
+| `categorical_implies_range` | EXECUTABLE | v1.11.0a2 |
+| `categorical_implies_trajectory_pattern` | EXECUTABLE | v1.11.0a3 |
+| `field_presence_consistency` | EXECUTABLE | v1.11.0a6 |
+| **`value_range_conditional`** | **EXECUTABLE** | **v1.11.0a7 (this)** |
+
+### Roadmap (refined)
+
+| Release | Adds | Status |
+|---|---|---|
+| v1.11.0a1 -> v1.11.0a5 | Layer 3 module + first production pack + empirical validation pattern | SHIPPED |
+| v1.11.0a6 | FieldPresenceConsistency execution | SHIPPED |
+| **v1.11.0a7** (this) | ValueRangeConditional execution (4/4 condition types now executable) | **SHIPPED** |
+| v1.11.0a8 | manifest_data_consistency pack design + invariants (uses field_presence_consistency for unknown-tool check) | future |
+| v1.11.0a9+ | Composite multi-layer audit; fairness integration | future |
+| v1.11.0rc1 | golden-value-locked | future |
+| v1.11.0 final | release | future |
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- `pytest tests/ -q` -> **959 passed, 7 skipped** (930 v1.11.0a6 + 29 new = 959)
+- Layer 1 byte-exact verified under v1.11.0a7 (5/5 cohorts)
+- All 6 v1.10.2 production rangepack yaml_sha256 values unchanged
+- Both Layer 3 invariant pack yaml_sha256 values unchanged from v1.11.0a5
+
+### What this release does NOT touch (verified frozen)
+
+| Path | Status |
+|---|---|
+| `src/neurotcs/audit_core/`, `rulepack/`, `input_contract/`, `fairness/`, `clinical_ranges/` | Frozen |
+| `src/neurotcs/cross_sheet/schema.py`, `loader.py`, `__init__.py` | Frozen |
+| Both invariant pack contents (yaml_sha256 byte-identical) | Frozen |
+| All 6 v1.10.2 production rangepack yaml_sha256 | Byte-identical |
+| All 5 Layer 1 audit_id invariants | Byte-exact across v1.11.0a6 -> v1.11.0a7 |
+| `scripts/run_empirical_validation_tool_declaration.py` | Unchanged |
+| `validation_results/tool_declaration_consistency_v1.11.0a5.json` | Unchanged |
+
+### Significance
+
+**All four condition types are now executable.** The v1.11.0 audit
+runtime is feature-complete with respect to condition-type semantics.
+Future Layer 3 work focuses on:
+
+1. Designing and shipping new invariant packs that USE these condition
+   types (e.g., `manifest_data_consistency` pack with the unknown-tool
+   check we scoped out yesterday)
+2. Composite multi-layer audit (`audit_all_layers()`) -- a new public
+   API surface that runs Layer 1 + Layer 2 + Layer 3 in a single call
+3. Fairness audit integration -- Layer 3 flags flowing into the existing
+   stratified fairness analysis
+4. Empirical validation + production promotion of remaining packs
+
+This release is intentionally narrow: pure implementation, no design
+decisions outstanding (schema locked since v1.11.0a1), no new pack
+contents. The runtime is now ready for the heavier design sessions
+that follow.
+
+---
+
 ## [1.11.0a6] -- 2026-05-26
 
 ### Pre-release: FieldPresenceConsistency execution

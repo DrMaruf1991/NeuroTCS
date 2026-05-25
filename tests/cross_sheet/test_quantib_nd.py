@@ -18,7 +18,7 @@ class TestQuantibNdInvariantInPack:
 
     def test_pack_now_has_4_invariants(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
-        assert len(lp.invariantpack.invariants) == 4
+        assert len(lp.invariantpack.invariants) == 5  # v1.11.0a8: + unknown-tool catch-all
 
     def test_quantib_invariant_is_4th(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
@@ -130,7 +130,14 @@ class TestQuantibNdExecution:
         assert result.flags[0].observed_value == 6.5
 
     def test_quantib_invariant_does_not_trigger_for_other_tools(self):
-        """Quantib invariant must only match manifest.upstream_volumetry_tool == 'quantib_nd'."""
+        """Quantib invariant must only match manifest.upstream_volumetry_tool == 'quantib_nd'.
+
+        v1.11.0a8 note: declaring 'freesurfer_7.0' now correctly fires the
+        catch-all unknown-tool info flag (added in v1.11.0a8). This test
+        narrows its assertion to verify no QUANTIB-specific warning flag
+        fires; the new info flag for the catch-all is expected and not a
+        regression.
+        """
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         submission = {
             "manifest": {"upstream_volumetry_tool": "freesurfer_7.0"},
@@ -139,8 +146,15 @@ class TestQuantibNdExecution:
             ],
         }
         result = audit_cross_sheet(submission, [lp], dry_run=True)
-        # No invariant should match freesurfer_7.0
-        assert len(result.flags) == 0
+        # No QUANTIB-specific invariant should match freesurfer_7.0
+        quantib_flags = [
+            f for f in result.flags
+            if "quantib" in f.invariant_name.lower()
+        ]
+        assert len(quantib_flags) == 0
+        # No warning-severity flag from any known-tool invariant
+        warning_flags = [f for f in result.flags if f.severity == "warning"]
+        assert len(warning_flags) == 0
 
 
 class TestRegressionNoOtherInvariantsBroken:
@@ -199,7 +213,7 @@ class TestAllFourToolsSimultaneously:
             "biomarkers": [{"patient_id": "p1", "visit_id": "v1", "hippocampal_volume_total_cm3": 3.5}],
         }
         result = audit_cross_sheet(submission, [lp], dry_run=True)
-        assert result.n_invariants_evaluated == 4
+        assert result.n_invariants_evaluated == 5  # v1.11.0a8: + unknown-tool catch-all
 
     def test_only_matching_tool_emits_flags(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")

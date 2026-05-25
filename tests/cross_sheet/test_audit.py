@@ -333,7 +333,11 @@ class TestUnimplementedConditionTypes:
         result = audit_cross_sheet(submission, [lp], dry_run=True)
         assert result.n_invariants_evaluated == 1
 
-    def test_value_range_conditional_raises(self):
+    def test_value_range_conditional_now_implemented_in_v1_11_0a7(self):
+        """v1.11.0a7 implements ValueRangeConditional execution. The
+        condition no longer raises NotImplementedError for row-shaped
+        source sheets; it evaluates. (Detailed cross-sheet and same-sheet
+        tests live in test_value_range_conditional.py.)"""
         lp = _build_pack(
             status=InvariantPackStatus.RESEARCH_PREVIEW,
             condition=ValueRangeConditionalCondition(
@@ -354,8 +358,10 @@ class TestUnimplementedConditionTypes:
             "biomarkers": [],
             "patients": [],
         }
-        with pytest.raises(NotImplementedError, match="ValueRangeConditional"):
-            audit_cross_sheet(submission, [lp], dry_run=True)
+        # Should execute without raising (empty submission -> 0 flags)
+        result = audit_cross_sheet(submission, [lp], dry_run=True)
+        assert result.n_invariants_evaluated == 1
+        assert len(result.flags) == 0
 
     def test_trajectory_pattern_now_implemented_in_v1_11_0a3(self):
         """v1.11.0a3 implements CategoricalImpliesTrajectoryPattern execution.
@@ -439,7 +445,7 @@ class TestEndToEndWithShippedPack:
     def test_shipped_pack_loads_with_4_invariants_at_production(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         assert lp.status == InvariantPackStatus.PRODUCTION
-        assert len(lp.invariantpack.invariants) == 4
+        assert len(lp.invariantpack.invariants) == 5  # v1.11.0a8: + unknown-tool catch-all
 
     def test_shipped_pack_neuroquant_in_range(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
@@ -503,7 +509,7 @@ class TestEndToEndWithShippedPack:
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         result = audit_cross_sheet({"manifest": {}, "biomarkers": []}, [lp], dry_run=False)
         assert result.n_dry_run is False
-        assert result.n_invariants_evaluated == 4
+        assert result.n_invariants_evaluated == 5  # v1.11.0a8: + unknown-tool catch-all
 
     def test_research_preview_packs_still_refused_in_production_mode(self):
         """The fail-closed gate remains; genotype_phenotype_consistency
@@ -524,5 +530,5 @@ class TestEndToEndWithShippedPack:
         }
         result = audit_cross_sheet(submission, [lp], dry_run=True)
         assert result.n_rows_audited == 3
-        assert result.n_invariants_evaluated == 4  # all 4 invariants in the pack evaluated
-        assert "cross_sheet/tool_declaration_consistency@1.0.0" in result.packs_run
+        assert result.n_invariants_evaluated == 5  # v1.11.0a8: + unknown-tool catch-all
+        assert "cross_sheet/tool_declaration_consistency@1.1.0" in result.packs_run

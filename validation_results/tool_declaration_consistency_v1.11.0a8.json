@@ -99,7 +99,29 @@
   "observed_total_flags_good": 0,
   "pack": "cross_sheet/tool_declaration_consistency",
   "pack_status": "production",
-  "pack_yaml_sha256": "89b27b62760caaa7367e51b59564f524d40debe761f1d4185ea5a2310920bab3",
+  "pack_yaml_sha256": "cf148e31edce12e9b856a226bd598970431013ebd72d2c05897360dc4b9edba4",
   "true_positive_rate_bad_above": 1.0,
-  "true_positive_rate_bad_below": 1.0
+  "true_positive_rate_bad_below": 1.0,
+  "unknown_tool_validation_v1_11_0a8": {
+    "corpus_seed": 42,
+    "invariant_name": "upstream_volumetry_tool_in_known_set",
+    "known_tools_correctly_silent": 4,
+    "n_known_tools_tested_for_silence": 4,
+    "n_unknown_cases": 100,
+    "spurious_warning_count": 0,
+    "true_positive_count": 100,
+    "true_positive_rate": 1.0,
+    "unknown_tools_drawn_from": [
+      "ants_atroposn4",
+      "deepbrainnet",
+      "freesurfer",
+      "fsl_first",
+      "manual_segmentation",
+      "neuroshield",
+      "octave_freesurfer",
+      "pixyl_neuro",
+      "spm_vbm",
+      "vuno_med_deepbrain"
+    ]
+  }
 }

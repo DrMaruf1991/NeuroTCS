@@ -77,6 +77,27 @@ N_GOOD_PER_TOOL = 200
 N_BAD_BELOW_PER_TOOL = 100
 N_BAD_ABOVE_PER_TOOL = 100
 
+# v1.11.0a8 extension: unknown-tool corpus for the categorical_not_in_known_set
+# invariant added in pack v1.1.0. The known set is the 4 tools above; this corpus
+# uses tools deliberately outside that set to verify the info flag fires.
+N_UNKNOWN_PER_RUN = 100
+UNKNOWN_TOOLS_FOR_VALIDATION = [
+    # Other FDA-cleared volumetric tools (per Brainreader review article 2025
+    # and FDA 510(k) Database) whose per-tool normative ranges are not yet
+    # transcribed in this pack:
+    "vuno_med_deepbrain",       # K232674, Oct 2023
+    "pixyl_neuro",              # K200810
+    "neuroshield",
+    # Research tools (not FDA-cleared for clinical use; common in research):
+    "freesurfer",
+    "fsl_first",
+    "spm_vbm",
+    "ants_atroposn4",
+    "deepbrainnet",
+    "manual_segmentation",
+    "octave_freesurfer",
+]
+
 
 @dataclass
 class CorpusCase:
@@ -266,9 +287,74 @@ def run_validation() -> dict[str, Any]:
 
 if __name__ == "__main__":
     summary = run_validation()
+
+    # v1.11.0a8 extension: validate the new categorical_not_in_known_set invariant
+    # against an unknown-tool corpus. Reuses the same CORPUS_SEED for reproducibility.
+    print("Validating v1.11.0a8 unknown-tool invariant (categorical_not_in_known_set)...")
+    lp_for_unknown = load_invariantpack("cross_sheet/tool_declaration_consistency")
+    unknown_rng = random.Random(CORPUS_SEED)
+    unknown_tp_correct = 0
+    unknown_fp_known_warning = 0
+    for i in range(N_UNKNOWN_PER_RUN):
+        tool = unknown_rng.choice(UNKNOWN_TOOLS_FOR_VALIDATION)
+        # Use a value in the Bethlehem-plausible range so known-tool invariants
+        # (if they fired by mistake) would still be flagged warning by their own
+        # ranges. The point is to confirm ONLY the info flag fires.
+        submission = {
+            "manifest": {"upstream_volumetry_tool": tool},
+            "biomarkers": [{
+                "patient_id": f"p{i}", "visit_id": "v1",
+                "hippocampal_volume_total_cm3": 3.5,
+            }],
+        }
+        result = audit_cross_sheet(submission, [lp_for_unknown], dry_run=False)
+        info_flags_for_unknown = [
+            f for f in result.flags
+            if f.severity == "info"
+            and f.invariant_name == "upstream_volumetry_tool_in_known_set"
+            and f.declared_tool == tool
+        ]
+        spurious_warnings = [f for f in result.flags if f.severity == "warning"]
+        if len(info_flags_for_unknown) == 1:
+            unknown_tp_correct += 1
+        if len(spurious_warnings) > 0:
+            unknown_fp_known_warning += 1
+
+    # Also confirm the 4 known tools never trigger the new info invariant
+    known_silent_count = 0
+    for tool in TOOL_RANGES.keys():
+        submission = {
+            "manifest": {"upstream_volumetry_tool": tool},
+            "biomarkers": [{
+                "patient_id": "p_known", "visit_id": "v1",
+                "hippocampal_volume_total_cm3": (TOOL_RANGES[tool][0] + TOOL_RANGES[tool][1]) / 2,
+            }],
+        }
+        result = audit_cross_sheet(submission, [lp_for_unknown], dry_run=False)
+        info_flags_for_unknown = [
+            f for f in result.flags
+            if f.invariant_name == "upstream_volumetry_tool_in_known_set"
+        ]
+        if len(info_flags_for_unknown) == 0:
+            known_silent_count += 1
+
+    unknown_tool_validation = {
+        "invariant_name": "upstream_volumetry_tool_in_known_set",
+        "corpus_seed": CORPUS_SEED,
+        "n_unknown_cases": N_UNKNOWN_PER_RUN,
+        "unknown_tools_drawn_from": sorted(UNKNOWN_TOOLS_FOR_VALIDATION),
+        "true_positive_count": unknown_tp_correct,
+        "true_positive_rate": unknown_tp_correct / N_UNKNOWN_PER_RUN,
+        "spurious_warning_count": unknown_fp_known_warning,
+        "n_known_tools_tested_for_silence": len(TOOL_RANGES),
+        "known_tools_correctly_silent": known_silent_count,
+    }
+    summary["unknown_tool_validation_v1_11_0a8"] = unknown_tool_validation
+
     out_dir = Path(__file__).resolve().parent.parent / "validation_results"
     out_dir.mkdir(exist_ok=True)
-    out_path = out_dir / "tool_declaration_consistency_v1.11.0a5.json"
+    # v1.11.0a8: write to new output file; v1.11.0a5 file is preserved as historical record
+    out_path = out_dir / "tool_declaration_consistency_v1.11.0a8.json"
     out_path.write_text(json.dumps(summary, indent=2, sort_keys=True))
 
     print(f"Validation results written to: {out_path}")
@@ -294,6 +380,14 @@ if __name__ == "__main__":
           f"(observed {summary['observed_total_flags_edge']} flags)")
     print()
     print(f"Total discrepancies: {summary['n_discrepancies']}")
+    print()
+    print("v1.11.0a8 unknown-tool invariant validation:")
+    print(f"  TP rate on n={N_UNKNOWN_PER_RUN} unknown-tool corpus: "
+          f"{unknown_tool_validation['true_positive_rate']:.6f} "
+          f"({unknown_tp_correct}/{N_UNKNOWN_PER_RUN} info flags emitted)")
+    print(f"  Spurious warnings from known-tool invariants: {unknown_fp_known_warning}")
+    print(f"  Known tools correctly silent for new invariant: "
+          f"{known_silent_count}/{len(TOOL_RANGES)}")
     if summary["n_discrepancies"] > 0:
         print("FAILED -- pack does not meet production-ready discipline")
         sys.exit(1)

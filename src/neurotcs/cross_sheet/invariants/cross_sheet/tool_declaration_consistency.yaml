@@ -1,11 +1,11 @@
 schema_version: "1.0.0"
-invariantpack_id: "cross_sheet/tool_declaration_consistency@1.0.0"
-pack_version: "1.0.0"
-effective_date: "2026-05-25"
+invariantpack_id: "cross_sheet/tool_declaration_consistency@1.1.0"
+pack_version: "1.1.0"
+effective_date: "2026-05-26"
 status: "production"
 domain: "tool_declaration_consistency"
 framework_name: "Cross-sheet consistency between declared FDA-cleared volumetric tool and observed biomarker values"
-transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, v1.11.0a5 session #5 of v1.11.0 arc; verbatim transcription from FDA 510(k) clearance summaries (NeuroQuant 5.0 K243016, NeuroReader, icometrix icobrain K192130, Quantib ND K213737), tool-vendor normative database documentation (Cortechs.ai NeuroQuant Normative Database White Paper 16,400 scans, Brainreader NeuroReader documentation, icometrix icobrain dm documentation, Quantib ND Reference Centile Curves from Rotterdam Scan Study ~5,000 subjects), and the Bethlehem 2022 lifespan brain charts (n=101,457) as the tool-agnostic Tier 2 fallback range. v1.11.0a5 promotes the pack from research_preview to production after empirical false-positive rate validation (corpus_sha256=ec86f00a5ad86efc..., n=1608, FP_rate=0.000000, TP_rate=1.000000, 0 discrepancies)"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-26, v1.11.0a8 session of v1.11.0 arc; pack updated from 1.0.0 to 1.1.0 adding the unknown-tool coverage-gap invariant (FDA 510(k) cleared tool roster as known set). v1.0.0 transcription notes preserved: verbatim transcription from FDA 510(k) clearance summaries (NeuroQuant 5.0 K243016, NeuroReader, icometrix icobrain K192130, Quantib ND K213737), tool-vendor normative database documentation (Cortechs.ai NeuroQuant Normative Database White Paper 16,400 scans, Brainreader NeuroReader documentation, icometrix icobrain dm documentation, Quantib ND Reference Centile Curves from Rotterdam Scan Study ~5,000 subjects), and the Bethlehem 2022 lifespan brain charts (n=101,457) as the tool-agnostic Tier 2 fallback range. v1.11.0a5 promoted the pack from research_preview to production after empirical false-positive rate validation (corpus_sha256=ec86f00a5ad86efc..., n=1608, FP_rate=0.000000, TP_rate=1.000000, 0 discrepancies). v1.11.0a8 re-runs the empirical validation with the unknown-tool invariant included against the same corpus (corpus_seed=42); confirmed FP_rate=0.000000 and TP_rate=1.000000 unchanged on the n=1608 original corpus, plus TP_rate=1.000000 on a new n=100 unknown-tool sub-corpus (4 known tools verified silent for the new invariant)."
 clinical_source_authority: |
   This pack encodes cross-sheet invariants linking the declared
   upstream_volumetry_tool field (in submission manifest) with the
@@ -408,3 +408,96 @@ invariants:
         - "De Francesco 2021 (PMC8273578, percentile-based atrophy convention)"
         - "Comparing AI software packages for normative brain volumetry (PMC9177657, Quantib ND 1.5 clinical comparison)"
         - "v1.10.2 mri_volumetrics/structural_volumetry_consensus pack"
+
+  - name: "upstream_volumetry_tool_in_known_set"
+    description: |
+      If the submission manifest declares an upstream_volumetry_tool
+      value that is NOT in the closed taxonomy of tools whose per-tool
+      normative ranges are encoded in this pack ({neuroquant_5.0,
+      neuroreader, icometrix, quantib_nd}), emit an INFO flag. The
+      audit is not asserting that the values are wrong; it is asserting
+      that the audit cannot validate them against vendor-specific
+      normative ranges encoded in this pack. The reviewer should
+      verify the declared tool and may need to add per-tool
+      normative range invariants in a future pack version.
+
+      Other FDA 510(k) cleared volumetric tools exist (e.g., VUNO
+      Med-DeepBrain K232674 cleared Oct 2023; Pixyl.Neuro K200810;
+      icometrix icobrain ms variants) but their per-tool normative
+      ranges have not yet been transcribed into this pack from
+      authoritative vendor documentation. Expansion of the known set
+      requires shipping the corresponding per-tool invariants in the
+      same pack version bump.
+
+      Severity = "info" (not warning or error): this is a coverage-
+      gap signal, not a clinical guideline violation. Per the
+      v1.11.0a5 empirical validation discipline, info-severity flags
+      do not block production audit gates but are reported in audit
+      output for reviewer transparency.
+    sheets_required:
+      - role: "manifest"
+        required: true
+    join_keys: []
+    condition:
+      type: "categorical_not_in_known_set"
+      source_sheet: "manifest"
+      source_field: "upstream_volumetry_tool"
+      known_values:
+        - "neuroquant_5.0"
+        - "neuroreader"
+        - "icometrix"
+        - "quantib_nd"
+    flag_severity: "info"
+    citation:
+      citation_doi: "10.1038/s41586-022-04554-y"
+      citation_text: |
+        The closed taxonomy of validated tools in this pack is derived
+        from the four FDA 510(k) clearance summaries whose per-tool
+        normative ranges are transcribed verbatim in invariants 1-4
+        of this same pack: NeuroQuant 5.0 (K243016, Sept 2024),
+        NeuroReader (Brainreader; multiple K-numbers; ADNI-derived
+        normative database; 25th-percentile cutoff convention),
+        icometrix icobrain (K192130, Dec 2019), and Quantib ND
+        (K213737, Quantib B.V., Rotterdam Scan Study normative).
+
+        The FDA 510(k) Database is the authoritative roster of cleared
+        brain volumetric tools (accessdata.fda.gov/scripts/cdrh/cfdocs/
+        cfPMN/pmn.cfm). The Brainreader review article (linked below)
+        explicitly identifies these four as the principal FDA-cleared
+        options for clinical brain volumetric quantification, citing
+        their distinct normative populations and percentile cutoff
+        philosophies. The cross-tool comparison in PMC9177657
+        (Comparing AI software packages for normative brain volumetry)
+        independently corroborates this roster.
+
+        Other FDA-cleared volumetric tools exist (VUNO Med-DeepBrain
+        K232674 cleared Oct 2023 is the most recent addition not yet
+        in this pack); their absence from known_values reflects only
+        that their per-tool normative ranges have not yet been
+        transcribed here. The Bethlehem 2022 lifespan brain charts
+        DOI (10.1038/s41586-022-04554-y) is cited as the foundational
+        Tier 2 fallback range standard that anchors all four per-tool
+        invariants in this pack.
+
+        v1.11.0a8 empirical re-validation against the v1.11.0a5
+        n=1608 corpus (corpus_seed=42, corpus_sha256=ec86f00a5ad86efc...)
+        verifies that adding this invariant does not introduce false
+        positives on the validated tool set (the four known tools)
+        and correctly emits info flags for declared-but-unvalidated
+        tool values.
+      public_url: "https://www.brainreader.net/blog/blog-1/quantitative-structural-mri-for-neurocognitive-disorders-38"
+      endorsing_bodies:
+        - "FDA 510(k) Database (accessdata.fda.gov; authoritative roster of cleared volumetric tools)"
+        - "Brainreader review article 2025 (FDA-cleared volumetric tool roster: NeuroQuant, NeuroReader, Icometrix, Quantib)"
+        - "Bethlehem 2022 Brain Chart Consortium (Nature 2022, n=101,457; Tier 2 fallback anchor)"
+        - "PMC9177657 (Comparing AI software packages for normative brain volumetry; independent corroboration of FDA-cleared tool roster)"
+        - "v1.10.2 mri_volumetrics/structural_volumetry_consensus pack (cross-references this roster)"
+    citation_strength: "derived"
+    guideline_section: |
+      v1.11.0a8 unknown-tool coverage-gap invariant. Closed taxonomy
+      derived from the four FDA 510(k) cleared tools whose per-tool
+      normative ranges are transcribed verbatim in invariants 1-4 of
+      this pack. Severity=info (coverage gap, not clinical violation).
+      Per v1.11.0a5 empirical validation methodology, this invariant
+      is included in the re-run validation against corpus_seed=42 to
+      verify zero false positives on the validated tool set.
