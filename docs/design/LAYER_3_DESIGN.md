@@ -1,10 +1,11 @@
 # Layer 3 -- Cross-Sheet Consistency Audits: Design Document
 
 **NeuroTCS architecture spec**
-**Status:** DESIGN LOCKED (do not modify without bumping `v1.11.0-design.N`)
+**Status:** DESIGN LOCKED -- section 12 RESOLVED via delegated authority (`v1.11.0-design.2`, do not modify without bumping the suffix)
 **Target release:** v1.11.0
-**Design author:** Salokhiddinov M, MD PhD, KIUT Tashkent, 2026-05-25
+**Design author:** Salokhiddinov M, MD PhD, KIUT Tashkent (with section 12 resolutions delegated to Claude/Anthropic on 2026-05-25; see section 12 provenance note)
 **Predecessor:** v1.10.2 (production: 6 packs / 100 bounds; research_preview: 1 pack; deprecated: 6 packs; Layer 1 byte-exact preserved across 5 cohorts)
+**Revision history:** See section 15. Current revision: `v1.11.0-design.2` (2026-05-25)
 
 ---
 
@@ -504,19 +505,119 @@ Estimated total: 3 sessions for full Layer 3 implementation. **None of this happ
 
 ---
 
-## 12. Open questions for review
+## 12. Open questions for review -- RESOLVED via delegation 2026-05-25
 
-The following are explicit open questions that the designer (Dr. Salokhiddinov) should resolve before implementation begins:
+**Provenance note (added in `v1.11.0-design.2`):**
 
-1. **Genotype-phenotype thresholds**: the proposed `apoe44_lifelong_cn_at_age_85_advisory` uses age 85 and 10-year follow-up as the threshold. Is this conservative enough to avoid false-positives in healthy super-aging cohorts (e.g., 90+ Wisconsin Registry for Alzheimer's Prevention sub-cohort)? Recommendation: hold age=85 for v1.11.0; revisit in v1.11.1 with real-cohort data.
+The four open questions in section 12 of the original `v1.11.0-design` document
+were explicitly delegated by the lead investigator (Dr. Marufjon Salokhiddinov,
+KIUT) to the design author (Claude / Anthropic) for resolution, with the
+instruction *"I delegate Q1-Q4 to you; use your recommendations."* The
+resolutions below therefore represent the design author's recommendations
+adopted unchanged, NOT independent clinical judgment by Dr. Salokhiddinov.
+This provenance is recorded so reviewers can apply appropriate skepticism
+where the answers touch clinical-judgment thresholds (Q1 specifically).
 
-2. **Tool-declaration tolerance**: when `manifest.upstream_volumetry_tool == "neuroquant_5.0"`, how strictly should values match NeuroQuant 5.0's range vs. the tool-agnostic Bethlehem 2022 range? Recommendation: tool-specific range with 10% tolerance to accommodate site-to-site variation; values outside both the tool range AND the Bethlehem 2022 range are stronger flags than values outside just the tool range.
+Any of these four resolutions MAY be overridden by Dr. Salokhiddinov in a
+later `v1.11.0-design.N` revision without requiring v1.11.0-rc1 to be reworked,
+PROVIDED the override is recorded in this section and the implementation is
+updated accordingly before v1.11.0 final. Production releases must not ship
+with a resolution that the lead investigator has not affirmatively accepted.
 
-3. **Default invariant-pack set**: should `audit_cross_sheet()` run all 3 production packs by default, or require explicit opt-in via `manifest.cross_sheet_audit_request`? Recommendation: run all 3 by default; skipping requires explicit `cross_sheet_audit_skip` declaration with reason.
+### Q1 -- APOE4/4 lifelong-CN advisory threshold -- RESOLVED
 
-4. **Layer 3 flag IDs in the audit ledger**: should Layer 3 flag IDs appear alongside Layer 1 audit_ids and Layer 2 flag_ids in the audit ledger, or be a separate ledger? Recommendation: same ledger, distinguished by `audit_layer` field (already structured for this).
+**Resolution:** Threshold = age 85 + 10-year observed follow-up window without
+MCI/AD state entry. Flag severity for v1.11.0 = `info` (advisory only).
+Strict reporter discipline: this is a flag for review, never for rejection,
+because rare biological super-aging outliers exist. Revisit in v1.11.1 with
+real-cohort data from OASIS-3 / ADNI / NACC / MIRIAD to determine observed
+false-positive rate and adjust threshold or severity accordingly.
 
-These four questions block implementation. They should be answered (yes/no or with explicit alternative) before v1.11.0-rc1 begins.
+**Why this resolution:** Conservative. The Wisconsin Registry for Alzheimer's
+Prevention and similar super-aging cohorts have documented APOE4/4 carriers
+who remain cognitively normal into their 90s; flagging at age 85 with `info`
+severity catches the population-level pattern (most APOE4/4 carriers DO enter
+MCI/AD by 85) without falsely rejecting the documented biological outliers.
+
+**Caveat:** If observed false-positive rate in real cohorts exceeds 25%, the
+threshold should be raised to age 90 in v1.11.1. This caveat is now part of
+the v1.11.0-rc2 acceptance criteria.
+
+### Q2 -- Tool-declaration tolerance -- RESOLVED
+
+**Resolution:** Two-tier flagging structure.
+
+- **Tier 1 (warning, `flag_severity: "warning"`):** value falls outside the
+  declared FDA tool's specific normative range, but within the Bethlehem 2022
+  tool-agnostic plausible range +/-10%. Interpretation: likely site/scanner
+  methodologic variation; the value is biologically plausible but inconsistent
+  with the declared tool's expected output distribution.
+
+- **Tier 2 (error, `flag_severity: "error"`):** value falls outside BOTH the
+  declared tool's normative range AND the Bethlehem 2022 tool-agnostic
+  plausible range +/-10%. Interpretation: strong evidence the declared tool
+  did not produce this value -- either tool misdeclaration, pipeline error,
+  or extreme pathology.
+
+The +/-10% tolerance is a deliberate design choice to accommodate Suarez-Garcia
+2022 (PMC8962257) cross-tool variation documentation showing that even
+FDA-cleared tools differ by 10-30% on the same patient.
+
+**Why this resolution:** A single-tier strict match would flag too many
+real submissions where the trial uses the FDA tool correctly but the value
+happens to be at the tool's bound edge. A single-tier loose match would miss
+the tool-misdeclaration cases this invariant pack is designed to catch. The
+two-tier structure resolves both failure modes.
+
+### Q3 -- Default invariant-pack set -- RESOLVED
+
+**Resolution:** All three production invariant packs run by default when
+`audit_cross_sheet()` is invoked without an explicit `cross_sheet_audit_request`
+field in the manifest. Skipping any production pack requires:
+
+1. Explicit `cross_sheet_audit_skip: [pack_id]` list in `manifest.json`
+2. Explicit `cross_sheet_audit_skip_reason: "<human-readable reason>"`
+   per skipped pack (minimum 20 characters; pydantic-validated)
+
+No silent skips. The skip-reason becomes part of the audit ledger, so a
+reviewer always sees why a pack was not run.
+
+**Why this resolution:** "Run all by default + require explicit skip" matches
+the existing fail-closed discipline of Layer 1 and Layer 2. If a trial
+submission opts out of a cross-sheet check, the reviewer should see exactly
+which check and exactly why, recorded as part of the audit.
+
+### Q4 -- Audit ledger structure -- RESOLVED
+
+**Resolution:** Single unified audit ledger across all three layers. Each
+flag entry carries a new `audit_layer` field with one of three values:
+
+- `"layer_1_temporal"` -- emitted by `audit()` (rulepack audits)
+- `"layer_2_range"` -- emitted by `audit_clinical_ranges()` (range pack audits)
+- `"layer_3_cross_sheet"` -- emitted by `audit_cross_sheet()` (invariant pack audits, NEW)
+
+Layer 3 `flag_id` entries appear alongside Layer 1 `audit_id` entries and
+Layer 2 `flag_id` entries in the same ledger output. This is the structure
+already implicit in the existing `MultiPackResult` aggregation; v1.11.0
+formalizes the cross-layer field naming.
+
+**Why this resolution:** A single unified ledger is easier for downstream
+consumers (regulators, IRBs, internal QA dashboards) to parse and audit.
+Splitting into separate ledgers would create coupling complications when
+Layer 3 needs to reference Layer 1 or Layer 2 flags as part of its
+cross-sheet evidence (e.g., a cross-sheet invariant whose firing depends
+on whether Layer 1 already flagged a temporal reversal for the same patient).
+
+### Section 12 acceptance status
+
+All four open questions are now RESOLVED via delegated authority. With these
+resolutions, the design as described in this document is **implementation-ready
+for v1.11.0-rc1**. Implementation may begin in a future session, scoped per
+section 11 (3 sessions for rc1, 1 session for rc2, 1 session for final).
+
+The implementation phase MUST trace to this document at tag
+`v1.11.0-design.2` (this revision). Any deviation from the locked design
+requires bumping to `v1.11.0-design.3` with explicit rationale.
 
 ---
 
@@ -549,18 +650,30 @@ This design document is ACCEPTED for implementation when:
 - [x] Section 4 (schema) declares exactly 4 condition types -- no more
 - [x] Section 9 (v1.11.0 content lock) declares exactly 3 production packs / 11 invariants -- no more
 - [x] Section 10 (test strategy) requires Layer 1 byte-exact preservation
-- [x] Section 12 (open questions) lists explicit blockers for implementation
+- [x] Section 12 (open questions) RESOLVED via delegated authority 2026-05-25
 - [x] No code path in this document
 - [x] Every cited paper has PMID/DOI/URL
 - [x] All YAML examples in sections 4.4.1 - 4.4.4 are declarative, not executable
 
-When the dr (Salokhiddinov) signs off on the four open questions in section 12, implementation may begin.
+**Status as of v1.11.0-design.2: RESOLVED. Implementation-ready.**
+
+The lead investigator retains the right to override any section 12 resolution
+in a future `v1.11.0-design.N` revision; production releases must not ship
+with a resolution the lead investigator has not affirmatively accepted (this
+is documented in section 12's provenance note).
 
 ---
 
-## 15. Tag
+## 15. Tag and revision history
 
-This document is tagged `v1.11.0-design` in the repository. Modifications require bumping to `v1.11.0-design.2`, `.3`, etc., with explicit changelog of what changed. The implementation phase (v1.11.0-rc1) traces to this tag.
+| Tag | Date | What changed |
+|---|---|---|
+| `v1.11.0-design` | 2026-05-25 | Initial design document; 4 open questions in section 12 |
+| `v1.11.0-design.2` | 2026-05-25 | Section 12 RESOLVED via delegated authority. Section 14 acceptance updated. No structural design changes; only provenance + answers to open questions. |
+
+Modifications to this document require bumping the tag suffix and adding
+a row to this table. The implementation phase (v1.11.0-rc1) traces to the
+LATEST design tag, currently `v1.11.0-design.2`.
 
 ---
 
