@@ -4,6 +4,151 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0a1] -- 2026-05-25
+
+### Pre-release: Layer 3 (cross-sheet consistency) module skeleton
+
+First alpha of the v1.11.0 Layer 3 implementation arc. Per the
+`docs/design/LAYER_3_DESIGN.md` at tag `v1.11.0-design.2`, the Layer 3
+implementation is scoped across 3 rc1 sessions; this is session #1 of 3.
+
+**SCOPE OF v1.11.0a1 (deliberately narrow):**
+- `src/neurotcs/cross_sheet/` Python module: schema + loader
+- One invariant pack at SKELETON status with one citation-locked invariant
+- 53 new tests (31 schema + 22 loader/discipline)
+- Layer 1 byte-exact preserved (hard gate)
+
+**EXPLICITLY NOT IN v1.11.0a1 (deferred to a2 / a3 / rc1):**
+- `audit_cross_sheet()` execution function
+- The remaining 4 invariants in the tool-declaration pack
+- The `genotype_phenotype_consistency` and `manifest_data_consistency` packs
+- Composite multi-layer audit function
+- Fairness audit integration with Layer 3 flags
+- Promotion of any pack to production status
+
+### Added
+
+**Module: `src/neurotcs/cross_sheet/`**
+
+- `schema.py` -- Pydantic models for `InvariantPack`, `CrossSheetInvariant`,
+  4 closed `ConditionSpec` types (`CategoricalImpliesRangeCondition`,
+  `FieldPresenceConsistencyCondition`, `ValueRangeConditionalCondition`,
+  `CategoricalImpliesTrajectoryPatternCondition`), `SheetSpec`,
+  `NumericRange`, `TrajectoryPattern`, `ConditionalRangeCase`,
+  `InvariantPackStatus` enum (parallel to `RangePackStatus`).
+- `loader.py` -- `load_invariantpack()`, `list_invariantpacks()`,
+  `LoadedInvariantPack` dataclass. Reuses
+  `neurotcs.clinical_ranges.yaml_hash.yaml_sha256_of_path` (the v1.10.1
+  cross-platform-stable hashing mechanism) for invariant-pack hashing.
+- `__init__.py` -- public API exposing schema and loader. Does NOT yet
+  expose `audit_cross_sheet`; that ships in v1.11.0a2.
+
+**Invariant pack: `cross_sheet/tool_declaration_consistency@1.0.0` (SKELETON)**
+
+One invariant at this release: `neuroquant_5_0_implies_hippocampal_volume_in_normative_range`.
+
+- **Condition type:** `categorical_implies_range`
+- **Rule:** if `manifest.upstream_volumetry_tool == "neuroquant_5.0"`, then
+  `biomarkers.hippocampal_volume_total_cm3` must be in [2.8, 5.0] cm^3
+- **Flag severity:** `warning` (Tier 1 per LAYER_3_DESIGN.md section 12 Q2)
+- **Citation strength:** `international_consensus`
+- **Endorsing bodies (7):** FDA, Cortechs.ai (NeuroQuant 5.0 normative
+  database, 16,400 scans), Bethlehem 2022 Brain Chart Consortium (n=101,457),
+  ADNI, PMC11714940 BrainChart AD validation, Mulder 2014 ADNI controls,
+  v1.10.2 `mri_volumetrics/structural_volumetry_consensus`
+- **Anchor citation:** Bethlehem 2022 Nature (PMID 35388223, DOI 10.1038/s41586-022-04554-y)
+
+**Locked golden yaml_sha256:**
+
+| Pack | yaml_sha256 |
+|---|---|
+| `cross_sheet/tool_declaration_consistency` | `e9033c103a03494248e9aa351984726b8b974431e44e9cf717be6ecdbfbc11b9` |
+
+**Tests (53 new, 779 total)**
+
+- `tests/cross_sheet/test_schema.py` (31 tests): schema-version constants,
+  status enum parallel to Layer 2, NumericRange ordering and forbid-extra,
+  SheetSpec valid roles + rejection, all 4 condition types construction +
+  rejection, CrossSheetInvariant + InvariantPack top-level validation,
+  duplicate invariant names rejected, deprecation discipline, canonical
+  hashing determinism, `assert_usable_for_audit()` refuses skeleton /
+  research_preview / planned and accepts production.
+- `tests/cross_sheet/test_loader.py` (22 tests): listing returns shipped pack
+  at skeleton status, loader produces expected sha256 + yaml_sha256,
+  golden yaml_sha256 match, shipped invariant contents (name / condition /
+  source / target / range / unit / severity), world-class discipline gates
+  (international_consensus + >=5 endorsing bodies + public URL + Bethlehem
+  2022 anchor), fail-closed gate refuses skeleton.
+
+### Changed
+
+**Version bump:** 1.10.2 -> 1.11.0a1 (PEP 440 alpha 1 = first incremental
+of the v1.11.0 implementation arc; not yet a release candidate).
+
+### Roadmap (unchanged from LAYER_3_DESIGN.md section 11)
+
+| Release | Session | Adds |
+|---|---|---|
+| **v1.11.0a1** (this) | rc1 #1 of 3 | cross_sheet schema + loader + 1 skeleton invariant + 53 tests |
+| v1.11.0a2 | rc1 #2 of 3 | `audit_cross_sheet()` + NeuroReader + icometrix invariants + ~30 more tests; promotes pack from skeleton to research_preview |
+| v1.11.0a3 | rc1 #3 of 3 | Quantib ND + `tool_value_outside_all_known_tool_ranges_warning` invariant + composite multi-layer audit + fairness integration; promotes pack to production |
+| v1.11.0rc1 | rc2 | golden-value-locked against synthetic + real cohorts |
+| v1.11.0 | final | release |
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- `pytest tests/ -q` -> **779 passed, 7 skipped** (726 v1.10.2 + 53 new = 779)
+- Layer 1 byte-exact verified under v1.11.0a1 (5/5 cohorts):
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` OK
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` OK
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` OK
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` OK
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` OK
+- All 6 v1.10.2 production rangepack yaml_sha256 values unchanged
+
+### What this release does NOT touch (verified frozen)
+
+| Path | Status |
+|---|---|
+| `src/neurotcs/audit_core/` | Frozen since v1.8.1 |
+| `src/neurotcs/rulepack/` | Frozen since v1.9.0 |
+| `src/neurotcs/input_contract/` | Frozen since v1.8.1 |
+| `src/neurotcs/fairness/` | Frozen since v1.8.1 |
+| `src/neurotcs/clinical_ranges/` (Layer 2) | Frozen since v1.10.2 (6 production packs + 1 research_preview + 6 deprecated) |
+| All 5 v1.10.1 production rangepack yaml_sha256 | Byte-identical (cross-platform stable per v1.10.1) |
+| The new `mri_volumetrics/structural_volumetry_consensus` yaml_sha256 from v1.10.2 | Byte-identical |
+| All 5 Layer 1 audit_id invariants | Byte-exact across v1.10.2 -> v1.11.0a1 |
+
+### Honest scope disclosure
+
+What this release does:
+- Lays the structural foundation for Layer 3 (cross-sheet consistency audits)
+- Encodes the first cross-sheet invariant at world-class evidence standard
+- Preserves Layer 1 byte-exact behavior and all v1.10.2 Layer 2 contents
+- Demonstrates the closed `ConditionSpec` taxonomy (no code execution in YAML)
+- Demonstrates the fail-closed audit gate (skeleton pack refuses execution)
+- Establishes the golden yaml_sha256 lock for the first invariant pack
+
+What this release does NOT do:
+- Provide working cross-sheet audit execution (deferred to v1.11.0a2)
+- Provide any of the 4 remaining invariants in the tool_declaration pack
+- Provide the genotype_phenotype_consistency pack (deferred to a3 or rc1)
+- Provide the manifest_data_consistency pack (deferred to a3 or rc1)
+- Provide composite multi-layer audit (deferred to a3 or rc1)
+- Promote any cross_sheet pack to production status
+
+### Why this is shipped as alpha
+
+The audit execution logic does not yet exist. A user who tries to call
+`audit_cross_sheet()` will find no such function in the public API. A user
+who loads the shipped pack and calls `assert_usable_for_audit()` will get
+a `ValueError` because the pack is at SKELETON status. This is intentional:
+the framework refuses to silently audit anything until the full pipeline
+is built and tested. This is the world-class discipline, not a partial fix.
+
+---
+
 ## [1.10.2] -- 2026-05-25
 
 ### Minor release: structural MRI volumetry consensus pack at world-class standard
