@@ -138,7 +138,7 @@ This is the operative section. Every auditor item from both documents is categor
 
 **Group 1 subtotal: 0 (a), 12 (b), 0 (c).**
 
-### 5.2 Document 1, Group 2 -- Imaging biomarkers (11 items)
+### 5.2 Document 1, Group 2 -- Imaging biomarkers (12 items)
 
 | Item | Category | Notes |
 |---|---|---|
@@ -155,9 +155,9 @@ This is the operative section. Every auditor item from both documents is categor
 | fMRI / resting-state functional connectivity | (c) | Research-grade for AD trial endpoints; no consensus cutoffs. |
 | Susceptibility-weighted imaging (SWI) | **(a) IN PRODUCTION** | Covered by `ad/aria_safety@1.0.0` as a contributor to ARIA-H detection (NeuroQuant 5.0 SWI capability noted in v1.10.2). |
 
-**Group 2 subtotal: 8 (a) [4 in production / 4 future], 0 (b), 3 (c).**
+**Group 2 subtotal: 9 (a) [4 in production / 5 future], 0 (b), 3 (c).**
 
-### 5.3 Document 1, Group 3 -- Fluid biomarkers (15 items)
+### 5.3 Document 1, Group 3 -- Fluid biomarkers (16 items)
 
 | Item | Category | Notes |
 |---|---|---|
@@ -178,9 +178,9 @@ This is the operative section. Every auditor item from both documents is categor
 | Plasma GFAP | (a) | Future extension of GFAP pack to plasma. Estimated 1 session. |
 | eMTBR-tau243 (Dec 2025) | (c) | Too new for ≥5 endorsing bodies. Single publication 2025. Revisit when ≥5 international bodies have endorsed cutoffs (estimated 2027+). |
 
-**Group 3 subtotal: 13 (a) [5 in production / 8 future], 0 (b), 3 (c).**
+**Group 3 subtotal: 14 (a) [5 in production / 9 future], 0 (b), 2 (c).**
 
-### 5.4 Document 1, Group 4 -- Genomics (10 items)
+### 5.4 Document 1, Group 4 -- Genomics (11 items)
 
 | Item | Category | Notes |
 |---|---|---|
@@ -198,7 +198,7 @@ This is the operative section. Every auditor item from both documents is categor
 
 **Group 4 subtotal: 2 (a) [1 in production / 1 future], 3 (b), 6 (c).**
 
-### 5.5 Document 1, Group 5 -- Cognitive and functional assessments (18 items)
+### 5.5 Document 1, Group 5 -- Cognitive and functional assessments (20 items)
 
 | Item | Category | Notes |
 |---|---|---|
@@ -223,7 +223,7 @@ This is the operative section. Every auditor item from both documents is categor
 | QOL-AD | (c) | Same as CGIC -- subjective. |
 | Zarit Burden Interview | (c) | Caregiver-reported; reliability/consistency is the actual issue. |
 
-**Group 5 subtotal: 12 (a) [2 already used / 10 future], 0 (b), 6 (c).**
+**Group 5 subtotal: 14 (a) [2 already used / 12 future], 0 (b), 6 (c).**
 
 ### 5.6 Document 1, Group 6 -- Digital biomarkers (8 items)
 
@@ -306,32 +306,69 @@ This is the most consequential group for the auditor's argument. Every item here
 | Real-world linkage data (EHR, claims, mortality, institutionalization) | (b) | External data linkage projects (CMS, OptumLabs). Out of scope. |
 | Data governance and audit trail (query history, locks, amendments) | (b) | EDC system territory (Medidata Rave, Veeva CDB). Out of scope. |
 
-**Document 2 subtotal: 4 (a) [1 already partially addressed / 3 future], 9 (b), 1 (c).**
+**Document 2 subtotal: 5 (a) [1 already partially addressed / 4 future], 8 (b), 1 (c).**
 
 ### 5.11 Triage totals
 
+**Errata note (2026-05-27, NeuroTCS v1.12.1):** Independent ground-truth
+recount of Sections 5.1 through 5.10 corrected the totals in this section.
+The original v1.11.0a1-scope-response numbers (54/27/34/115) reflected
+arithmetic errors in five group subtotals (5.2, 5.3, 5.5, 5.10) and four
+group header item counts (5.2, 5.3, 5.4, 5.5). The numbers below are the
+verified ground-truth recount: **66 (a) / 26 (b) / 25 (c) / 117 items.**
+See CHANGELOG.md v1.12.1 entry for the full reconciliation.
+
 | Category | Count | % |
 |---|---|---|
-| **(a) In-scope, in production** | **15** | **~13%** |
-| **(a) In-scope, future pack/layer** | **39** | **~34%** |
-| **(a) Subtotal: in-scope (already in production + future)** | **54** | **~47%** |
-| **(b) Out-of-scope, belongs in different tool** | **27** | **~24%** |
-| **(c) Genuine roadmap gap, needs clinical judgment or maturing evidence** | **34** | **~29%** |
-| **Total items audited** | **115** | 100% |
+| **(a) In-scope, in production / already used / partially addressed** | **21** | **~18%** |
+| **(a) In-scope, future pack/layer** | **45** | **~38%** |
+| **(a) Subtotal: in-scope (in production + future)** | **66** | **~56%** |
+| **(b) Out-of-scope, belongs in different tool** | **26** | **~22%** |
+| **(c) Genuine roadmap gap, needs clinical judgment or maturing evidence** | **25** | **~21%** |
+| **Total items audited** | **117** | 100% |
 
-**The headline number:** the auditor identified ~115 distinct gap categories. **~47% are in-scope for NeuroTCS** (15 already in production, 39 future); **~24% are explicitly out-of-scope** with named alternative tools (CDISC validators, EDC systems, image-QC tools, etc.); **~29% need clinical judgment or maturing evidence** before they can be scoped.
+**Per-group ground-truth recount:**
 
-This is a much more defensible position than "we need 115 more packs." It is also a much more defensible position than "we have nothing to add."
+| Section | Group | Total | (a) | (b) | (c) |
+|---|---|---|---|---|---|
+| 5.1 | Document 1, Group 1 -- SDTM core domains | 12 | 0 | 12 | 0 |
+| 5.2 | Document 1, Group 2 -- Imaging biomarkers | 12 | 9 | 0 | 3 |
+| 5.3 | Document 1, Group 3 -- Fluid biomarkers | 16 | 14 | 0 | 2 |
+| 5.4 | Document 1, Group 4 -- Genomics | 11 | 2 | 3 | 6 |
+| 5.5 | Document 1, Group 5 -- Cognitive and functional assessments | 20 | 14 | 0 | 6 |
+| 5.6 | Document 1, Group 6 -- Digital biomarkers | 8 | 1 | 0 | 7 |
+| 5.7 | Document 1, Group 7 -- Trial-operational data | 10 | 7 | 3 | 0 |
+| 5.8 | Document 1, Group 8 -- Anti-amyloid safety endpoints | 10 | 10 | 0 | 0 |
+| 5.9 | Document 1, Group 9 -- Outcome adjudication | 4 | 4 | 0 | 0 |
+| 5.10 | Document 2 -- 14 additional dataset layers | 14 | 5 | 8 | 1 |
+| **Total** | | **117** | **66** | **26** | **25** |
+
+*Note on Section 5.10:* one row in Document 2 ("Anti-amyloid treatment
+safety decision trees") is annotated **(a) Already in roadmap (Group 8)**
+and is a cross-reference to items counted separately in Section 5.8.
+This is preserved in the 117-row count (it appears as a distinct row in
+the auditor's Document 2 table). The duplicate is acknowledged here so
+downstream consumers can adjust the totals if they prefer to deduplicate.
+
+**The headline number:** the auditor identified 117 distinct gap rows
+across Documents 1 and 2. **~56% are in-scope for NeuroTCS** (21 already
+in production or addressed, 45 future); **~22% are explicitly out-of-scope**
+with named alternative tools (CDISC validators, EDC systems, image-QC
+tools, etc.); **~21% need clinical judgment or maturing evidence** before
+they can be scoped.
+
+This is a much more defensible position than "we need 117 more packs." It
+is also a much more defensible position than "we have nothing to add."
 
 ---
 
-## 6. Defensible roadmap for the 39 in-scope future items
+## 6. Defensible roadmap for the 45 in-scope future items
 
-Realistic estimate: 39 future (a) items at the v1.10.x pace of ~1-2 packs per session = **20-30 additional implementation sessions**. Roughly 12-18 months of disciplined work.
+Realistic estimate: 45 future (a) items at the v1.10.x pace of ~1-2 packs per session = **22-35 additional implementation sessions**. Roughly 12-20 months of disciplined work.
 
 ### 6.1 Priority tiers
 
-The 39 future items split into three tiers by clinical importance + evidence readiness:
+The 45 future items split into three tiers by clinical importance + evidence readiness:
 
 **Tier 1 -- High priority, evidence ready (10 items, ~10-12 sessions):**
 
@@ -364,9 +401,9 @@ The 39 future items split into three tiers by clinical importance + evidence rea
 24. Microbleeds non-ARIA Layer 2 pack
 25. Surveillance MRI schedule Layer 4 invariant
 
-**Tier 3 -- Lower priority, Layer 4 dependent (14 items, ~15 sessions):**
+**Tier 3 -- Lower priority, Layer 4 dependent (20 items, ~18-20 sessions):**
 
-26-39. Various Layer 4 (inclusion/protocol/missing-data) items, screen failures, endpoint derivation Layer 3 invariants, outcome adjudication consistency invariants, study-partner reliability framework (depends on Layer 4 design first).
+26-45. Various Layer 4 (inclusion/protocol/missing-data) items, screen failures, endpoint derivation Layer 3 invariants, outcome adjudication consistency invariants, study-partner reliability framework, and additional in-scope (a) items from the corrected ground-truth recount (depends on Layer 4 design first).
 
 ### 6.2 Sequencing recommendation
 
@@ -381,16 +418,16 @@ Complete the v1.11.0 arc first (a2, a3, rc1, final = 4 sessions). Then begin the
 | Complete v1.11.0 arc | a2, a3, rc1, final | 4 sessions | 1-2 months |
 | Tier 1 roadmap | v1.11.1 - v1.11.10 | 10 sessions | 3-5 months |
 | Tier 2 roadmap + Layer 4 design | v1.12.0-design, v1.12.x, v1.13.x | 15 sessions | 5-8 months |
-| Tier 3 roadmap | v1.14.x + | 15 sessions | 5-9 months |
-| **Total** | **v1.11.0 - v1.14.x** | **~44 sessions** | **14-24 months** |
+| Tier 3 roadmap | v1.14.x + | 18-20 sessions | 6-11 months |
+| **Total** | **v1.11.0 - v1.14.x** | **~47-49 sessions** | **15-26 months** |
 
 This is honest. It is not "we'll cover everything in two sessions." It is also not "we'll never cover this." It is a disciplined multi-year roadmap at world-class evidence standard.
 
 ---
 
-## 7. Explicit out-of-scope statements for the 27 (b) items
+## 7. Explicit out-of-scope statements for the 26 (b) items
 
-For the 27 items categorized (b), NeuroTCS will not implement audit coverage. This section documents which tools should handle them, so trial submitters can use NeuroTCS in combination with the appropriate tools.
+For the 26 items categorized (b), NeuroTCS will not implement audit coverage. This section documents which tools should handle them, so trial submitters can use NeuroTCS in combination with the appropriate tools.
 
 | (b) Item | Recommended tool / standard |
 |---|---|
@@ -398,7 +435,6 @@ For the 27 items categorized (b), NeuroTCS will not implement audit coverage. Th
 | ADaM analysis datasets | Trial biostatistician + Define-XML traceability tools |
 | Randomization / stratification metadata | IWRS/IxRS systems (Calyx, Endpoint Clinical, Veeva eClinical) |
 | Raw DICOM headers, scanner/coil/sequence params | MRIQC, dcm2niix, scanner vendor QA, central reader QA programs |
-| PET reconstruction QC | Central PET reader QA, scanner vendor QA |
 | Bioanalytical assay metadata (batch, LLOQ, freeze-thaw) | Bioanalytical lab CLIA/CAP documentation (Quanterix, Roche Elecsys, Lilly validated lab reports) |
 | Drug accountability | EDC (Medidata Rave, Veeva CDB) |
 | Concomitant medication interactions | Trial pharmacovigilance system, FDA FAERS for post-market |
@@ -415,16 +451,17 @@ NeuroTCS users should ensure these tools are in place upstream of (or alongside)
 
 ---
 
-## 8. Honest acknowledgment of 34 (c) items
+## 8. Honest acknowledgment of 25 (c) items
 
-The 34 (c) items are not refused. They are honest "we don't know yet" items, each with a specific reason:
+The 25 (c) items are not refused. They are honest "we don't know yet" items, each with a specific reason:
 
 | Reason category | Count | Examples |
 |---|---|---|
-| Evidence too immature for ≥5-body consensus | ~15 | eMTBR-tau243 (Dec 2025), most digital biomarkers, sTREM2, methylation, transcriptomics |
-| Multiple competing standards, no convergence | ~10 | Polygenic risk scores, GWAS panels, DTI tract selection, ASL/fMRI cutoffs |
-| Inherently subjective endpoint | ~5 | CGIC, QOL-AD, Zarit, caregiver-reported scales |
-| Methodology open research | ~4 | Study-partner reliability framework, LMIC language/rater drift |
+| Evidence too immature for ≥5-body consensus | 12 | eMTBR-tau243 (Dec 2025), 7 digital biomarkers (gait, speech, typing, sleep, driving, eye-tracking, smartphone), CSF sTREM2, methylation panel, transcriptomic profile, mitochondrial DNA haplogroup |
+| Multiple competing standards, no convergence | 6 | GWAS panels, PLCG2 protective variant, polygenic risk scores, DTI tract selection, ASL perfusion cutoffs, fMRI/resting-state cutoffs |
+| Inherently subjective endpoint | 6 | FAQ, CFI, ADCS-ADL (all informant-reported), CGIC, QOL-AD, Zarit (all subjective) |
+| Methodology open research | 1 | Caregiver / study-partner data reliability framework |
+| **Total** | **25** | |
 
 Each (c) item gets revisited when its blocking condition resolves. Examples:
 - **eMTBR-tau243** -- revisit when 5+ international bodies endorse cutoffs (estimated 2027)
@@ -439,7 +476,7 @@ This is the honest version of "this is not a partial fix; this is a deliberate h
 
 If the auditor reads only one paragraph of this document, it should be this:
 
-> *You are correct that NeuroTCS is not a complete AD trial-data recognizer. It was never designed to be one and is not described in that way in the v1.x scope documents (see `docs/SCOPE.md`). NeuroTCS is a citation-locked, fail-closed audit framework for the logical consistency of AD trial biomarker data, operating at three layers: temporal coherence of categorical state trajectories (Layer 1, production since v1.8.x), per-visit plausibility of continuous biomarker values against published normative ranges (Layer 2, production since v1.10.0 with 6 packs / 100 bounds), and cross-sheet consistency between manifest declarations and observed values (Layer 3, in development per `LAYER_3_DESIGN.md` v1.11.0-design.2). Of the ~115 gap categories your review identified, ~47% (54 items) are in-scope for NeuroTCS, of which 15 are already in production and 39 are on a disciplined 20-30 session roadmap (estimated 12-18 months). ~24% (27 items) are explicitly out-of-scope, with named alternative tools (CDISC SDTM validators, EDC systems, image-QC tools, CLIA-certified bioanalytical labs) recommended. ~29% (34 items) are genuine roadmap gaps awaiting maturing evidence or convergent clinical-judgment standards; each will be revisited when its specific blocking condition resolves. The framework's hard boundaries -- no measurement, no SDTM structural validation, no event adjudication, no replacement for human expert review -- are documented in section 3 of this response. We welcome integration with the upstream and adjacent tools that handle the layers above and below us.*
+> *You are correct that NeuroTCS is not a complete AD trial-data recognizer. It was never designed to be one and is not described in that way in the v1.x scope documents (see `docs/SCOPE.md`). NeuroTCS is a citation-locked, fail-closed audit framework for the logical consistency of AD trial biomarker data, operating at three layers: temporal coherence of categorical state trajectories (Layer 1, production since v1.8.x), per-visit plausibility of continuous biomarker values against published normative ranges (Layer 2, production since v1.10.0 with 6 packs / 100 bounds), and cross-sheet consistency between manifest declarations and observed values (Layer 3, in development per `LAYER_3_DESIGN.md` v1.11.0-design.2). Of the 117 gap rows your review identified, ~56% (66 items) are in-scope for NeuroTCS, of which 21 are already in production or addressed and 45 are on a disciplined 22-35 session roadmap (estimated 12-20 months). ~22% (26 items) are explicitly out-of-scope, with named alternative tools (CDISC SDTM validators, EDC systems, image-QC tools, CLIA-certified bioanalytical labs) recommended. ~21% (25 items) are genuine roadmap gaps awaiting maturing evidence or convergent clinical-judgment standards; each will be revisited when its specific blocking condition resolves. The framework's hard boundaries -- no measurement, no SDTM structural validation, no event adjudication, no replacement for human expert review -- are documented in section 3 of this response. We welcome integration with the upstream and adjacent tools that handle the layers above and below us.*
 
 That paragraph is the public-facing position. Sections 1-8 above are the technical support for it.
 
@@ -465,7 +502,7 @@ To be explicit about what this scope-response document does NOT commit to:
 
 | Tag | Date | What changed |
 |---|---|---|
-| `v1.11.0a1-scope-response` | 2026-05-25 | Initial scope-response document. Triage of ~115 auditor-identified gap categories. Roadmap for 39 future in-scope items. Out-of-scope statements for 27 items. Acknowledgment of 34 evidence-or-judgment-pending items. |
+| `v1.11.0a1-scope-response` | 2026-05-25 | Initial scope-response document. Triage of 117 auditor-identified gap rows. Roadmap for in-scope future items. Out-of-scope statements. Acknowledgment of evidence-or-judgment-pending items. (NOTE: original v1.11.0a1-scope-response numbers (54/27/34/115) reflected arithmetic errors corrected in NeuroTCS v1.12.1 — see CHANGELOG.md.) |
 
 Modifications to this document require bumping to `v1.11.0a1-scope-response.2`, `.3`, etc., with explicit changelog of which items moved between categories and why.
 
@@ -478,10 +515,10 @@ This document is ACCEPTED when:
 - [x] Section 2 (one-sentence definition) is signed off
 - [x] Section 3 (four hard boundaries) is signed off
 - [x] Section 4 (triage taxonomy a/b/c) is the operative method
-- [x] Section 5 (item-by-item triage, ~115 items) is the operative result
-- [x] Section 6 (roadmap for 39 in-scope future items) is roadmap-only, not commitment
-- [x] Section 7 (27 out-of-scope items + named alternative tools) is the operative recommendation
-- [x] Section 8 (34 evidence-pending items) is the operative deferral
+- [x] Section 5 (item-by-item triage, 117 items) is the operative result
+- [x] Section 6 (roadmap for 45 in-scope future items) is roadmap-only, not commitment
+- [x] Section 7 (26 out-of-scope items + named alternative tools) is the operative recommendation
+- [x] Section 8 (25 evidence-pending items) is the operative deferral
 - [x] Section 9 (one-paragraph response to auditor) is the public-facing position
 - [x] No code, no schema, no test changes in this release
 
