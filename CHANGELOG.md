@@ -4,6 +4,174 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.1] -- 2026-05-28
+
+### Documentation-only release: scope doc reclassification post-v1.13.0
+
+Two items in `docs/SCOPE_RESPONSE_TO_EXTERNAL_AUDIT.md` reclassified based
+on v1.13.0 implementation work and primary-source research findings.
+**Zero code changes.** Zero schema changes. Zero test changes. All
+existing pack hashes byte-identical. All Layer 1 cTCS + audit_ids
+byte-identical.
+
+### Reclassification 1: WMH/Fazekas moved (a) future → (a) IN PRODUCTION
+
+The Section 5.2 row "MRI white matter hyperintensities (WMH, Fazekas)"
+moved from "(a) future Layer 2 pack, estimated 1-2 sessions" to
+"(a) IN PRODUCTION -- Covered by `mri_volumetrics/wmh_fazekas_consensus@1.0.0`"
+to reflect the v1.13.0 ship. Anchors documented in the row: Fazekas 1987
+(PMID 3496763), STRIVE-2 (Duering 2023, PMID 37236211), Meta VCI Map
+(de Kort 2024, PMID 39602940, n=14,876), NeuroQuant FDA 510(k).
+
+### Reclassification 2: CSF p-tau217 moved (a) future → (c) needs maturing evidence
+
+The Section 5.3 row "CSF p-tau217" moved from "(a) future pack
+`csf_biomarkers/ptau217_consensus`, estimated 1-2 sessions" to
+"(c) needs maturing evidence" after v1.13.0 primary-source research
+revealed three blocking findings:
+
+1. **No FDA-cleared CSF p-tau217 cutoff exists.** The May 2025 FDA 510(k)
+   clearance is the Lumipulse G pTau217/Aβ42 **plasma** ratio (Fujirebio,
+   May 16, 2025), not CSF. Repeated initial assumption that "FDA-cleared
+   p-tau217" applied to CSF was wrong.
+2. **Plasma p-tau217 is already shipping** in
+   `plasma_biomarkers/plasma_amyloid_consensus@1.0.0` (measurements:
+   `plasma_ptau217_pgml`, `plasma_ptau217_abeta42_ratio_lumipulse`,
+   `plasma_amyloid_status`). A CSF-only pack would be redundant for the
+   modality that has regulatory standardization.
+3. **Cross-platform CSF cutoffs lack ≥5-body consensus.** Lilly MSD,
+   Quanterix Simoa, and Roche Elecsys all measure CSF p-tau217 in pg/mL
+   with different absolute ranges and no harmonized conversion factor.
+   Janelidze 2020 (Nat Commun, BioFINDER cohort), Leuzy 2021 (Neurology),
+   Mattsson-Carlgren 2020 (Sci Adv) all use platform-specific cutoffs.
+   This fails the production-floor international_consensus standard.
+
+Revisit condition: (a) FDA clears a CSF p-tau217 assay, OR (b) AA/IWG/EAN/
+EFNS/SNMMI converge on a single cross-platform CSF cutoff. Estimated
+revisit: 2027+.
+
+### Net effect on triage totals
+
+| Metric | v1.12.1 | v1.13.1 | Delta |
+|---|---|---|---|
+| Total items audited | 117 | 117 | 0 |
+| (a) In-scope total | 66 | 65 | -1 |
+| (a) In production / addressed | 21 | **22** | **+1** |
+| (a) Future | 45 | **43** | **-2** |
+| (b) Out-of-scope | 26 | 26 | 0 |
+| (c) Needs maturing evidence | 25 | **26** | **+1** |
+
+Verification: 117 = 65 + 26 + 26 ✓. Independent Python text-parser recount
+across all 10 Section 5 tables confirms per-group subtotals match the
+v1.13.1 table. Methodology identical to v1.12.1 ground-truth recount.
+
+### Group-level changes
+
+**Group 2 (Imaging biomarkers):** 12 items, 9 (a) [5 in-production / 4
+future], 0 (b), 3 (c). Change: in-production count 4 → 5; future count
+5 → 4 (WMH/Fazekas moved). Group total unchanged.
+
+**Group 3 (Fluid biomarkers):** 16 items, **13 (a)** [5 in-production /
+8 future], 0 (b), **3 (c)**. Change: (a) total 14 → 13; future count
+9 → 8 (CSF p-tau217 moved); (c) total 2 → 3. Group total unchanged.
+
+All 8 other group subtotals unchanged.
+
+### Tier 1 roadmap (Section 6.1) impact
+
+Tier 1 dropped from 10 items to 8 items. Items renumbered:
+
+1-5. Five ARIA-related Layer 3 invariants (Group 8) -- unchanged
+6. Tau PET regional SUVR + Braak Layer 2 pack -- was item 6, unchanged
+7. ~~WMH / Fazekas Layer 2 pack~~ **DONE in v1.13.0**
+8. ~~CSF p-tau217 Layer 2 pack~~ **MOVED to (c) in v1.13.1**
+7. NfL Layer 2 pack (CSF + plasma) -- was item 9, renumbered to 7
+8. GFAP Layer 2 pack (CSF + plasma) -- was item 10, renumbered to 8
+
+Session estimate reduced from 10-12 sessions to 8-10 sessions for Tier 1.
+
+### Section 6.3 timeline impact
+
+| Phase | Sessions (v1.12.1) | Sessions (v1.13.1) | Delta |
+|---|---|---|---|
+| Complete v1.11.0 arc | 4 | 4 | 0 |
+| Tier 1 roadmap | 10 | **8-10** | -2 to 0 |
+| Tier 2 + Layer 4 design | 15 | 15 | 0 |
+| Tier 3 roadmap | 18-20 | 18-20 | 0 |
+| **Total** | **47-49** | **45-49** | -2 to 0 |
+
+Wall-clock estimate slightly reduced: was 15-26 months, now 15-25 months.
+
+### Modified files
+
+- `docs/SCOPE_RESPONSE_TO_EXTERNAL_AUDIT.md`:
+  - Section 5.2 line 146: WMH/Fazekas row updated to "(a) IN PRODUCTION"
+  - Section 5.2 subtotal: added v1.13.1 change note (4→5 in-production)
+  - Section 5.3 line 169: CSF p-tau217 row updated to "(c)" with full rationale
+  - Section 5.3 subtotal: 14 (a) → 13 (a), 2 (c) → 3 (c)
+  - Section 5.11: prepended v1.13.1 update note; totals table updated
+    (66/26/25 → 65/26/26; in-production 21 → 22; future 45 → 43);
+    per-group ground-truth table updated; headline paragraph updated
+  - Section 6 header: "45 future items" → "43 future items"
+  - Section 6.1 Tier 1: 10 items → 8 items with change note; items renumbered
+  - Section 6.1 Tier 3: range "26-45" → "26-43" with numbering note
+  - Section 6.3 timeline: Tier 1 10 → 8-10 sessions, total 47-49 → 45-49,
+    wall-clock 15-26 → 15-25 months
+  - Section 8 header: "25 (c) items" → "26 (c) items"; CSF p-tau217 added
+    to "multiple competing standards, no convergence" row (6→7); subtotal
+    25 → 26; new revisit bullet for CSF p-tau217
+  - Section 9 auditor-response paragraph: 66/21/45 → 65/22/43; 25 → 26 (c);
+    "22-35 session roadmap" → "22-33 session roadmap"; "Layer 2... 6 packs /
+    100 bounds" → "Layer 2... 7 packs as of v1.13.0"
+  - Section 11 tag history: added `v1.12.1` row + new `v1.13.1` row
+  - Section 12 acceptance criteria: 45 → 43 future items, 25 → 26 (c) items
+- `pyproject.toml`, `src/neurotcs/__init__.py`, `CITATION.cff`: version
+  1.13.0 → 1.13.1
+- `CHANGELOG.md`: this entry
+
+### Unchanged
+
+- **All 7 Layer 2 production rangepack yaml_sha256** byte-identical to v1.13.0:
+  - `ad/aria_safety`: `0f5c3275c5eaaaa7e45f3636cd3a29ec7ff193d03024f624ad93ec6638af4912`
+  - `pet_amyloid/centiloid_consensus`: `bfcc5f5d8ca773d9781bc99cd057f4888728b4870ae147103dfdc07f2bb92fc2`
+  - `genetics/apoe_consensus`: `3d9cdca055b4b9049c9ee7636987231001c9a93d716920d630afb52016087c8f`
+  - `csf_biomarkers/csf_amyloid_consensus`: `ef9b4e3c75020e618c894e52f68700fa14bd09f079ed971a25fea30d3d8c021b`
+  - `plasma_biomarkers/plasma_amyloid_consensus`: `cec8f0fa928b744068fb45e5ef406a49f5b2217db8ef0be95c066d9394e4da2f`
+  - `mri_volumetrics/structural_volumetry_consensus`: `70710ccf013b36e5941a440a46df1b169bb505e0787a3163945e880db354191f`
+  - `mri_volumetrics/wmh_fazekas_consensus`: `d4fee2be22ce6780490dc90989dde3aaef66d760a2b5b3a90f0b8753e98df0c6`
+- **All 2 Layer 3 invariantpack yaml_sha256** byte-identical to v1.13.0:
+  - `cross_sheet/tool_declaration_consistency`: `cf148e31edce12e9b856a226bd598970431013ebd72d2c05897360dc4b9edba4`
+  - `cross_sheet/genotype_phenotype_consistency`: `c988ffeddc31d04121cc012dcb32fe1e09f64ad4ddfb95e22b772a32788a1a40`
+- **All 3 Layer 1 rulepacks** byte-identical to v1.13.0
+- **All 5 Layer 1 cohort cTCS scores** byte-identical:
+  OASIS-3 0.994191, ADNI 0.994575, NACC 0.991502, MIRIAD 0.985369,
+  MIRIAD-test-retest 1.000000
+- **All 5 Layer 1 cohort audit_ids** byte-identical to v1.13.0
+- **All 1031 tests** still pass (no code or test changes)
+- **ruff** clean (no code changes)
+- **All 14 packs in roster** unchanged (7 production + 1 preview + 6 deprecated)
+
+### Verification
+
+- `pytest tests/ -q` -> 1031 passed, 7 skipped (identical to v1.13.0)
+- `ruff check src/ tests/ scripts/` -> All checks passed (no code changes)
+- Independent Python text-parser ground-truth recount: 117/65/26/26
+  verified across all 10 Section 5 groups
+- All 9 existing pack hashes byte-identical to v1.13.0
+- All 5 cTCS + audit_ids byte-identical to v1.13.0
+
+### Roadmap-integrity discipline preserved
+
+This release demonstrates the v1.12.1 docs-arithmetic-correction discipline
+applied to forward roadmap accuracy. When v1.13.0 shipped, two scope-doc
+items became stale: WMH/Fazekas was no longer "future" (it was done), and
+CSF p-tau217 was no longer "(a) ready" (primary-source research found
+fundamental issues with the original triage decision). Shipping v1.14.0
+on top of a stale scope doc would have been the partial-fix pattern the
+standing mandate prohibits. v1.13.1 corrects both before any new code work.
+
+---
+
 ## [1.13.0] -- 2026-05-27
 
 ### New Layer 2 pack: WMH/Fazekas consensus

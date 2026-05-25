@@ -143,7 +143,7 @@ This is the operative section. Every auditor item from both documents is categor
 | Item | Category | Notes |
 |---|---|---|
 | MRI volumetric segmentation (hippocampus, etc.) | **(a) PARTIALLY IN PRODUCTION** | Covered by `mri_volumetrics/structural_volumetry_consensus@1.0.0` (v1.10.2, 6 production packs / 100 bounds). 18 additional regions in `freesurfer_extended` research_preview pack. Future v1.10.3 session promotes feasible regions. |
-| MRI white matter hyperintensities (WMH, Fazekas) | (a) | Future Layer 2 pack. Has consensus normative (Fazekas 1987, ENIGMA QC, NeuroQuant Microvascular report). Estimated 1-2 sessions. |
+| MRI white matter hyperintensities (WMH, Fazekas) | **(a) IN PRODUCTION** | Covered by `mri_volumetrics/wmh_fazekas_consensus@1.0.0` (v1.13.0, 6 measurements / 13 bounds). Anchors: Fazekas 1987 (PMID 3496763), STRIVE-2 (Duering 2023, PMID 37236211), Meta VCI Map (de Kort 2024, PMID 39602940, n=14,876), NeuroQuant FDA 510(k). |
 | MRI microbleeds, superficial siderosis | (a) | Future Layer 2 pack. Has consensus criteria (Microbleed Anatomical Rating Scale, BOMBS scale, Brain Observer MicroBleed Scale). Partially covered by `ad/aria_safety@1.0.0` (ARIA-H). Future pack could expand to non-ARIA microbleed contexts. |
 | MRI ARIA-E reads | **(a) IN PRODUCTION** | Covered by `ad/aria_safety@1.0.0` (severity/location/evolution). |
 | MRI ARIA-H reads | **(a) IN PRODUCTION** | Covered by `ad/aria_safety@1.0.0`. |
@@ -155,7 +155,9 @@ This is the operative section. Every auditor item from both documents is categor
 | fMRI / resting-state functional connectivity | (c) | Research-grade for AD trial endpoints; no consensus cutoffs. |
 | Susceptibility-weighted imaging (SWI) | **(a) IN PRODUCTION** | Covered by `ad/aria_safety@1.0.0` as a contributor to ARIA-H detection (NeuroQuant 5.0 SWI capability noted in v1.10.2). |
 
-**Group 2 subtotal: 9 (a) [4 in production / 5 future], 0 (b), 3 (c).**
+**Group 2 subtotal: 9 (a) [5 in production / 4 future], 0 (b), 3 (c).**
+
+*Change from v1.12.1: WMH/Fazekas moved from "future" to "in production" with the v1.13.0 ship of `mri_volumetrics/wmh_fazekas_consensus@1.0.0`. In-production count: 4 → 5; future count: 5 → 4. Group totals unchanged.*
 
 ### 5.3 Document 1, Group 3 -- Fluid biomarkers (16 items)
 
@@ -166,7 +168,7 @@ This is the operative section. Every auditor item from both documents is categor
 | CSF Aβ42/40 ratio | **(a) IN PRODUCTION** | Covered by `csf_biomarkers/csf_amyloid_consensus@1.0.0`. |
 | CSF total tau | (a) | Future extension of `csf_biomarkers/csf_amyloid_consensus` or new pack. Anchor: NIA-AA 2024 biological staging. Estimated 1 session. |
 | CSF p-tau181 | (a) | Future extension. Anchor: Janelidze 2020, AA 2024. Estimated 1 session. |
-| CSF p-tau217 | (a) | Future pack `csf_biomarkers/ptau217_consensus`. Anchor: Lilly Elecsys p-tau217, Quanterix Simoa, AA 2024 Table 7. Estimated 1-2 sessions. |
+| CSF p-tau217 | (c) | **DOWNGRADED from (a) in v1.13.1.** During v1.13.0 primary-source research, three findings forced this reclassification: (1) No FDA-cleared CSF p-tau217 cutoff exists; the May 2025 FDA 510(k) clearance is the Lumipulse G pTau217/Aβ42 **plasma** ratio, not CSF. (2) Plasma p-tau217 is already shipping in `plasma_biomarkers/plasma_amyloid_consensus@1.0.0` (measurements: `plasma_ptau217_pgml`, `plasma_ptau217_abeta42_ratio_lumipulse`, `plasma_amyloid_status`); a CSF-only pack would be redundant for the modality that has regulatory standardization. (3) Cross-platform CSF p-tau217 cutoffs (Lilly MSD, Quanterix Simoa, Roche Elecsys) lack a single ≥5-body consensus; each platform reports different absolute pg/mL ranges with no harmonized conversion factor. Revisit when (a) FDA clears a CSF p-tau217 assay, OR (b) AA/IWG/EAN/EFNS/SNMMI converge on a single cross-platform CSF cutoff. Estimated revisit: 2027+. |
 | CSF p-tau231 | (a) | Future extension. Anchor: Ashton 2021. Estimated 1 session. |
 | CSF NfL | (a) | Future pack `fluid_biomarkers/nfl_consensus`. Anchor: Simoa NfL, BMD pipelines. Estimated 1-2 sessions. |
 | CSF GFAP | (a) | Future pack `fluid_biomarkers/gfap_consensus`. Anchor: Simoa GFAP, Pereira 2021. Estimated 1-2 sessions. |
@@ -178,7 +180,9 @@ This is the operative section. Every auditor item from both documents is categor
 | Plasma GFAP | (a) | Future extension of GFAP pack to plasma. Estimated 1 session. |
 | eMTBR-tau243 (Dec 2025) | (c) | Too new for ≥5 endorsing bodies. Single publication 2025. Revisit when ≥5 international bodies have endorsed cutoffs (estimated 2027+). |
 
-**Group 3 subtotal: 14 (a) [5 in production / 9 future], 0 (b), 2 (c).**
+**Group 3 subtotal: 13 (a) [5 in production / 8 future], 0 (b), 3 (c).**
+
+*Change from v1.12.1: CSF p-tau217 reclassified from "(a) future" to "(c) needs maturing evidence" after v1.13.0 primary-source research (see line above). (a) total: 14 → 13; (c) total: 2 → 3. Group total of 16 items unchanged.*
 
 ### 5.4 Document 1, Group 4 -- Genomics (11 items)
 
@@ -314,26 +318,45 @@ This is the most consequential group for the auditor's argument. Every item here
 recount of Sections 5.1 through 5.10 corrected the totals in this section.
 The original v1.11.0a1-scope-response numbers (54/27/34/115) reflected
 arithmetic errors in five group subtotals (5.2, 5.3, 5.5, 5.10) and four
-group header item counts (5.2, 5.3, 5.4, 5.5). The numbers below are the
-verified ground-truth recount: **66 (a) / 26 (b) / 25 (c) / 117 items.**
+group header item counts (5.2, 5.3, 5.4, 5.5). The v1.12.1 verified
+ground-truth recount was: **66 (a) / 26 (b) / 25 (c) / 117 items.**
 See CHANGELOG.md v1.12.1 entry for the full reconciliation.
+
+**Update note (2026-05-28, NeuroTCS v1.13.1):** Two items reclassified
+since v1.12.1, both originating from v1.13.0 development work:
+
+1. **WMH / Fazekas (Group 2, Section 5.2):** Moved from "(a) future" to
+   "(a) IN PRODUCTION" with the v1.13.0 ship of
+   `mri_volumetrics/wmh_fazekas_consensus@1.0.0`. Group 2 in-production
+   count: 4 → 5; future count: 5 → 4. Item count unchanged.
+2. **CSF p-tau217 (Group 3, Section 5.3):** Reclassified from "(a) future"
+   to "(c) needs maturing evidence" after v1.13.0 primary-source research
+   found that (a) no FDA-cleared CSF p-tau217 cutoff exists (May 2025
+   Lumipulse 510(k) is plasma, not CSF), (b) plasma p-tau217 is already
+   covered in shipped `plasma_amyloid_consensus@1.0.0`, and (c) cross-
+   platform CSF cutoffs lack ≥5-body consensus.
+
+Net effect on totals: **(a) 66 → 65**, **(c) 25 → 26**, **(b) 26
+unchanged**, **total 117 unchanged**. In-production count: **21 → 22**.
+Future (a) count: **45 → 43** (lost 2: WMH/Fazekas became in-production,
+CSF p-tau217 became (c)).
 
 | Category | Count | % |
 |---|---|---|
-| **(a) In-scope, in production / already used / partially addressed** | **21** | **~18%** |
-| **(a) In-scope, future pack/layer** | **45** | **~38%** |
-| **(a) Subtotal: in-scope (in production + future)** | **66** | **~56%** |
+| **(a) In-scope, in production / already used / partially addressed** | **22** | **~19%** |
+| **(a) In-scope, future pack/layer** | **43** | **~37%** |
+| **(a) Subtotal: in-scope (in production + future)** | **65** | **~56%** |
 | **(b) Out-of-scope, belongs in different tool** | **26** | **~22%** |
-| **(c) Genuine roadmap gap, needs clinical judgment or maturing evidence** | **25** | **~21%** |
+| **(c) Genuine roadmap gap, needs clinical judgment or maturing evidence** | **26** | **~22%** |
 | **Total items audited** | **117** | 100% |
 
-**Per-group ground-truth recount:**
+**Per-group ground-truth recount (post-v1.13.1):**
 
 | Section | Group | Total | (a) | (b) | (c) |
 |---|---|---|---|---|---|
 | 5.1 | Document 1, Group 1 -- SDTM core domains | 12 | 0 | 12 | 0 |
 | 5.2 | Document 1, Group 2 -- Imaging biomarkers | 12 | 9 | 0 | 3 |
-| 5.3 | Document 1, Group 3 -- Fluid biomarkers | 16 | 14 | 0 | 2 |
+| 5.3 | Document 1, Group 3 -- Fluid biomarkers | 16 | 13 | 0 | 3 |
 | 5.4 | Document 1, Group 4 -- Genomics | 11 | 2 | 3 | 6 |
 | 5.5 | Document 1, Group 5 -- Cognitive and functional assessments | 20 | 14 | 0 | 6 |
 | 5.6 | Document 1, Group 6 -- Digital biomarkers | 8 | 1 | 0 | 7 |
@@ -341,7 +364,7 @@ See CHANGELOG.md v1.12.1 entry for the full reconciliation.
 | 5.8 | Document 1, Group 8 -- Anti-amyloid safety endpoints | 10 | 10 | 0 | 0 |
 | 5.9 | Document 1, Group 9 -- Outcome adjudication | 4 | 4 | 0 | 0 |
 | 5.10 | Document 2 -- 14 additional dataset layers | 14 | 5 | 8 | 1 |
-| **Total** | | **117** | **66** | **26** | **25** |
+| **Total** | | **117** | **65** | **26** | **26** |
 
 *Note on Section 5.10:* one row in Document 2 ("Anti-amyloid treatment
 safety decision trees") is annotated **(a) Already in roadmap (Group 8)**
@@ -350,27 +373,29 @@ This is preserved in the 117-row count (it appears as a distinct row in
 the auditor's Document 2 table). The duplicate is acknowledged here so
 downstream consumers can adjust the totals if they prefer to deduplicate.
 
-**The headline number:** the auditor identified 117 distinct gap rows
-across Documents 1 and 2. **~56% are in-scope for NeuroTCS** (21 already
-in production or addressed, 45 future); **~22% are explicitly out-of-scope**
-with named alternative tools (CDISC validators, EDC systems, image-QC
-tools, etc.); **~21% need clinical judgment or maturing evidence** before
-they can be scoped.
+**The headline number (post-v1.13.1):** the auditor identified 117 distinct
+gap rows across Documents 1 and 2. **~56% are in-scope for NeuroTCS** (22
+already in production or addressed, 43 future); **~22% are explicitly
+out-of-scope** with named alternative tools (CDISC validators, EDC systems,
+image-QC tools, etc.); **~22% need clinical judgment or maturing evidence**
+before they can be scoped.
 
 This is a much more defensible position than "we need 117 more packs." It
 is also a much more defensible position than "we have nothing to add."
 
 ---
 
-## 6. Defensible roadmap for the 45 in-scope future items
+## 6. Defensible roadmap for the 43 in-scope future items
 
-Realistic estimate: 45 future (a) items at the v1.10.x pace of ~1-2 packs per session = **22-35 additional implementation sessions**. Roughly 12-20 months of disciplined work.
+Realistic estimate: 43 future (a) items at the v1.10.x pace of ~1-2 packs per session = **22-33 additional implementation sessions**. Roughly 12-20 months of disciplined work.
+
+*Change from v1.12.1: 45 → 43 future items. WMH/Fazekas shipped in v1.13.0 (now in-production). CSF p-tau217 reclassified to (c) (no FDA-cleared CSF cutoff, plasma already covered, no cross-platform consensus). See Section 5.11 v1.13.1 update note.*
 
 ### 6.1 Priority tiers
 
-The 45 future items split into three tiers by clinical importance + evidence readiness:
+The 43 future items split into three tiers by clinical importance + evidence readiness:
 
-**Tier 1 -- High priority, evidence ready (10 items, ~10-12 sessions):**
+**Tier 1 -- High priority, evidence ready (8 items, ~8-10 sessions):**
 
 1. ARIA-related dose pause/discontinuation Layer 3 invariant (Group 8)
 2. Anticoagulation contraindication Layer 3 invariant (Group 8)
@@ -378,10 +403,10 @@ The 45 future items split into three tiers by clinical importance + evidence rea
 4. ARIA symptoms vs MRI-grade Layer 3 invariant (Group 8)
 5. Macrohemorrhage events Layer 3 invariant (Group 8)
 6. Tau PET regional SUVR + Braak Layer 2 pack (Group 2)
-7. WMH / Fazekas Layer 2 pack (Group 2)
-8. CSF p-tau217 Layer 2 pack (Group 3)
-9. NfL Layer 2 pack (CSF + plasma) (Group 3)
-10. GFAP Layer 2 pack (CSF + plasma) (Group 3)
+7. NfL Layer 2 pack (CSF + plasma) (Group 3)
+8. GFAP Layer 2 pack (CSF + plasma) (Group 3)
+
+*Change from v1.12.1: 10 items → 8 items. Item 7 (WMH / Fazekas Layer 2 pack) DONE in v1.13.0 (`mri_volumetrics/wmh_fazekas_consensus@1.0.0`). Item 8 (CSF p-tau217 Layer 2 pack) DOWNGRADED to (c) in v1.13.1 after primary-source research found no FDA-cleared CSF cutoff exists and plasma p-tau217 is already in production. Items renumbered.*
 
 **Tier 2 -- Medium priority, evidence ready (15 items, ~15 sessions):**
 
@@ -403,7 +428,9 @@ The 45 future items split into three tiers by clinical importance + evidence rea
 
 **Tier 3 -- Lower priority, Layer 4 dependent (20 items, ~18-20 sessions):**
 
-26-45. Various Layer 4 (inclusion/protocol/missing-data) items, screen failures, endpoint derivation Layer 3 invariants, outcome adjudication consistency invariants, study-partner reliability framework, and additional in-scope (a) items from the corrected ground-truth recount (depends on Layer 4 design first).
+26-43. Various Layer 4 (inclusion/protocol/missing-data) items, screen failures, endpoint derivation Layer 3 invariants, outcome adjudication consistency invariants, study-partner reliability framework, and additional in-scope (a) items from the corrected ground-truth recount (depends on Layer 4 design first).
+
+*Tier 3 numbering note: in v1.12.1 this range was 26-45 (10 Tier 1 + 15 Tier 2 + 20 Tier 3 = 45). In v1.13.1 Tier 1 dropped to 8 items (WMH/Fazekas done, CSF p-tau217 moved to (c)), so the cumulative numbering is 8 + 15 + 20 = 43.*
 
 ### 6.2 Sequencing recommendation
 
@@ -416,10 +443,12 @@ Complete the v1.11.0 arc first (a2, a3, rc1, final = 4 sessions). Then begin the
 | Phase | Releases | Sessions | Wall-clock estimate |
 |---|---|---|---|
 | Complete v1.11.0 arc | a2, a3, rc1, final | 4 sessions | 1-2 months |
-| Tier 1 roadmap | v1.11.1 - v1.11.10 | 10 sessions | 3-5 months |
+| Tier 1 roadmap | v1.11.1 - v1.11.10 | 8-10 sessions | 3-4 months |
 | Tier 2 roadmap + Layer 4 design | v1.12.0-design, v1.12.x, v1.13.x | 15 sessions | 5-8 months |
 | Tier 3 roadmap | v1.14.x + | 18-20 sessions | 6-11 months |
-| **Total** | **v1.11.0 - v1.14.x** | **~47-49 sessions** | **15-26 months** |
+| **Total** | **v1.11.0 - v1.14.x** | **~45-49 sessions** | **15-25 months** |
+
+*Tier 1 reduced from 10 to 8-10 sessions in v1.13.1: WMH/Fazekas done in v1.13.0, CSF p-tau217 moved to (c). Total session estimate reduced accordingly.*
 
 This is honest. It is not "we'll cover everything in two sessions." It is also not "we'll never cover this." It is a disciplined multi-year roadmap at world-class evidence standard.
 
@@ -451,22 +480,23 @@ NeuroTCS users should ensure these tools are in place upstream of (or alongside)
 
 ---
 
-## 8. Honest acknowledgment of 25 (c) items
+## 8. Honest acknowledgment of 26 (c) items
 
-The 25 (c) items are not refused. They are honest "we don't know yet" items, each with a specific reason:
+The 26 (c) items are not refused. They are honest "we don't know yet" items, each with a specific reason:
 
 | Reason category | Count | Examples |
 |---|---|---|
 | Evidence too immature for ≥5-body consensus | 12 | eMTBR-tau243 (Dec 2025), 7 digital biomarkers (gait, speech, typing, sleep, driving, eye-tracking, smartphone), CSF sTREM2, methylation panel, transcriptomic profile, mitochondrial DNA haplogroup |
-| Multiple competing standards, no convergence | 6 | GWAS panels, PLCG2 protective variant, polygenic risk scores, DTI tract selection, ASL perfusion cutoffs, fMRI/resting-state cutoffs |
+| Multiple competing standards, no convergence | 7 | GWAS panels, PLCG2 protective variant, polygenic risk scores, DTI tract selection, ASL perfusion cutoffs, fMRI/resting-state cutoffs, **CSF p-tau217 cross-platform (added v1.13.1)** |
 | Inherently subjective endpoint | 6 | FAQ, CFI, ADCS-ADL (all informant-reported), CGIC, QOL-AD, Zarit (all subjective) |
 | Methodology open research | 1 | Caregiver / study-partner data reliability framework |
-| **Total** | **25** | |
+| **Total** | **26** | |
 
 Each (c) item gets revisited when its blocking condition resolves. Examples:
 - **eMTBR-tau243** -- revisit when 5+ international bodies endorse cutoffs (estimated 2027)
 - **Digital gait biomarkers** -- revisit when FDA clears a digital-gait device with AD trial indication
 - **Caregiver reliability** -- revisit when the AD trial community converges on a standard reliability framework
+- **CSF p-tau217 (new v1.13.1)** -- revisit when (a) FDA clears a CSF p-tau217 assay (the May 2025 Lumipulse clearance is plasma-only), OR (b) AA/IWG/EAN/EFNS/SNMMI converge on a single cross-platform CSF cutoff harmonizing Lilly MSD, Quanterix Simoa, and Roche Elecsys. Estimated 2027+.
 
 This is the honest version of "this is not a partial fix; this is a deliberate hold pending evidence."
 
@@ -476,7 +506,7 @@ This is the honest version of "this is not a partial fix; this is a deliberate h
 
 If the auditor reads only one paragraph of this document, it should be this:
 
-> *You are correct that NeuroTCS is not a complete AD trial-data recognizer. It was never designed to be one and is not described in that way in the v1.x scope documents (see `docs/SCOPE.md`). NeuroTCS is a citation-locked, fail-closed audit framework for the logical consistency of AD trial biomarker data, operating at three layers: temporal coherence of categorical state trajectories (Layer 1, production since v1.8.x), per-visit plausibility of continuous biomarker values against published normative ranges (Layer 2, production since v1.10.0 with 6 packs / 100 bounds), and cross-sheet consistency between manifest declarations and observed values (Layer 3, in development per `LAYER_3_DESIGN.md` v1.11.0-design.2). Of the 117 gap rows your review identified, ~56% (66 items) are in-scope for NeuroTCS, of which 21 are already in production or addressed and 45 are on a disciplined 22-35 session roadmap (estimated 12-20 months). ~22% (26 items) are explicitly out-of-scope, with named alternative tools (CDISC SDTM validators, EDC systems, image-QC tools, CLIA-certified bioanalytical labs) recommended. ~21% (25 items) are genuine roadmap gaps awaiting maturing evidence or convergent clinical-judgment standards; each will be revisited when its specific blocking condition resolves. The framework's hard boundaries -- no measurement, no SDTM structural validation, no event adjudication, no replacement for human expert review -- are documented in section 3 of this response. We welcome integration with the upstream and adjacent tools that handle the layers above and below us.*
+> *You are correct that NeuroTCS is not a complete AD trial-data recognizer. It was never designed to be one and is not described in that way in the v1.x scope documents (see `docs/SCOPE.md`). NeuroTCS is a citation-locked, fail-closed audit framework for the logical consistency of AD trial biomarker data, operating at three layers: temporal coherence of categorical state trajectories (Layer 1, production since v1.8.x), per-visit plausibility of continuous biomarker values against published normative ranges (Layer 2, production since v1.10.0 with 7 packs as of v1.13.0), and cross-sheet consistency between manifest declarations and observed values (Layer 3, in development per `LAYER_3_DESIGN.md` v1.11.0-design.2). Of the 117 gap rows your review identified, ~56% (65 items) are in-scope for NeuroTCS, of which 22 are already in production or addressed and 43 are on a disciplined 22-33 session roadmap (estimated 12-20 months). ~22% (26 items) are explicitly out-of-scope, with named alternative tools (CDISC SDTM validators, EDC systems, image-QC tools, CLIA-certified bioanalytical labs) recommended. ~22% (26 items) are genuine roadmap gaps awaiting maturing evidence or convergent clinical-judgment standards; each will be revisited when its specific blocking condition resolves. The framework's hard boundaries -- no measurement, no SDTM structural validation, no event adjudication, no replacement for human expert review -- are documented in section 3 of this response. We welcome integration with the upstream and adjacent tools that handle the layers above and below us.*
 
 That paragraph is the public-facing position. Sections 1-8 above are the technical support for it.
 
@@ -503,6 +533,8 @@ To be explicit about what this scope-response document does NOT commit to:
 | Tag | Date | What changed |
 |---|---|---|
 | `v1.11.0a1-scope-response` | 2026-05-25 | Initial scope-response document. Triage of 117 auditor-identified gap rows. Roadmap for in-scope future items. Out-of-scope statements. Acknowledgment of evidence-or-judgment-pending items. (NOTE: original v1.11.0a1-scope-response numbers (54/27/34/115) reflected arithmetic errors corrected in NeuroTCS v1.12.1 — see CHANGELOG.md.) |
+| `v1.12.1` | 2026-05-27 | Section 5.11 arithmetic corrected via independent Python text-parser recount. Old totals 54/27/34/115 → verified 66/26/25/117. Section header counts 5.2/5.3/5.4/5.5 fixed. Subtotals in 5.2/5.3/5.5/5.10 fixed. In-scope split corrected (15+39=54 → 21+45=66). Downstream references in sections 6, 7, 8, 9 updated to match. Phantom "PET reconstruction QC" row removed from section 7. |
+| `v1.13.1` | 2026-05-28 | Two items reclassified after v1.13.0 work: (1) WMH/Fazekas moved from "(a) future" to "(a) IN PRODUCTION" with the v1.13.0 ship of `mri_volumetrics/wmh_fazekas_consensus@1.0.0` (Fazekas 1987 + STRIVE-2 + Meta VCI Map). (2) CSF p-tau217 reclassified from "(a) future" to "(c) needs maturing evidence" after primary-source research found no FDA-cleared CSF cutoff exists, plasma p-tau217 is already in production, and cross-platform CSF cutoffs lack ≥5-body consensus. Net: (a) 66 → 65, (c) 25 → 26, in-production 21 → 22, future 45 → 43. Sections 5.2, 5.3, 5.11, 6 header, 6.1 Tier 1, 8, 9 updated. |
 
 Modifications to this document require bumping to `v1.11.0a1-scope-response.2`, `.3`, etc., with explicit changelog of which items moved between categories and why.
 
@@ -516,9 +548,9 @@ This document is ACCEPTED when:
 - [x] Section 3 (four hard boundaries) is signed off
 - [x] Section 4 (triage taxonomy a/b/c) is the operative method
 - [x] Section 5 (item-by-item triage, 117 items) is the operative result
-- [x] Section 6 (roadmap for 45 in-scope future items) is roadmap-only, not commitment
+- [x] Section 6 (roadmap for 43 in-scope future items) is roadmap-only, not commitment
 - [x] Section 7 (26 out-of-scope items + named alternative tools) is the operative recommendation
-- [x] Section 8 (25 evidence-pending items) is the operative deferral
+- [x] Section 8 (26 evidence-pending items) is the operative deferral
 - [x] Section 9 (one-paragraph response to auditor) is the public-facing position
 - [x] No code, no schema, no test changes in this release
 
