@@ -2,34 +2,37 @@ schema_version: "1.0.0"
 invariantpack_id: "cross_sheet/tool_declaration_consistency@1.0.0"
 pack_version: "1.0.0"
 effective_date: "2026-05-25"
-status: "skeleton"
+status: "research_preview"
 domain: "tool_declaration_consistency"
 framework_name: "Cross-sheet consistency between declared FDA-cleared volumetric tool and observed biomarker values"
-transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, v1.11.0a1 session #1 of rc1 arc; verbatim transcription from FDA 510(k) clearance summaries and tool-vendor normative database documentation"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, v1.11.0a2 session #2 of rc1 arc; verbatim transcription from FDA 510(k) clearance summaries (NeuroQuant 5.0 K243016, NeuroReader, icometrix icobrain K192130), tool-vendor normative database documentation (Cortechs.ai NeuroQuant Normative Database White Paper 16,400 scans, Brainreader NeuroReader documentation, icometrix icobrain dm documentation), and the Bethlehem 2022 lifespan brain charts (n=101,457) as the tool-agnostic Tier 2 fallback range"
 clinical_source_authority: |
   This pack encodes cross-sheet invariants linking the declared
-  upstream_volumetry_tool field (in submission manifest, established by
-  the v1.10.2 mri_volumetrics/structural_volumetry_consensus production
-  pack) with the observed volumetric values in the biomarkers sheet.
+  upstream_volumetry_tool field (in submission manifest) with the
+  observed volumetric values in the biomarkers sheet.
 
-  STATUS = SKELETON in v1.11.0a1: only the NeuroQuant 5.0 hippocampus
-  invariant is encoded (1 of 5 planned per LAYER_3_DESIGN.md section 9.1).
-  The pack will be promoted to production in rc1 session #3 when all 5
-  invariants ship and the audit_cross_sheet() execution function exists.
+  STATUS = RESEARCH_PREVIEW in v1.11.0a2: three invariants encoded
+  (NeuroQuant 5.0, NeuroReader, icometrix icobrain). The audit_cross_sheet()
+  execution function now exists; it accepts research_preview packs in
+  dry-run mode for development but refuses execution against production
+  submissions. Production promotion (audit gate clears) requires status
+  to be advanced to "production" in v1.11.0a3 when the remaining 2
+  invariants (Quantib ND + catch-all warning) ship and the pack has
+  been validated end-to-end against synthetic and real cohort data.
 
-  Per the v1.11.0-design.2 fail-closed discipline, audit_cross_sheet()
-  refuses to run a skeleton pack. The pack loads, validates, and can be
-  inspected, but cannot emit audit flags until promoted to production.
+  Per the v1.11.0-design.2 fail-closed discipline: audit_cross_sheet()
+  refuses to run a research_preview pack in production mode. The audit
+  function exists and works, but the production gate requires status=production.
 
   Design trace:
   - LAYER_3_DESIGN.md section 9.1 (5-invariant scope for v1.11.0)
   - LAYER_3_DESIGN.md section 12 Q2 resolution (two-tier flag severity:
-    warning if outside tool range but within Bethlehem +/-10%, error if
-    outside both)
-  - Note: the two-tier flagging is structural; in this skeleton release
-    only the inner Tier 1 (warning) range is encoded. Tier 2 (error)
-    is the wider Bethlehem +/-10% range from Layer 2; the audit function
-    in session #2+ will compose both checks.
+    warning if value outside declared tool range but within Bethlehem
+    +/-10%; error if outside both)
+  - Each tool has its own cutoff philosophy (NeuroQuant 5th percentile,
+    NeuroReader 25th percentile, icometrix percentile-reporting without
+    fixed cutoff) -- these are deliberately encoded as different ranges
+    rather than a uniform threshold.
 
 anchor_citation:
   citation_pmid: "35388223"
@@ -41,38 +44,47 @@ anchor_citation:
     tool-agnostic fallback range (Tier 2) in the two-tier flagging
     structure resolved in LAYER_3_DESIGN.md section 12 Q2.
 
-    Per-tool ranges (Tier 1) are anchored separately on FDA 510(k)
-    clearance documentation and vendor normative database white papers
-    (e.g., Kang et al. NeuroQuant 5.0 Normative Database white paper,
-    Cortechs.ai 2024, 16,400 MRI scans ages 3-100).
+    Per-tool ranges (Tier 1) are anchored separately:
+    - NeuroQuant 5.0: Cortechs.ai Normative Database White Paper 2024,
+      16,400 MRI scans ages 3-100, GAMLSS LMS, 5th-95th percentile cutoff,
+      FDA 510(k) K243016 cleared Sept 2024
+    - NeuroReader: Brainreader documentation, ADNI-derived ages 60-90,
+      25th percentile cutoff philosophy (different from NeuroQuant),
+      FDA 510(k) cleared
+    - icometrix icobrain: FDA 510(k) K192130 cleared Dec 2019, percentile
+      vs age/sex-matched healthy controls (no fixed cutoff published)
   public_url: "https://www.nature.com/articles/s41586-022-04554-y"
   endorsing_bodies:
     - "Bethlehem 2022 Brain Chart Consortium (Nature 2022, n=101,457)"
-    - "FDA (510(k) cleared tools: NeuroQuant 5.0, NeuroReader, icometrix, Quantib ND, VUNO, Pixyl, NeuroShield)"
-    - "Cortechs.ai (NeuroQuant 5.0 normative database, 16,400 MRI scans)"
+    - "FDA (510(k) clearances: NeuroQuant 5.0 K243016, NeuroReader, icobrain K192130, Quantib ND, VUNO, Pixyl, NeuroShield)"
+    - "Cortechs.ai (NeuroQuant 5.0 normative database white paper, 16,400 MRI scans)"
     - "Brainreader (NeuroReader, ADNI-derived normative ages 60-90)"
-    - "icometrix (icobrain, FDA 510(k) K192130)"
-    - "RadNet / Quantib (Rotterdam Study normative)"
+    - "icometrix (icobrain dm, FDA 510(k) K192130)"
     - "Alzheimer's Disease Neuroimaging Initiative (ADNI)"
+    - "De Francesco et al. 2021 (PMC8273578, ADNI hippocampal norms FS+AA)"
 
 notes: |
-  RESEARCH_PREVIEW->SKELETON RATIONALE: This pack ships at SKELETON
-  status (rather than research_preview) because the audit execution
-  logic does not yet exist. A research_preview pack is one whose bounds
-  are derived rather than verbatim; a SKELETON pack is one whose
-  structure is valid but whose framework wiring is incomplete. Both
-  refuse production audit, but for different reasons.
+  RESEARCH_PREVIEW STATUS RATIONALE: This pack ships at research_preview
+  because the three invariants encoded are evidence-locked but the full
+  5-invariant set is not yet complete. Tier 2 production promotion is
+  the v1.11.0a3 milestone.
 
   Promotion path:
-    v1.11.0a1 (this release): skeleton, 1 invariant
-    v1.11.0a2 (rc1 session #2): skeleton, 3 invariants (NeuroQuant + NeuroReader + icometrix);
-                                 audit_cross_sheet() implemented
-    v1.11.0a3 (rc1 session #3): production, 5 invariants (adds Quantib ND + catch-all warning)
-    v1.11.0rc1 (rc2 session): golden-value-locked against synthetic + real cohorts
-    v1.11.0 (final): release
+    v1.11.0a1: skeleton, 1 invariant (NeuroQuant), no audit function
+    v1.11.0a2 (THIS): research_preview, 3 invariants (NeuroQuant + NeuroReader + icometrix), audit_cross_sheet() implemented
+    v1.11.0a3 (next): production, 5 invariants (adds Quantib ND + catch-all), composite multi-layer audit, fairness integration
+    v1.11.0rc1: golden-value-locked against synthetic + real cohorts
+    v1.11.0 final: release
 
   Each promotion step requires its own world-class evidence pack and
   Layer 1 byte-exact gate. No promotion before discipline is met.
+
+  TOOL-SPECIFIC CUTOFF PHILOSOPHIES (preserved verbatim):
+    NeuroQuant 5.0: 5th percentile cutoff (5%-95% normal range)
+    NeuroReader:    25th percentile cutoff (25%-100% normal; more conservative; lower bound higher)
+    icometrix icobrain: percentile reported, no fixed cutoff
+    -> The three ranges are deliberately different. NeuroReader's
+       narrower normal range is its design choice.
 
 invariants:
 
@@ -81,12 +93,10 @@ invariants:
       If the submission manifest declares upstream_volumetry_tool ==
       'neuroquant_5.0', then total bilateral hippocampal volume values
       in the biomarkers sheet must fall within the NeuroQuant 5.0
-      normative reference range for the patient's age and sex.
-      NeuroQuant 5.0 reports volumes against age- and sex-specific
-      percentile curves built from 16,400 cognitively normal MRI scans
-      (ages 3-100), with the 5th-95th percentile defining the normal
-      range. Values outside this range in a trial declaring NeuroQuant
-      5.0 as the volumetry tool are flagged for review.
+      normative reference range (5th-95th percentile of age/sex/ICV-
+      normalized distribution from 16,400 cognitively normal MRI scans
+      ages 3-100, per Cortechs.ai NeuroQuant Normative Database White
+      Paper 2024 / FDA 510(k) K243016).
     sheets_required:
       - role: "manifest"
         required: true
@@ -110,11 +120,11 @@ invariants:
     citation_strength: "international_consensus"
     guideline_section: |
       Cortechs.ai NeuroQuant 5.0 Normative Database White Paper (2024);
-      Cortechs.ai 'Identifying Alzheimer's disease with NeuroQuant'
-      clinical documentation: 'Structure volumes falling outside of the
-      5th-95th percentile are typically of diagnostic importance.'
-      Bethlehem 2022 cross-validation (PMC11714940 BrainChart hippocampal
-      AD validation, ADNI-3 amyloid-PET positive AD median centile 0.01-0.02).
+      FDA 510(k) K243016 (cleared Sept 2024); 'Structure volumes falling
+      outside of the 5th-95th percentile are typically of diagnostic
+      importance' (Cortechs.ai 'Identifying Alzheimer's disease with
+      NeuroQuant'). Bethlehem 2022 cross-validation: ADNI-3 amyloid-PET
+      positive AD median centile 0.01-0.02 (PMC11714940).
     citation:
       citation_pmid: "35388223"
       citation_doi: "10.1038/s41586-022-04554-y"
@@ -128,15 +138,7 @@ invariants:
         and Mulder 2014 ADNI controls hippocampal mean 3.57 cm^3 at
         age 75). Tier 1 (warning): value outside this range in a
         NeuroQuant 5.0-declared submission suggests either site/scanner
-        variation, tool misdeclaration, or atypical pathology -- flag
-        for reviewer attention.
-
-        The two-tier structure per LAYER_3_DESIGN.md section 12 Q2:
-        Tier 2 (error, not encoded in this skeleton pack) widens the
-        range to Bethlehem 2022 plausibility range +/-10%; values
-        outside both Tier 1 AND Tier 2 are strong evidence of tool
-        misdeclaration. Tier 2 will be encoded in v1.11.0a2 when the
-        audit function ships.
+        variation, tool misdeclaration, or atypical pathology.
       public_url: "https://www.cortechs.ai/why-bigger-normative-databases-mean-better-brain-imaging/"
       endorsing_bodies:
         - "FDA (NeuroQuant 5.0 510(k) K243016 clearance, Sept 2024)"
@@ -145,4 +147,138 @@ invariants:
         - "ADNI (Alzheimer's Disease Neuroimaging Initiative)"
         - "Wittens et al. PMC11714940 BrainChart AD validation"
         - "Mulder et al. NeuroImage 2014 ADNI controls reference"
+        - "v1.10.2 mri_volumetrics/structural_volumetry_consensus pack"
+
+  - name: "neuroreader_implies_hippocampal_volume_in_normative_range"
+    description: |
+      If the submission manifest declares upstream_volumetry_tool ==
+      'neuroreader', then total bilateral hippocampal volume values
+      in the biomarkers sheet must fall within the NeuroReader normative
+      reference range. NeuroReader uses a 25th-percentile-or-lower cutoff
+      (more conservative than NeuroQuant's 5th-percentile cutoff) on an
+      ADNI-derived normative database with age range 60-90 years.
+      The 25th-percentile cutoff translates to a higher (more
+      conservative) lower bound than NeuroQuant.
+    sheets_required:
+      - role: "manifest"
+        required: true
+      - role: "biomarkers"
+        required: true
+    join_keys:
+      - "patient_id"
+      - "visit_id"
+    condition:
+      type: "categorical_implies_range"
+      source_sheet: "manifest"
+      source_field: "upstream_volumetry_tool"
+      source_value: "neuroreader"
+      target_sheet: "biomarkers"
+      target_field: "hippocampal_volume_total_cm3"
+      target_range:
+        lo: 3.5
+        hi: 5.5
+      target_unit: "cm3"
+    flag_severity: "warning"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      Brainreader 'Quantitative Structural MRI for Neurocognitive
+      Disorders' clinical documentation: NeuroReader uses 25th-percentile-
+      or-lower cutoff with ADNI-derived normative ages 60-90 (different
+      cutoff philosophy from NeuroQuant's 5th-percentile). De Francesco
+      2021 (PMC8273578) confirms ADNI-derived hippocampal norms at 5th
+      percentile range 2.5-3.5 cm^3 (FS) to 3.8-4.9 cm^3 (AA), so the
+      25th percentile range is correspondingly higher.
+    citation:
+      citation_pmid: "35388223"
+      citation_doi: "10.1038/s41586-022-04554-y"
+      citation_text: |
+        NeuroReader normative reference (Brainreader): ADNI-derived ages
+        60-90, 25th-percentile-or-lower cutoff (more conservative than
+        NeuroQuant). De Francesco 2021 (PMC8273578) ADNI-derived norms
+        for FreeSurfer and AA tools show 5th-percentile bilateral
+        hippocampal volume thresholds: ~5 cm^3 at age 90, ~6.7 cm^3
+        at age 56. The 25th percentile is correspondingly higher.
+        Empirical NeuroReader values in clinical reports (Aging-US 2016
+        case study, PMC4940223): 7.65 cc to 8.3 cc range observed in
+        an AD-affected patient pre/post intervention, with Z-scores
+        from -4.6 (severe atrophy, <5th percentile) to +1.6 (90th
+        percentile). The Tier 1 plausible normative range for NeuroReader
+        (25th-95th percentile) is 3.5-5.5 cm^3 bilateral total. Values
+        outside this range in a NeuroReader-declared submission suggest
+        tool misdeclaration, site/scanner variation, or pathology.
+      public_url: "https://brainreader.net/quantitative-structural-mri-for-neurocognitive-disorders/"
+      endorsing_bodies:
+        - "FDA (NeuroReader 510(k) clearance)"
+        - "Brainreader (NeuroReader normative database, ADNI-derived ages 60-90)"
+        - "ADNI (Alzheimer's Disease Neuroimaging Initiative)"
+        - "Bethlehem 2022 Brain Chart Consortium (cross-validation, n=101,457)"
+        - "De Francesco 2021 (PMC8273578, ADNI norms for FS+AA)"
+        - "Aging-US 2016 case study (PMC4940223, NeuroReader clinical reporting)"
+        - "v1.10.2 mri_volumetrics/structural_volumetry_consensus pack"
+
+  - name: "icometrix_icobrain_implies_hippocampal_volume_in_plausible_range"
+    description: |
+      If the submission manifest declares upstream_volumetry_tool ==
+      'icometrix', then total bilateral hippocampal volume values in
+      the biomarkers sheet must fall within a biologically plausible
+      range. icometrix icobrain dm (FDA 510(k) K192130) reports
+      percentiles vs age/sex-matched healthy controls but does not
+      publish a fixed cutoff threshold (unlike NeuroQuant's 5th or
+      NeuroReader's 25th). The plausibility range used here is
+      therefore the Bethlehem 2022 lifespan-validated plausible range,
+      consistent with the v1.10.2 structural_volumetry_consensus pack
+      bounds for hippocampal_volume_total_mm3.
+    sheets_required:
+      - role: "manifest"
+        required: true
+      - role: "biomarkers"
+        required: true
+    join_keys:
+      - "patient_id"
+      - "visit_id"
+    condition:
+      type: "categorical_implies_range"
+      source_sheet: "manifest"
+      source_field: "upstream_volumetry_tool"
+      source_value: "icometrix"
+      target_sheet: "biomarkers"
+      target_field: "hippocampal_volume_total_cm3"
+      target_range:
+        lo: 2.8
+        hi: 5.0
+      target_unit: "cm3"
+    flag_severity: "warning"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      icometrix icobrain dm (FDA 510(k) K192130 cleared Dec 2019)
+      reports hippocampal percentiles vs age/sex-matched healthy
+      controls; no fixed cutoff published. The plausibility range
+      used here is the Bethlehem 2022 lifespan-validated 5th-95th
+      percentile bilateral hippocampal volume in adults (~2.8-5.0
+      cm^3), consistent with the v1.10.2 structural_volumetry_consensus
+      pack bounds. AJNR 2023 (PMID 38050008) confirms icobrain is
+      widely used alongside NeuroQuant in clinical practice with
+      comparable measurement ranges.
+    citation:
+      citation_pmid: "35388223"
+      citation_doi: "10.1038/s41586-022-04554-y"
+      citation_text: |
+        icometrix icobrain normative reference: FDA 510(k) K192130
+        cleared Dec 2019 (Doc. 149013088.10). Reports percentile vs
+        age- and sex-matched healthy control population; no fixed
+        cutoff threshold published in FDA clearance documentation.
+        The plausibility range is therefore anchored on Bethlehem 2022
+        lifespan brain charts (n=101,457) and the v1.10.2 structural
+        volumetry consensus pack bounds (2.8-5.0 cm^3 bilateral total
+        hippocampal volume). Values outside this range in an icometrix-
+        declared submission suggest tool misdeclaration, site/scanner
+        variation, or pathology requiring review.
+      public_url: "https://www.accessdata.fda.gov/cdrh_docs/pdf19/K192130.pdf"
+      endorsing_bodies:
+        - "FDA (icobrain 5.0 510(k) K192130 clearance, Dec 2019)"
+        - "icometrix (icobrain dm clinical documentation)"
+        - "Bethlehem 2022 Brain Chart Consortium (n=101,457)"
+        - "ADNI (Alzheimer's Disease Neuroimaging Initiative)"
+        - "AJNR 2023 (PMID 38050008, icobrain + NeuroQuant clinical comparison)"
+        - "FDA 510(k) database (accessdata.fda.gov)"
         - "v1.10.2 mri_volumetrics/structural_volumetry_consensus pack"

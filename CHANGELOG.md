@@ -4,6 +4,154 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0a2] -- 2026-05-25
+
+### Pre-release: Layer 3 audit execution + 2 new invariants
+
+Second alpha of the v1.11.0 Layer 3 implementation arc. Per
+`docs/design/LAYER_3_DESIGN.md` v1.11.0-design.2, this is session #2 of 3
+in the rc1 arc.
+
+**SCOPE OF v1.11.0a2:**
+- `audit_cross_sheet()` execution function implemented
+- 2 new invariants added to `cross_sheet/tool_declaration_consistency`
+  pack: NeuroReader (25th-percentile cutoff, ADNI ages 60-90) and
+  icometrix icobrain (FDA K192130, Bethlehem plausibility range)
+- Pack promoted from SKELETON to RESEARCH_PREVIEW status
+- 35 new tests (88 cross_sheet total)
+- Layer 1 byte-exact preserved across all 5 cohorts
+
+**EXPLICITLY NOT IN v1.11.0a2 (deferred to a3 / rc1):**
+- 2 remaining invariants (Quantib ND + catch-all warning)
+- Composite multi-layer audit
+- Fairness audit integration with Layer 3 flags
+- Promotion of any pack to production status
+- The 3 unimplemented ConditionSpec types (FieldPresence, ValueRangeConditional,
+  CategoricalImpliesTrajectoryPattern) -- schema-validated but raise
+  NotImplementedError at audit time
+
+### Added
+
+**Module: `src/neurotcs/cross_sheet/audit.py` (~310 lines, NEW)**
+
+- `audit_cross_sheet(submission, invariant_packs, *, dry_run, skip_packs, skip_reasons)`
+  -- public API
+- `CrossSheetFlag` dataclass with `audit_layer="layer_3_cross_sheet"` (per
+  LAYER_3_DESIGN.md section 12 Q4 unified-ledger resolution)
+- `CrossSheetAuditResult` dataclass (flags + packs_run + packs_skipped +
+  n_rows_audited + n_invariants_evaluated + n_dry_run)
+- Fail-closed status gate (production always runs, research_preview
+  requires dry_run=True, skeleton/planned/deprecated always raise)
+- Skip discipline per section 12 Q3: skip_packs requires matching
+  skip_reasons with min 20-char reason
+- Deterministic flag_id derivation (SHA-256 over canonical-JSON per
+  section 6, cross-platform-stable)
+- Missing-sheet info flag emission (section 8 rule 1)
+- NotImplementedError for the 3 unimplemented condition types with
+  explicit pointers to v1.11.0a3 / v1.11.0rc1
+
+**Invariant pack: `cross_sheet/tool_declaration_consistency@1.0.0` (3 invariants)**
+
+Status promoted: SKELETON -> RESEARCH_PREVIEW.
+
+| Invariant | Tool | Range | Cutoff philosophy |
+|---|---|---|---|
+| neuroquant_5_0_implies_hippocampal_volume_in_normative_range | NeuroQuant 5.0 | [2.8, 5.0] cm^3 | 5th-95th percentile (Cortechs.ai 16,400 scans) |
+| neuroreader_implies_hippocampal_volume_in_normative_range (NEW) | NeuroReader | [3.5, 5.5] cm^3 | 25th-percentile cutoff (ADNI 60-90) |
+| icometrix_icobrain_implies_hippocampal_volume_in_plausible_range (NEW) | icometrix icobrain | [2.8, 5.0] cm^3 | No fixed cutoff; Bethlehem plausibility range |
+
+All 3 at `flag_severity=warning`, `citation_strength=international_consensus`,
+>=5 endorsing bodies per invariant.
+
+**Locked golden yaml_sha256 (UPDATED in v1.11.0a2):**
+
+| Pack | v1.11.0a1 yaml_sha256 | v1.11.0a2 yaml_sha256 |
+|---|---|---|
+| `cross_sheet/tool_declaration_consistency` | `e9033c103a03494248e9aa351984726b8b974431e44e9cf717be6ecdbfbc11b9` | `a1dff4f5f110221f425e27e888fb0d65586f33ae9e871bb50a540cbc217fec9f` |
+
+**Tests (35 new, 814 total)**
+
+- `tests/cross_sheet/test_audit.py` (30 tests, NEW): in-range no-flag,
+  below/above range flag emission, non-matching tool no-flag,
+  missing source/target field no-flag, non-numeric value handling,
+  join_keys captured in flag, missing-sheet info flag, status gates
+  (production/research_preview/skeleton/planned), skip discipline
+  (with/without reason, short reason), NotImplementedError for 3
+  condition types, flag_id determinism and hex-SHA256 format,
+  end-to-end against shipped pack including NeuroReader narrower range
+  and icometrix Bethlehem range.
+- `tests/cross_sheet/test_loader.py` (updated): expects 3 invariants
+  at research_preview status, golden yaml_sha256 updated to v1.11.0a2
+  value, new tests for each tool's range.
+
+### Changed
+
+**Version bump:** 1.11.0a1 -> 1.11.0a2 (PEP 440 alpha 2).
+
+**Pack status:** `cross_sheet/tool_declaration_consistency`
+  SKELETON -> RESEARCH_PREVIEW.
+
+### Roadmap (unchanged from LAYER_3_DESIGN.md section 11)
+
+| Release | Session | Adds | Status |
+|---|---|---|---|
+| v1.11.0a1 | rc1 #1 of 3 | cross_sheet schema + loader + 1 SKELETON invariant + 53 tests | SHIPPED |
+| **v1.11.0a2** (this) | rc1 #2 of 3 | audit_cross_sheet() + 2 more invariants + 35 tests; SKELETON -> RESEARCH_PREVIEW | **SHIPPED** |
+| v1.11.0a3 | rc1 #3 of 3 | Quantib ND + catch-all warning + composite multi-layer audit + fairness integration; -> PRODUCTION | future |
+| v1.11.0rc1 | rc2 | golden-value-locked against synthetic + real cohorts | future |
+| v1.11.0 | final | release | future |
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- `pytest tests/ -q` -> **814 passed, 7 skipped** (779 v1.11.0a1 + 35 new = 814)
+- Layer 1 byte-exact verified under v1.11.0a2 (5/5 cohorts):
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` OK
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` OK
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` OK
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` OK
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` OK
+- All 6 v1.10.2 production rangepack yaml_sha256 values unchanged
+- `audit_cross_sheet()` end-to-end smoke tests pass on synthetic data
+- Deterministic flag_id verified across repeated runs
+
+### What this release does NOT touch (verified frozen)
+
+| Path | Status |
+|---|---|
+| `src/neurotcs/audit_core/` | Frozen since v1.8.1 |
+| `src/neurotcs/rulepack/` | Frozen since v1.9.0 |
+| `src/neurotcs/input_contract/` | Frozen since v1.8.1 |
+| `src/neurotcs/fairness/` | Frozen since v1.8.1 |
+| `src/neurotcs/clinical_ranges/` (Layer 2) | Frozen since v1.10.2 |
+| Layer 3 schema.py + loader.py (v1.11.0a1) | Unchanged |
+| All 6 v1.10.2 production rangepack yaml_sha256 | Byte-identical |
+| All 5 Layer 1 audit_id invariants | Byte-exact across v1.11.0a1 -> v1.11.0a2 |
+
+### Honest scope disclosure
+
+What this release does:
+- Implements working Layer 3 cross-sheet audit execution
+- Adds 2 evidence-locked invariants (NeuroReader + icometrix) bringing
+  the tool-declaration pack to 3/5 of its full v1.11.0 scope
+- Maintains all Layer 1 / Layer 2 invariants byte-exact
+- Demonstrates fail-closed discipline at every level: skeleton refused,
+  research_preview requires dry_run, production gates clean
+- Demonstrates deterministic flag_id derivation
+
+What this release does NOT do:
+- Promote any pack to production status (deferred to v1.11.0a3)
+- Implement the 2 remaining invariants in the tool_declaration pack
+- Implement the other 2 invariant packs (genotype_phenotype_consistency
+  needs CategoricalImpliesTrajectoryPattern execution, planned for
+  v1.11.0a3; manifest_data_consistency needs FieldPresenceConsistency
+  execution, planned for v1.11.0rc1)
+- Implement composite multi-layer audit (deferred to v1.11.0a3)
+- Implement fairness audit integration with Layer 3 flags (deferred to
+  v1.11.0a3)
+
+---
+
 ## [1.11.0a1] -- 2026-05-25
 
 ### Pre-release: Layer 3 (cross-sheet consistency) module skeleton

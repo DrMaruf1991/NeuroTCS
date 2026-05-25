@@ -31,7 +31,7 @@ from neurotcs.cross_sheet import (
 # ============================================================
 
 GOLDEN_YAML_SHA256_TOOL_DECL = (
-    "e9033c103a03494248e9aa351984726b8b974431e44e9cf717be6ecdbfbc11b9"
+    "a1dff4f5f110221f425e27e888fb0d65586f33ae9e871bb50a540cbc217fec9f"
 )
 
 
@@ -49,13 +49,13 @@ class TestListInvariantPacks:
             assert "name" in p
             assert "status" in p
 
-    def test_tool_declaration_pack_listed_at_skeleton(self):
+    def test_tool_declaration_pack_listed_at_research_preview(self):
         packs = list_invariantpacks()
         td = next(p for p in packs if p["name"] == "cross_sheet/tool_declaration_consistency")
-        assert td["status"] == "skeleton"
+        assert td["status"] == "research_preview"
         assert td["schema_version"] == "1.0.0"
         assert td["pack_version"] == "1.0.0"
-        assert td["n_invariants"] == 1
+        assert td["n_invariants"] == 3
 
 
 class TestLoadInvariantPack:
@@ -63,7 +63,7 @@ class TestLoadInvariantPack:
     def test_loads_tool_declaration_consistency(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         assert lp.invariantpack.invariantpack_id == "cross_sheet/tool_declaration_consistency@1.0.0"
-        assert lp.status == InvariantPackStatus.SKELETON
+        assert lp.status == InvariantPackStatus.RESEARCH_PREVIEW
 
     def test_canonical_sha256_present(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
@@ -93,21 +93,65 @@ class TestLoadInvariantPack:
 
 
 class TestShippedPackContents:
-    """Verify the v1.11.0a1 shipped pack contents in detail."""
+    """Verify the v1.11.0a2 shipped pack contents in detail (3 invariants)."""
 
-    def test_pack_has_exactly_one_invariant_in_v1_11_0a1(self):
-        """v1.11.0a1 ships exactly 1 invariant per the narrowed scope.
-        Sessions #2 and #3 add the remaining 4."""
+    def test_pack_has_exactly_three_invariants_in_v1_11_0a2(self):
+        """v1.11.0a2 ships exactly 3 invariants: NeuroQuant 5.0, NeuroReader,
+        icometrix icobrain. Session #3 adds the remaining 2 (Quantib ND + catch-all)."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
-        assert len(lp.invariantpack.invariants) == 1
+        assert len(lp.invariantpack.invariants) == 3
 
-    def test_shipped_invariant_name(self):
+    def test_shipped_invariants_names(self):
+        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        names = [inv.name for inv in lp.invariantpack.invariants]
+        assert names == [
+            "neuroquant_5_0_implies_hippocampal_volume_in_normative_range",
+            "neuroreader_implies_hippocampal_volume_in_normative_range",
+            "icometrix_icobrain_implies_hippocampal_volume_in_plausible_range",
+        ]
+
+    def test_neuroquant_invariant_range_2_8_to_5_0(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         inv = lp.invariantpack.invariants[0]
-        assert inv.name == "neuroquant_5_0_implies_hippocampal_volume_in_normative_range"
+        assert inv.condition.source_value == "neuroquant_5.0"
+        assert inv.condition.target_range.lo == 2.8
+        assert inv.condition.target_range.hi == 5.0
 
-    def test_shipped_invariant_is_categorical_implies_range(self):
+    def test_neuroreader_invariant_range_3_5_to_5_5(self):
+        """NeuroReader uses 25th-percentile cutoff (more conservative than
+        NeuroQuant's 5th); higher lower bound."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        inv = lp.invariantpack.invariants[1]
+        assert inv.condition.source_value == "neuroreader"
+        assert inv.condition.target_range.lo == 3.5
+        assert inv.condition.target_range.hi == 5.5
+
+    def test_icometrix_invariant_range_2_8_to_5_0(self):
+        """icometrix icobrain has no fixed cutoff; uses Bethlehem
+        plausibility range."""
+        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        inv = lp.invariantpack.invariants[2]
+        assert inv.condition.source_value == "icometrix"
+        assert inv.condition.target_range.lo == 2.8
+        assert inv.condition.target_range.hi == 5.0
+
+    def test_all_shipped_invariants_are_categorical_implies_range(self):
+        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        for inv in lp.invariantpack.invariants:
+            assert inv.condition.type == "categorical_implies_range"
+
+    def test_all_shipped_invariants_target_hippocampal_volume(self):
+        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        for inv in lp.invariantpack.invariants:
+            assert inv.condition.target_sheet == "biomarkers"
+            assert inv.condition.target_field == "hippocampal_volume_total_cm3"
+            assert inv.condition.target_unit == "cm3"
+
+    def test_all_shipped_invariants_at_warning_severity(self):
+        """Tier 1 (within Bethlehem +/-10%) uses warning severity."""
+        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        for inv in lp.invariantpack.invariants:
+            assert inv.flag_severity == "warning"
         inv = lp.invariantpack.invariants[0]
         assert inv.condition.type == "categorical_implies_range"
 
@@ -186,21 +230,22 @@ class TestWorldClassDiscipline:
         assert "Cortechs.ai" in joined or "NeuroQuant" in joined
 
 
-class TestSkeletonFailClosedGate:
+class TestResearchPreviewFailClosedGate:
     """Layer 3 fail-closed discipline parallel to Layer 2: a non-production
-    pack must refuse audit. In v1.11.0a1, the shipped pack is SKELETON,
-    so audit_cross_sheet (when it lands in session #2+) must refuse."""
+    pack must refuse audit. In v1.11.0a2, the shipped pack is RESEARCH_PREVIEW,
+    so the pack-level assert_usable_for_audit() must still refuse (only
+    audit_cross_sheet() in dry_run mode accepts research_preview)."""
 
-    def test_load_succeeds_for_skeleton(self):
-        """A skeleton pack must still load and validate."""
+    def test_load_succeeds_for_research_preview(self):
+        """A research_preview pack must load and validate."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         assert lp is not None
-        assert lp.status == InvariantPackStatus.SKELETON
+        assert lp.status == InvariantPackStatus.RESEARCH_PREVIEW
 
-    def test_assert_usable_for_audit_refuses_skeleton(self):
+    def test_assert_usable_for_audit_refuses_research_preview(self):
         """The fail-closed gate on the loaded pack must refuse."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
-        with pytest.raises(ValueError, match="skeleton"):
+        with pytest.raises(ValueError, match="research_preview"):
             lp.assert_usable_for_audit()
 
     def test_assert_usable_for_audit_message_mentions_production_requirement(self):
@@ -211,4 +256,4 @@ class TestSkeletonFailClosedGate:
         except ValueError as e:
             msg = str(e)
             assert "production" in msg.lower()
-            assert "skeleton" in msg.lower()
+            assert "research_preview" in msg.lower()
