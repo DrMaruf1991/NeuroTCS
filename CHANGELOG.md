@@ -4,6 +4,75 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] -- 2026-05-27
+
+### Final release of the v1.11.0 Layer 3 development arc
+
+This is the final release of the v1.11.0 series. It contains **no code changes**
+relative to v1.11.0a8.post1 -- the v1.11.0 arc development is feature-complete
+and stable. This release closes the v1.11.0 milestone formally.
+
+**Scope of v1.11.0 (as a complete arc):**
+
+- **Layer 3 cross-sheet consistency audit runtime** (new in v1.11.0)
+  - 5 of 5 condition types executable (closed taxonomy)
+  - Schema-versioned invariant pack format
+  - Public `audit_cross_sheet()` API
+- **2 Layer 3 invariant packs shipped:**
+  - `cross_sheet/tool_declaration_consistency@1.1.0` (production, 5 invariants)
+  - `cross_sheet/genotype_phenotype_consistency@1.0.0` (research_preview)
+- **Empirical validation methodology established** (corpus_seed=42, FP/TP tracking)
+- **Full integration with Layer 1 (trajectory audits) and Layer 2 (rangepacks)**
+
+**Verification at v1.11.0 final:**
+
+- `pytest tests/ -q` -> 994 passed, 7 skipped
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- 5 Layer 1 cohort audit_ids byte-exact (OASIS-3, ADNI, NACC, MIRIAD, MIRIAD-test-retest)
+- 8 pack `yaml_sha256` values byte-identical to v1.11.0a8.post1
+- 8 of 8 Layer 2/3 production+research_preview packs exceed >=5 endorsing bodies
+
+**Known gap deferred to v1.12.0:**
+
+The 3 Layer 1 AD trajectory rulepacks (`aa_2024`, `aa_2024_trac`, `niaaa_2018`)
+lack the structured `endorsing_bodies` field. The clinical anchoring exists
+inline in `clinical_source_authority` text; the structured field for tooling
+verification is the gap. This is documented in detail in the gap-check
+deliverable at `D:\NeuroTCS-GapCheck-2026-05-26\` and is the focus of v1.12.0.
+
+This gap is being shipped intentionally as part of v1.11.0 final to preserve
+the milestone cut-line: v1.11.0 = "Layer 3 runtime feature-complete";
+v1.12.0 = "Layer 1 rulepack endorsement schema extension".
+
+### Released alphas in the v1.11.0 arc (historical record)
+
+| Release | Scope |
+|---|---|
+| v1.11.0-design / -design.2 | Layer 3 cross-sheet design lock |
+| v1.11.0a1 / a1-scope-response | Layer 3 module skeleton + scope response |
+| v1.11.0a2 | `audit_cross_sheet()` execution + 2 invariants |
+| v1.11.0a3 | Trajectory-pattern execution + APOE4 homozygote pack |
+| v1.11.0a4 | Quantib ND invariant added |
+| v1.11.0a5 | First production promotion (`tool_declaration_consistency`) + empirical validation |
+| v1.11.0a6 | FieldPresenceConsistency execution |
+| v1.11.0a7 (merged into a8) | ValueRangeConditional execution |
+| v1.11.0a8 | 5th condition type + pack 1.0.0 -> 1.1.0 |
+| v1.11.0a8.post1 | Audit-trail correction for v1.11.0a7 tag situation |
+| **v1.11.0 (this)** | **Final release of the v1.11.0 arc** |
+
+### What v1.11.0 final does NOT change
+
+- No code in `src/neurotcs/`
+- No schema changes
+- No pack content changes
+- No `yaml_sha256` changes
+- No test changes
+- No CHANGELOG entries before this one are modified
+
+This is purely a version-string update to mark the v1.11.0 milestone.
+
+---
+
 ## [1.11.0a8.post1] -- 2026-05-26
 
 ### Post-release: audit-trail correction for v1.11.0a7 tag situation
