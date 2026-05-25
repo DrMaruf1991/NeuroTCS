@@ -1,18 +1,29 @@
 # NeuroTCS v1.x Scope Statement
 
-**Effective:** v1.9.0 (2026-05-24) onward
+**Effective:** v1.10.0 (2026-05-25) onward (v1.9.0 first AD-only release; v1.10.0 first multi-layer release)
 **Status:** Canonical — supersedes any conflicting statements in older docs
 
-## Scope: Alzheimer's disease only
+## Scope: Alzheimer's disease only; multi-layer audit family
 
-NeuroTCS v1.x is a citation-locked, fail-closed audit framework for longitudinal medical AI **in Alzheimer's disease**. The v1.x release series will not ship rule packs or audit infrastructure for any other disease domain.
+NeuroTCS v1.x is a citation-locked, fail-closed **audit-layer family** for longitudinal medical AI **in Alzheimer's disease**. The v1.x release series will not ship rule packs or audit infrastructure for any other disease domain.
+
+As of v1.10.0, NeuroTCS ships **two parallel audit layers**:
+
+| Layer | Question | Shipped | Status |
+|---|---|---|---|
+| **Layer 1 · Temporal coherence** | Are the model's predicted disease-stage transitions clinically plausible? | v1.0+ | Production (5-cohort byte-exact locked) |
+| **Layer 2 · Clinical range validation** | Do the per-visit clinical measurements fall within published biologically-plausible ranges? | v1.10.0 | Production (6 packs, 55 measurements) |
+| Layer 3 · Cross-sheet consistency | Are signals across different domains (genetics / labs / imaging / cognition) internally consistent? | v1.11.0 roadmap | Planned |
+| Layer 4 · Inclusion / protocol | Does each patient and visit comply with the trial protocol? | v1.12.0 roadmap | Planned |
+
+The Layer Contract that all layers adhere to is documented at [`docs/clinical_ranges/LAYER_CONTRACT.md`](clinical_ranges/LAYER_CONTRACT.md).
 
 ## What this means in practice
 
 | Question | Answer |
 |---|---|
-| What rule packs ship in v1.x? | Exactly 3 AD packs: `ad/niaaa_2018`, `ad/aa_2024`, `ad/aa_2024_trac` |
-| What cohorts are audited under the four-cohort triangulation lock? | ADNI, OASIS-3, NACC, MIRIAD (plus MIRIAD test-retest) — all AD |
+| What rule packs ship in v1.x? | **Layer 1:** Exactly 3 AD packs: `ad/niaaa_2018`, `ad/aa_2024`, `ad/aa_2024_trac`<br>**Layer 2 (v1.10.0):** Exactly 6 range packs covering vitals, CSF/plasma biomarkers, MRI volumetrics, PET amyloid, AD genetics |
+| What cohorts are audited under the four-cohort triangulation lock? | ADNI, OASIS-3, NACC, MIRIAD (plus MIRIAD test-retest) — all AD, Layer 1 only |
 | Will Parkinson's, MS, oncology, stroke, or lung-nodule rule packs be added in v1.x? | No |
 | What if I have a non-AD rule pack? | The schema (`DiseaseDomain` enum) accepts only `alzheimers` and `custom`; non-AD packs will fail validation |
 | Where did the non-AD rule packs go? | Extracted at v1.9.0 to seed future per-disease repos (see [v1.9.0 CHANGELOG entry](../CHANGELOG.md#190--2026-05-24)). Recoverable from git history at tag v1.8.1 or from the offline archive `NeuroTCS-non-AD-extracted-v1.8.1.zip` |

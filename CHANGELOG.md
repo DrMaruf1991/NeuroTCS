@@ -4,6 +4,221 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0-rc1] — 2026-05-25
+
+### World-class restructure: international-consensus citation standard
+
+This release candidate restructures Layer 2 around a stricter evidence bar
+introduced in response to an external pre-push audit. The earlier v1.10.0
+draft (preserved below as historical context, never tagged or pushed)
+shipped 6 range packs each anchored to one primary paper, but several
+numeric bounds were synthesized from broader literature rather than lifted
+verbatim from the cited table. An external auditor would reasonably
+classify those as citation-informed rather than citation-locked.
+
+v1.10.0-rc1 introduces three discipline mechanisms that distinguish
+citation-locked from citation-informed bounds, and ships exactly **one**
+pack at the new bar — the highest-citation-strength pack in the AD
+treatment-monitoring space.
+
+### New: world-class evidence discipline
+
+- **`RangePackStatus.RESEARCH_PREVIEW`** — a new lifecycle status for
+  packs that are structurally valid and citation-informed but have not
+  yet undergone the verbatim citation-trace audit required for the
+  `production` status. `audit_clinical_ranges()` refuses to run a
+  research_preview pack (same fail-closed semantics as skeleton).
+
+- **`CitationStrength` enum** on every `RangeBound`:
+  - `verbatim` — the cited source contains the exact numeric bound in a
+    table, figure, or explicit statement
+  - `derived` — the bound is computed from data in the cited source
+  - `international_consensus` — at least 5 international specialty
+    bodies have published agreeing numeric criteria. The
+    `Citation.endorsing_bodies` list must enumerate them.
+
+- **`Citation.public_url`** and **`Citation.endorsing_bodies`** —
+  required for any bound at `verbatim` or `international_consensus`
+  strength. Pydantic-strict model validator rejects bounds claiming
+  `international_consensus` with fewer than 5 endorsing bodies or
+  without a public URL.
+
+### Production pack (1)
+
+**`ad/aria_safety@1.0.0`** — Amyloid-Related Imaging Abnormalities (ARIA)
+radiographic severity classification, dose-management thresholds, and
+surveillance MRI schedule for anti-amyloid monoclonal antibody therapy
+(lecanemab, donanemab).
+
+- SHA-256: `9fb3cbd4a5662e5e7dd0a8d3617548c6...`
+- 5 measurements, 12 bounds, every bound at `citation_strength=international_consensus`
+- Each bound has ≥5 endorsing bodies and a public URL
+- Endorsing bodies cited across the pack include:
+  - **FDA** (LEQEMBI prescribing label, revised 8/2025; KISUNLA label, revised 7/2025)
+  - **American Society of Neuroradiology** (Cogswell PM, et al. AJNR 2022;43(9):E19-E35, PMID 35953274)
+  - **Alzheimer's Association** (Lecanemab AUR Cummings 2023; Donanemab AUR Rabinovici 2025)
+  - **European Academy of Neurology** (ARIA guidance citing Cogswell 2022)
+  - **American Academy of Neurology**
+  - **Eisai** (Clarity AD trial protocol)
+  - **Eli Lilly** (TRAILBLAZER-ALZ 2 protocol, Statistical Analysis Plan Tables AACI.4.1 / 4.2)
+- Verbatim FDA Table 3 ARIA-E severity thresholds: mild <5cm, moderate 5-10cm or multiple sites <10cm, severe >10cm
+- Verbatim ARIA-H microhemorrhage thresholds: mild ≤4, moderate 5-9, severe ≥10
+- Verbatim ARIA-H siderosis thresholds: mild 1 focal area, moderate 2, severe >2
+- Verbatim baseline exclusion: >4 baseline microhemorrhages excludes from anti-amyloid therapy
+
+### Demoted to research_preview (6)
+
+The following packs from v1.10.0-draft are retained on disk and remain
+loadable for experimentation, but their `status` field is now
+`research_preview` and `audit_clinical_ranges()` refuses to run them
+pending their own world-class citation-trace upgrade:
+
+- `vital_signs/standard` (Pinnacle 21 / CDISC SDTM territory; AD-specific bounds not internationally established)
+- `csf_biomarkers/aa_2024` (citation-informed; assay-platform-specific bounds need IFCC + AA + EADC verbatim transcription)
+- `plasma_biomarkers/aa_2024` (same; plasma assay landscape evolving rapidly)
+- `mri_volumetrics/freesurfer` (tool-specific; ENIGMA is one consortium, not 5+ bodies)
+- `pet_amyloid/centiloid` (citation-informed; Klunk 2015 anchors the scale but specific lower-bound floors are derivation, not verbatim)
+- `genetics/apoe_valid_genotypes` (mostly verbatim biology; deferred for full ACMG + CPIC + ClinGen + HUGO citation lock in v1.11.0)
+
+### Honest scope disclosure
+
+- **Layer 1** (temporal coherence, frozen): 5 cohort audit invariants
+  reproduce byte-exact under v1.10.0-rc1.
+- **Layer 2** (clinical ranges): exactly 1 production pack at world-class
+  standard. The pack covers ARIA monitoring, which is the
+  highest-stakes safety domain in anti-amyloid AD therapy.
+- The original 6 v1.10.0-draft packs (which would have caught 16 of 49
+  planted errors in our test trial file) are retained as research_preview
+  for transparency and future upgrade work.
+
+### What this release does NOT touch (verified frozen)
+
+- `src/neurotcs/audit_core/` (Layer 1 audit pipeline)
+- `src/neurotcs/rulepack/` (Layer 1 rule packs)
+- `src/neurotcs/input_contract/` (adapters)
+- All 5 Layer 1 audit_id invariants
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` → All checks passed
+- `pytest tests/ -q` → **526 passed, 7 skipped** (397 existing + 129 new Layer 2 tests covering the world-class gates, ARIA pack behavior, schema upgrade, and research_preview demotion semantics)
+- All 5 Layer 1 audit invariants byte-exact:
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` ✓
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` ✓
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` ✓
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` ✓
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` ✓
+
+### Roadmap
+
+- **v1.10.0 final**: build remaining 4 packs to world-class standard:
+  - `pet_amyloid/centiloid_consensus` (Klunk 2015 + EANM + SNMMI + AA + FDA + EMA + NIA-AA 2024)
+  - `genetics/apoe_consensus` (ACMG + CPIC + HUGO + ClinGen + AA + FDA + EMA + Roses 1996)
+  - `csf_amyloid_consensus` (AA Biofluid + IFCC + EADC + NIA-AA 2024 + JPND + ADNI + FDA)
+  - `plasma_amyloid_consensus` (AA workgroup + NIA-AA 2024 + AAIC + FDA + Quanterix/Fujirebio standards + EAN + Alzheimer's Society UK)
+
+- **v1.11.0**: Layer 3 (cross-sheet consistency)
+- **v1.12.0**: Layer 4 (inclusion/protocol)
+
+---
+
+## [1.10.0-draft] — 2026-05-25 — NOT PUSHED, HISTORICAL CONTEXT BELOW
+
+### Layer 2 ships: clinical-range validation
+
+This release adds **`neurotcs.clinical_ranges`** — the second audit layer
+in the NeuroTCS v1.x family. Where Layer 1 (the original audit pipeline,
+shipped v1.0+) audits temporal coherence of categorical disease-stage
+predictions against published clinical-staging frameworks, Layer 2 audits
+the per-visit numeric and categorical clinical measurements (vitals, labs,
+imaging volumetrics, PET, genetics) against published biologically-plausible
+ranges.
+
+The architectural pattern is deliberately identical to Layer 1: citation-locked
+YAML packs with PMID/DOI anchors, Pydantic v2 strict schema, SHA-256 canonical-JSON
+hashing, deterministic `flag_id` (the Layer 2 analogue of Layer 1's `audit_id`),
+production/skeleton/planned status enum, fail-closed semantics.
+
+The v2.0 multi-layer architecture is baked in from day one. The Layer Contract
+([`docs/clinical_ranges/LAYER_CONTRACT.md`](docs/clinical_ranges/LAYER_CONTRACT.md))
+documents the interface that Layer 3 (cross-sheet consistency, v1.11.0 roadmap)
+and Layer 4 (inclusion/protocol, v1.12.0 roadmap) will slot into without
+rewriting v1.10.0 code.
+
+### Honest scope disclosure
+
+On a 49-error clinical-trial test dataset, the combined Layer 1 + Layer 2
+catch rate is **22 of 49 errors caught**:
+- Layer 1 (temporal coherence): 6 errors caught (predicted-state regressions, time-window violations)
+- Layer 2 (clinical ranges): 16 errors caught (out-of-range biomarkers, vital-sign extremes, invalid genotypes, scale violations)
+- The remaining 27 errors require future layers: cross-sheet consistency (v1.11.0, ~10 errors), inclusion/protocol (v1.12.0, ~7 errors), variant-phenotype clinician reasoning (permanently out of scope, ~2 errors)
+
+This is incremental progress, not a comprehensive validator. Pinnacle 21 /
+OpenCDISC remain the right tool for SDTM compliance; NeuroTCS complements them
+with AD-specific citation-locked audits.
+
+### Added
+
+- **`src/neurotcs/clinical_ranges/`** — new subpackage parallel to `rulepack/`
+  - `schema.py`: `RangePack`, `MeasurementRange`, `RangeBound`, `Citation`, `BoundType` (Pydantic v2 strict)
+  - `loader.py`: `load_rangepack(name)`, `list_rangepacks()`, `LoadedRangePack`
+  - `audit.py`: `audit_clinical_ranges()`, `audit_clinical_ranges_multi()`, `ClinicalRangeAuditResult`, `ClinicalRangeFlag`, `MultiPackResult`
+  - `adapters/trial_excel.py`: `trial_excel_to_measurements()` adapter for CDISC-style anti-amyloid trial Excel files
+
+- **6 production range packs** under `src/neurotcs/clinical_ranges/ranges/`:
+  - `vital_signs/standard@1.0.0` — 9 measurements (SBP, DBP, HR, temp, resp_rate, SpO2, weight, height, BMI). Anchor: Whelton 2017 ACC/AHA (PMID 29133356). Per-bound citations from ATS, Brown 2012 hypothermia, Kusumoto 2018 bradycardia, Tanaka 2001 HRmax.
+  - `csf_biomarkers/aa_2024@1.0.0` — 9 measurements (CSF Aβ42/40, ratio, t-tau, p-tau181/217/231, NfL, GFAP). Anchor: Lewczuk 2018 IFCC consensus (PMID 29752307). Per-bound citations from Hansson 2018, Janelidze 2020, Ashton 2020 CSF p-tau231, Khalil 2020 NfL, Cicognola 2021 GFAP.
+  - `plasma_biomarkers/aa_2024@1.0.0` — 9 measurements (plasma Aβ42/40, ratio, t-tau, p-tau181/217/231, NfL, GFAP). Anchor: Hansson 2018 (PMID 29626426). Per-bound citations from Karikari 2020 plasma p-tau181, Janelidze 2020, Ashton 2024 plasma p-tau217 meta-analysis, Schindler 2019 plasma ratio.
+  - `mri_volumetrics/freesurfer@1.0.0` — 13 measurements (hippocampus L/R, entorhinal L/R, amygdala L/R, lateral ventricles, cortical thickness, Fazekas periventricular + deep white, microbleed count, DTI FA uncinate L/R). Anchor: Fischl 2012 (PMID 22248573). Per-bound citations from ENIGMA Hibar 2015, Mueller 2010 ADNI, Schmaal 2020 cortical thickness, Fazekas 1987 scale, Pierpaoli 1996 FA bounds.
+  - `pet_amyloid/centiloid@1.0.0` — 8 measurements (global SUVR, centiloid, amyloid_status categorical, 5 regional SUVRs). Anchor: Klunk 2015 Centiloid Project (PMID 25282030). Per-bound citations from Brier 2016 tau PET SUVR, Johnson 2013 amyloid PET appropriate-use criteria.
+  - `genetics/apoe_valid_genotypes@1.0.0` — 7 measurements (APOE genotype categorical, PRS decile, PRS z-score, WGS QC status, WGS coverage, PSEN1, PSEN2). Anchor: Roses 1996 APOE alleles (PMID 8639020). Per-bound citations from Wray 2019 PRS deciles, GA4GH variant QC, ACMG 2015 variant interpretation.
+
+- **Trial-file adapter** at `src/neurotcs/clinical_ranges/adapters/trial_excel.py`
+  consuming CDISC-style anti-amyloid trial Excel files (sheets DM/VS/QS/MR/PT/LB/GE/TR/AE/CT/DB)
+  and emitting the long-format measurements DataFrame Layer 2 consumes.
+  Splits LB rows by `sample_type` (CSF / plasma / serum) so CSF and plasma
+  biomarker packs apply to their own assays.
+
+- **104 new pytest tests** under `tests/clinical_ranges/`:
+  - `test_schema.py` — Citation + RangeBound + MeasurementRange + RangePack validation, canonical SHA-256 hashing, evaluate_value_against_bounds, categorical evaluation
+  - `test_loader.py` — Each of 6 production packs loads cleanly, every measurement has per-bound citation, deterministic SHA across loads
+  - `test_audit.py` — End-to-end audit on synthetic data, in-range/out-of-range/categorical/unit-mismatch flagging, NaN handling, fail-closed gating, multi-pack disjoint-coverage enforcement
+  - `test_trial_file_validation.py` — Gold-standard test against the planted-error trial file: asserts all 16 in-scope errors are caught with the right bound_type, and byte-exact `combined_flag_id` reproducibility
+
+- **`docs/clinical_ranges/LAYER_CONTRACT.md`** — full architectural specification
+  of the Layer interface that v1.11.0+ layers will implement
+
+- **`docs/SCOPE.md` updated** to describe the v1.x audit-layer family
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` → All checks passed
+- `pytest tests/ -q` (clean env) → **501 passed, 7 skipped** (397 existing + 104 new Layer 2 tests)
+- All 5 Layer 1 audit invariants reproduce **byte-exact** under v1.10.0:
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` ✓
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` ✓
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` ✓
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` ✓
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` ✓
+- Layer 2 multi-pack flag_id on the trial file: `beb2c75085fbd2b2...` (deterministic across runs)
+- Layer 2 catches 16/16 in-scope planted errors
+
+### What this release does NOT touch
+
+- `src/neurotcs/audit_core/` — Layer 1 audit pipeline (frozen)
+- `src/neurotcs/rulepack/` — Layer 1 rule packs (frozen)
+- `src/neurotcs/input_contract/` — adapters (frozen)
+- The 5 locked audit_id invariants — verified byte-exact
+
+### What this release does NOT yet catch (roadmap)
+
+- Cross-sheet consistency (APOE GE vs DM; CSF vs PET; CT vs MRI; MMSE-vs-state) — Layer 3, v1.11.0
+- Imaging monotonicity (hippocampus grew, ventricles shrank, microbleed count decreased) — Layer 3, v1.11.0
+- Treatment-protocol adherence (drug-administered vs arm; ARIA-severe-but-continued; impossibly high dose) — Layer 4, v1.12.0
+- Inclusion-criteria violations (age out of range, amyloid-negative enrolled in anti-amyloid arm) — Layer 4, v1.12.0
+- ID/protocol integrity (duplicate patient_id rows, visits past protocol end) — Layer 4, v1.12.0
+- Variant-phenotype reasoning (PSEN1 in late-onset 78yo) — permanently out of scope; clinician work
+
 ## [1.9.1] — 2026-05-25
 
 ### CI workflow fixes (PATCH release; no behavior change)

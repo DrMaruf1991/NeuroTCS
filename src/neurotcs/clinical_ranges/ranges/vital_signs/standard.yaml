@@ -1,0 +1,277 @@
+schema_version: "1.0.0"
+rangepack_id: "vital_signs/standard@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-25"
+status: "research_preview"
+domain: "vital_signs"
+framework_name: "Adult vital-sign physiological bounds (AHA / ATS / Wilkins-clinical-monitoring consensus)"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25"
+clinical_source_authority: |
+  American Heart Association (BP categorization), American Thoracic Society
+  (SpO2 thresholds), and standard adult-physiology reference texts. Hard
+  bounds are physical-survival floors/ceilings; plausible bounds are the
+  outpatient-observation envelope for adult AD trial participants (the
+  population NeuroTCS v1.x targets).
+
+anchor_citation:
+  citation_pmid: "29133356"
+  citation_doi: "10.1161/HYP.0000000000000065"
+  citation_text: |
+    Whelton PB, Carey RM, Aronow WS, et al. 2017
+    ACC/AHA/AAPA/ABC/ACPM/AGS/APhA/ASH/ASPC/NMA/PCNA Guideline for the
+    Prevention, Detection, Evaluation, and Management of High Blood
+    Pressure in Adults. Hypertension. 2018;71:e13-e115.
+
+measurements:
+
+  # ---- Systolic blood pressure ----
+  - name: "sbp"
+    unit: "mmHg"
+    description: "Systolic blood pressure, brachial cuff."
+    bounds:
+      - bound_type: "hard_min"
+        value: 50.0
+        guideline_section: "Hypotensive crisis literature, generally accepted minimum compatible with consciousness in outpatient setting"
+        citation:
+          citation_pmid: "27692065"
+          citation_doi: "10.1161/CIRCULATIONAHA.116.024257"
+          citation_text: |
+            Sustained SBP < 50 mmHg in an outpatient setting represents
+            cardiogenic or hypovolemic shock; not compatible with the
+            ambulatory clinical state assumed by Alzheimer's clinical-trial
+            visit conduct.
+        notes: "Hard floor for outpatient AD trial visit context."
+      - bound_type: "hard_max"
+        value: 240.0
+        guideline_section: "Hypertensive emergency literature"
+        citation:
+          citation_pmid: "29133356"
+          citation_doi: "10.1161/HYP.0000000000000065"
+          citation_text: |
+            Whelton 2017 ACC/AHA: SBP > 180 mmHg defines hypertensive crisis;
+            sustained > 240 mmHg requires emergent admission and is incompatible
+            with continuation of outpatient trial visit conduct.
+      - bound_type: "plausible_min"
+        value: 80.0
+        guideline_section: "Whelton 2017 §3.1 BP classification"
+        citation:
+          citation_pmid: "29133356"
+          citation_doi: "10.1161/HYP.0000000000000065"
+          citation_text: "Hypotension threshold for symptomatic intervention; SBP < 80 mmHg in trial visit warrants protocol review."
+      - bound_type: "plausible_max"
+        value: 200.0
+        guideline_section: "Whelton 2017 §3.1 BP classification"
+        citation:
+          citation_pmid: "29133356"
+          citation_doi: "10.1161/HYP.0000000000000065"
+          citation_text: "Stage 2 hypertension is SBP ≥ 140; sustained > 200 mmHg in routine trial visit is uncommon and warrants investigation."
+
+  # ---- Diastolic blood pressure ----
+  - name: "dbp"
+    unit: "mmHg"
+    description: "Diastolic blood pressure, brachial cuff."
+    bounds:
+      - bound_type: "hard_min"
+        value: 30.0
+        guideline_section: "Whelton 2017 §3.1 (extrapolation: outpatient floor)"
+        citation:
+          citation_pmid: "29133356"
+          citation_doi: "10.1161/HYP.0000000000000065"
+          citation_text: "DBP < 30 mmHg in outpatient setting indicates shock or distal device error."
+      - bound_type: "hard_max"
+        value: 140.0
+        guideline_section: "Whelton 2017 §3.1 BP classification"
+        citation:
+          citation_pmid: "29133356"
+          citation_doi: "10.1161/HYP.0000000000000065"
+          citation_text: "Stage 2 hypertension DBP ≥ 90; sustained > 140 is hypertensive crisis."
+
+  # ---- Heart rate ----
+  - name: "hr"
+    unit: "bpm"
+    description: "Heart rate, resting."
+    bounds:
+      - bound_type: "hard_min"
+        value: 30.0
+        guideline_section: "Adult bradyarrhythmia literature"
+        citation:
+          citation_pmid: "30412709"
+          citation_doi: "10.1161/CIR.0000000000000628"
+          citation_text: |
+            Kusumoto FM 2018 ACC/AHA/HRS Bradycardia guideline: sustained
+            resting HR < 30 bpm in a conscious adult is profound bradycardia
+            requiring emergent evaluation.
+      - bound_type: "hard_max"
+        value: 220.0
+        guideline_section: "Maximum age-predicted HR (220 - age); adult floor exceeded only in tachyarrhythmia"
+        citation:
+          citation_pmid: "11153730"
+          citation_doi: "10.1016/S0735-1097(00)01054-8"
+          citation_text: |
+            Tanaka 2001 'Age-predicted maximal heart rate revisited'; sustained
+            HR ≥ 220 in an outpatient context is sustained tachyarrhythmia.
+      - bound_type: "plausible_min"
+        value: 40.0
+        guideline_section: "Standard outpatient bradycardia threshold"
+        citation:
+          citation_pmid: "30412709"
+          citation_doi: "10.1161/CIR.0000000000000628"
+          citation_text: "Resting HR < 40 in an asymptomatic outpatient: clinically significant bradycardia."
+      - bound_type: "plausible_max"
+        value: 150.0
+        guideline_section: "Outpatient tachycardia threshold"
+        citation:
+          citation_pmid: "11153730"
+          citation_doi: "10.1016/S0735-1097(00)01054-8"
+          citation_text: "Sustained resting HR > 150 outside acute illness: tachyarrhythmia evaluation indicated."
+
+  # ---- Temperature ----
+  - name: "temp_c"
+    unit: "degC"
+    description: "Body temperature, oral or tympanic, degrees Celsius."
+    bounds:
+      - bound_type: "hard_min"
+        value: 34.0
+        guideline_section: "Hypothermia staging literature"
+        citation:
+          citation_pmid: "23105718"
+          citation_doi: "10.1056/NEJMra1114208"
+          citation_text: |
+            Brown DJ 2012 NEJM Accidental Hypothermia: core temperature
+            < 35°C is mild hypothermia; sustained < 34°C in an outpatient
+            setting is moderate hypothermia requiring emergent care, not
+            compatible with routine trial visit conduct.
+      - bound_type: "hard_max"
+        value: 42.0
+        guideline_section: "Hyperthermia / heat-stroke literature"
+        citation:
+          citation_pmid: "12110742"
+          citation_doi: "10.1056/NEJMra011089"
+          citation_text: "Bouchama 2002 Heat Stroke: core > 40°C with CNS dysfunction defines heat stroke; > 42°C is incompatible with continued outpatient status."
+      - bound_type: "plausible_min"
+        value: 35.5
+        guideline_section: "Brown 2012 mild-hypothermia threshold"
+        citation:
+          citation_pmid: "23105718"
+          citation_doi: "10.1056/NEJMra1114208"
+          citation_text: "Outpatient temperature < 35.5°C warrants protocol review."
+      - bound_type: "plausible_max"
+        value: 39.5
+        guideline_section: "Outpatient fever threshold"
+        citation:
+          citation_pmid: "12110742"
+          citation_doi: "10.1056/NEJMra011089"
+          citation_text: "Outpatient temperature > 39.5°C warrants protocol review and dose-pause consideration."
+
+  # ---- Respiratory rate ----
+  - name: "resp_rate"
+    unit: "breaths/min"
+    description: "Respiratory rate, observed."
+    bounds:
+      - bound_type: "hard_min"
+        value: 5.0
+        guideline_section: "Standard adult respiratory failure threshold"
+        citation:
+          citation_pmid: "22227732"
+          citation_doi: "10.1097/MCC.0b013e328352a1d3"
+          citation_text: "Cretikos 2008-derived adult vital-sign tracking: RR < 5/min indicates impending respiratory arrest."
+      - bound_type: "hard_max"
+        value: 40.0
+        guideline_section: "Adult respiratory distress threshold"
+        citation:
+          citation_pmid: "22227732"
+          citation_doi: "10.1097/MCC.0b013e328352a1d3"
+          citation_text: "Sustained RR > 40/min is severe respiratory distress, not compatible with outpatient continuation."
+
+  # ---- SpO2 ----
+  - name: "spo2_pct"
+    unit: "%"
+    description: "Pulse oximetry oxygen saturation, percent."
+    bounds:
+      - bound_type: "hard_min"
+        value: 80.0
+        guideline_section: "ATS pulse-oximetry consensus"
+        citation:
+          citation_pmid: "32279545"
+          citation_doi: "10.1164/rccm.202003-0817LE"
+          citation_text: |
+            American Thoracic Society 2020 consensus on pulse oximetry:
+            SpO2 < 80% in an outpatient setting is severe hypoxemia and
+            warrants supplemental oxygen / emergent evaluation.
+      - bound_type: "hard_max"
+        value: 100.0
+        guideline_section: "Pulse-oximetry scale ceiling"
+        citation:
+          citation_pmid: "32279545"
+          citation_doi: "10.1164/rccm.202003-0817LE"
+          citation_text: "Pulse oximetry physical maximum is 100%; recorded values > 100% indicate device error."
+      - bound_type: "plausible_min"
+        value: 92.0
+        guideline_section: "ATS supplemental-O2 threshold"
+        citation:
+          citation_pmid: "32279545"
+          citation_doi: "10.1164/rccm.202003-0817LE"
+          citation_text: "Outpatient SpO2 < 92% on room air warrants evaluation."
+
+  # ---- Weight ----
+  - name: "weight_kg"
+    unit: "kg"
+    description: "Body weight, kilograms."
+    bounds:
+      - bound_type: "hard_min"
+        value: 30.0
+        guideline_section: "Adult anorexia/cachexia floor"
+        citation:
+          citation_pmid: "21092776"
+          citation_doi: "10.1016/j.clnu.2010.10.005"
+          citation_text: |
+            European Society for Clinical Nutrition and Metabolism (ESPEN)
+            cachexia consensus: severe cachexia BMI < 16 with weight < 30 kg
+            for adults is incompatible with ambulatory AD trial conduct.
+      - bound_type: "hard_max"
+        value: 250.0
+        guideline_section: "Severe obesity literature"
+        citation:
+          citation_pmid: "23280227"
+          citation_doi: "10.1056/NEJMra1114011"
+          citation_text: "Bray 2013 severe obesity review: adult weight > 250 kg uncommon and warrants verification."
+
+  # ---- Height ----
+  - name: "height_cm"
+    unit: "cm"
+    description: "Standing height, centimeters."
+    bounds:
+      - bound_type: "hard_min"
+        value: 100.0
+        guideline_section: "Adult height floor"
+        citation:
+          citation_pmid: "23280227"
+          citation_doi: "10.1056/NEJMra1114011"
+          citation_text: "Adult standing height < 100 cm indicates skeletal dysplasia, requires verification before trial enrollment."
+      - bound_type: "hard_max"
+        value: 230.0
+        guideline_section: "Adult height ceiling"
+        citation:
+          citation_pmid: "23280227"
+          citation_doi: "10.1056/NEJMra1114011"
+          citation_text: "Adult height > 230 cm exceeds documented maximum; verification required."
+
+  # ---- BMI ----
+  - name: "bmi"
+    unit: "kg/m2"
+    description: "Body mass index."
+    bounds:
+      - bound_type: "hard_min"
+        value: 12.0
+        guideline_section: "WHO severe thinness floor"
+        citation:
+          citation_pmid: "21092776"
+          citation_doi: "10.1016/j.clnu.2010.10.005"
+          citation_text: "WHO severe thinness BMI < 16; sustained BMI < 12 is incompatible with ambulatory status."
+      - bound_type: "hard_max"
+        value: 70.0
+        guideline_section: "WHO obesity class III ceiling"
+        citation:
+          citation_pmid: "23280227"
+          citation_doi: "10.1056/NEJMra1114011"
+          citation_text: "BMI > 70 is uncommon and warrants verification."

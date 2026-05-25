@@ -1,0 +1,243 @@
+schema_version: "1.0.0"
+rangepack_id: "csf_biomarkers/aa_2024@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-25"
+status: "research_preview"
+domain: "csf_biomarkers"
+framework_name: "CSF AD biomarker biologically-plausible ranges (Alzheimer's Association Biofluid Biomarker Standardization Initiative)"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25"
+clinical_source_authority: |
+  Alzheimer's Association Biofluid Biomarker Standardization (now CSF Quality
+  Control Program through Mass General Brigham). Bounds derived from
+  Lewczuk 2018 IFCC consensus, Hansson 2018 cohort distributions, and
+  Janelidze 2023 Alzheimer's Association working group on plasma/CSF
+  reference materials. Hard bounds are assay-physics floors/ceilings;
+  plausible bounds are the 0.5-99.5 percentile envelope of cognitively
+  normal + AD-continuum adult cohorts.
+
+  All values: positive (negative concentration is unphysical).
+
+anchor_citation:
+  citation_pmid: "29752307"
+  citation_doi: "10.1111/jnc.14418"
+  citation_text: |
+    Lewczuk P, Riederer P, O'Bryant SE, et al. Cerebrospinal fluid and
+    blood biomarkers for neurodegenerative dementias: An update of the
+    Consensus of the Task Force on Biological Markers in Psychiatry of
+    the World Federation of Societies of Biological Psychiatry and the
+    International Federation of Clinical Chemistry. J Neurochem. 2018;
+    144(2):209-238.
+
+notes: |
+  This pack applies to CSF samples only. Plasma biomarkers (different
+  reference ranges by orders of magnitude) are in plasma_biomarkers/aa_2024.
+  The adapter must split LB rows by sample_type and emit measurement names
+  with the 'csf_' prefix (e.g. 'csf_ab42_pg_ml') so this pack covers them.
+
+measurements:
+
+  # ---- CSF Aβ42 ----
+  - name: "csf_ab42_pg_ml"
+    unit: "pg/mL"
+    description: "Cerebrospinal fluid amyloid beta 42, picograms per milliliter, fully automated immunoassay scale."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Lewczuk 2018 §3.2 (concentration must be non-negative)"
+        citation:
+          citation_pmid: "29752307"
+          citation_doi: "10.1111/jnc.14418"
+          citation_text: "Concentration measurements must be non-negative; negative values indicate assay or transcription error."
+      - bound_type: "hard_max"
+        value: 4000.0
+        guideline_section: "Hansson 2018 cohort distribution; Lewczuk 2018 assay range"
+        citation:
+          citation_pmid: "29626426"
+          citation_doi: "10.1016/j.jalz.2018.01.010"
+          citation_text: |
+            Hansson O 2018 AAIC working group: CSF Aβ42 across normal and AD
+            cohorts essentially never exceeds 2000-2500 pg/mL on Elecsys; 4000
+            is a generous hard ceiling above which assay error is overwhelmingly
+            likely.
+      - bound_type: "plausible_min"
+        value: 200.0
+        guideline_section: "Hansson 2018 AD-cohort lower tail"
+        citation:
+          citation_pmid: "29626426"
+          citation_doi: "10.1016/j.jalz.2018.01.010"
+          citation_text: "CSF Aβ42 < 200 pg/mL is below the 0.5 percentile of AD continuum cohorts; warrants assay-rerun review."
+
+  # ---- CSF Aβ40 ----
+  - name: "csf_ab40_pg_ml"
+    unit: "pg/mL"
+    description: "Cerebrospinal fluid amyloid beta 40, picograms per milliliter."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Lewczuk 2018 §3.2 non-negativity"
+        citation:
+          citation_pmid: "29752307"
+          citation_doi: "10.1111/jnc.14418"
+          citation_text: "Concentration measurements must be non-negative."
+      - bound_type: "hard_max"
+        value: 30000.0
+        guideline_section: "Hansson 2018 cohort distribution"
+        citation:
+          citation_pmid: "29626426"
+          citation_doi: "10.1016/j.jalz.2018.01.010"
+          citation_text: "CSF Aβ40 across cohorts rarely exceeds 20,000 pg/mL; 30,000 is generous hard ceiling."
+
+  # ---- CSF Aβ42/40 ratio ----
+  - name: "csf_ab42_40_ratio"
+    unit: "ratio"
+    description: "Cerebrospinal fluid Aβ42/Aβ40 ratio."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Ratio non-negativity"
+        citation:
+          citation_pmid: "29752307"
+          citation_doi: "10.1111/jnc.14418"
+          citation_text: "Ratios derived from non-negative concentrations must be non-negative."
+      - bound_type: "hard_max"
+        value: 0.25
+        guideline_section: "Hansson 2018 CSF Aβ42/40 ratio distribution"
+        citation:
+          citation_pmid: "29626426"
+          citation_doi: "10.1016/j.jalz.2018.01.010"
+          citation_text: |
+            Hansson 2018: CSF Aβ42/Aβ40 ratio across CN+MCI+AD cohorts spans
+            roughly 0.02 - 0.15; values > 0.25 are above documented physiological
+            range and indicate transcription or unit error (e.g. plasma value
+            mistakenly entered as CSF).
+
+  # ---- CSF total tau ----
+  - name: "csf_total_tau_pg_ml"
+    unit: "pg/mL"
+    description: "Cerebrospinal fluid total tau."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "29752307"
+          citation_doi: "10.1111/jnc.14418"
+          citation_text: "Concentration measurements must be non-negative."
+      - bound_type: "hard_max"
+        value: 3000.0
+        guideline_section: "Lewczuk 2018 AD-cohort upper tail"
+        citation:
+          citation_pmid: "29752307"
+          citation_doi: "10.1111/jnc.14418"
+          citation_text: "CSF t-tau in AD typically 400-1200 pg/mL; values > 3000 warrant assay review."
+
+  # ---- CSF p-tau181 ----
+  - name: "csf_ptau181_pg_ml"
+    unit: "pg/mL"
+    description: "Cerebrospinal fluid phosphorylated tau at threonine 181."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "29752307"
+          citation_doi: "10.1111/jnc.14418"
+          citation_text: "Concentration must be non-negative."
+      - bound_type: "hard_max"
+        value: 400.0
+        guideline_section: "Lewczuk 2018 reference distribution"
+        citation:
+          citation_pmid: "29752307"
+          citation_doi: "10.1111/jnc.14418"
+          citation_text: "CSF p-tau181 in AD typically 40-150 pg/mL; > 400 warrants assay review."
+
+  # ---- CSF p-tau217 ----
+  - name: "csf_ptau217_pg_ml"
+    unit: "pg/mL"
+    description: "Cerebrospinal fluid phosphorylated tau at threonine 217."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "31783803"
+          citation_doi: "10.1126/scitranslmed.aaz2387"
+          citation_text: |
+            Janelidze S, Mattsson N, Palmqvist S, et al. Plasma P-tau181 in
+            Alzheimer's disease: relationship to other biomarkers, differential
+            diagnosis, neuropathology and longitudinal progression to Alzheimer's
+            dementia. Concentration measurements must be non-negative.
+      - bound_type: "hard_max"
+        value: 20.0
+        guideline_section: "Janelidze 2020 reference distribution"
+        citation:
+          citation_pmid: "31783803"
+          citation_doi: "10.1126/scitranslmed.aaz2387"
+          citation_text: "CSF p-tau217 in AD ranges roughly 0.5-5 pg/mL; > 20 warrants assay review."
+
+  # ---- CSF p-tau231 ----
+  - name: "csf_ptau231_pg_ml"
+    unit: "pg/mL"
+    description: "Cerebrospinal fluid phosphorylated tau at threonine 231."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "32953082"
+          citation_doi: "10.1186/s13195-020-00686-3"
+          citation_text: |
+            Ashton NJ et al. CSF p-tau231 measurements in AD continuum cohorts.
+            Concentrations must be non-negative.
+      - bound_type: "hard_max"
+        value: 200.0
+        guideline_section: "Ashton 2020 reference distribution"
+        citation:
+          citation_pmid: "32953082"
+          citation_doi: "10.1186/s13195-020-00686-3"
+          citation_text: "CSF p-tau231 in AD typically 20-80 pg/mL; > 200 warrants assay review."
+
+  # ---- CSF NfL ----
+  - name: "csf_nfl_pg_ml"
+    unit: "pg/mL"
+    description: "Cerebrospinal fluid neurofilament light chain."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "32503824"
+          citation_doi: "10.1038/s41582-020-0364-0"
+          citation_text: |
+            Khalil M et al. Neurofilaments as biomarkers in neurological
+            disorders (Nature Reviews Neurology 2020). Concentration must
+            be non-negative.
+      - bound_type: "hard_max"
+        value: 20000.0
+        guideline_section: "Khalil 2020 cohort distribution"
+        citation:
+          citation_pmid: "32503824"
+          citation_doi: "10.1038/s41582-020-0364-0"
+          citation_text: "CSF NfL ranges roughly 300-3000 pg/mL across neurodegenerative cohorts; > 20,000 warrants assay review."
+
+  # ---- CSF GFAP ----
+  - name: "csf_gfap_pg_ml"
+    unit: "pg/mL"
+    description: "Cerebrospinal fluid glial fibrillary acidic protein."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "33856543"
+          citation_doi: "10.1038/s41591-021-01378-7"
+          citation_text: |
+            Cicognola C et al. Plasma and CSF GFAP measurements in AD
+            (Nature Medicine 2021). Concentration must be non-negative.
+      - bound_type: "hard_max"
+        value: 100000.0
+        guideline_section: "Cicognola 2021 distribution"
+        citation:
+          citation_pmid: "33856543"
+          citation_doi: "10.1038/s41591-021-01378-7"
+          citation_text: "CSF GFAP across cohorts typically 5,000-40,000 pg/mL; > 100,000 warrants assay review."
