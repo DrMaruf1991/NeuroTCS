@@ -243,11 +243,7 @@ def _evaluate_invariant(
     if isinstance(cond, CategoricalImpliesRangeCondition):
         flags.extend(_evaluate_categorical_implies_range(invariant, cond, submission, lp))
     elif isinstance(cond, FieldPresenceConsistencyCondition):
-        raise NotImplementedError(
-            f"FieldPresenceConsistencyCondition (invariant {invariant.name!r}) "
-            f"is not yet implemented in v1.11.0a2. It is schema-validated only. "
-            f"Execution lands in v1.11.0rc1 with the manifest_data_consistency pack."
-        )
+        flags.extend(_evaluate_field_presence_consistency(invariant, cond, submission, lp))
     elif isinstance(cond, ValueRangeConditionalCondition):
         raise NotImplementedError(
             f"ValueRangeConditionalCondition (invariant {invariant.name!r}) "
@@ -444,6 +440,227 @@ def _make_trajectory_pattern_flag(
             f"AD dementia in this group is {cond.pattern.population_baseline_rate:.0%} "
             f"by age {age_threshold:.0f} (Fortea 2024); pattern deviation "
             f"flagged for review (advisory only)."
+        ),
+        citation_pmid=invariant.citation.citation_pmid,
+        citation_doi=invariant.citation.citation_doi,
+        citation_public_url=invariant.citation.public_url,
+    )
+
+
+def _evaluate_field_presence_consistency(
+    invariant: CrossSheetInvariant,
+    cond: FieldPresenceConsistencyCondition,
+    submission: dict[str, Any],
+    lp: LoadedInvariantPack,
+) -> list[CrossSheetFlag]:
+    """Evaluate a field_presence_consistency condition.
+
+    Per v1.11.0-design.2 section 4.4.2: "if the manifest declares L3
+    conformance, attribution/ must exist with one file per prediction row."
+
+    Two modes:
+
+    MODE A (sheet-presence only, required_per_row_in_sheet is None):
+        If source_sheet.source_field == source_value, then required_sheet
+        must be present in the submission AND non-empty (at least one row,
+        or for the manifest sheet, a non-empty dict).
+        On failure, emit exactly ONE flag describing the missing sheet.
+
+    MODE B (per-row matching, required_per_row_in_sheet is set):
+        If source_sheet.source_field == source_value, then:
+          (1) required_sheet must be present and non-empty (Mode A check), AND
+          (2) for each row in required_per_row_in_sheet, there must be a
+              matching entry in required_sheet keyed by the invariant's
+              join_keys (e.g., one attribution file per prediction row,
+              matched on patient_id + visit_id).
+        On failure of (1), emit ONE flag for the missing required_sheet.
+        On failure of (2), emit ONE flag PER unmatched row in
+              required_per_row_in_sheet, with join_key_values populated.
+
+    A row in the manifest sheet is the manifest dict itself (the manifest
+    is dict-shaped, not list-shaped). Other sheets are list-of-dicts.
+
+    The trigger evaluation: source_sheet.source_field == source_value is
+    checked against:
+      - The manifest dict directly if source_sheet == "manifest"
+      - The first row of source_sheet if it's a list (sheet-level metadata
+        check; row-level checks belong to other condition types)
+
+    If the trigger condition is not met (source value not matching),
+    emit no flags -- the invariant simply does not apply to this submission.
+
+    If the source_sheet itself is missing or empty, also emit no flags --
+    the trigger cannot be evaluated, and other invariants in the pack are
+    responsible for missing-source-sheet checks.
+    """
+    flags: list[CrossSheetFlag] = []
+
+    source = submission.get(cond.source_sheet)
+    if source is None:
+        return flags
+
+    # Extract the field value from the source sheet
+    source_field_value = _extract_source_field_value(source, cond.source_field)
+    if source_field_value is None:
+        return flags
+
+    # Check trigger: does the source field match the declared source value?
+    if source_field_value != cond.source_value:
+        return flags
+
+    # Trigger matched. Now check required_sheet presence + non-emptiness.
+    required = submission.get(cond.required_sheet)
+    if required is None or _is_empty_sheet(required):
+        flag = _make_field_presence_missing_sheet_flag(
+            invariant=invariant,
+            lp=lp,
+            cond=cond,
+            source_field_value=source_field_value,
+        )
+        flags.append(flag)
+        return flags  # No point checking per-row if the sheet is missing
+
+    # If Mode A (no per-row check), we're done.
+    if cond.required_per_row_in_sheet is None:
+        return flags
+
+    # Mode B: each row in required_per_row_in_sheet must have a matching
+    # entry in required_sheet, matched on the invariant's join_keys.
+    per_row_sheet = submission.get(cond.required_per_row_in_sheet)
+    if per_row_sheet is None or _is_empty_sheet(per_row_sheet):
+        # Nothing to match against; no flags.
+        return flags
+
+    per_row_rows = _iter_rows(per_row_sheet)
+    required_rows = _iter_rows(required)
+
+    # Build an index of required_sheet by the invariant's join_keys
+    join_keys = invariant.join_keys
+    required_index: set[tuple[Any, ...]] = set()
+    for r in required_rows:
+        key = tuple(r.get(k) for k in join_keys)
+        if all(v is not None for v in key):
+            required_index.add(key)
+
+    # For each row in per_row_sheet, check whether its key is in the index
+    for row in per_row_rows:
+        key = tuple(row.get(k) for k in join_keys)
+        if any(v is None for v in key):
+            continue  # Can't match a row missing its join key
+        if key not in required_index:
+            join_key_values = dict(zip(join_keys, key, strict=True))
+            flag = _make_field_presence_unmatched_row_flag(
+                invariant=invariant,
+                lp=lp,
+                cond=cond,
+                source_field_value=source_field_value,
+                join_key_values=join_key_values,
+            )
+            flags.append(flag)
+
+    return flags
+
+
+def _extract_source_field_value(source: Any, source_field: str) -> Any:
+    """Extract a field value from a source sheet.
+
+    The manifest is dict-shaped; other sheets are list-of-dicts and we
+    take the first row as representing sheet-level metadata.
+    """
+    if isinstance(source, dict):
+        return source.get(source_field)
+    if isinstance(source, list) and source:
+        first_row = source[0]
+        if isinstance(first_row, dict):
+            return first_row.get(source_field)
+    return None
+
+
+def _is_empty_sheet(sheet: Any) -> bool:
+    """A sheet is empty if it's an empty dict, empty list, or None."""
+    if sheet is None:
+        return True
+    if isinstance(sheet, dict):
+        return len(sheet) == 0
+    if isinstance(sheet, list):
+        return len(sheet) == 0
+    return False
+
+
+def _make_field_presence_missing_sheet_flag(
+    invariant: CrossSheetInvariant,
+    lp: LoadedInvariantPack,
+    cond: FieldPresenceConsistencyCondition,
+    source_field_value: Any,
+) -> CrossSheetFlag:
+    """Emit a flag for a missing required_sheet."""
+    payload = {
+        "yaml_sha256": lp.yaml_sha256,
+        "invariant_name": invariant.name,
+        "kind": "field_presence_missing_sheet",
+        "source_value": cond.source_value,
+        "source_sheet": cond.source_sheet,
+        "source_field": cond.source_field,
+        "observed_source_value": _stringify_for_hash({"v": source_field_value})["v"],
+        "required_sheet": cond.required_sheet,
+        "contract_version": "1.2.0",
+    }
+    flag_id = _derive_flag_id(payload)
+    return CrossSheetFlag(
+        flag_id=flag_id,
+        pack_id=lp.invariantpack.invariantpack_id,
+        invariant_name=invariant.name,
+        severity=invariant.flag_severity,
+        join_key_values={},
+        observed_value=None,
+        declared_tool=str(source_field_value),
+        flag_reason=(
+            f"{cond.source_sheet}.{cond.source_field}={source_field_value!r} "
+            f"requires sheet {cond.required_sheet!r} to be present and non-empty, "
+            f"but {cond.required_sheet!r} is missing or empty in this submission."
+        ),
+        citation_pmid=invariant.citation.citation_pmid,
+        citation_doi=invariant.citation.citation_doi,
+        citation_public_url=invariant.citation.public_url,
+    )
+
+
+def _make_field_presence_unmatched_row_flag(
+    invariant: CrossSheetInvariant,
+    lp: LoadedInvariantPack,
+    cond: FieldPresenceConsistencyCondition,
+    source_field_value: Any,
+    join_key_values: dict[str, Any],
+) -> CrossSheetFlag:
+    """Emit a flag for a row in required_per_row_in_sheet that has no
+    matching entry in required_sheet."""
+    payload = {
+        "yaml_sha256": lp.yaml_sha256,
+        "invariant_name": invariant.name,
+        "kind": "field_presence_unmatched_row",
+        "source_value": cond.source_value,
+        "source_sheet": cond.source_sheet,
+        "source_field": cond.source_field,
+        "observed_source_value": _stringify_for_hash({"v": source_field_value})["v"],
+        "required_sheet": cond.required_sheet,
+        "required_per_row_in_sheet": cond.required_per_row_in_sheet,
+        "join_key_values": _stringify_for_hash(join_key_values),
+        "contract_version": "1.2.0",
+    }
+    flag_id = _derive_flag_id(payload)
+    return CrossSheetFlag(
+        flag_id=flag_id,
+        pack_id=lp.invariantpack.invariantpack_id,
+        invariant_name=invariant.name,
+        severity=invariant.flag_severity,
+        join_key_values=dict(join_key_values),
+        observed_value=None,
+        declared_tool=str(source_field_value),
+        flag_reason=(
+            f"{cond.source_sheet}.{cond.source_field}={source_field_value!r} "
+            f"requires each row in {cond.required_per_row_in_sheet!r} to have "
+            f"a matching entry in {cond.required_sheet!r} (keyed on {invariant.join_keys}), "
+            f"but row with {join_key_values} has no matching entry."
         ),
         citation_pmid=invariant.citation.citation_pmid,
         citation_doi=invariant.citation.citation_doi,

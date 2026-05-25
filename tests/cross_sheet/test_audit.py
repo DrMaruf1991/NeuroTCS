@@ -311,7 +311,10 @@ class TestUnimplementedConditionTypes:
     or the missing-sheet info flag fires before the condition is reached.
     """
 
-    def test_field_presence_consistency_raises(self):
+    def test_field_presence_consistency_now_implemented_in_v1_11_0a6(self):
+        """v1.11.0a6 implements FieldPresenceConsistency execution. The
+        condition no longer raises NotImplementedError; it evaluates.
+        (Detailed Mode A / Mode B tests live in test_field_presence_consistency.py.)"""
         lp = _build_pack(
             status=InvariantPackStatus.RESEARCH_PREVIEW,
             condition=FieldPresenceConsistencyCondition(
@@ -324,10 +327,11 @@ class TestUnimplementedConditionTypes:
         submission = {
             "manifest": {"conformance_level": "L3"},
             "biomarkers": [],  # required by test pack
-            "attribution": {},
+            "attribution": [{"patient_id": "p1", "visit_id": "v1"}],
         }
-        with pytest.raises(NotImplementedError, match="FieldPresenceConsistency"):
-            audit_cross_sheet(submission, [lp], dry_run=True)
+        # Should execute without raising
+        result = audit_cross_sheet(submission, [lp], dry_run=True)
+        assert result.n_invariants_evaluated == 1
 
     def test_value_range_conditional_raises(self):
         lp = _build_pack(

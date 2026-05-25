@@ -4,6 +4,170 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0a6] -- 2026-05-26
+
+### Pre-release: FieldPresenceConsistency execution
+
+Sixth alpha of the v1.11.0 Layer 3 implementation arc. Implements
+the `FieldPresenceConsistency` condition type (previously schema-
+validated since v1.11.0a1 but raising `NotImplementedError` on
+execution).
+
+**SCOPE OF v1.11.0a6:**
+- `_evaluate_field_presence_consistency()` implementation in audit.py
+- Two modes: sheet-presence-only (Mode A) and per-row matching (Mode B)
+- Helper functions `_extract_source_field_value()` and `_is_empty_sheet()`
+- Deterministic flag_id generation following existing pattern
+- 33 new tests (204 cross_sheet total)
+- Layer 1 byte-exact preserved across all 5 cohorts
+- All 8 pack yaml_sha256 values byte-identical to v1.11.0a5
+
+**EXPLICITLY NOT IN v1.11.0a6 (deferred):**
+- `ValueRangeConditional` execution (next session -- same pure-implementation character)
+- `manifest_data_consistency` pack design + invariants (design-heavy session)
+- Composite multi-layer audit (`audit_all_layers()`) -- new public API surface
+- Fairness audit integration with Layer 3 flags
+- Production promotion of `genotype_phenotype_consistency`
+
+### Added
+
+**Module: `src/neurotcs/cross_sheet/audit.py` (extended)**
+
+- `_evaluate_field_presence_consistency(invariant, cond, submission, lp)`:
+  main execution path for `FieldPresenceConsistency` conditions
+- `_extract_source_field_value(source, source_field)`: extracts a
+  field value from a source sheet, handling both dict-shaped (manifest)
+  and list-of-dicts (other sheets) cases
+- `_is_empty_sheet(sheet)`: returns True for None / empty dict / empty list
+- `_make_field_presence_missing_sheet_flag(...)`: emits the sheet-level
+  flag when required_sheet is missing or empty
+- `_make_field_presence_unmatched_row_flag(...)`: emits a per-row flag
+  when a row in required_per_row_in_sheet has no matching entry in
+  required_sheet
+
+Removed: `NotImplementedError` for `FieldPresenceConsistencyCondition`
+(now executes). `ValueRangeConditional` still raises NotImplementedError.
+
+### Semantics
+
+**Mode A (sheet-presence only):**
+- Trigger: source_sheet.source_field == source_value
+- Check: required_sheet must be present and non-empty in the submission
+- On violation: ONE flag describing the missing required_sheet
+
+**Mode B (per-row matching, when required_per_row_in_sheet is set):**
+- Trigger: source_sheet.source_field == source_value
+- Check (1): required_sheet must be present and non-empty (Mode A check)
+- Check (2): for each row in required_per_row_in_sheet, there must be
+  a matching entry in required_sheet keyed on the invariant's join_keys
+- On failure of (1): ONE sheet-level flag (join_key_values is empty)
+- On failure of (2): ONE flag PER unmatched row (join_key_values
+  populated with the unmatched row's join key values)
+
+Design example from v1.11.0-design.2 section 4.4.2: "if the manifest
+declares L3 conformance, attribution/ must exist with one file per
+prediction row."
+
+Rows with incomplete join keys are skipped (not flagged) on both
+sides of the match -- this matches the existing v1.11.0a3
+trajectory pattern execution discipline.
+
+### Tests (33 new, 204 cross_sheet total)
+
+- `tests/cross_sheet/test_field_presence_consistency.py` (NEW):
+  - Helper function tests: `_extract_source_field_value`, `_is_empty_sheet`
+  - 8 Mode A tests: trigger-not-matched, sheet-missing, sheet-empty,
+    sheet-present, trigger-field-missing, flag-reason content,
+    severity respects warning/info declarations
+  - 9 Mode B tests: all-rows-matched, one-unmatched, multiple-unmatched,
+    sheet-entirely-missing (sheet-level not per-row), trigger-not-matched,
+    prediction-with-incomplete-join-key skipped, attribution-with-incomplete-key
+    not indexed, per-row-sheet-empty (no-rows-to-match), flag-reason content
+  - 3 determinism tests: flag_id deterministic for Mode A, Mode B, hex SHA-256
+  - 2 regression tests: shipped tool_declaration_consistency + genotype_phenotype_consistency
+    packs still work unchanged
+  - 1 ValueRangeConditional-still-raises test
+- `tests/cross_sheet/test_audit.py` (1 test rewritten):
+  `test_field_presence_consistency_raises` ->
+  `test_field_presence_consistency_now_implemented_in_v1_11_0a6`
+
+### Changed
+
+**Version bump:** 1.11.0a5 -> 1.11.0a6 (PEP 440 alpha 6).
+
+**Audit execution surface:** `FieldPresenceConsistency` condition type
+now executable; no longer raises NotImplementedError for either mode.
+
+### Roadmap (refined)
+
+| Release | Adds | Status |
+|---|---|---|
+| v1.11.0a1 -> v1.11.0a4 | Layer 3 module + 5 invariants across 2 packs | SHIPPED |
+| v1.11.0a5 | First Layer 3 production pack + empirical validation pattern | SHIPPED |
+| **v1.11.0a6** (this) | FieldPresenceConsistency execution (2 of 4 deferred condition types now executable) | **SHIPPED** |
+| v1.11.0a7 | ValueRangeConditional execution (3rd condition type) | future |
+| v1.11.0a8 (or later) | manifest_data_consistency pack (incl. unknown-tool check) | future |
+| v1.11.0a9+ | Composite multi-layer audit; fairness integration | future |
+| v1.11.0rc1 | golden-value-locked, all condition types executable, all designed packs shipped | future |
+| v1.11.0 final | release | future |
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- `pytest tests/ -q` -> **930 passed, 7 skipped** (897 v1.11.0a5 + 33 new = 930)
+- Layer 1 byte-exact verified under v1.11.0a6 (5/5 cohorts):
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` OK
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` OK
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` OK
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` OK
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` OK
+- All 6 v1.10.2 production rangepack yaml_sha256 values unchanged
+- Both Layer 3 invariant pack yaml_sha256 values unchanged from v1.11.0a5
+
+### What this release does NOT touch (verified frozen)
+
+| Path | Status |
+|---|---|
+| `src/neurotcs/audit_core/` | Frozen since v1.8.1 |
+| `src/neurotcs/rulepack/` | Frozen since v1.9.0 |
+| `src/neurotcs/input_contract/` | Frozen since v1.8.1 |
+| `src/neurotcs/fairness/` | Frozen since v1.8.1 |
+| `src/neurotcs/clinical_ranges/` (Layer 2) | Frozen since v1.10.2 |
+| `src/neurotcs/cross_sheet/schema.py`, `loader.py`, `__init__.py` | Frozen since earlier in v1.11.0 arc |
+| `tool_declaration_consistency.yaml` | yaml_sha256 unchanged from v1.11.0a5 |
+| `genotype_phenotype_consistency.yaml` | yaml_sha256 unchanged from v1.11.0a3 |
+| All 6 v1.10.2 production rangepack yaml_sha256 | Byte-identical |
+| All 5 Layer 1 audit_id invariants | Byte-exact across v1.11.0a5 -> v1.11.0a6 |
+| `scripts/run_empirical_validation_tool_declaration.py` | Unchanged from v1.11.0a5 |
+| `validation_results/tool_declaration_consistency_v1.11.0a5.json` | Unchanged |
+
+### Honest scope disclosure
+
+What this release does:
+- Implements working FieldPresenceConsistency execution for both modes
+- Adds 33 tests covering both modes, helper functions, determinism,
+  edge cases (incomplete join keys, empty/missing sheets), severity
+  respect, and regression checks against shipped packs
+- Preserves byte-exact behavior of Layer 1, Layer 2, and prior Layer 3
+  pack contents
+- Makes the audit runtime ready for the future `manifest_data_consistency`
+  pack (which will USE this condition type once it ships)
+
+What this release does NOT do:
+- Implement `ValueRangeConditional` execution (next session)
+- Ship any invariant pack that uses FieldPresenceConsistency (deferred
+  to manifest_data_consistency design session)
+- Promote any pack to production
+- Implement composite multi-layer audit or fairness integration
+
+The deliberate narrow scope reflects: this is pure implementation work
+with no design decisions outstanding (the schema was locked in v1.11.0a1).
+The next session can either ship ValueRangeConditional (same character)
+or pivot to manifest_data_consistency pack design (heavier; needs
+clinical evidence-gathering for the unknown-tool check).
+
+---
+
 ## [1.11.0a5] -- 2026-05-25
 
 ### Pre-release: production promotion of tool_declaration_consistency pack
