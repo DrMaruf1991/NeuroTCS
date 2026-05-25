@@ -5,7 +5,7 @@ effective_date: "2026-05-25"
 status: "research_preview"
 domain: "tool_declaration_consistency"
 framework_name: "Cross-sheet consistency between declared FDA-cleared volumetric tool and observed biomarker values"
-transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, v1.11.0a2 session #2 of rc1 arc; verbatim transcription from FDA 510(k) clearance summaries (NeuroQuant 5.0 K243016, NeuroReader, icometrix icobrain K192130), tool-vendor normative database documentation (Cortechs.ai NeuroQuant Normative Database White Paper 16,400 scans, Brainreader NeuroReader documentation, icometrix icobrain dm documentation), and the Bethlehem 2022 lifespan brain charts (n=101,457) as the tool-agnostic Tier 2 fallback range"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, v1.11.0a4 session #4 of v1.11.0 arc; verbatim transcription from FDA 510(k) clearance summaries (NeuroQuant 5.0 K243016, NeuroReader, icometrix icobrain K192130, Quantib ND K213737), tool-vendor normative database documentation (Cortechs.ai NeuroQuant Normative Database White Paper 16,400 scans, Brainreader NeuroReader documentation, icometrix icobrain dm documentation, Quantib ND Reference Centile Curves from Rotterdam Scan Study ~5,000 subjects), and the Bethlehem 2022 lifespan brain charts (n=101,457) as the tool-agnostic Tier 2 fallback range"
 clinical_source_authority: |
   This pack encodes cross-sheet invariants linking the declared
   upstream_volumetry_tool field (in submission manifest) with the
@@ -56,35 +56,43 @@ anchor_citation:
   public_url: "https://www.nature.com/articles/s41586-022-04554-y"
   endorsing_bodies:
     - "Bethlehem 2022 Brain Chart Consortium (Nature 2022, n=101,457)"
-    - "FDA (510(k) clearances: NeuroQuant 5.0 K243016, NeuroReader, icobrain K192130, Quantib ND, VUNO, Pixyl, NeuroShield)"
+    - "FDA (510(k) clearances: NeuroQuant 5.0 K243016, NeuroReader, icobrain K192130, Quantib ND K213737, VUNO, Pixyl, NeuroShield)"
     - "Cortechs.ai (NeuroQuant 5.0 normative database white paper, 16,400 MRI scans)"
     - "Brainreader (NeuroReader, ADNI-derived normative ages 60-90)"
     - "icometrix (icobrain dm, FDA 510(k) K192130)"
+    - "Quantib B.V. (Quantib ND, Rotterdam Scan Study Reference Centile Curves, ~5,000 subjects)"
     - "Alzheimer's Disease Neuroimaging Initiative (ADNI)"
+    - "Rotterdam Scan Study (population-based normative MRI dataset)"
     - "De Francesco et al. 2021 (PMC8273578, ADNI hippocampal norms FS+AA)"
 
 notes: |
   RESEARCH_PREVIEW STATUS RATIONALE: This pack ships at research_preview
-  because the three invariants encoded are evidence-locked but the full
-  5-invariant set is not yet complete. Tier 2 production promotion is
-  the v1.11.0a3 milestone.
+  because the four invariants encoded are evidence-locked but the
+  catch-all warning invariant (5th and final) is not yet shipped.
+  Production promotion is the v1.11.0a5 milestone.
+
+  TOOL-SPECIFIC CUTOFF PHILOSOPHIES (preserved verbatim):
+    NeuroQuant 5.0: 5th percentile cutoff on Cortechs database (16,400 ages 3-100)
+    NeuroReader:    25th percentile cutoff on ADNI database (ages 60-90)
+                    -- more conservative; lower bound higher (3.5 vs 2.8)
+    icometrix icobrain: percentile reported, no fixed cutoff published
+    Quantib ND:     5th percentile cutoff on Rotterdam Scan Study (~5,000 subjects)
+                    -- same cutoff convention as NeuroQuant but different population
+    -> The four ranges reflect different tool philosophies. NeuroReader's
+       narrower normal range is its design choice; the others use 5th-
+       percentile cutoffs at structurally similar plausible ranges.
 
   Promotion path:
-    v1.11.0a1: skeleton, 1 invariant (NeuroQuant), no audit function
-    v1.11.0a2 (THIS): research_preview, 3 invariants (NeuroQuant + NeuroReader + icometrix), audit_cross_sheet() implemented
-    v1.11.0a3 (next): production, 5 invariants (adds Quantib ND + catch-all), composite multi-layer audit, fairness integration
-    v1.11.0rc1: golden-value-locked against synthetic + real cohorts
+    v1.11.0a1: skeleton, 1 invariant, no audit function
+    v1.11.0a2: research_preview, 3 invariants (NeuroQuant + NeuroReader + icometrix), audit_cross_sheet() implemented
+    v1.11.0a3: research_preview, 3 invariants UNCHANGED (this pack); the v1.11.0a3 release added the new genotype_phenotype_consistency pack
+    v1.11.0a4 (THIS): research_preview, 4 invariants (adds Quantib ND)
+    v1.11.0a5: production, 5 invariants (adds catch-all warning); pack-level empirical validation against synthetic + real cohort data
+    v1.11.0rc1: golden-value-locked
     v1.11.0 final: release
 
   Each promotion step requires its own world-class evidence pack and
   Layer 1 byte-exact gate. No promotion before discipline is met.
-
-  TOOL-SPECIFIC CUTOFF PHILOSOPHIES (preserved verbatim):
-    NeuroQuant 5.0: 5th percentile cutoff (5%-95% normal range)
-    NeuroReader:    25th percentile cutoff (25%-100% normal; more conservative; lower bound higher)
-    icometrix icobrain: percentile reported, no fixed cutoff
-    -> The three ranges are deliberately different. NeuroReader's
-       narrower normal range is its design choice.
 
 invariants:
 
@@ -281,4 +289,84 @@ invariants:
         - "ADNI (Alzheimer's Disease Neuroimaging Initiative)"
         - "AJNR 2023 (PMID 38050008, icobrain + NeuroQuant clinical comparison)"
         - "FDA 510(k) database (accessdata.fda.gov)"
+        - "v1.10.2 mri_volumetrics/structural_volumetry_consensus pack"
+
+  - name: "quantib_nd_implies_hippocampal_volume_in_normative_range"
+    description: |
+      If the submission manifest declares upstream_volumetry_tool ==
+      'quantib_nd', then total bilateral hippocampal volume values
+      in the biomarkers sheet must fall within the Quantib ND
+      normative reference range. Quantib ND (FDA 510(k) K213737)
+      uses reference centile curves (RCCs) derived from the population-
+      based Rotterdam Scan Study (~5,000 subjects), with the 5th-
+      percentile-or-lower threshold defining hippocampal atrophy
+      (same convention as NeuroQuant; different normative population
+      from NeuroQuant's Cortechs database or NeuroReader's ADNI).
+    sheets_required:
+      - role: "manifest"
+        required: true
+      - role: "biomarkers"
+        required: true
+    join_keys:
+      - "patient_id"
+      - "visit_id"
+    condition:
+      type: "categorical_implies_range"
+      source_sheet: "manifest"
+      source_field: "upstream_volumetry_tool"
+      source_value: "quantib_nd"
+      target_sheet: "biomarkers"
+      target_field: "hippocampal_volume_total_cm3"
+      target_range:
+        lo: 2.8
+        hi: 5.0
+      target_unit: "cm3"
+    flag_severity: "warning"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      Quantib B.V. FDA 510(k) K213737 clearance documentation; Quantib
+      blog "How to measure the changing shape of the aging brain"
+      (Quantib.com 2019): RCCs displayed at standard percentiles
+      (95th, 75th, 50th, 25th, 5th); hippocampal volume below 5th
+      percentile flagged as abnormal per the broader De Francesco 2021
+      (PMC8273578) / Frontiers Neuroscience normative-percentile
+      convention. Rotterdam Scan Study normative dataset (~5,000
+      subjects) differs from NeuroQuant's Cortechs.ai database (16,400
+      scans ages 3-100) and from NeuroReader's ADNI 60-90 database;
+      the Tier 1 plausible range used here (2.8-5.0 cm^3 bilateral
+      total) is the Bethlehem 2022 lifespan-validated range that all
+      three tools' 5th-95th percentile distributions overlap with for
+      adults.
+    citation:
+      citation_pmid: "35388223"
+      citation_doi: "10.1038/s41591-024-02931-w"
+      citation_text: |
+        Quantib ND normative reference: FDA 510(k) K213737 (Quantib B.V.,
+        Floor van Leeuwen Quality & Regulatory Director). Quantib ND
+        uses Reference Centile Curves (RCCs) derived from the
+        population-based Rotterdam Scan Study (~5,000 subjects),
+        displaying volumetric data at standard percentiles
+        (95th, 75th, 50th, 25th, 5th). Per the broader normative-
+        percentile convention (De Francesco 2021 PMC8273578; FreeSurfer
+        and ACM-Adaboost both use 5th-percentile cutoffs for atrophy),
+        hippocampal volume below the 5th percentile is flagged as
+        abnormal. The Tier 1 plausible range used here for Quantib ND
+        (2.8-5.0 cm^3 bilateral total hippocampal volume in adults)
+        is the Bethlehem 2022 lifespan-validated range and matches the
+        structural overlap with NeuroQuant's normative range. Values
+        outside this range in a Quantib-ND-declared submission suggest
+        tool misdeclaration, site/scanner variation, or pathology
+        requiring review.
+
+        Doi citation links to Fortea 2024 anchor for the v1.11.0a3
+        anchor; the Quantib-specific public_url below points to the
+        FDA K213737 510(k) summary document.
+      public_url: "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K213737.pdf"
+      endorsing_bodies:
+        - "FDA (Quantib ND 510(k) K213737 clearance, accessdata.fda.gov)"
+        - "Quantib B.V. (Quantib ND clinical documentation, Reference Centile Curves)"
+        - "Rotterdam Scan Study (population-based normative dataset, ~5,000 subjects)"
+        - "Bethlehem 2022 Brain Chart Consortium (n=101,457 lifespan validation)"
+        - "De Francesco 2021 (PMC8273578, percentile-based atrophy convention)"
+        - "Comparing AI software packages for normative brain volumetry (PMC9177657, Quantib ND 1.5 clinical comparison)"
         - "v1.10.2 mri_volumetrics/structural_volumetry_consensus pack"

@@ -4,6 +4,151 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0a4] -- 2026-05-25
+
+### Pre-release: Quantib ND invariant added to tool_declaration_consistency pack
+
+Fourth alpha of the v1.11.0 Layer 3 implementation arc. Adds the Quantib ND
+invariant to the `cross_sheet/tool_declaration_consistency` pack, bringing
+the pack to 4 of its 5 planned invariants. Pack remains at RESEARCH_PREVIEW.
+
+**SCOPE OF v1.11.0a4 (deliberately narrow):**
+- Add `quantib_nd_implies_hippocampal_volume_in_normative_range` invariant
+- 23 new tests (142 cross_sheet total)
+- Layer 1 byte-exact preserved across all 5 cohorts
+
+**EXPLICITLY NOT IN v1.11.0a4 (deferred):**
+- Catch-all warning invariant (`tool_value_outside_all_known_tool_ranges_warning`) -- v1.11.0a5
+- Production promotion of any pack -- v1.11.0a5 (requires catch-all + empirical validation)
+- Composite multi-layer audit -- v1.11.0rc1
+- Fairness audit integration -- v1.11.0rc1
+- `FieldPresenceConsistency` and `ValueRangeConditional` executions -- v1.11.0rc1
+
+### Added
+
+**Invariant: `quantib_nd_implies_hippocampal_volume_in_normative_range`**
+
+| Field | Value |
+|---|---|
+| Trigger | `manifest.upstream_volumetry_tool == "quantib_nd"` |
+| Target | `biomarkers.hippocampal_volume_total_cm3 in [2.8, 5.0]` |
+| Severity | `warning` |
+| Citation strength | `international_consensus` |
+| Endorsing bodies | 7 (FDA K213737, Quantib B.V., Rotterdam Scan Study, Bethlehem 2022, De Francesco 2021, PMC9177657, v1.10.2 structural_volumetry_consensus) |
+| Anchor citation | Quantib FDA 510(k) K213737 + Rotterdam Scan Study Reference Centile Curves |
+| Public URL | https://www.accessdata.fda.gov/cdrh_docs/pdf21/K213737.pdf |
+
+**Cutoff philosophy rationale:** Quantib ND uses Reference Centile Curves
+(RCCs) derived from the population-based Rotterdam Scan Study (~5,000
+subjects), displaying volumetric data at standard percentiles (95th,
+75th, 50th, 25th, 5th). Per the broader normative-percentile convention
+(De Francesco 2021 PMC8273578; FreeSurfer and ACM-Adaboost both use
+5th-percentile cutoffs for atrophy), hippocampal volume below the 5th
+percentile is flagged as abnormal. The Tier 1 plausible range used here
+(2.8-5.0 cm³ bilateral total in adults) is the Bethlehem 2022 lifespan-
+validated range and matches the structural overlap with NeuroQuant's
+range (both use 5th-percentile cutoffs).
+
+Four tool-specific cutoff philosophies now encoded across all 4 invariants:
+
+| Tool | Cutoff | Normative population | Range |
+|---|---|---|---|
+| NeuroQuant 5.0 | 5th percentile | Cortechs.ai (16,400 ages 3-100) | [2.8, 5.0] cm³ |
+| NeuroReader | 25th percentile | ADNI (ages 60-90) | [3.5, 5.5] cm³ |
+| icometrix icobrain | percentile reported, no fixed cutoff | age/sex-matched controls | [2.8, 5.0] cm³ (Bethlehem) |
+| **Quantib ND** (NEW) | 5th percentile | Rotterdam Scan Study (~5,000 subjects) | [2.8, 5.0] cm³ |
+
+**Locked golden yaml_sha256 (UPDATED in v1.11.0a4):**
+
+| Pack | v1.11.0a3 yaml_sha256 | v1.11.0a4 yaml_sha256 |
+|---|---|---|
+| `cross_sheet/tool_declaration_consistency` | `a1dff4f5f110221f425e27e888fb0d65586f33ae9e871bb50a540cbc217fec9f` | `7f33dc13318f2b591305f2ec43139201709dafb476cf739a77947ea1af26f95f` |
+| `cross_sheet/genotype_phenotype_consistency` | `c988ffeddc31d04121cc012dcb32fe1e09f64ad4ddfb95e22b772a32788a1a40` | unchanged |
+
+**Tests (23 new, 142 cross_sheet total)**
+
+- `tests/cross_sheet/test_quantib_nd.py` (23 tests, NEW): pack-load
+  verification (4 invariants), Quantib invariant trigger/target/range/severity
+  assertions, world-class discipline checks (≥5 endorsing bodies,
+  international_consensus, Rotterdam cited, K213737 cited, FDA public URL),
+  end-to-end execution (in-range, below-range, above-range, non-matching
+  tool), regression tests verifying NeuroQuant + NeuroReader + icometrix
+  unchanged, multi-invariant execution diagnostics.
+- `tests/cross_sheet/test_loader.py` (updated): golden yaml_sha256
+  updated, 4-invariant assertions, new Quantib-specific tests.
+- `tests/cross_sheet/test_audit.py` (updated): `n_invariants_evaluated`
+  expectations updated from 3 to 4.
+
+### Changed
+
+**Version bump:** 1.11.0a3 -> 1.11.0a4 (PEP 440 alpha 4).
+
+**Pack invariant count:** `cross_sheet/tool_declaration_consistency`
+3 -> 4 invariants. Pack remains at RESEARCH_PREVIEW.
+
+### Roadmap (refined)
+
+| Release | Adds | Status |
+|---|---|---|
+| v1.11.0a1 | cross_sheet schema + loader + 1 SKELETON invariant | SHIPPED |
+| v1.11.0a2 | audit_cross_sheet() + 2 invariants; SKELETON->RESEARCH_PREVIEW | SHIPPED |
+| v1.11.0a3 | CategoricalImpliesTrajectoryPattern execution + APOE4 invariant pack | SHIPPED |
+| **v1.11.0a4** (this) | Quantib ND invariant (4th of 5 in tool_declaration pack) | **SHIPPED** |
+| v1.11.0a5 | Catch-all warning invariant + production promotion of tool_declaration pack | future |
+| v1.11.0rc1 | FieldPresenceConsistency + ValueRangeConditional executions + manifest_data_consistency pack + composite audit + fairness integration; golden-value-locked | future |
+| v1.11.0 final | release | future |
+
+### Verification
+
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- `pytest tests/ -q` -> **868 passed, 7 skipped** (845 v1.11.0a3 + 23 new = 868)
+- Layer 1 byte-exact verified under v1.11.0a4 (5/5 cohorts):
+  - OASIS-3 cTCS=0.994191 audit_id=`766ffc5f26eae47f...` OK
+  - ADNI cTCS=0.994575 audit_id=`9e708f2ebd610e8f...` OK
+  - NACC cTCS=0.991502 audit_id=`def60e6836a5a9fe...` OK
+  - MIRIAD cTCS=0.985369 audit_id=`947ab24ef83490e5...` OK
+  - MIRIAD test-retest cTCS=1.000000 audit_id=`804303993ff5c913...` OK
+- All 6 v1.10.2 production rangepack yaml_sha256 values unchanged
+- v1.11.0a3 genotype_phenotype_consistency yaml_sha256 unchanged
+
+### What this release does NOT touch (verified frozen)
+
+| Path | Status |
+|---|---|
+| `src/neurotcs/audit_core/` | Frozen since v1.8.1 |
+| `src/neurotcs/rulepack/` | Frozen since v1.9.0 |
+| `src/neurotcs/input_contract/` | Frozen since v1.8.1 |
+| `src/neurotcs/fairness/` | Frozen since v1.8.1 |
+| `src/neurotcs/clinical_ranges/` (Layer 2) | Frozen since v1.10.2 |
+| `src/neurotcs/cross_sheet/schema.py` | Frozen since v1.11.0a1 |
+| `src/neurotcs/cross_sheet/loader.py` | Frozen since v1.11.0a1 |
+| `src/neurotcs/cross_sheet/__init__.py` | Frozen since v1.11.0a2 |
+| `src/neurotcs/cross_sheet/audit.py` | Frozen since v1.11.0a3 |
+| `genotype_phenotype_consistency.yaml` | Unchanged from v1.11.0a3 |
+| All 6 v1.10.2 production rangepack yaml_sha256 | Byte-identical |
+| All 5 Layer 1 audit_id invariants | Byte-exact across v1.11.0a3 -> v1.11.0a4 |
+
+### Honest scope disclosure
+
+What this release does:
+- Adds the 4th of 5 planned invariants to tool_declaration_consistency pack
+- Encodes Quantib ND with its actual cutoff philosophy (5th percentile on
+  Rotterdam Scan Study) at international_consensus standard
+- Maintains all Layer 1 / Layer 2 invariants and prior Layer 3 pack contents byte-exact
+- 23 new tests covering Quantib ND specifically + regression checks for
+  the prior 3 invariants
+- Addresses Tier 1 priority from scope-response (Quantib ND is one of the
+  named FDA-cleared volumetric tools in the v1.10.2 structural_volumetry_consensus
+  pack roster)
+
+What this release does NOT do:
+- Promote any pack to production status (deferred to v1.11.0a5 along with catch-all invariant)
+- Implement the 5th catch-all warning invariant
+- Implement composite multi-layer audit or fairness integration
+- Implement `FieldPresenceConsistency` or `ValueRangeConditional` execution
+
+---
+
 ## [1.11.0a3] -- 2026-05-25
 
 ### Pre-release: trajectory-pattern execution + first genotype-phenotype invariant pack

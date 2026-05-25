@@ -31,7 +31,7 @@ from neurotcs.cross_sheet import (
 # ============================================================
 
 GOLDEN_YAML_SHA256_TOOL_DECL = (
-    "a1dff4f5f110221f425e27e888fb0d65586f33ae9e871bb50a540cbc217fec9f"
+    "7f33dc13318f2b591305f2ec43139201709dafb476cf739a77947ea1af26f95f"
 )
 
 
@@ -55,7 +55,7 @@ class TestListInvariantPacks:
         assert td["status"] == "research_preview"
         assert td["schema_version"] == "1.0.0"
         assert td["pack_version"] == "1.0.0"
-        assert td["n_invariants"] == 3
+        assert td["n_invariants"] == 4
 
 
 class TestLoadInvariantPack:
@@ -95,11 +95,11 @@ class TestLoadInvariantPack:
 class TestShippedPackContents:
     """Verify the v1.11.0a2 shipped pack contents in detail (3 invariants)."""
 
-    def test_pack_has_exactly_three_invariants_in_v1_11_0a2(self):
-        """v1.11.0a2 ships exactly 3 invariants: NeuroQuant 5.0, NeuroReader,
-        icometrix icobrain. Session #3 adds the remaining 2 (Quantib ND + catch-all)."""
+    def test_pack_has_exactly_four_invariants_in_v1_11_0a4(self):
+        """v1.11.0a4 ships exactly 4 invariants: NeuroQuant 5.0, NeuroReader,
+        icometrix icobrain, Quantib ND. Session 5 adds the catch-all warning."""
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
-        assert len(lp.invariantpack.invariants) == 3
+        assert len(lp.invariantpack.invariants) == 4
 
     def test_shipped_invariants_names(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
@@ -108,7 +108,33 @@ class TestShippedPackContents:
             "neuroquant_5_0_implies_hippocampal_volume_in_normative_range",
             "neuroreader_implies_hippocampal_volume_in_normative_range",
             "icometrix_icobrain_implies_hippocampal_volume_in_plausible_range",
+            "quantib_nd_implies_hippocampal_volume_in_normative_range",
         ]
+
+    def test_quantib_nd_invariant_range_2_8_to_5_0(self):
+        """Quantib ND uses 5th-percentile cutoff on Rotterdam Scan Study
+        normative; Tier 1 plausible range matches NeuroQuant structurally
+        because both use 5th-percentile cutoffs."""
+        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        inv = lp.invariantpack.invariants[3]
+        assert inv.name == "quantib_nd_implies_hippocampal_volume_in_normative_range"
+        assert inv.condition.source_value == "quantib_nd"
+        assert inv.condition.target_range.lo == 2.8
+        assert inv.condition.target_range.hi == 5.0
+
+    def test_quantib_nd_invariant_cites_rotterdam_scan_study(self):
+        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        inv = lp.invariantpack.invariants[3]
+        # The Rotterdam Scan Study should appear in either the citation_text
+        # or in endorsing_bodies (it's the normative database)
+        joined = inv.citation.citation_text + " ".join(inv.citation.endorsing_bodies)
+        assert "Rotterdam" in joined
+
+    def test_quantib_nd_invariant_cites_fda_k213737(self):
+        lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
+        inv = lp.invariantpack.invariants[3]
+        joined = inv.citation.citation_text + " ".join(inv.citation.endorsing_bodies)
+        assert "K213737" in joined
 
     def test_neuroquant_invariant_range_2_8_to_5_0(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")

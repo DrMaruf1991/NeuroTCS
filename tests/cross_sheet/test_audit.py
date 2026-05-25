@@ -432,10 +432,10 @@ class TestFlagIdDeterminism:
 class TestEndToEndWithShippedPack:
     """Use the actual shipped tool_declaration_consistency pack."""
 
-    def test_shipped_pack_loads_with_3_invariants_at_research_preview(self):
+    def test_shipped_pack_loads_with_4_invariants_at_research_preview(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
         assert lp.status == InvariantPackStatus.RESEARCH_PREVIEW
-        assert len(lp.invariantpack.invariants) == 3
+        assert len(lp.invariantpack.invariants) == 4
 
     def test_shipped_pack_neuroquant_in_range(self):
         lp = load_invariantpack("cross_sheet/tool_declaration_consistency")
@@ -510,5 +510,5 @@ class TestEndToEndWithShippedPack:
         }
         result = audit_cross_sheet(submission, [lp], dry_run=True)
         assert result.n_rows_audited == 3
-        assert result.n_invariants_evaluated == 3  # all 3 invariants in the pack evaluated
+        assert result.n_invariants_evaluated == 4  # all 4 invariants in the pack evaluated
         assert "cross_sheet/tool_declaration_consistency@1.0.0" in result.packs_run
