@@ -58,9 +58,9 @@ NeuroTCS v1.x is scope-narrowed to **Alzheimer's disease** in preparation for FD
 
 | Pack | Disease | Anchor publication | PMID | Transitions |
 |---|---|---|---|---|
-| `ad/niaaa_2018@1.2.0` | Alzheimer's | Jack 2018 NIA-AA Framework | 29653606 | 4 + 2 inadmissible |
-| `ad/aa_2024@2.0.0` | Alzheimer's | Jack 2024 AA Revised Criteria | 38934362 | 28 + 17 inadmissible (Table 7 integrated staging, 17 states) |
-| `ad/aa_2024_trac@1.0.0` | Alzheimer's (anti-Aβ) | La Joie 2025 TRAC framework | _pending — recent_ | 6 + 3 inadmissible (5 require `treatment_status`) |
+| `ad/niaaa_2018@1.3.0` | Alzheimer's | Jack 2018 NIA-AA Framework | 29653606 | 4 + 2 inadmissible |
+| `ad/aa_2024@2.1.0` | Alzheimer's | Jack 2024 AA Revised Criteria | 38934362 | 28 + 17 inadmissible (Table 7 integrated staging, 17 states) |
+| `ad/aa_2024_trac@1.1.0` | Alzheimer's (anti-Aβ) | La Joie 2025 TRAC framework | 41298245 | 6 + 3 inadmissible (5 require `treatment_status`) |
 
 Each rule pack is:
 

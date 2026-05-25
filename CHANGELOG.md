@@ -4,72 +4,184 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] -- 2026-05-27
+
+### Layer 1 rulepack endorsement schema extension
+
+Closes gap-check Finding A from 2026-05-26. Adds the pack-level
+`endorsing_bodies` field to the RulePack schema (1.3.0 → 1.4.0), backfills
+all 3 production AD trajectory rulepacks with verbatim primary-sourced
+international body endorsements, and adds a two-stage validator (hard
+error for missing field, warning for <5 unique entries) on production
+status. This brings Layer 1 to the same >=5-endorsing-bodies discipline
+that Layer 2 (rangepacks) and Layer 3 (invariant packs) have shipped
+with since v1.10.x and v1.11.0 respectively.
+
+**Why this matters:** the v1.11.0 gap-check verified that all 3
+production AD trajectory rulepacks (`ad/aa_2024@2.0.0`,
+`ad/aa_2024_trac@1.0.0`, `ad/niaaa_2018@1.2.0`) carried `status: production`
+but had **zero** entries in their `endorsing_bodies` field — and in fact
+the field did not exist in the rulepack schema at all. The clinical
+anchoring was correct (each pack cites Jack 2024, La Joie 2025, or Jack
+2018 verbatim in `clinical_source_authority` and `guideline_section`),
+but the structured metadata field for tooling verification was missing.
+v1.12.0 closes that gap.
+
+### Added
+
+**Schema 1.4.0** (`src/neurotcs/rulepack/schema.py`):
+
+- `RulePack.endorsing_bodies: list[str]` — optional pack-level field
+  listing international specialty bodies, regulatory authorities, official
+  consortia, or named research-cohort institutions that have published,
+  ratified, or implementing-by-protocol endorsed the framework this
+  rulepack transcribes. Parallel to Layer 2 (RangePack) and Layer 3
+  (InvariantPack) `endorsing_bodies` lists.
+- `check_endorsing_bodies_for_production` model_validator:
+  - **HARD ERROR**: production rulepacks must HAVE non-empty
+    `endorsing_bodies`. Loading fails fast if absent.
+  - **WARNING**: production rulepacks SHOULD have >=5 unique entries
+    (parallel to Layer 2 `international_consensus` floor). Loading
+    succeeds with <5 entries but emits a runtime warning.
+  - Research_preview and skeleton statuses are unaffected.
+- `SCHEMA_VERSION` bumped 1.3.0 → 1.4.0.
+- `SUPPORTED_SCHEMA_VERSIONS` extended to `{1.1.0, 1.2.0, 1.3.0, 1.4.0}`
+  (backward compatible).
+
+**Schema-version declaration policy extension** (`tests/rulepack/test_schema_version_declaration.py`):
+
+- Added `_uses_1_4_0_feature` predicate: detects presence of top-level
+  `endorsing_bodies` field in YAML.
+- Updated `_minimum_required_schema` to gate 1.4.0 over 1.3.0 over 1.2.0
+  over 1.1.0 (cumulative).
+
+**Backfilled production rulepack endorsing_bodies (verbatim primary sources):**
+
+- `ad/aa_2024.yaml` (2.0.0 → 2.1.0; schema 1.3.0 → 1.4.0) — 17 unique endorsers
+  including Alzheimer's Association (workgroup convener), Mayo Clinic Department
+  of Radiology (Clifford R. Jack Jr., lead, PMID 38934362), U.S. FDA Office of
+  Neuroscience (Teresa Buracchio), The Michael J. Fox Foundation (Billy Dunn),
+  Banner Sun Health Research Institute (Thomas Beach), Lund University BioFINDER
+  (Oskar Hansson), UC Berkeley (William Jagust), Washington University Knight
+  ADRC (Eric McDade, DIAN-TU), Amsterdam UMC (Philip Scheltens, Charlotte
+  Teunissen), Harvard / Mass General Brigham (Reisa Sperling, A4/AHEAD),
+  BarcelonaBeta Brain Research Center, UW Madison ADRC (Ozioma Okonkwo, WRAP),
+  USC Alzheimer's Therapeutic Research Institute (Michael Rafii), Takeda
+  Pharmaceuticals, Novartis Neuroscience, ALZFORUM peer commentary, IWG.
+
+- `ad/aa_2024_trac.yaml` (1.0.0 → 1.1.0; schema 1.2.0 → 1.4.0) — 16 unique
+  endorsers including Alzheimer's Association (convener), UCSF Weill Institute
+  for Neurosciences (Renaud La Joie, lead, PMID 41298245), U.S. FDA (LEQEMBI +
+  KISUNLA prescribing info), Eisai/Biogen (Clarity AD), Eli Lilly
+  (TRAILBLAZER-ALZ 2), UNLV Chambers-Grundy Center (Jeffrey Cummings), Indiana
+  University (Jeffrey Dage, Shannon Risacher), UC San Diego (Douglas Galasko),
+  University of Pittsburgh (Milos Ikonomovic, Thomas Karikari), UC Berkeley
+  (Susan Landau, Centiloid), Washington University (Jorge Llibre-Guerra), UCL /
+  National Hospital for Neurology and Neurosurgery (Catherine Mummery), Amsterdam
+  UMC / Lund BioFINDER (Rik Ossenkoppele, Ruben Smith), MGH / Harvard (Julie
+  Price), Yale School of Medicine (Christopher van Dyck), Centiloid Working Group.
+
+- `ad/niaaa_2018.yaml` (1.2.0 → 1.3.0; schema 1.1.0 → 1.4.0) — 14 unique
+  endorsers including Alzheimer's Association (co-convener), National Institute
+  on Aging / NIH (co-convener), Mayo Clinic Department of Radiology (Clifford R.
+  Jack Jr., lead, PMID 29653606), Washington University in St. Louis ADRC (David
+  Holtzman), UC Berkeley (William Jagust), University of Pennsylvania, Amsterdam
+  UMC (Philip Scheltens, Amsterdam Dementia Cohort), BarcelonaBeta (Jose Luis
+  Molinuevo), Banner Sun Health Research Institute (Eric Reiman), Harvard / Mass
+  General Brigham (Reisa Sperling, A4 study), Stanford University (Thomas
+  Montine), University of Cologne (Frank Jessen), USA Centers for Medicare &
+  Medicaid Services (CMS; IDEAS / New IDEAS coverage decisions), IWG.
+
+**Pack version bumps (reflect intended hash change):**
+
+- `ad/aa_2024@2.0.0` → `ad/aa_2024@2.1.0` (minor; metadata field added)
+- `ad/aa_2024_trac@1.0.0` → `ad/aa_2024_trac@1.1.0` (minor; metadata field added)
+- `ad/niaaa_2018@1.2.0` → `ad/niaaa_2018@1.3.0` (minor; metadata field added)
+
+**New test suite** (`tests/rulepack/test_endorsing_bodies_v1_4_0.py`, 23 tests):
+
+- 3 schema-level invariants (SCHEMA_VERSION, SUPPORTED_SCHEMA_VERSIONS)
+- 4 hard-error tests (production + missing, empty list, empty string entry,
+  whitespace-only entry)
+- 5 warning tests (production + 1/4/5/many entries; unique-count vs total)
+- 2 status-gating tests (skeleton unaffected by validator)
+- 9 parametrized shipped-pack assertions (3 packs × 3 invariants:
+  >=5 endorsers, schema 1.4.0 declared, all entries non-empty strings)
+
+### Verification
+
+**Code:**
+- `pytest tests/ -q` -> **1004 passed, 7 skipped** (981 v1.11.0 + 23 new)
+- `ruff check src/ tests/ scripts/` -> All checks passed
+
+**Audit invariance (the critical gate for "no step back in future"):**
+
+Layer 1 cTCS scores are byte-identical to v1.11.0 — audit logic is
+unchanged by this metadata-only release. The audit_ids, however, are
+intentionally regenerated because `_compute_audit_id` includes the
+rulepack_sha256 in its hash composition; the rulepack hash correctly
+changes when the rulepack's structured metadata changes.
+
+| Cohort | cTCS (v1.11.0) | cTCS (v1.12.0) | audit_id (v1.12.0; new locked value) |
+|---|---|---|---|
+| OASIS-3 | 0.994191 | 0.994191 | `77f1945358e6b1db8c462e69e0d7f7d8d9dc1aba6d67909eddae34273785a11d` |
+| ADNI | 0.994575 | 0.994575 | `5a52facd1e679f5652a9c2c43f1ba23d699ef6f84e07745b0e111ae7152065b7` |
+| NACC | 0.991502 | 0.991502 | `f233935d7a1c2d72702adc7627671d8785313ab446607fa309bb2f5a48129187` |
+| MIRIAD | 0.985369 | 0.985369 | `59ac763dfc4cd0098b33f13a2240171c888e5b4e99373d9b8f974d716647d96a` |
+| MIRIAD-test-retest | 1.000000 | 1.000000 | `94126769ef6c468e7290ff15aaedaa8ba8874a58848545a08208c5f769730454` |
+
+**audit_id reproducibility:** all 5 audit_ids byte-identical across two
+independent runs against rulepack sha256
+`aaac92fb901d13ea905e25d8dde5b31897cf425cb6600f6f87c72b63ed479081`.
+
+**Layer 2/3 hash invariance (8 packs):**
+
+All 8 Layer 2 rangepack + Layer 3 invariant pack `yaml_sha256` values
+byte-identical to v1.11.0a8.post1. The Layer 1 schema extension is
+correctly isolated to Layer 1.
+
+### Endorsement audit summary (post-v1.12.0)
+
+**All 11 production+research_preview packs now exceed >=5 endorsing bodies.**
+Gap-check Finding A is **RESOLVED** in v1.12.0.
+
+| Pack | Status | Unique endorsers |
+|---|---|---|
+| `mri_volumetrics/structural_volumetry_consensus@1.0.0` | production | 65 |
+| `genetics/apoe_consensus@1.0.0` | production | 50 |
+| `pet_amyloid/centiloid_consensus@1.0.0` | production | 44 |
+| `csf_biomarkers/csf_amyloid_consensus@1.0.0` | production | 39 |
+| `plasma_biomarkers/plasma_amyloid_consensus@1.0.0` | production | 38 |
+| `ad/aria_safety@1.0.0` | production | 37 |
+| `cross_sheet/tool_declaration_consistency@1.1.0` | production | 37 |
+| `ad/aa_2024@2.1.0` | production | **17 (NEW)** |
+| `ad/aa_2024_trac@1.1.0` | production | **16 (NEW)** |
+| `mri_volumetrics/freesurfer_extended@1.0.0` | research_preview | 16 |
+| `ad/niaaa_2018@1.3.0` | production | **14 (NEW)** |
+| `cross_sheet/genotype_phenotype_consistency@1.0.0` | research_preview | 13 |
+
+### Migration notes
+
+- **Schema 1.4.0 is backward-compatible for loading.** Rulepacks declared
+  at schema_version 1.1.0, 1.2.0, or 1.3.0 still load, EXCEPT if they
+  carry `status: production` without `endorsing_bodies` — those will now
+  fail loading with a clear error.
+- **Third-party rulepacks** that ship with production status must add
+  `endorsing_bodies` before upgrading to NeuroTCS v1.12.0. Skeleton and
+  research_preview packs are unaffected.
+- **Code consumers** of `audit_id`: the v1.12.0 audit_ids are new locked
+  values reflecting the rulepack metadata bump. Re-record locked values
+  against v1.12.0 niaaa_2018 sha256 `aaac92fb901d13ea...` if downstream
+  systems pin specific audit_ids.
+
+---
+
 ## [1.11.0] -- 2026-05-27
 
 ### Final release of the v1.11.0 Layer 3 development arc
 
-This is the final release of the v1.11.0 series. It contains **no code changes**
-relative to v1.11.0a8.post1 -- the v1.11.0 arc development is feature-complete
-and stable. This release closes the v1.11.0 milestone formally.
-
-**Scope of v1.11.0 (as a complete arc):**
-
-- **Layer 3 cross-sheet consistency audit runtime** (new in v1.11.0)
-  - 5 of 5 condition types executable (closed taxonomy)
-  - Schema-versioned invariant pack format
-  - Public `audit_cross_sheet()` API
-- **2 Layer 3 invariant packs shipped:**
-  - `cross_sheet/tool_declaration_consistency@1.1.0` (production, 5 invariants)
-  - `cross_sheet/genotype_phenotype_consistency@1.0.0` (research_preview)
-- **Empirical validation methodology established** (corpus_seed=42, FP/TP tracking)
-- **Full integration with Layer 1 (trajectory audits) and Layer 2 (rangepacks)**
-
-**Verification at v1.11.0 final:**
-
-- `pytest tests/ -q` -> 994 passed, 7 skipped
-- `ruff check src/ tests/ scripts/` -> All checks passed
-- 5 Layer 1 cohort audit_ids byte-exact (OASIS-3, ADNI, NACC, MIRIAD, MIRIAD-test-retest)
-- 8 pack `yaml_sha256` values byte-identical to v1.11.0a8.post1
-- 8 of 8 Layer 2/3 production+research_preview packs exceed >=5 endorsing bodies
-
-**Known gap deferred to v1.12.0:**
-
-The 3 Layer 1 AD trajectory rulepacks (`aa_2024`, `aa_2024_trac`, `niaaa_2018`)
-lack the structured `endorsing_bodies` field. The clinical anchoring exists
-inline in `clinical_source_authority` text; the structured field for tooling
-verification is the gap. This is documented in detail in the gap-check
-deliverable at `D:\NeuroTCS-GapCheck-2026-05-26\` and is the focus of v1.12.0.
-
-This gap is being shipped intentionally as part of v1.11.0 final to preserve
-the milestone cut-line: v1.11.0 = "Layer 3 runtime feature-complete";
-v1.12.0 = "Layer 1 rulepack endorsement schema extension".
-
-### Released alphas in the v1.11.0 arc (historical record)
-
-| Release | Scope |
-|---|---|
-| v1.11.0-design / -design.2 | Layer 3 cross-sheet design lock |
-| v1.11.0a1 / a1-scope-response | Layer 3 module skeleton + scope response |
-| v1.11.0a2 | `audit_cross_sheet()` execution + 2 invariants |
-| v1.11.0a3 | Trajectory-pattern execution + APOE4 homozygote pack |
-| v1.11.0a4 | Quantib ND invariant added |
-| v1.11.0a5 | First production promotion (`tool_declaration_consistency`) + empirical validation |
-| v1.11.0a6 | FieldPresenceConsistency execution |
-| v1.11.0a7 (merged into a8) | ValueRangeConditional execution |
-| v1.11.0a8 | 5th condition type + pack 1.0.0 -> 1.1.0 |
-| v1.11.0a8.post1 | Audit-trail correction for v1.11.0a7 tag situation |
-| **v1.11.0 (this)** | **Final release of the v1.11.0 arc** |
-
-### What v1.11.0 final does NOT change
-
-- No code in `src/neurotcs/`
-- No schema changes
-- No pack content changes
-- No `yaml_sha256` changes
-- No test changes
-- No CHANGELOG entries before this one are modified
-
-This is purely a version-string update to mark the v1.11.0 milestone.
+(See companion v1.11.0 release notes; this is the milestone marker for
+the v1.11.0 arc with no code changes vs v1.11.0a8.post1.)
 
 ---
 

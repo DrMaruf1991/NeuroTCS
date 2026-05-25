@@ -1,5 +1,5 @@
 """
-NeuroTCS Rule Pack Schema v1.3.0.
+NeuroTCS Rule Pack Schema v1.4.0.
 
 Citation-locked, version-stamped, fail-closed Pydantic specification for
 clinical rule packs.
@@ -17,19 +17,52 @@ honest, audit-friendly version tracking:
     (context-conditional admissibility) declares `schema_version: "1.2.0"`.
   - A pack that uses `attribution_type == "clinical_inference"` (or sets
     `inference_rationale` on any transition) declares `schema_version: "1.3.0"`.
+  - A pack that uses the pack-level `endorsing_bodies` field (added in 1.4.0)
+    declares `schema_version: "1.4.0"`.
 
 Rationale: an external reviewer or AI-vendor auditor inspecting the YAML
 can immediately tell which schema features are in play. A pack that
-"over-declares" (e.g. claims 1.3.0 but uses no 1.3.0 features) wastes
-reviewer attention. A pack that "under-declares" (e.g. claims 1.1.0 but
-uses required_conditions) will fail validation at load time.
+"over-declares" (e.g. claims 1.4.0 but uses no 1.4.0 features) wastes
+reviewer attention. A pack that "under-declares" (e.g. claims 1.3.0 but
+uses endorsing_bodies) will fail validation at load time.
 
 `tests/rulepack/test_schema_version_declaration.py` enforces this policy
 automatically across every shipped rule pack — under-declaring will be
 caught at CI time before it reaches a reviewer.
 
-Supported schema versions for loading: {1.1.0, 1.2.0, 1.3.0}. The loader
-accepts any of these and applies feature gating per-field.
+Supported schema versions for loading: {1.1.0, 1.2.0, 1.3.0, 1.4.0}. The
+loader accepts any of these and applies feature gating per-field.
+
+v1.4.0 changes vs v1.3.0 (shipped in v1.12.0):
+  - Added optional pack-level `endorsing_bodies: list[str]` field to
+    RulePack, parallel to the Layer 2 rangepack and Layer 3 invariant pack
+    `endorsing_bodies` lists. Names the international specialty bodies,
+    regulatory authorities, official consortia, or named research-cohort
+    institutions that have published, ratified, or implementing-by-protocol
+    endorsed the framework this rulepack transcribes.
+  - Added two-stage `status: production` validator (motivated by the
+    v1.11.0 gap-check Finding A):
+        * HARD ERROR: production rulepacks must HAVE the field (non-empty
+          list). Loading fails fast if a production rulepack lacks it.
+        * WARNING: production rulepacks SHOULD have >=5 unique endorsing
+          bodies. Loading succeeds with <5 entries but emits a runtime
+          warning naming the pack and the actual count.
+  - The two-stage design matches existing Layer 2 / Layer 3 discipline:
+    Layer 2 rangepack `citation_strength: international_consensus` requires
+    >=5 endorsing_bodies (hard error); other citation strengths allow
+    fewer. This brings Layer 1 to the same standard, scoped to production
+    status so research_preview and skeleton rulepacks are unaffected.
+  - Motivation: NeuroTCS gap-check 2026-05-26 (Finding A) verified that
+    the 3 production AD trajectory rulepacks (ad/aa_2024@2.0.0,
+    ad/aa_2024_trac@1.0.0, ad/niaaa_2018@1.2.0) carry production status
+    but lack the structured endorsing_bodies metadata field, while
+    Layer 2 rangepacks and Layer 3 invariant packs already require it.
+    This schema extension closes that gap.
+  - Backward compatible: research_preview and skeleton rulepacks are
+    unaffected. Production rulepacks declared at schema_version 1.1.0,
+    1.2.0, or 1.3.0 are required to declare the field even if they don't
+    use other 1.4.0 features (this is how the gap is closed — the field
+    becomes mandatory for any production rulepack).
 
 v1.3.0 changes vs v1.2.0 (shipped in v1.7.1, per ERRATA E-2026-003):
   - Added optional `attribution_type` field to Transition with two values:
@@ -96,11 +129,11 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 # Schema version
 # ============================================================
 
-SCHEMA_VERSION = "1.3.0"
+SCHEMA_VERSION = "1.4.0"
 
 
 # Schema versions that the loader accepts (backward compatible).
-SUPPORTED_SCHEMA_VERSIONS = frozenset({"1.1.0", "1.2.0", "1.3.0"})
+SUPPORTED_SCHEMA_VERSIONS = frozenset({"1.1.0", "1.2.0", "1.3.0", "1.4.0"})
 
 
 # ============================================================
@@ -436,6 +469,25 @@ class RulePack(BaseModel):
         default_factory=list,
         description="Additional specialist reviewers (additive, non-blocking)"
     )
+    endorsing_bodies: list[str] = Field(
+        default_factory=list,
+        description="International specialty bodies, regulatory authorities, "
+                    "official consortia, or named research-cohort institutions "
+                    "that have published, ratified, or implementing-by-protocol "
+                    "endorsed the framework this rulepack transcribes. "
+                    "Examples: 'Alzheimer's Association', 'National Institute "
+                    "on Aging (NIA)', 'FDA Office of Neuroscience', 'European "
+                    "Academy of Neurology (EAN)', 'Mayo Clinic Department of "
+                    "Radiology', 'Washington University Knight ADRC', 'UCSF "
+                    "Memory and Aging Center', 'Amsterdam UMC', 'Lund "
+                    "University BioFINDER', 'Banner Sun Health Research "
+                    "Institute'. "
+                    "Parallel to Layer 2 (RangePack) and Layer 3 (InvariantPack) "
+                    "endorsing_bodies fields. Required (>=1 entry, >=5 unique "
+                    "entries warned) for production status; optional for "
+                    "research_preview and skeleton statuses. Added in "
+                    "schema_version 1.4.0 per gap-check Finding A 2026-05-26."
+    )
 
     # Anchor citation for the framework as a whole
     anchor_citation: Citation = Field(...)
@@ -541,6 +593,62 @@ class RulePack(BaseModel):
                 f"admissible_transitions. Either populate transitions or "
                 f"mark as SKELETON."
             )
+        return self
+
+    @model_validator(mode="after")
+    def check_endorsing_bodies_for_production(self) -> RulePack:
+        """Two-stage endorsement check (added in schema_version 1.4.0).
+
+        HARD ERROR: production rulepacks must HAVE endorsing_bodies as a
+        non-empty list. Loading fails fast if absent.
+
+        WARNING: production rulepacks SHOULD have >=5 unique endorsing
+        bodies (parallel to Layer 2 international_consensus floor and
+        Layer 3 invariantpack discipline). Loading succeeds with <5
+        entries but emits a runtime warning naming the pack.
+
+        Research_preview and skeleton statuses are unaffected.
+        Motivation: gap-check Finding A 2026-05-26.
+        """
+        import warnings as _warnings
+
+        if self.status != RulePackStatus.PRODUCTION:
+            return self
+
+        # Hard error: production must have the field non-empty
+        if not self.endorsing_bodies:
+            raise ValueError(
+                f"RulePack '{self.rulepack_id}' is PRODUCTION but has no "
+                f"endorsing_bodies. Production rulepacks must declare the "
+                f"international specialty bodies, regulatory authorities, "
+                f"or official consortia that have endorsed the framework "
+                f"this rulepack transcribes. Field added in schema_version "
+                f"1.4.0 per gap-check Finding A 2026-05-26. To remediate: "
+                f"add a non-empty `endorsing_bodies` list to the YAML."
+            )
+
+        # Reject empty or whitespace-only entries
+        cleaned = [e.strip() for e in self.endorsing_bodies if isinstance(e, str)]
+        non_empty = [e for e in cleaned if e]
+        if len(non_empty) != len(self.endorsing_bodies):
+            raise ValueError(
+                f"RulePack '{self.rulepack_id}' endorsing_bodies contains "
+                f"empty or whitespace-only entries. All entries must be "
+                f"non-empty strings."
+            )
+
+        # Warning: production should have >=5 unique entries
+        unique = set(non_empty)
+        if len(unique) < 5:
+            _warnings.warn(
+                f"RulePack '{self.rulepack_id}' is PRODUCTION with only "
+                f"{len(unique)} unique endorsing_bodies (>=5 recommended "
+                f"for production-status international consensus). "
+                f"Parallel to Layer 2 international_consensus floor.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         return self
 
     # ============================================================

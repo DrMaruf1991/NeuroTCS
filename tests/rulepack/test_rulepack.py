@@ -56,9 +56,9 @@ TRANSCRIPTION_AUDIT_DIR = PROJECT_ROOT / "docs" / "transcription_audit"
 # Schema-level tests
 # ============================================================
 
-def test_schema_version_is_1_3():
-    assert SCHEMA_VERSION == "1.3.0"
-    print(f"  {PASS} test_schema_version_is_1_3")
+def test_schema_version_is_1_4():
+    assert SCHEMA_VERSION == "1.4.0"
+    print(f"  {PASS} test_schema_version_is_1_4")
 
 
 def test_citation_requires_pmid_or_doi():
@@ -157,7 +157,13 @@ def test_transition_clinical_inference_with_rationale_valid():
 
 
 def test_rulepack_requires_v1_1_authorship_fields():
-    """v1.1 schema requires transcribed_by and clinical_source_authority."""
+    """v1.1 schema requires transcribed_by and clinical_source_authority.
+
+    NOTE (v1.4.0 schema): production status now also requires
+    endorsing_bodies (>=1 entry; >=5 unique recommended). This test
+    constructs a valid production pack with all required fields including
+    endorsing_bodies; the test focus remains the v1.1 authorship fields.
+    """
     cit = Citation(citation_pmid="1", citation_text="ref")
     states = [State(name="A", description="a", ordinal_rank=0),
               State(name="B", description="b", ordinal_rank=1)]
@@ -174,6 +180,9 @@ def test_rulepack_requires_v1_1_authorship_fields():
         anchor_citation=cit,
         state_space=states,
         admissible_transitions=trans,
+        # v1.4.0 schema: production status requires endorsing_bodies
+        endorsing_bodies=["Body A", "Body B", "Body C", "Body D",
+                          "Body E", "Body F"],
     )
 
     # Missing transcribed_by
@@ -482,10 +491,13 @@ def test_schema_v1_2_default_evaluated_at_is_either():
     print(f"  {PASS} test_schema_v1_2_default_evaluated_at_is_either")
 
 
-def test_trac_pack_loads_with_schema_v1_2():
+def test_trac_pack_loads_with_schema_v1_4():
+    """TRAC pack uses both v1.2.0 features (required_conditions) and
+    v1.4.0 features (endorsing_bodies). Declared schema_version is 1.4.0.
+    """
     pack = load_rulepack("ad/aa_2024_trac")
-    assert pack.rulepack.schema_version == "1.2.0"
-    assert pack.rulepack.rulepack_id == "ad/aa_2024_trac@1.0.0"
+    assert pack.rulepack.schema_version == "1.4.0"
+    assert pack.rulepack.rulepack_id == "ad/aa_2024_trac@1.1.0"
     assert pack.rulepack.disease_domain.value == "alzheimers"
     assert pack.rulepack.status.value == "production"
     # 4 states: A_neg, A_pos, Partial_TRAC, Full_TRAC
@@ -496,7 +508,12 @@ def test_trac_pack_loads_with_schema_v1_2():
     assert len(pack.rulepack.admissible_transitions) == 6
     # 3 documented inadmissible transitions
     assert len(pack.rulepack.inadmissible_transitions) == 3
-    print(f"  {PASS} test_trac_pack_loads_with_schema_v1_2 "
+    # v1.4.0: endorsing_bodies populated for production pack
+    assert len(pack.rulepack.endorsing_bodies) >= 5, (
+        f"TRAC pack endorsing_bodies has {len(pack.rulepack.endorsing_bodies)} "
+        f"entries; >=5 required for production status"
+    )
+    print(f"  {PASS} test_trac_pack_loads_with_schema_v1_4 "
           f"(sha={pack.sha256[:8]})")
 
 
@@ -628,16 +645,20 @@ def test_unsupported_schema_version_rejected():
 # AA-2024 v1.2.0 priors tests (ERRATA E-2026-002)
 # ============================================================
 
-def test_aa_2024_pack_is_v2_0_0():
-    """AA 2024 v2.0.0 = full Table 7 integrated biological + clinical staging.
-    Previously v1.2.0 used a single-axis 7-stage design; v2.0.0 redesigned
-    to match the paper's Table 7 alphanumeric scheme verbatim. Major
-    version bump reflects the breaking state-space change.
+def test_aa_2024_pack_is_v2_1_0():
+    """AA 2024 v2.1.0 = full Table 7 integrated biological + clinical staging
+    with endorsing_bodies field (schema_version 1.4.0).
+
+    v2.0.0 (Schema 1.3.0) used clinical_inference attribution_type on 8
+    cutpoint-dependent transitions per Jack 2024 §4.6. v2.1.0 (this) adds
+    the pack-level endorsing_bodies field per gap-check Finding A
+    2026-05-26; schema bumps to 1.4.0 as a result.
     """
     pack = load_rulepack("ad/aa_2024")
-    assert pack.rulepack.rulepack_id == "ad/aa_2024@2.0.0"
-    assert pack.rulepack.schema_version == "1.3.0"  # uses clinical_inference
-    print(f"  {PASS} test_aa_2024_pack_is_v2_0_0 (sha={pack.sha256[:8]})")
+    assert pack.rulepack.rulepack_id == "ad/aa_2024@2.1.0"
+    assert pack.rulepack.schema_version == "1.4.0"  # uses endorsing_bodies (1.4.0)
+    assert len(pack.rulepack.endorsing_bodies) >= 5
+    print(f"  {PASS} test_aa_2024_pack_is_v2_1_0 (sha={pack.sha256[:8]})")
 
 
 def test_aa_2024_state_space_matches_table_7():
@@ -826,7 +847,7 @@ def test_aa_2024_persistence_minimum_for_transitional_decline():
 
 def run_all():
     tests = [
-        test_schema_version_is_1_3,
+        test_schema_version_is_1_4,
         test_citation_requires_pmid_or_doi,
         test_transition_requires_citation_and_section,
         test_transition_attribution_type_default_is_guideline_quote,
@@ -851,7 +872,7 @@ def run_all():
         # v1.2 schema + TRAC pack
         test_schema_v1_2_supports_required_conditions,
         test_schema_v1_2_default_evaluated_at_is_either,
-        test_trac_pack_loads_with_schema_v1_2,
+        test_trac_pack_loads_with_schema_v1_4,
         test_trac_pack_cites_la_joie_2025_doi,
         test_trac_admits_a_pos_to_full_trac_with_active_treatment,
         test_trac_rejects_a_pos_to_full_trac_without_treatment,
@@ -862,7 +883,7 @@ def run_all():
         test_existing_v1_1_packs_still_load_under_v1_2_schema,
         test_unsupported_schema_version_rejected,
         # AA-2024 v1.2.0 priors (ERRATA E-2026-002)
-        test_aa_2024_pack_is_v2_0_0,
+        test_aa_2024_pack_is_v2_1_0,
         test_aa_2024_state_space_matches_table_7,
         test_aa_2024_stage_0_only_exits_to_1A,
         test_aa_2024_biological_regression_inadmissible,

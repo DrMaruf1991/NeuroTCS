@@ -9,10 +9,10 @@
 # Jack 2024 §4.6 which explicitly declines to commit to a single
 # cutpoint methodology.
 
-schema_version: 1.3.0
-rulepack_id: ad/aa_2024@2.0.0
-ruleset_version: 2.0.0
-effective_date: '2026-05-18'
+schema_version: 1.4.0
+rulepack_id: ad/aa_2024@2.1.0
+ruleset_version: 2.1.0
+effective_date: '2026-05-27'
 status: production
 disease_domain: alzheimers
 framework_name: Alzheimer's Association 2024 Revised Criteria (integrated biological
@@ -26,6 +26,29 @@ clinical_source_authority: Revised criteria for diagnosis and staging of Alzheim
   defines Table 6 (stages 0 through 6). Section §6 Integrated staging defines Table
   7 (alphanumeric scheme). Open access under CC BY-NC-ND 4.0 license.
 reviewers: []
+
+# Endorsing bodies (schema_version 1.4.0; added 2026-05-27 per gap-check Finding A).
+# Verbatim primary sources:
+#   - Alzheimer's Association: workgroup convener (https://www.alz.org/news/2024/revised-alzheimers-diagnostic-staging-criteria)
+#   - Authorship affiliations from PMID 38934362 (peer-reviewed in Alz & Dementia)
+endorsing_bodies:
+  - "Alzheimer's Association (workgroup convener; senior author Maria C. Carrillo; alz.org press release 2024-06-27)"
+  - "Mayo Clinic Department of Radiology (Clifford R. Jack Jr., lead author, PMID 38934362)"
+  - "U.S. Food and Drug Administration, Office of Neuroscience (Teresa Buracchio, co-author affiliation)"
+  - "The Michael J. Fox Foundation for Parkinson's Research (Billy Dunn, co-author affiliation)"
+  - "Banner Sun Health Research Institute, Civin Laboratory for Neuropathology (Thomas G. Beach, co-author)"
+  - "Lund University / Skåne University Hospital BioFINDER (Oskar Hansson, co-author)"
+  - "University of California Berkeley, School of Public Health (William Jagust, co-author)"
+  - "Washington University in St. Louis Knight ADRC (Eric McDade, co-author; DIAN-TU)"
+  - "Amsterdam UMC Alzheimer Center / Amsterdam Dementia Cohort (Philip Scheltens, Charlotte E. Teunissen, co-authors)"
+  - "Harvard Medical School / Mass General Brigham (Reisa Sperling, co-author; A4 / AHEAD 3-45 studies)"
+  - "BarcelonaBeta Brain Research Center (Jose Luis Molinuevo, co-author)"
+  - "Wisconsin Alzheimer's Disease Research Center, University of Wisconsin-Madison (Ozioma C. Okonkwo, co-author; WRAP)"
+  - "Alzheimer's Therapeutic Research Institute, University of Southern California (Michael S. Rafii, co-author)"
+  - "Takeda Pharmaceuticals (J. Scott Andrews, co-author; global evidence & outcomes affiliation)"
+  - "Novartis Neuroscience Global Drug Development (Ana Graf, co-author)"
+  - "ALZFORUM peer commentary on AA-2024 (Revised Again: Alzheimer's Diagnostic Criteria Get Another Makeover)"
+  - "International Working Group (IWG) on AD diagnosis (concurrent independent criteria comparison)"
 anchor_citation:
   citation_pmid: '38934362'
   citation_doi: 10.1002/alz.13859

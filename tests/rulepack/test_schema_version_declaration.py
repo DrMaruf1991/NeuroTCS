@@ -14,6 +14,9 @@ This module checks every shipped rule pack and asserts that the declared
   - 1.3.0 features (gates the pack to >= 1.3.0):
     * `attribution_type: "clinical_inference"` on any transition
     * `inference_rationale` set on any transition
+  - 1.4.0 features (gates the pack to >= 1.4.0):
+    * Pack-level `endorsing_bodies` field present and non-empty
+      (added in schema_version 1.4.0; required for production status)
   - Otherwise: 1.1.0 is sufficient.
 
 A pack that DECLARES 1.2.0 but uses no 1.2.0 features over-declares.
@@ -63,6 +66,17 @@ def _all_transitions(doc: dict) -> list[dict]:
     return out
 
 
+def _uses_1_4_0_feature(doc: dict) -> bool:
+    """True if pack uses any 1.4.0-only field.
+
+    The 1.4.0 schema introduces the pack-level `endorsing_bodies` field.
+    A pack that declares this field at all (even as an empty list, though
+    the pydantic validator will reject empty for production status) is
+    using a 1.4.0 feature and must declare schema_version 1.4.0+.
+    """
+    return "endorsing_bodies" in doc
+
+
 def _uses_1_3_0_feature(doc: dict) -> bool:
     """True if any transition uses a 1.3.0-only field."""
     for t in _all_transitions(doc):
@@ -86,7 +100,13 @@ def _uses_1_2_0_feature(doc: dict) -> bool:
 
 
 def _minimum_required_schema(doc: dict) -> str:
-    """Compute the minimum schema version this pack needs."""
+    """Compute the minimum schema version this pack needs.
+
+    Feature gates accumulate: 1.4.0 features dominate 1.3.0, which
+    dominate 1.2.0, which dominate 1.1.0.
+    """
+    if _uses_1_4_0_feature(doc):
+        return "1.4.0"
     if _uses_1_3_0_feature(doc):
         return "1.3.0"
     if _uses_1_2_0_feature(doc):

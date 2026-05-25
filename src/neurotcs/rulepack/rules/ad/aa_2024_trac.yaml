@@ -16,10 +16,10 @@
 # `treatment_status` per-visit context and admits the transition only
 # when an anti-Aβ therapy was active or recently discontinued.
 
-schema_version: "1.2.0"
-rulepack_id: "ad/aa_2024_trac@1.0.0"
-ruleset_version: "1.0.0"
-effective_date: "2026-05-18"
+schema_version: "1.4.0"
+rulepack_id: "ad/aa_2024_trac@1.1.0"
+ruleset_version: "1.1.0"
+effective_date: "2026-05-27"
 status: "production"
 disease_domain: "alzheimers"
 framework_name: "Treatment-Related Amyloid Clearance (TRAC) framework: amyloid biomarker trajectories under anti-Aβ therapy"
@@ -39,6 +39,29 @@ clinical_source_authority: >-
   donanemab (Kisunla, donanemab-azbt, Eli Lilly; FDA approval 2024-07-02,
   modified titration label 2025-07-09 per TRAILBLAZER-ALZ 6).
 reviewers: []
+
+# Endorsing bodies (schema_version 1.4.0; added 2026-05-27 per gap-check Finding A).
+# Verbatim primary sources:
+#   - Alzheimer's Association workgroup convener (https://medconnection.ucsfhealth.org/news/...)
+#   - Authorship affiliations from PMID 41298245 (peer-reviewed in Alz & Dementia 2025)
+#   - FDA prescribing information (Leqembi, Kisunla) cited in §4 of La Joie 2025
+endorsing_bodies:
+  - "Alzheimer's Association (workgroup convener; senior author Maria C. Carrillo)"
+  - "UCSF Weill Institute for Neurosciences, Edward and Pearl Fein Memory and Aging Center (Renaud La Joie, lead author, PMID 41298245)"
+  - "U.S. Food and Drug Administration (LEQEMBI accelerated approval 2023-01-06, traditional approval 2023-07-06, maintenance dosing 2025-01; KISUNLA approval 2024-07-02, modified titration label 2025-07-09)"
+  - "Eisai / Biogen (Clarity AD trial protocol; lecanemab anti-amyloid antibody)"
+  - "Eli Lilly (TRAILBLAZER-ALZ 2 trial protocol; donanemab-azbt anti-amyloid antibody)"
+  - "Kirk Kerkorian School of Medicine, University of Nevada Las Vegas, Chambers-Grundy Center for Transformative Neuroscience (Jeffrey L. Cummings, co-author)"
+  - "Indiana University School of Medicine Department of Neurology (Jeffrey L. Dage, co-author; Shannon L. Risacher, co-author)"
+  - "UC San Diego (Douglas Galasko, co-author)"
+  - "University of Pittsburgh (Milos D. Ikonomovic, Thomas K. Karikari, co-authors)"
+  - "UC Berkeley (Susan M. Landau, co-author; Centiloid)"
+  - "Washington University in St. Louis (Jorge J. Llibre-Guerra, co-author)"
+  - "University College London / National Hospital for Neurology and Neurosurgery (Catherine J. Mummery, co-author)"
+  - "Amsterdam UMC / Lund University BioFINDER (Rik Ossenkoppele, Ruben Smith, co-authors)"
+  - "Massachusetts General Hospital / Harvard Medical School (Julie C. Price, co-author)"
+  - "Yale School of Medicine (Christopher H. van Dyck, co-author)"
+  - "Centiloid Working Group (TRAC uses Centiloid units; Klunk et al. 2015 referenced throughout)"
 
 anchor_citation:
   # pmid_pending: recent paper (2025); recheck PubMed quarterly

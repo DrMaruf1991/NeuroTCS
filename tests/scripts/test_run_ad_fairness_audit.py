@@ -121,6 +121,9 @@ def test_fairness_runner_links_audit_id_to_report(tmp_path: Path):
     assert len(report["audit"]["audit_id"]) == 64
     assert len(report["audit"]["audit_id_v2"]) == 64
     # rulepack identity present
-    assert report["audit"]["rulepack_id"] == "ad/niaaa_2018@1.2.0"
+    assert report["audit"]["rulepack_id"] == "ad/niaaa_2018@1.3.0"
     # SHA prefix matches the known rulepack SHA (first 16 chars)
-    assert report["audit"]["rulepack_sha256"].startswith("f359148d1cbf6abe")
+    # v1.12.0: rulepack hash changed because endorsing_bodies field was
+    # backfilled into niaaa_2018.yaml per gap-check Finding A. This is an
+    # intended change (schema_version 1.4.0). New prefix:
+    assert report["audit"]["rulepack_sha256"].startswith("aaac92fb901d13ea")
