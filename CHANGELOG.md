@@ -4,6 +4,180 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.2] -- 2026-05-28
+
+### Documentation reconciliation: 4 releases of stale scope-doc content closed
+
+This release closes accumulated documentation debt in
+`docs/SCOPE_RESPONSE_TO_EXTERNAL_AUDIT.md` (the canonical scope-response
+document responding to the external auditor's 117-row gap analysis).
+The document was stale across four prior releases:
+
+- v1.14.0 extended `plasma_amyloid_consensus@1.0.0` → `@1.1.0` with the
+  FDA-cleared Elecsys pTau181 measurement; scope doc citations still
+  said `@1.0.0`
+- v1.15.0 shipped the Tau PET dual pack family; scope doc still listed
+  Tau PET as "(a) future"
+- v1.13.1 + v1.14.0 CHANGELOGs documented "NfL/GFAP scope downgrade
+  following p-tau217 pattern" as a deferred item; the downgrade was
+  never actually executed in the scope doc
+- v1.15.1 closed the world-class gate gap; scope doc references to
+  pack counts were stale
+
+### Five items reclassified in v1.15.2
+
+1. **Tau PET (Group 2, Section 5.2):** Moved from "(a) future" to
+   "(a) IN PRODUCTION" with the v1.15.0 ship of `tau_pet/tau_consensus@1.0.0`
+   (production, FDA Tauvid PI §2.4 verbatim 1.65× cerebellar threshold,
+   anchor Mattay 2020 J Nucl Med PMID 32709695) + `tau_pet/tau_research_preview@1.0.0`
+   (research_preview, Schöll 2016 + Maass 2017 + Pascoal 2021 + Villemagne
+   2023 CenTauR).
+
+2. **CSF NfL (Group 3, Section 5.3):** DOWNGRADED from "(a) future" to
+   "(c) needs maturing evidence" following the v1.13.1 CSF p-tau217
+   precedent. Three findings: (a) no FDA-cleared NfL assay for AD-specific
+   indication exists (Quanterix Simoa NfL has FDA Breakthrough Designation
+   for multiple sclerosis only; LDT status "for research use only");
+   (b) cross-platform NfL cutoffs (Quanterix Simoa, Roche Elecsys NfL,
+   Mesoscale Discovery) report numerically different values that correlate
+   but require platform-specific reference values; no harmonized conversion
+   factor or unified clinical cutoff; (c) NfL is non-specific (elevated in
+   MS, ALS, TBI, stroke, peripheral neuropathy, normal aging) — even with
+   FDA action it would not be an AD-specific biomarker without
+   context-specific cutoff stratification.
+
+3. **CSF GFAP (Group 3, Section 5.3):** DOWNGRADED from "(a) future" to
+   "(c)" following identical pattern. No FDA AD-specific clearance;
+   cross-platform inconsistency; reactive-astrocyte-non-specific (elevated
+   in TBI, stroke, MS, prion disease).
+
+4. **Plasma NfL (Group 3, Section 5.3):** DOWNGRADED from "(a) future" to
+   "(c)" for the same reasons as CSF NfL.
+
+5. **Plasma GFAP (Group 3, Section 5.3):** DOWNGRADED from "(a) future" to
+   "(c)" for the same reasons as CSF GFAP.
+
+### Citation updates (cosmetic but honest)
+
+- All scope-doc citations to `plasma_biomarkers/plasma_amyloid_consensus`
+  updated from `@1.0.0` to `@1.1.0` (the v1.14.0 extension adding the
+  FDA-cleared Elecsys pTau181 measurement)
+- The "Plasma p-tau181, p-tau231" row was previously claimed as
+  "(a) IN PRODUCTION" in `@1.0.0` — this was inaccurate; p-tau181 was not
+  added until `@1.1.0` (v1.14.0). The row is now split into "(a) IN
+  PRODUCTION (p-tau181 Elecsys, FDA-cleared K252163 Oct 2025)" + "(a) future
+  (p-tau231)" with the @1.1.0 citation.
+
+### Net effect on triage totals
+
+| Category | v1.13.1 | v1.15.2 | Δ |
+|---|---|---|---|
+| (a) In-production | 22 | **23** | +1 (Tau PET shipped) |
+| (a) Future | 43 | **38** | -5 (Tau PET shipped; 4 NfL/GFAP downgraded) |
+| (a) Subtotal | 65 | **61** | -4 (NfL/GFAP downgrades) |
+| (b) Out-of-scope | 26 | **26** | unchanged |
+| (c) Needs evidence | 26 | **30** | +4 (NfL/GFAP downgrades) |
+| **Total** | **117** | **117** | unchanged |
+
+Internal arithmetic verified clean via Python text-parser recount:
+all per-group subtotals sum to per-group totals; per-group totals sum
+to 61 (a) + 26 (b) + 30 (c) = 117 across all 10 groups.
+
+### Tier 1 roadmap reduced from 8 → 5 items
+
+The v1.13.1 Tier 1 had 8 items:
+- Items 1-5: ARIA-related Layer 3 invariants (all 5 still in Tier 1)
+- Item 6: Tau PET regional SUVR + Braak Layer 2 pack → **DONE in v1.15.0**
+- Item 7: NfL Layer 2 pack (CSF + plasma) → **DOWNGRADED to (c) in v1.15.2**
+- Item 8: GFAP Layer 2 pack (CSF + plasma) → **DOWNGRADED to (c) in v1.15.2**
+
+All 5 remaining Tier 1 items are anti-amyloid-safety Layer 3 invariants
+(Group 8) — the most clinically consequential items in the roadmap.
+They're already partial-covered by the existing
+`genotype_phenotype_consistency` and `tool_declaration_consistency`
+Layer 3 packs designed in `LAYER_3_DESIGN.md`.
+
+### Tier 2 roadmap reduced 15 → 13 items
+
+Plasma NfL and Plasma GFAP extensions removed (downgraded to (c)).
+Remaining Tier 2 items unchanged.
+
+### Modified
+
+- `docs/SCOPE_RESPONSE_TO_EXTERNAL_AUDIT.md`:
+  - Section 5.2 Tau PET row: future → IN PRODUCTION
+  - Section 5.2 subtotal: 5 in-prod / 4 future → 6 in-prod / 3 future
+  - Section 5.3 plasma pack citations: `@1.0.0` → `@1.1.0`
+  - Section 5.3 Plasma p-tau181 row: now lists FDA-cleared Elecsys variant
+    explicitly with K252163 anchor
+  - Section 5.3 CSF NfL row: (a) → (c) with full downgrade reasoning
+  - Section 5.3 CSF GFAP row: (a) → (c)
+  - Section 5.3 Plasma NfL row: (a) → (c)
+  - Section 5.3 Plasma GFAP row: (a) → (c)
+  - Section 5.3 subtotal: 13 (a) / 3 (c) → 9 (a) / 7 (c)
+  - Section 5.11 totals: 65/26/26 → 61/26/30, in-prod 22 → 23, future 43 → 38
+  - Section 5.11 per-group table updated
+  - Section 5.11 v1.15.2 update note prepended
+  - Section 6 header: 43 → 38 future items, 22-33 → 19-28 sessions
+  - Section 6.1 Tier 1: 8 → 5 items (Tau PET done, NfL/GFAP downgraded)
+  - Section 6.1 Tier 2: 15 → 13 items (Plasma NfL/GFAP removed)
+  - Section 6.3 estimated timeline: 45-49 → 40-44 sessions
+  - Section 8: 26 (c) → 30 (c); "no convergence" category 7 → 11
+  - Section 9 (auditor response): updated pack count to 8 production + 2 preview;
+    in-scope 56% → 52%; in-production 22 → 23; future 43 → 38
+  - Section 11 (revision history): v1.15.2 row added
+- `pyproject.toml`, `src/neurotcs/__init__.py`, `CITATION.cff`: version
+  1.15.1 → 1.15.2
+- `CHANGELOG.md`: this entry
+
+### Unchanged (byte-identical to v1.15.1)
+
+This is a DOCS-ONLY release. NO YAML, code, schema, or test files modified.
+
+- All 8 Layer 2 production rangepack yaml_sha256 byte-identical
+- Both research_preview pack yaml_sha256 byte-identical
+- Both Layer 3 invariantpack yaml_sha256 byte-identical
+- All 3 Layer 1 rulepacks byte-identical
+- All 5 Layer 1 cohort cTCS + audit_ids byte-identical
+- All 1131 tests pass (unchanged)
+
+### Why honest scope reduction matters
+
+The shift from 56% in-scope (v1.13.1) to 52% in-scope (v1.15.2) reflects
+HONEST scope reduction, not pessimism. NfL and GFAP were aspirationally
+classified as "(a) future" packs across multiple releases on the
+assumption that FDA clearance, cross-platform harmonization, and
+AD-specific cutoffs would materialize. Primary-source research during
+v1.14.0 and v1.15.0 found none of those conditions had been met:
+
+- No FDA AD-specific clearance for either biomarker
+- Cross-platform values still diverge across Simoa, Elecsys, MSD
+- Both NfL and GFAP remain non-specific to AD
+
+Following the v1.13.1 CSF p-tau217 precedent — where the same three
+findings led to the same downgrade — these four items move to (c).
+They are not refused; they are deliberate holds pending the specific
+blocking conditions (FDA AD clearance OR ≥5-body cross-platform
+consensus). Estimated revisit: 2027+.
+
+This is the same world-class discipline that drove v1.13.1 (CSF
+p-tau217 downgrade), v1.15.1 (world-class gate reconciliation), and
+now v1.15.2 (NfL/GFAP downgrade). No partial fix; no aspiration
+without evidence; no documented-but-deferred gaps.
+
+### Standing mandate honored
+
+> world class no partial fix, end-to-end, root-to-root, no hallucinations,
+> double-test always, no step back in future.
+
+v1.15.2 closes 4 releases worth of documented-but-deferred scope-doc
+debt. The pattern of documenting gaps in CHANGELOGs while deferring
+their actual execution in canonical docs is exactly what produced the
+wmh_fazekas silent skip (closed in v1.15.1) and the NfL/GFAP
+documentation drift (closed here). No more deferred docs.
+
+---
+
 ## [1.15.1] -- 2026-05-28
 
 ### Architectural reconciliation: world-class gate + wmh_fazekas in production

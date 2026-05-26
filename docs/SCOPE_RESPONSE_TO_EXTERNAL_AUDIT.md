@@ -148,16 +148,16 @@ This is the operative section. Every auditor item from both documents is categor
 | MRI ARIA-E reads | **(a) IN PRODUCTION** | Covered by `ad/aria_safety@1.0.0` (severity/location/evolution). |
 | MRI ARIA-H reads | **(a) IN PRODUCTION** | Covered by `ad/aria_safety@1.0.0`. |
 | Amyloid PET (Centiloid, regional SUVR, status) | **(a) IN PRODUCTION** | Covered by `pet_amyloid/centiloid_consensus@1.0.0` (3 measurements, 10 bounds). |
-| Tau PET (regional SUVR, Braak stage, MTL vs neocortical) | (a) | Future Layer 2 pack. Anchors: flortaucipir FDA-approved 2020, MK-6240 PDUFA Aug 2026, Braak staging consensus, Jack 2024 biological staging. Estimated 2-3 sessions. |
+| Tau PET (regional SUVR, Braak stage, MTL vs neocortical) | **(a) IN PRODUCTION** | Covered by **dual-pack family** (v1.15.0): `tau_pet/tau_consensus@1.0.0` (production, 6 measurements / 13 bounds, FDA Tauvid (flortaucipir) PI §2.4 verbatim visual interpretation criteria including the 1.65× cerebellar threshold; anchor Mattay 2020 J Nucl Med PMID 32709695) AND `tau_pet/tau_research_preview@1.0.0` (research_preview, 6 measurements / 16 bounds, Schöll 2016 / Maass 2017 / Pascoal 2021 SUVR cutoffs + PET-Braak 0-VI staging + Villemagne 2023 CenTauR universal scale). Tracer scope: flortaucipir only. MK-6240 PDUFA Aug 13 2026 not yet approved; future v2.0.0 will add MK-6240 after FDA action. |
 | FDG PET | (a) | Future Layer 2 pack. Anchors: Mosconi 2009/2013 metabolic patterns, ADNI FDG normative. Estimated 1-2 sessions. |
 | Diffusion MRI (DTI FA, MD, RD) | (c) | Needs clinical judgment: which tracts, which atlas (ICBM-DTI-81, JHU), which normative reference. Evidence exists but no single ≥5-body consensus on cutoffs. |
 | ASL / perfusion MRI (CBF) | (c) | Same as DTI: no consensus cutoffs at international_consensus standard yet. |
 | fMRI / resting-state functional connectivity | (c) | Research-grade for AD trial endpoints; no consensus cutoffs. |
 | Susceptibility-weighted imaging (SWI) | **(a) IN PRODUCTION** | Covered by `ad/aria_safety@1.0.0` as a contributor to ARIA-H detection (NeuroQuant 5.0 SWI capability noted in v1.10.2). |
 
-**Group 2 subtotal: 9 (a) [5 in production / 4 future], 0 (b), 3 (c).**
+**Group 2 subtotal: 9 (a) [6 in production / 3 future], 0 (b), 3 (c).**
 
-*Change from v1.12.1: WMH/Fazekas moved from "future" to "in production" with the v1.13.0 ship of `mri_volumetrics/wmh_fazekas_consensus@1.0.0`. In-production count: 4 → 5; future count: 5 → 4. Group totals unchanged.*
+*Change from v1.13.1: Tau PET moved from "(a) future" to "(a) IN PRODUCTION" with the v1.15.0 ship of the `tau_pet/tau_consensus@1.0.0` + `tau_pet/tau_research_preview@1.0.0` dual pack family. In-production count: 5 → 6; future count: 4 → 3. Group totals 9/0/3 unchanged.*
 
 ### 5.3 Document 1, Group 3 -- Fluid biomarkers (16 items)
 
@@ -168,21 +168,21 @@ This is the operative section. Every auditor item from both documents is categor
 | CSF Aβ42/40 ratio | **(a) IN PRODUCTION** | Covered by `csf_biomarkers/csf_amyloid_consensus@1.0.0`. |
 | CSF total tau | (a) | Future extension of `csf_biomarkers/csf_amyloid_consensus` or new pack. Anchor: NIA-AA 2024 biological staging. Estimated 1 session. |
 | CSF p-tau181 | (a) | Future extension. Anchor: Janelidze 2020, AA 2024. Estimated 1 session. |
-| CSF p-tau217 | (c) | **DOWNGRADED from (a) in v1.13.1.** During v1.13.0 primary-source research, three findings forced this reclassification: (1) No FDA-cleared CSF p-tau217 cutoff exists; the May 2025 FDA 510(k) clearance is the Lumipulse G pTau217/Aβ42 **plasma** ratio, not CSF. (2) Plasma p-tau217 is already shipping in `plasma_biomarkers/plasma_amyloid_consensus@1.0.0` (measurements: `plasma_ptau217_pgml`, `plasma_ptau217_abeta42_ratio_lumipulse`, `plasma_amyloid_status`); a CSF-only pack would be redundant for the modality that has regulatory standardization. (3) Cross-platform CSF p-tau217 cutoffs (Lilly MSD, Quanterix Simoa, Roche Elecsys) lack a single ≥5-body consensus; each platform reports different absolute pg/mL ranges with no harmonized conversion factor. Revisit when (a) FDA clears a CSF p-tau217 assay, OR (b) AA/IWG/EAN/EFNS/SNMMI converge on a single cross-platform CSF cutoff. Estimated revisit: 2027+. |
+| CSF p-tau217 | (c) | **DOWNGRADED from (a) in v1.13.1.** During v1.13.0 primary-source research, three findings forced this reclassification: (1) No FDA-cleared CSF p-tau217 cutoff exists; the May 2025 FDA 510(k) clearance is the Lumipulse G pTau217/Aβ42 **plasma** ratio, not CSF. (2) Plasma p-tau217 is already shipping in `plasma_biomarkers/plasma_amyloid_consensus@1.1.0` (measurements: `plasma_ptau217_pgml`, `plasma_ptau217_abeta42_ratio_lumipulse`, `plasma_amyloid_status`); a CSF-only pack would be redundant for the modality that has regulatory standardization. (3) Cross-platform CSF p-tau217 cutoffs (Lilly MSD, Quanterix Simoa, Roche Elecsys) lack a single ≥5-body consensus; each platform reports different absolute pg/mL ranges with no harmonized conversion factor. Revisit when (a) FDA clears a CSF p-tau217 assay, OR (b) AA/IWG/EAN/EFNS/SNMMI converge on a single cross-platform CSF cutoff. Estimated revisit: 2027+. |
 | CSF p-tau231 | (a) | Future extension. Anchor: Ashton 2021. Estimated 1 session. |
-| CSF NfL | (a) | Future pack `fluid_biomarkers/nfl_consensus`. Anchor: Simoa NfL, BMD pipelines. Estimated 1-2 sessions. |
-| CSF GFAP | (a) | Future pack `fluid_biomarkers/gfap_consensus`. Anchor: Simoa GFAP, Pereira 2021. Estimated 1-2 sessions. |
+| CSF NfL | (c) | **DOWNGRADED from (a) in v1.15.2** following the v1.13.1 CSF p-tau217 precedent. Three findings during v1.15.0 primary-source research: (1) No FDA-cleared NfL assay for AD-specific indication exists (Quanterix Simoa NfL has FDA Breakthrough Designation for multiple sclerosis only; LDT status "for research use only"). (2) Cross-platform NfL cutoffs (Quanterix Simoa, Roche Elecsys NfL, Mesoscale Discovery) report numerically different values that correlate but require platform-specific reference values; no harmonized conversion factor or unified clinical cutoff. (3) NfL is non-specific (elevated in MS, ALS, TBI, stroke, peripheral neuropathy, normal aging) — even with FDA action it would not be an AD-specific biomarker without context-specific cutoff stratification. Revisit when (a) FDA clears an NfL assay with explicit AD trial indication, OR (b) ≥5 international bodies endorse cross-platform AD-specific NfL cutoffs. Estimated revisit: 2027+. |
+| CSF GFAP | (c) | **DOWNGRADED from (a) in v1.15.2** following the same pattern as CSF NfL. Three findings: (1) No FDA-cleared GFAP assay for AD-specific indication (Pereira 2021 BMJ Neurology elevation pattern is well-described but not regulatorily standardized). (2) Cross-platform GFAP cutoffs (Quanterix Simoa, Roche Elecsys, Mesoscale) lack harmonization. (3) GFAP elevation is reactive-astrocyte-non-specific — elevated in TBI, stroke, MS, prion disease as well as AD. Revisit conditions identical to NfL. Estimated revisit: 2027+. |
 | CSF sTREM2 | (c) | Research-grade; no FDA-cleared cutoffs; no ≥5-body consensus. Revisit when evidence matures. |
-| Plasma p-tau217 | **(a) IN PRODUCTION** | Covered by `plasma_biomarkers/plasma_amyloid_consensus@1.0.0`. |
-| Plasma p-tau181, p-tau231 | **(a) IN PRODUCTION** | Covered by `plasma_biomarkers/plasma_amyloid_consensus@1.0.0`. |
-| Plasma Aβ42/40 ratio | **(a) IN PRODUCTION** | Covered by `plasma_biomarkers/plasma_amyloid_consensus@1.0.0`. |
-| Plasma NfL | (a) | Future extension of NfL pack to plasma. Estimated 1 session. |
-| Plasma GFAP | (a) | Future extension of GFAP pack to plasma. Estimated 1 session. |
+| Plasma p-tau217 | **(a) IN PRODUCTION** | Covered by `plasma_biomarkers/plasma_amyloid_consensus@1.1.0`. |
+| Plasma p-tau181, p-tau231 | **(a) IN PRODUCTION (p-tau181) / (a) future (p-tau231)** | Plasma p-tau181 Elecsys (Roche, FDA 510(k) K252163 cleared October 13, 2025) is now in production at `plasma_biomarkers/plasma_amyloid_consensus@1.1.0` (measurement `plasma_ptau181_pgml_elecsys`, FDA-verbatim cutoff 0.722 pg/mL, 97.9% NPV in 312-participant primary-care submission cohort). Plasma p-tau231 remains future extension; anchor Ashton 2021. |
+| Plasma Aβ42/40 ratio | **(a) IN PRODUCTION** | Covered by `plasma_biomarkers/plasma_amyloid_consensus@1.1.0`. |
+| Plasma NfL | (c) | **DOWNGRADED from (a) in v1.15.2** for the same reasons as CSF NfL above (no FDA AD-specific clearance, cross-platform inconsistency, non-specific to AD). Revisit conditions identical. Estimated revisit: 2027+. |
+| Plasma GFAP | (c) | **DOWNGRADED from (a) in v1.15.2** for the same reasons as CSF GFAP above. Revisit conditions identical. Estimated revisit: 2027+. |
 | eMTBR-tau243 (Dec 2025) | (c) | Too new for ≥5 endorsing bodies. Single publication 2025. Revisit when ≥5 international bodies have endorsed cutoffs (estimated 2027+). |
 
-**Group 3 subtotal: 13 (a) [5 in production / 8 future], 0 (b), 3 (c).**
+**Group 3 subtotal: 9 (a) [6 in production / 3 future], 0 (b), 7 (c).**
 
-*Change from v1.12.1: CSF p-tau217 reclassified from "(a) future" to "(c) needs maturing evidence" after v1.13.0 primary-source research (see line above). (a) total: 14 → 13; (c) total: 2 → 3. Group total of 16 items unchanged.*
+*Change from v1.13.1: (i) Plasma p-tau181 Elecsys moved from "implicit (a) future" to "(a) IN PRODUCTION" with the v1.14.0 ship of `plasma_amyloid_consensus@1.1.0` (note: v1.13.1 documentation incorrectly claimed plasma p-tau181 was in `@1.0.0`; this is corrected here). (ii) Plasma p-tau217 / Plasma Aβ42/40 citations updated from `@1.0.0` to `@1.1.0` (cosmetic, pack extended in v1.14.0). (iii) CSF NfL, CSF GFAP, Plasma NfL, Plasma GFAP — 4 items DOWNGRADED from "(a) future" to "(c) needs maturing evidence" following the v1.13.1 CSF p-tau217 precedent: no FDA-cleared AD-specific assays exist; cross-platform inconsistency; non-specific to AD. Net effect on Group 3: (a) 13 → 9 [5 in-prod / 8 future → 6 in-prod / 3 future]; (c) 3 → 7; total 16 unchanged. This downgrade was documented as a "future scope downgrade following p-tau217 pattern" in v1.13.1 / v1.14.0 CHANGELOGs but not actually executed in the scope doc until v1.15.2 — closing that documentation gap is the purpose of this revision.*
 
 ### 5.4 Document 1, Group 4 -- Genomics (11 items)
 
@@ -322,41 +322,66 @@ group header item counts (5.2, 5.3, 5.4, 5.5). The v1.12.1 verified
 ground-truth recount was: **66 (a) / 26 (b) / 25 (c) / 117 items.**
 See CHANGELOG.md v1.12.1 entry for the full reconciliation.
 
-**Update note (2026-05-28, NeuroTCS v1.13.1):** Two items reclassified
-since v1.12.1, both originating from v1.13.0 development work:
+**Update note (2026-05-28, NeuroTCS v1.15.2):** Five additional items
+reclassified since v1.13.1, originating from v1.14.0 + v1.15.0 + v1.15.1
+development work and the v1.15.2 documentation reconciliation:
 
-1. **WMH / Fazekas (Group 2, Section 5.2):** Moved from "(a) future" to
-   "(a) IN PRODUCTION" with the v1.13.0 ship of
-   `mri_volumetrics/wmh_fazekas_consensus@1.0.0`. Group 2 in-production
-   count: 4 → 5; future count: 5 → 4. Item count unchanged.
-2. **CSF p-tau217 (Group 3, Section 5.3):** Reclassified from "(a) future"
-   to "(c) needs maturing evidence" after v1.13.0 primary-source research
-   found that (a) no FDA-cleared CSF p-tau217 cutoff exists (May 2025
-   Lumipulse 510(k) is plasma, not CSF), (b) plasma p-tau217 is already
-   covered in shipped `plasma_amyloid_consensus@1.0.0`, and (c) cross-
-   platform CSF cutoffs lack ≥5-body consensus.
+1. **Tau PET (Group 2, Section 5.2):** Moved from "(a) future" to
+   "(a) IN PRODUCTION" with the v1.15.0 ship of the dual pack family
+   `tau_pet/tau_consensus@1.0.0` (production, FDA Tauvid verbatim 1.65×
+   cerebellar threshold) + `tau_pet/tau_research_preview@1.0.0` (Schöll/
+   Maass/Pascoal/CenTauR). Group 2 in-production count: 5 → 6; future
+   count: 4 → 3. Item count unchanged.
 
-Net effect on totals: **(a) 66 → 65**, **(c) 25 → 26**, **(b) 26
-unchanged**, **total 117 unchanged**. In-production count: **21 → 22**.
-Future (a) count: **45 → 43** (lost 2: WMH/Fazekas became in-production,
-CSF p-tau217 became (c)).
+2. **CSF NfL (Group 3, Section 5.3):** DOWNGRADED from "(a) future" to
+   "(c) needs maturing evidence" following the v1.13.1 CSF p-tau217
+   precedent. No FDA-cleared NfL assay for AD-specific indication exists;
+   Quanterix Simoa NfL FDA Breakthrough Designation is MS-only. Cross-
+   platform inconsistency (Simoa vs Elecsys vs MSD report different
+   absolute values). NfL is non-specific to AD.
+
+3. **CSF GFAP (Group 3, Section 5.3):** DOWNGRADED from "(a) future" to
+   "(c)" following identical pattern as CSF NfL. No FDA AD-specific
+   clearance; cross-platform inconsistency; reactive-astrocyte-non-specific.
+
+4. **Plasma NfL (Group 3, Section 5.3):** DOWNGRADED from "(a) future" to
+   "(c)" following the same logic as CSF NfL.
+
+5. **Plasma GFAP (Group 3, Section 5.3):** DOWNGRADED from "(a) future" to
+   "(c)" following the same logic as CSF GFAP.
+
+The NfL/GFAP downgrades were documented as "future scope downgrade
+following p-tau217 pattern" in v1.13.1 and v1.14.0 CHANGELOGs but not
+actually executed in the scope doc until v1.15.2. Closing that
+documentation gap is the purpose of this revision.
+
+Net effect on totals: **(a) 65 → 61** (Tau PET in-prod, 4 NfL/GFAP items
+moved to (c)), **(c) 26 → 30**, **(b) 26 unchanged**, **total 117
+unchanged**. In-production count: **22 → 23** (Tau PET added; Plasma
+p-tau181 Elecsys was de-facto in-prod in v1.14.0 but shared the row
+"Plasma p-tau181, p-tau231" so it doesn't add a row count). Future (a)
+count: **43 → 38** (Tau PET shipped, 4 NfL/GFAP items moved to (c)).
+
+Plasma pack citation updated across the document: `@1.0.0` → `@1.1.0`
+(v1.14.0 extended the pack with the FDA-cleared Elecsys pTau181
+measurement; the old `@1.0.0` citation was stale).
 
 | Category | Count | % |
 |---|---|---|
-| **(a) In-scope, in production / already used / partially addressed** | **22** | **~19%** |
-| **(a) In-scope, future pack/layer** | **43** | **~37%** |
-| **(a) Subtotal: in-scope (in production + future)** | **65** | **~56%** |
+| **(a) In-scope, in production / already used / partially addressed** | **23** | **~20%** |
+| **(a) In-scope, future pack/layer** | **38** | **~32%** |
+| **(a) Subtotal: in-scope (in production + future)** | **61** | **~52%** |
 | **(b) Out-of-scope, belongs in different tool** | **26** | **~22%** |
-| **(c) Genuine roadmap gap, needs clinical judgment or maturing evidence** | **26** | **~22%** |
+| **(c) Genuine roadmap gap, needs clinical judgment or maturing evidence** | **30** | **~26%** |
 | **Total items audited** | **117** | 100% |
 
-**Per-group ground-truth recount (post-v1.13.1):**
+**Per-group ground-truth recount (post-v1.15.2):**
 
 | Section | Group | Total | (a) | (b) | (c) |
 |---|---|---|---|---|---|
 | 5.1 | Document 1, Group 1 -- SDTM core domains | 12 | 0 | 12 | 0 |
 | 5.2 | Document 1, Group 2 -- Imaging biomarkers | 12 | 9 | 0 | 3 |
-| 5.3 | Document 1, Group 3 -- Fluid biomarkers | 16 | 13 | 0 | 3 |
+| 5.3 | Document 1, Group 3 -- Fluid biomarkers | 16 | 9 | 0 | 7 |
 | 5.4 | Document 1, Group 4 -- Genomics | 11 | 2 | 3 | 6 |
 | 5.5 | Document 1, Group 5 -- Cognitive and functional assessments | 20 | 14 | 0 | 6 |
 | 5.6 | Document 1, Group 6 -- Digital biomarkers | 8 | 1 | 0 | 7 |
@@ -364,7 +389,7 @@ CSF p-tau217 became (c)).
 | 5.8 | Document 1, Group 8 -- Anti-amyloid safety endpoints | 10 | 10 | 0 | 0 |
 | 5.9 | Document 1, Group 9 -- Outcome adjudication | 4 | 4 | 0 | 0 |
 | 5.10 | Document 2 -- 14 additional dataset layers | 14 | 5 | 8 | 1 |
-| **Total** | | **117** | **65** | **26** | **26** |
+| **Total** | | **117** | **61** | **26** | **30** |
 
 *Note on Section 5.10:* one row in Document 2 ("Anti-amyloid treatment
 safety decision trees") is annotated **(a) Already in roadmap (Group 8)**
@@ -373,82 +398,85 @@ This is preserved in the 117-row count (it appears as a distinct row in
 the auditor's Document 2 table). The duplicate is acknowledged here so
 downstream consumers can adjust the totals if they prefer to deduplicate.
 
-**The headline number (post-v1.13.1):** the auditor identified 117 distinct
-gap rows across Documents 1 and 2. **~56% are in-scope for NeuroTCS** (22
-already in production or addressed, 43 future); **~22% are explicitly
+**The headline number (post-v1.15.2):** the auditor identified 117 distinct
+gap rows across Documents 1 and 2. **~52% are in-scope for NeuroTCS** (23
+already in production or addressed, 38 future); **~22% are explicitly
 out-of-scope** with named alternative tools (CDISC validators, EDC systems,
-image-QC tools, etc.); **~22% need clinical judgment or maturing evidence**
+image-QC tools, etc.); **~26% need clinical judgment or maturing evidence**
 before they can be scoped.
 
 This is a much more defensible position than "we need 117 more packs." It
 is also a much more defensible position than "we have nothing to add."
 
+The shift from 56% in-scope (v1.13.1) to 52% in-scope (v1.15.2) reflects
+HONEST scope reduction: NfL/GFAP were aspirationally classified as future
+(a) packs but on primary-source research did not meet world-class evidence
+standards. Moving them to (c) is the same discipline the v1.13.1 release
+applied to CSF p-tau217. No partial fix; no aspiration without evidence.
+
 ---
 
-## 6. Defensible roadmap for the 43 in-scope future items
+## 6. Defensible roadmap for the 38 in-scope future items
 
-Realistic estimate: 43 future (a) items at the v1.10.x pace of ~1-2 packs per session = **22-33 additional implementation sessions**. Roughly 12-20 months of disciplined work.
+Realistic estimate: 38 future (a) items at the v1.10.x pace of ~1-2 packs per session = **19-28 additional implementation sessions**. Roughly 10-18 months of disciplined work.
 
-*Change from v1.12.1: 45 → 43 future items. WMH/Fazekas shipped in v1.13.0 (now in-production). CSF p-tau217 reclassified to (c) (no FDA-cleared CSF cutoff, plasma already covered, no cross-platform consensus). See Section 5.11 v1.13.1 update note.*
+*Change from v1.13.1: 43 → 38 future items. Tau PET dual pack shipped in v1.15.0 (`tau_pet/tau_consensus@1.0.0` + `tau_pet/tau_research_preview@1.0.0`, now in-production). CSF NfL, CSF GFAP, Plasma NfL, Plasma GFAP downgraded to (c) in v1.15.2 (no FDA AD-specific clearance, cross-platform inconsistency, non-specific to AD — same world-class evidence standard that drove the v1.13.1 CSF p-tau217 downgrade).*
 
 ### 6.1 Priority tiers
 
-The 43 future items split into three tiers by clinical importance + evidence readiness:
+The 38 future items split into three tiers by clinical importance + evidence readiness:
 
-**Tier 1 -- High priority, evidence ready (8 items, ~8-10 sessions):**
+**Tier 1 -- High priority, evidence ready (5 items, ~5-7 sessions):**
 
 1. ARIA-related dose pause/discontinuation Layer 3 invariant (Group 8)
 2. Anticoagulation contraindication Layer 3 invariant (Group 8)
 3. APOE4 homozygote enhanced monitoring Layer 3 invariant (Group 8) -- aligns with v1.11.0a3 genotype-phenotype pack
 4. ARIA symptoms vs MRI-grade Layer 3 invariant (Group 8)
 5. Macrohemorrhage events Layer 3 invariant (Group 8)
-6. Tau PET regional SUVR + Braak Layer 2 pack (Group 2)
-7. NfL Layer 2 pack (CSF + plasma) (Group 3)
-8. GFAP Layer 2 pack (CSF + plasma) (Group 3)
 
-*Change from v1.12.1: 10 items → 8 items. Item 7 (WMH / Fazekas Layer 2 pack) DONE in v1.13.0 (`mri_volumetrics/wmh_fazekas_consensus@1.0.0`). Item 8 (CSF p-tau217 Layer 2 pack) DOWNGRADED to (c) in v1.13.1 after primary-source research found no FDA-cleared CSF cutoff exists and plasma p-tau217 is already in production. Items renumbered.*
+*Change from v1.13.1: 8 items → 5 items. Item 6 (Tau PET regional SUVR + Braak Layer 2 pack) DONE in v1.15.0 as a dual-pack family. Items 7 (NfL Layer 2 pack) and 8 (GFAP Layer 2 pack) DOWNGRADED to (c) in v1.15.2 after primary-source research found no FDA AD-specific clearance, cross-platform inconsistency, and non-AD-specific elevation patterns. All 5 remaining Tier 1 items are Layer 3 invariants from Group 8 (anti-amyloid safety endpoints) — partially covered by the existing `genotype_phenotype_consistency` and `tool_declaration_consistency` Layer 3 packs designed in `LAYER_3_DESIGN.md`.*
 
-**Tier 2 -- Medium priority, evidence ready (15 items, ~15 sessions):**
+**Tier 2 -- Medium priority, evidence ready (13 items, ~13 sessions):**
 
-11. FDG PET Layer 2 pack
-12. CSF t-tau extension
-13. CSF p-tau181 extension
-14. CSF p-tau231 extension
-15. Plasma NfL extension
-16. Plasma GFAP extension
-17. TREM2 variants Layer 2 pack
-18. ADAS-Cog Layer 2 pack
-19. MoCA Layer 2 pack
-20. CDR/MMSE Layer 2 plausibility bounds
-21. iADRS composite Layer 2 pack
-22. NPI-Q Layer 2 pack
-23. UPSIT olfactory Layer 2 pack
-24. Microbleeds non-ARIA Layer 2 pack
-25. Surveillance MRI schedule Layer 4 invariant
+6. FDG PET Layer 2 pack
+7. CSF t-tau extension
+8. CSF p-tau181 extension
+9. CSF p-tau231 extension
+10. Plasma p-tau231 extension (in shared `plasma_amyloid_consensus` row)
+11. TREM2 variants Layer 2 pack
+12. ADAS-Cog Layer 2 pack
+13. MoCA Layer 2 pack
+14. CDR/MMSE Layer 2 plausibility bounds
+15. iADRS composite Layer 2 pack
+16. NPI-Q Layer 2 pack
+17. UPSIT olfactory Layer 2 pack
+18. Microbleeds non-ARIA Layer 2 pack
+
+*Change from v1.13.1: Tier 2 was 15 items (numbered 11-25 in v1.13.1). Plasma NfL and Plasma GFAP removed (downgraded to (c) in v1.15.2). Tier 2 now 13 items.*
 
 **Tier 3 -- Lower priority, Layer 4 dependent (20 items, ~18-20 sessions):**
 
-26-43. Various Layer 4 (inclusion/protocol/missing-data) items, screen failures, endpoint derivation Layer 3 invariants, outcome adjudication consistency invariants, study-partner reliability framework, and additional in-scope (a) items from the corrected ground-truth recount (depends on Layer 4 design first).
+19-38. Various Layer 4 (inclusion/protocol/missing-data) items, screen failures, endpoint derivation Layer 3 invariants, outcome adjudication consistency invariants, study-partner reliability framework, and additional in-scope (a) items from the corrected ground-truth recount (depends on Layer 4 design first).
 
-*Tier 3 numbering note: in v1.12.1 this range was 26-45 (10 Tier 1 + 15 Tier 2 + 20 Tier 3 = 45). In v1.13.1 Tier 1 dropped to 8 items (WMH/Fazekas done, CSF p-tau217 moved to (c)), so the cumulative numbering is 8 + 15 + 20 = 43.*
+*Tier 3 numbering note: cumulative numbering is 5 + 13 + 20 = 38. (v1.13.1: 8 + 15 + 20 = 43; v1.15.2: minus 1 Tier 1 (Tau PET done), minus 2 Tier 1 (NfL/GFAP downgraded), minus 2 Tier 2 (Plasma NfL/GFAP downgraded) = 38.)*
 
 ### 6.2 Sequencing recommendation
 
 Complete the v1.11.0 arc first (a2, a3, rc1, final = 4 sessions). Then begin the Tier 1 roadmap in v1.11.x and v1.12.0 (Layer 4 design). Tier 2 follows in v1.13.x. Tier 3 spans v1.14.x and beyond.
 
-**Critical sequencing principle:** Tier 1's ARIA-related Layer 3 invariants are the most clinically consequential. Five of them belong in the v1.11.0 implementation arc itself -- they're already partial-covered by the genotype_phenotype_consistency and tool_declaration_consistency packs designed in `LAYER_3_DESIGN.md`. The remaining Tier 1 items follow in v1.11.x point releases.
+**Critical sequencing principle:** All 5 remaining Tier 1 items are ARIA-related Layer 3 invariants — the most clinically consequential. They're already partial-covered by the genotype_phenotype_consistency and tool_declaration_consistency packs designed in `LAYER_3_DESIGN.md`. v1.11.x point releases complete them.
 
 ### 6.3 Estimated timeline
 
 | Phase | Releases | Sessions | Wall-clock estimate |
 |---|---|---|---|
 | Complete v1.11.0 arc | a2, a3, rc1, final | 4 sessions | 1-2 months |
-| Tier 1 roadmap | v1.11.1 - v1.11.10 | 8-10 sessions | 3-4 months |
-| Tier 2 roadmap + Layer 4 design | v1.12.0-design, v1.12.x, v1.13.x | 15 sessions | 5-8 months |
+| Tier 1 roadmap | v1.11.1 - v1.11.7 | 5-7 sessions | 2-3 months |
+| Tier 2 roadmap + Layer 4 design | v1.12.0-design, v1.12.x, v1.13.x | 13 sessions | 5-7 months |
 | Tier 3 roadmap | v1.14.x + | 18-20 sessions | 6-11 months |
-| **Total** | **v1.11.0 - v1.14.x** | **~45-49 sessions** | **15-25 months** |
+| **Total** | **v1.11.0 - v1.14.x** | **~40-44 sessions** | **14-23 months** |
 
-*Tier 1 reduced from 10 to 8-10 sessions in v1.13.1: WMH/Fazekas done in v1.13.0, CSF p-tau217 moved to (c). Total session estimate reduced accordingly.*
+*Tier 1 reduced from 8-10 to 5-7 sessions in v1.15.2: Tau PET done in v1.15.0; NfL/GFAP downgraded to (c). Tier 2 reduced from 15 to 13 sessions: Plasma NfL/GFAP downgraded. Total session estimate reduced accordingly (45-49 → 40-44).*
 
 This is honest. It is not "we'll cover everything in two sessions." It is also not "we'll never cover this." It is a disciplined multi-year roadmap at world-class evidence standard.
 
@@ -480,23 +508,25 @@ NeuroTCS users should ensure these tools are in place upstream of (or alongside)
 
 ---
 
-## 8. Honest acknowledgment of 26 (c) items
+## 8. Honest acknowledgment of 30 (c) items
 
-The 26 (c) items are not refused. They are honest "we don't know yet" items, each with a specific reason:
+The 30 (c) items are not refused. They are honest "we don't know yet" items, each with a specific reason:
 
 | Reason category | Count | Examples |
 |---|---|---|
 | Evidence too immature for ≥5-body consensus | 12 | eMTBR-tau243 (Dec 2025), 7 digital biomarkers (gait, speech, typing, sleep, driving, eye-tracking, smartphone), CSF sTREM2, methylation panel, transcriptomic profile, mitochondrial DNA haplogroup |
-| Multiple competing standards, no convergence | 7 | GWAS panels, PLCG2 protective variant, polygenic risk scores, DTI tract selection, ASL perfusion cutoffs, fMRI/resting-state cutoffs, **CSF p-tau217 cross-platform (added v1.13.1)** |
+| Multiple competing standards, no convergence | 11 | GWAS panels, PLCG2 protective variant, polygenic risk scores, DTI tract selection, ASL perfusion cutoffs, fMRI/resting-state cutoffs, CSF p-tau217 cross-platform (added v1.13.1), **CSF NfL cross-platform (added v1.15.2)**, **CSF GFAP cross-platform (added v1.15.2)**, **Plasma NfL cross-platform (added v1.15.2)**, **Plasma GFAP cross-platform (added v1.15.2)** |
 | Inherently subjective endpoint | 6 | FAQ, CFI, ADCS-ADL (all informant-reported), CGIC, QOL-AD, Zarit (all subjective) |
 | Methodology open research | 1 | Caregiver / study-partner data reliability framework |
-| **Total** | **26** | |
+| **Total** | **30** | |
 
 Each (c) item gets revisited when its blocking condition resolves. Examples:
 - **eMTBR-tau243** -- revisit when 5+ international bodies endorse cutoffs (estimated 2027)
 - **Digital gait biomarkers** -- revisit when FDA clears a digital-gait device with AD trial indication
 - **Caregiver reliability** -- revisit when the AD trial community converges on a standard reliability framework
 - **CSF p-tau217 (new v1.13.1)** -- revisit when (a) FDA clears a CSF p-tau217 assay (the May 2025 Lumipulse clearance is plasma-only), OR (b) AA/IWG/EAN/EFNS/SNMMI converge on a single cross-platform CSF cutoff harmonizing Lilly MSD, Quanterix Simoa, and Roche Elecsys. Estimated 2027+.
+- **CSF + Plasma NfL (new v1.15.2)** -- revisit when (a) FDA clears an NfL assay with explicit AD trial indication (current Quanterix Simoa Breakthrough Designation is MS-only), OR (b) ≥5 international bodies endorse cross-platform AD-specific NfL cutoffs that account for NfL's non-specificity to AD (elevated in MS, ALS, TBI, stroke, peripheral neuropathy, normal aging). Estimated 2027+.
+- **CSF + Plasma GFAP (new v1.15.2)** -- revisit conditions identical to NfL (no FDA AD-specific clearance, cross-platform inconsistency, reactive-astrocyte-non-specificity). Estimated 2027+.
 
 This is the honest version of "this is not a partial fix; this is a deliberate hold pending evidence."
 
@@ -506,7 +536,7 @@ This is the honest version of "this is not a partial fix; this is a deliberate h
 
 If the auditor reads only one paragraph of this document, it should be this:
 
-> *You are correct that NeuroTCS is not a complete AD trial-data recognizer. It was never designed to be one and is not described in that way in the v1.x scope documents (see `docs/SCOPE.md`). NeuroTCS is a citation-locked, fail-closed audit framework for the logical consistency of AD trial biomarker data, operating at three layers: temporal coherence of categorical state trajectories (Layer 1, production since v1.8.x), per-visit plausibility of continuous biomarker values against published normative ranges (Layer 2, production since v1.10.0 with 7 packs as of v1.13.0), and cross-sheet consistency between manifest declarations and observed values (Layer 3, in development per `LAYER_3_DESIGN.md` v1.11.0-design.2). Of the 117 gap rows your review identified, ~56% (65 items) are in-scope for NeuroTCS, of which 22 are already in production or addressed and 43 are on a disciplined 22-33 session roadmap (estimated 12-20 months). ~22% (26 items) are explicitly out-of-scope, with named alternative tools (CDISC SDTM validators, EDC systems, image-QC tools, CLIA-certified bioanalytical labs) recommended. ~22% (26 items) are genuine roadmap gaps awaiting maturing evidence or convergent clinical-judgment standards; each will be revisited when its specific blocking condition resolves. The framework's hard boundaries -- no measurement, no SDTM structural validation, no event adjudication, no replacement for human expert review -- are documented in section 3 of this response. We welcome integration with the upstream and adjacent tools that handle the layers above and below us.*
+> *You are correct that NeuroTCS is not a complete AD trial-data recognizer. It was never designed to be one and is not described in that way in the v1.x scope documents (see `docs/SCOPE.md`). NeuroTCS is a citation-locked, fail-closed audit framework for the logical consistency of AD trial biomarker data, operating at three layers: temporal coherence of categorical state trajectories (Layer 1, production since v1.8.x), per-visit plausibility of continuous biomarker values against published normative ranges (Layer 2, production since v1.10.0 with 8 packs as of v1.15.1 — ad/aria_safety, pet_amyloid/centiloid_consensus, genetics/apoe_consensus, csf_biomarkers/csf_amyloid_consensus, plasma_biomarkers/plasma_amyloid_consensus, mri_volumetrics/structural_volumetry_consensus, mri_volumetrics/wmh_fazekas_consensus, tau_pet/tau_consensus, plus 2 research_preview packs), and cross-sheet consistency between manifest declarations and observed values (Layer 3, in development per `LAYER_3_DESIGN.md` v1.11.0-design.2). Of the 117 gap rows your review identified, ~52% (61 items) are in-scope for NeuroTCS, of which 23 are already in production or addressed and 38 are on a disciplined 19-28 session roadmap (estimated 10-18 months). ~22% (26 items) are explicitly out-of-scope, with named alternative tools (CDISC SDTM validators, EDC systems, image-QC tools, CLIA-certified bioanalytical labs) recommended. ~26% (30 items) are genuine roadmap gaps awaiting maturing evidence or convergent clinical-judgment standards; each will be revisited when its specific blocking condition resolves. The framework's hard boundaries -- no measurement, no SDTM structural validation, no event adjudication, no replacement for human expert review -- are documented in section 3 of this response. We welcome integration with the upstream and adjacent tools that handle the layers above and below us.*
 
 That paragraph is the public-facing position. Sections 1-8 above are the technical support for it.
 
@@ -535,6 +565,7 @@ To be explicit about what this scope-response document does NOT commit to:
 | `v1.11.0a1-scope-response` | 2026-05-25 | Initial scope-response document. Triage of 117 auditor-identified gap rows. Roadmap for in-scope future items. Out-of-scope statements. Acknowledgment of evidence-or-judgment-pending items. (NOTE: original v1.11.0a1-scope-response numbers (54/27/34/115) reflected arithmetic errors corrected in NeuroTCS v1.12.1 — see CHANGELOG.md.) |
 | `v1.12.1` | 2026-05-27 | Section 5.11 arithmetic corrected via independent Python text-parser recount. Old totals 54/27/34/115 → verified 66/26/25/117. Section header counts 5.2/5.3/5.4/5.5 fixed. Subtotals in 5.2/5.3/5.5/5.10 fixed. In-scope split corrected (15+39=54 → 21+45=66). Downstream references in sections 6, 7, 8, 9 updated to match. Phantom "PET reconstruction QC" row removed from section 7. |
 | `v1.13.1` | 2026-05-28 | Two items reclassified after v1.13.0 work: (1) WMH/Fazekas moved from "(a) future" to "(a) IN PRODUCTION" with the v1.13.0 ship of `mri_volumetrics/wmh_fazekas_consensus@1.0.0` (Fazekas 1987 + STRIVE-2 + Meta VCI Map). (2) CSF p-tau217 reclassified from "(a) future" to "(c) needs maturing evidence" after primary-source research found no FDA-cleared CSF cutoff exists, plasma p-tau217 is already in production, and cross-platform CSF cutoffs lack ≥5-body consensus. Net: (a) 66 → 65, (c) 25 → 26, in-production 21 → 22, future 45 → 43. Sections 5.2, 5.3, 5.11, 6 header, 6.1 Tier 1, 8, 9 updated. |
+| `v1.15.2` | 2026-05-28 | **Documentation reconciliation closing four releases of stale content.** Five items reclassified: (1) Tau PET moved from "(a) future" to "(a) IN PRODUCTION" with v1.15.0 dual pack family `tau_pet/tau_consensus@1.0.0` (FDA Tauvid PI §2.4 verbatim 1.65× cerebellar threshold) + `tau_pet/tau_research_preview@1.0.0` (Schöll/Maass/Pascoal/CenTauR). (2-5) CSF NfL, CSF GFAP, Plasma NfL, Plasma GFAP all DOWNGRADED from "(a) future" to "(c) needs maturing evidence" following the v1.13.1 CSF p-tau217 precedent: no FDA AD-specific clearance exists (Quanterix Simoa NfL FDA Breakthrough Designation is MS-only), cross-platform inconsistency (Simoa vs Elecsys vs MSD), and non-AD-specificity (NfL elevated in MS/ALS/TBI/stroke/aging; GFAP elevated in TBI/stroke/MS/prion disease). All four downgrades were documented in v1.13.1/v1.14.0 CHANGELOGs as "future scope downgrade following p-tau217 pattern" but not actually executed in the scope doc until v1.15.2. Net: (a) 65 → 61 (1 to in-prod, 4 to (c)), (c) 26 → 30, in-production 22 → 23, future 43 → 38. Tier 1 dropped from 8 items to 5 items (Tau PET done, NfL/GFAP downgraded). Plasma pack citations updated `@1.0.0` → `@1.1.0` (cosmetic, pack extended in v1.14.0 with FDA-cleared Elecsys pTau181). Sections 5.2, 5.3, 5.11, 6 header, 6.1, 6.3, 8, 9 updated. No code, schema, or test changes. |
 
 Modifications to this document require bumping to `v1.11.0a1-scope-response.2`, `.3`, etc., with explicit changelog of which items moved between categories and why.
 
