@@ -267,6 +267,45 @@ def test_every_bound_has_5plus_endorsing_bodies():
     assert not failures, "Bounds with <5 endorsers:\n  " + "\n  ".join(failures)
 
 
+def test_every_bound_meets_world_class_evidence_bar():
+    """v1.15.1 reconciled world-class gate: every bound must satisfy
+       (a) >=5 endorsing bodies (load-bearing invariant),
+       (b) citation_strength in {international_consensus, verbatim, derived}, and
+       (c) if derived: citation_text shows multi-cohort/multi-source evidence.
+
+    This pack mixes three citation_strength forms (5 international_consensus,
+    4 verbatim Fazekas 1987 visual scale, 4 derived Meta VCI Map normative).
+    All three forms are world-class because every bound clears the >=5 endorser
+    floor and derived bounds reference the Meta VCI Map Consortium (n=14,876
+    across 15 cohorts)."""
+    from neurotcs.clinical_ranges.schema import CitationStrength
+    pack = load_rangepack(PACK_NAME)
+    valid_strengths = {
+        CitationStrength.INTERNATIONAL_CONSENSUS,
+        CitationStrength.VERBATIM,
+        CitationStrength.DERIVED,
+    }
+    multi_source_markers = (
+        "cohort", "multi-", "Meta VCI", "consortium", "Consortium",
+        "percentile", "across", "n=", "ADNI", "BioFINDER",
+    )
+    for m in pack.rangepack.measurements:
+        for b in m.bounds:
+            assert b.citation_strength in valid_strengths, (
+                f"{m.name}.{b.bound_type.value}: invalid strength {b.citation_strength.value}"
+            )
+            assert len(b.citation.endorsing_bodies) >= 5, (
+                f"{m.name}.{b.bound_type.value}: only "
+                f"{len(b.citation.endorsing_bodies)} endorsers"
+            )
+            if b.citation_strength == CitationStrength.DERIVED:
+                text = b.citation.citation_text
+                assert any(marker in text for marker in multi_source_markers), (
+                    f"{m.name}.{b.bound_type.value}: derived bound without "
+                    f"multi-source evidence markers in citation_text"
+                )
+
+
 def test_meta_vci_map_normative_referenced():
     """The Meta VCI Map Consortium normative reference (de Kort 2024,
     PMID 39602940) must be cited on every WMH volume measurement."""

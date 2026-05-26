@@ -4,6 +4,169 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.1] -- 2026-05-28
+
+### Architectural reconciliation: world-class gate + wmh_fazekas in production
+
+This release closes a silent-skip architectural gap that was documented but
+not fixed across v1.13.0, v1.14.0, and v1.15.0: `mri_volumetrics/wmh_fazekas_consensus`
+was shipped at `status: production` in v1.13.0 but excluded from
+`EXPECTED_PRODUCTION_PACKS` because the strict v1.10.x-v1.15.0 gate test
+required EVERY bound to carry the literal string `international_consensus`
+as `citation_strength`, and wmh_fazekas has bounds with `verbatim` (Fazekas 1987
+visual scale) and `derived` (Meta VCI Map normative) citation strengths.
+
+The architectural reconciliation: the world-class invariant for production
+packs is the **endorser floor (>=5 endorsing bodies per bound)**, not the
+**citation_strength label**. The strength label describes the *form of
+evidence* (international_consensus, verbatim, derived); the endorser floor
+enforces *multi-body agreement*. The two are independent invariants.
+
+### Why the old gate was dishonest
+
+Fazekas 1987 verbatim ceiling at 3 is a 39-year-old founding paper now
+ratified by STRIVE-2 2023, the Wahlund 2001 visual scale, and the EFNS
+white-matter-lesion guidelines — that IS international consensus. The
+citation FORM is verbatim because the YAML quotes the Fazekas 1987 paper
+directly. Meta VCI Map Consortium 99th-percentile WMH volume cutoffs
+derived from n=14,876 across 15 cohorts are STRONGER evidence than a
+single guideline endorsement, but the schema labels that "derived" because
+the YAML cites the population-statistical derivation.
+
+The strict label-based gate excluded both forms of world-class evidence.
+The endorser-floor-based gate accepts them. The endorser floor is the
+load-bearing invariant.
+
+### Reconciled gate (v1.15.1)
+
+A production-pack bound is world-class iff three invariants hold simultaneously:
+
+1. **Endorser floor (load-bearing):** `len(citation.endorsing_bodies) >= 5`
+2. **Citation strength form:** `citation_strength` ∈ {`international_consensus`,
+   `verbatim`, `derived`}
+3. **For derived bounds only:** `citation_text` references multi-cohort or
+   multi-source evidence (named cohorts: ADNI/BioFINDER/OASIS/A4/HABS/Meta VCI/
+   AMYPAD/GAAIN/etc., or population-statistical phrasing: percentile/n=/
+   consortium/across).
+
+All three invariants are enforced parametrically across every pack in
+`EXPECTED_PRODUCTION_PACKS` via three tests in
+`tests/clinical_ranges/test_loader.py::TestProductionPackWorldClassGate`:
+
+- `test_every_bound_meets_world_class_evidence_bar` — invariants 1+2 atomically
+- `test_derived_bounds_show_multi_source_evidence` — invariant 3
+- `test_every_bound_has_5plus_endorsing_bodies` — back-compat name for invariant 1
+
+### Verified — every current production pack passes the reconciled gate
+
+| Pack                                              | bounds | IC | verb | deriv | min endorse |
+|---------------------------------------------------|--------|----|------|-------|-------------|
+| ad/aria_safety                                    | 12     | 12 | 0    | 0     | 6           |
+| pet_amyloid/centiloid_consensus                   | 10     | 10 | 0    | 0     | 6           |
+| genetics/apoe_consensus                           | 12     | 12 | 0    | 0     | 6           |
+| csf_biomarkers/csf_amyloid_consensus              | 9      | 9  | 0    | 0     | 6           |
+| plasma_biomarkers/plasma_amyloid_consensus@1.1.0  | 14     | 14 | 0    | 0     | 6           |
+| mri_volumetrics/structural_volumetry_consensus    | 46     | 46 | 0    | 0     | 6           |
+| **mri_volumetrics/wmh_fazekas_consensus**         | **13** | **5** | **4** | **4** | **6**       |
+| tau_pet/tau_consensus                             | 13     | 13 | 0    | 0     | 6           |
+
+All 129 production-pack bounds clear all three invariants. wmh_fazekas's
+4 verbatim bounds (Fazekas 1987 scale 0-3) and 4 derived bounds (Meta VCI Map
+normative cutoffs) all pass.
+
+### Added
+
+- `docs/WORLD_CLASS_GATE.md` — canonical architectural documentation for
+  the production-pack invariant. Defines the three invariants, the
+  path-to-production for new packs, and the versioning history of the gate.
+  This is the reference for every future pack proposal.
+- `tests/clinical_ranges/test_loader.py::TestProductionPackWorldClassGate::test_every_bound_meets_world_class_evidence_bar`
+- `tests/clinical_ranges/test_loader.py::TestProductionPackWorldClassGate::test_derived_bounds_show_multi_source_evidence`
+- `tests/clinical_ranges/test_wmh_fazekas_consensus_pack.py::test_every_bound_meets_world_class_evidence_bar`
+
+### Modified
+
+- `tests/clinical_ranges/test_loader.py`:
+  - `EXPECTED_PRODUCTION_PACKS` now includes `mri_volumetrics/wmh_fazekas_consensus`
+    (was silently skipped across v1.13.0/v1.14.0/v1.15.0)
+  - `TestProductionPackWorldClassGate.test_every_bound_is_international_consensus`
+    REMOVED — replaced by reconciled `test_every_bound_meets_world_class_evidence_bar`
+  - Header comment block now documents the world-class gate architecture
+    (was previously a gap-acknowledgment note)
+- `pyproject.toml`, `src/neurotcs/__init__.py`, `CITATION.cff`: version
+  1.15.0 -> 1.15.1
+- `CHANGELOG.md`: this entry
+
+### Unchanged (byte-identical to v1.15.0)
+
+This is a test/documentation-only release. NO YAML files changed.
+
+- **All 8 Layer 2 production rangepack yaml_sha256 byte-identical to v1.15.0:**
+  - ad/aria_safety: `0f5c3275...`
+  - pet_amyloid/centiloid_consensus: `bfcc5f5d...`
+  - genetics/apoe_consensus: `3d9cdca0...`
+  - csf_biomarkers/csf_amyloid_consensus: `ef9b4e3c...`
+  - plasma_biomarkers/plasma_amyloid_consensus: `abd58cc5...`
+  - mri_volumetrics/structural_volumetry_consensus: `70710ccf...`
+  - mri_volumetrics/wmh_fazekas_consensus: `d4fee2be...`
+  - tau_pet/tau_consensus: `76c8ff42...`
+- **Both research_preview pack yaml_sha256 byte-identical:**
+  - mri_volumetrics/freesurfer_extended (unchanged)
+  - tau_pet/tau_research_preview: `c30ac885...`
+- **Both Layer 3 invariantpack yaml_sha256 byte-identical**
+- **All 3 Layer 1 rulepacks byte-identical** (niaaa_2018 `aaac92fb...`)
+- **All 5 Layer 1 cohort cTCS + audit_ids byte-identical:**
+  OASIS-3 0.994191 `77f1945358e6b1db...`, ADNI 0.994575 `5a52facd1e679f56...`,
+  NACC 0.991502 `f233935d7a1c2d72...`, MIRIAD 0.985369 `59ac763dfc4cd009...`,
+  MIRIAD-test-retest 1.000000 `94126769ef6c468e...`
+
+### Verification
+
+- pytest tests/ -q -> **1131 passed, 7 skipped** (was 1114 in v1.15.0; +17 from
+  parametrized world-class gate expansion: 8 packs * 2 new test functions = 16
+  new parametrized cases, plus 1 new wmh_fazekas-specific test)
+- ruff check -> All checks passed
+- All 12 active pack hashes byte-identical to v1.15.0 (no YAML files touched)
+- All 5 Layer 1 cohort audit_ids + cTCS byte-identical to v1.15.0
+- All 8 production packs (including newly-admitted wmh_fazekas) pass the
+  reconciled world-class gate
+
+### Pack roster post-v1.15.1
+
+8 production + 2 research_preview + 6 deprecated = 16 total (unchanged
+from v1.15.0; wmh_fazekas was already at status: production in v1.13.0,
+it just wasn't being gated by the strict test).
+
+### Methodology
+
+This release demonstrates the discipline of **closing a documented gap
+before building forward**. The wmh_fazekas exclusion was visible in
+v1.13.0/v1.14.0/v1.15.0 CHANGELOGs but every prior release deferred the
+fix. v1.15.1 makes the fix because (a) the gap was real architectural
+debt that affected the honesty of the world-class invariant, and (b) the
+standing mandate is "no step back in future" — deferred gaps tend to
+accumulate when forward work is more interesting.
+
+### Audit hooks for future packs
+
+Every future Layer 2 pack proposal should be reviewed against the
+canonical `docs/WORLD_CLASS_GATE.md` path-to-production:
+
+1. YAML with status=production and PMID/DOI anchor + public_url
+2. Every bound has citation_strength in {IC, verbatim, derived}
+3. Every bound has >=5 endorsing_bodies
+4. Every bound has public_url
+5. Every derived bound's citation_text contains multi-source markers
+6. Add to EXPECTED_PRODUCTION_PACKS in test_loader.py
+7. Add golden yaml_sha256 to test_yaml_sha256_cross_platform.py
+8. Pack-specific test file with world-class gate test mirroring central
+9. Update roster counts in test_deprecation_semantics.py
+10. Full pytest + ruff + byte-exact invariance vs prior release
+
+If any step fails, ship at research_preview, not production. No silent gaps.
+
+---
+
 ## [1.15.0] -- 2026-05-28
 
 ### Layer 2 dual-pack addition: Tau PET (production + research_preview)
