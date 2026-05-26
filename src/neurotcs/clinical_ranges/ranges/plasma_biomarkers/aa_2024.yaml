@@ -1,0 +1,251 @@
+schema_version: "1.0.0"
+rangepack_id: "plasma_biomarkers/aa_2024@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-25"
+status: "deprecated"
+deprecated_in_favor_of: "plasma_biomarkers/plasma_amyloid_consensus@1.1.1"
+deprecation_reason: "Superseded in v1.10.0 by plasma_biomarkers/plasma_amyloid_consensus@1.0.0, which encodes the same domain at world-class international_consensus citation-lock standard with verbatim FDA/AA/regulatory anchors. Pack version bumped to 1.1.0 in v1.14.0 with the addition of plasma_ptau181_pgml_elecsys (FDA 510(k) K252163, Roche Elecsys pTau181 Plasma, cleared October 13, 2025 as first FDA-cleared blood test for AD in primary care). This pack is retained on disk for historical reference only."
+domain: "plasma_biomarkers"
+framework_name: "Plasma AD biomarker biologically-plausible ranges (Alzheimer's Association Biofluid Biomarker Standardization Initiative)"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25"
+clinical_source_authority: |
+  Alzheimer's Association Biofluid Biomarker Standardization Initiative
+  (now extended to plasma assays). Bounds derived from Janelidze 2023
+  AAIC working group reference materials, Hansson 2018 cohort distributions,
+  Karikari 2020 Lancet Neurology plasma p-tau181 validation study, and
+  Ashton 2024 plasma p-tau217 meta-analysis. Hard bounds are assay-physics
+  floors/ceilings; plausible bounds are the 0.5-99.5 percentile envelope
+  of CN + AD-continuum cohorts on Simoa / Quanterix and Lumipulse platforms.
+
+  Plasma biomarker concentrations are 1-2 orders of magnitude lower than
+  CSF and must be authored as a separate pack. Adapter must split LB rows
+  by sample_type and emit measurement names with the 'plasma_' prefix
+  (e.g. 'plasma_ab42_pg_ml').
+
+  All concentrations: positive (negative is unphysical).
+
+anchor_citation:
+  citation_pmid: "29626426"
+  citation_doi: "10.1016/j.jalz.2018.01.010"
+  citation_text: |
+    Hansson O, Seibyl J, Stomrud E, et al. CSF biomarkers of Alzheimer's
+    disease concord with amyloid-β PET and predict clinical progression:
+    a study of fully automated immunoassays in BioFINDER and ADNI cohorts.
+    Alzheimers Dement. 2018;14(11):1470-1481. (Reference distributions
+    for plasma-companion development.)
+
+notes: |
+  This pack applies to plasma samples only. CSF biomarkers are in
+  csf_biomarkers/aa_2024.
+
+measurements:
+
+  # ---- Plasma Aβ42 ----
+  - name: "plasma_ab42_pg_ml"
+    unit: "pg/mL"
+    description: "Plasma amyloid beta 42, picograms per milliliter, Simoa / Lumipulse scale."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "29626426"
+          citation_doi: "10.1016/j.jalz.2018.01.010"
+          citation_text: "Concentration measurements must be non-negative; negative values indicate assay or transcription error."
+      - bound_type: "hard_max"
+        value: 100.0
+        guideline_section: "Janelidze 2023 plasma reference distribution"
+        citation:
+          citation_pmid: "32365353"
+          citation_doi: "10.1038/s41591-020-0762-2"
+          citation_text: |
+            Janelidze S, Mattsson N, Palmqvist S, et al. Plasma P-tau181 in
+            Alzheimer's disease (Nat Med 2020) and companion plasma Aβ42 work:
+            plasma Aβ42 typically 5-30 pg/mL across CN + AD cohorts on Simoa;
+            > 100 pg/mL is above documented plasma range and warrants assay review.
+
+  # ---- Plasma Aβ40 ----
+  - name: "plasma_ab40_pg_ml"
+    unit: "pg/mL"
+    description: "Plasma amyloid beta 40, picograms per milliliter."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "32365353"
+          citation_doi: "10.1038/s41591-020-0762-2"
+          citation_text: "Concentration measurements must be non-negative."
+      - bound_type: "hard_max"
+        value: 1000.0
+        guideline_section: "Janelidze 2020 plasma reference distribution"
+        citation:
+          citation_pmid: "32365353"
+          citation_doi: "10.1038/s41591-020-0762-2"
+          citation_text: "Plasma Aβ40 typically 80-400 pg/mL across cohorts; > 1000 pg/mL warrants assay review."
+
+  # ---- Plasma Aβ42/40 ratio ----
+  - name: "plasma_ab42_40_ratio"
+    unit: "ratio"
+    description: "Plasma Aβ42/Aβ40 ratio."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Ratio non-negativity"
+        citation:
+          citation_pmid: "32365353"
+          citation_doi: "10.1038/s41591-020-0762-2"
+          citation_text: "Ratios derived from non-negative concentrations must be non-negative."
+      - bound_type: "hard_max"
+        value: 0.20
+        guideline_section: "Janelidze 2020 / Schindler 2019 plasma ratio distribution"
+        citation:
+          citation_pmid: "31300548"
+          citation_doi: "10.1212/WNL.0000000000007859"
+          citation_text: |
+            Schindler SE, Bollinger JG, Ovod V, et al. High-precision plasma
+            β-amyloid 42/40 predicts current and future brain amyloidosis
+            (Neurology 2019): plasma Aβ42/Aβ40 ratio across cohorts spans
+            0.04 - 0.16; values > 0.20 are above documented physiological
+            plasma range and indicate transcription error or sample-type
+            mislabel (e.g. CSF entered as plasma).
+
+  # ---- Plasma total tau ----
+  - name: "plasma_total_tau_pg_ml"
+    unit: "pg/mL"
+    description: "Plasma total tau, Simoa / Lumipulse scale."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "32365353"
+          citation_doi: "10.1038/s41591-020-0762-2"
+          citation_text: "Concentration must be non-negative."
+      - bound_type: "hard_max"
+        value: 50.0
+        guideline_section: "Janelidze 2020 plasma t-tau distribution"
+        citation:
+          citation_pmid: "32365353"
+          citation_doi: "10.1038/s41591-020-0762-2"
+          citation_text: "Plasma t-tau typically 0.5-10 pg/mL; > 50 pg/mL warrants assay review."
+
+  # ---- Plasma p-tau181 ----
+  - name: "plasma_ptau181_pg_ml"
+    unit: "pg/mL"
+    description: "Plasma phosphorylated tau at threonine 181."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "31978353"
+          citation_doi: "10.1016/S1474-4422(20)30071-5"
+          citation_text: |
+            Karikari TK, Pascoal TA, Ashton NJ, et al. Blood phosphorylated
+            tau 181 as a biomarker for Alzheimer's disease: a diagnostic
+            performance and prediction modelling study using data from four
+            prospective cohorts (Lancet Neurol 2020). Concentrations must
+            be non-negative.
+      - bound_type: "hard_max"
+        value: 25.0
+        guideline_section: "Karikari 2020 cohort distribution"
+        citation:
+          citation_pmid: "31978353"
+          citation_doi: "10.1016/S1474-4422(20)30071-5"
+          citation_text: "Plasma p-tau181 in AD typically 1-8 pg/mL; > 25 pg/mL warrants assay review."
+
+  # ---- Plasma p-tau217 ----
+  - name: "plasma_ptau217_pg_ml"
+    unit: "pg/mL"
+    description: "Plasma phosphorylated tau at threonine 217."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Ashton 2024 plasma p-tau217 meta-analysis"
+        citation:
+          citation_pmid: "38226478"
+          citation_doi: "10.1001/jamaneurol.2023.5319"
+          citation_text: |
+            Ashton NJ, Brum WS, Di Molfetta G, et al. Diagnostic Accuracy of a
+            Plasma Phosphorylated Tau 217 Immunoassay for Alzheimer Disease
+            Pathology (JAMA Neurol 2024). Concentrations must be non-negative.
+      - bound_type: "hard_max"
+        value: 10.0
+        guideline_section: "Ashton 2024 cohort distribution"
+        citation:
+          citation_pmid: "38226478"
+          citation_doi: "10.1001/jamaneurol.2023.5319"
+          citation_text: "Plasma p-tau217 across CN+AD cohorts typically 0.05-2.0 pg/mL; > 10 pg/mL warrants assay review."
+
+  # ---- Plasma p-tau231 ----
+  - name: "plasma_ptau231_pg_ml"
+    unit: "pg/mL"
+    description: "Plasma phosphorylated tau at threonine 231."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Ashton 2021 plasma p-tau231"
+        citation:
+          citation_pmid: "33854171"
+          citation_doi: "10.1007/s00401-021-02309-z"
+          citation_text: |
+            Ashton NJ, Pascoal TA, Karikari TK, et al. Plasma p-tau231: a new
+            biomarker for incipient Alzheimer's disease pathology (Acta
+            Neuropathol 2021). Concentrations must be non-negative.
+      - bound_type: "hard_max"
+        value: 100.0
+        guideline_section: "Ashton 2021 cohort distribution"
+        citation:
+          citation_pmid: "33854171"
+          citation_doi: "10.1007/s00401-021-02309-z"
+          citation_text: "Plasma p-tau231 typically 5-30 pg/mL; > 100 pg/mL warrants assay review."
+
+  # ---- Plasma NfL ----
+  - name: "plasma_nfl_pg_ml"
+    unit: "pg/mL"
+    description: "Plasma neurofilament light chain (serum NfL is often interchangeable on Simoa)."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "32503824"
+          citation_doi: "10.1038/s41582-020-0364-0"
+          citation_text: |
+            Khalil M, Teunissen CE, Otto M, et al. Neurofilaments as biomarkers
+            in neurological disorders (Nat Rev Neurol 2020). Concentrations
+            must be non-negative.
+      - bound_type: "hard_max"
+        value: 1000.0
+        guideline_section: "Khalil 2020 plasma NfL distribution"
+        citation:
+          citation_pmid: "32503824"
+          citation_doi: "10.1038/s41582-020-0364-0"
+          citation_text: |
+            Plasma NfL across neurological-disease cohorts typically 8-150 pg/mL;
+            > 1000 pg/mL is above documented plasma range in chronic AD and
+            indicates acute neurological event, sample contamination, or
+            transcription error (CSF mistakenly entered as plasma).
+
+  # ---- Plasma GFAP ----
+  - name: "plasma_gfap_pg_ml"
+    unit: "pg/mL"
+    description: "Plasma glial fibrillary acidic protein."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "Concentration non-negativity"
+        citation:
+          citation_pmid: "33856543"
+          citation_doi: "10.1038/s41591-021-01378-7"
+          citation_text: |
+            Cicognola C et al. Plasma GFAP across AD cohorts (Nat Med 2021).
+            Concentrations must be non-negative.
+      - bound_type: "hard_max"
+        value: 2000.0
+        guideline_section: "Cicognola 2021 plasma GFAP distribution"
+        citation:
+          citation_pmid: "33856543"
+          citation_doi: "10.1038/s41591-021-01378-7"
+          citation_text: "Plasma GFAP typically 50-700 pg/mL across CN+AD cohorts; > 2000 pg/mL warrants assay review."

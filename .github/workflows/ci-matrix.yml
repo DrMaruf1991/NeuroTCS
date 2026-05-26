@@ -1,0 +1,59 @@
+name: CI matrix (cross-platform × Python)
+
+# Runs the framework-only test suite across {ubuntu, windows} × {Python 3.10, 3.11, 3.12, 3.13}.
+# Cohort tests are excluded (they require DUA-controlled data not available in CI).
+# This complements ci.yml which runs the full suite on ubuntu-latest + Python 3.11.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  framework-tests-matrix:
+    name: pytest (${{ matrix.os }}, py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install package + dev tools
+        run: |
+          pip install -e .
+          pip install pytest ruff
+
+      - name: Lint with ruff (blocking)
+        run: ruff check src/ tests/ scripts/
+
+      - name: Framework-only pytest (cohort tests excluded — expect 397 passed)
+        # Single-line pytest invocation is portable across Windows + Linux without
+        # shell-specific line-continuation characters. Cohort tests are excluded
+        # via --ignore because the underlying CSV/RDA files are DUA-controlled
+        # and not available in CI; those tests skip cleanly under ci.yml's full
+        # run but we ignore them explicitly here so the cell count is deterministic.
+        run: python -m pytest tests/ -q --tb=short --ignore=tests/audit_core/test_real_adni_audit.py --ignore=tests/audit_core/test_real_oasis3_audit.py --ignore=tests/audit_core/test_real_nacc_audit.py --ignore=tests/audit_core/test_real_miriad_audit.py --ignore=tests/audit_core/test_real_miriad_fairness_audit.py --ignore=tests/audit_core/test_four_cohort_triangulation.py
+
+      - name: Smoke-test examples (syntax only)
+        run: python scripts/ci/smoke_test_examples.py
+
+      - name: Verify planned-module import hook fires correctly
+        run: python scripts/ci/verify_import_hook.py
+
+      - name: Verify reference_adapters reorganization (v1.8.1)
+        run: python scripts/ci/verify_reference_adapters.py

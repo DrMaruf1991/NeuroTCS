@@ -1,0 +1,213 @@
+schema_version: "1.0.0"
+rangepack_id: "pet_amyloid/centiloid@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-25"
+status: "deprecated"
+deprecated_in_favor_of: "pet_amyloid/centiloid_consensus@1.0.0"
+deprecation_reason: "Superseded in v1.10.0 by pet_amyloid/centiloid_consensus@1.0.0, which encodes the same domain at world-class international_consensus citation-lock standard with verbatim FDA/AA/regulatory anchors. This pack is retained on disk for historical reference only."
+domain: "pet_amyloid"
+framework_name: "Amyloid and tau PET imaging plausibility ranges (Klunk 2015 centiloid project + standard SUVR distributions)"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25"
+clinical_source_authority: |
+  Klunk WE et al. The Centiloid Project: standardizing quantitative
+  amyloid plaque estimation by PET (Alzheimer's & Dementia 2015). The
+  centiloid scale is defined with anchor points 0 (high-certainty
+  amyloid-negative young control mean) and 100 (typical AD patient
+  mean). Hard bounds extend the documented working range. SUVR bounds
+  derive from standard amyloid/tau tracer literature (florbetapir 18F,
+  flutemetamol 18F, florbetaben 18F for amyloid; flortaucipir 18F
+  for tau).
+
+anchor_citation:
+  citation_pmid: "25282030"
+  citation_doi: "10.1016/j.jalz.2014.07.003"
+  citation_text: |
+    Klunk WE, Koeppe RA, Price JC, et al. The Centiloid Project:
+    standardizing quantitative amyloid plaque estimation by PET.
+    Alzheimers Dement. 2015;11(1):1-15.
+
+notes: |
+  This pack covers amyloid PET (SUVR and centiloid) plus categorical
+  amyloid_status. Tau PET SUVR uses flortaucipir scale (Brier 2016 /
+  Jack 2017). Cross-field consistency between amyloid_status and
+  centiloid is NOT validated here — that is Layer 3 (cross-sheet)
+  work, deferred to v1.11.0.
+
+measurements:
+
+  # ---- Global SUVR ----
+  - name: "suvr_global"
+    unit: "suvr"
+    description: "Global cortical standardized uptake value ratio (SUVR), reference region typically cerebellum or pons depending on tracer."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.5
+        guideline_section: "Klunk 2015 §Methods; SUVR cannot be negative or near-zero in cortex"
+        citation:
+          citation_pmid: "25282030"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: |
+            Klunk 2015 §Methods: cortical SUVR with whole-cerebellum or
+            cerebellar-cortex reference is essentially never below 0.7
+            in adult subjects; SUVR < 0.5 indicates processing failure.
+      - bound_type: "hard_max"
+        value: 5.0
+        guideline_section: "Tau PET upper-tail literature (Brier 2016, Jack 2017)"
+        citation:
+          citation_pmid: "27098020"
+          citation_doi: "10.1126/scitranslmed.aaf2362"
+          citation_text: |
+            Brier MR et al. Tau and Aβ imaging, CSF measures, and cognition
+            in Alzheimer's disease (Sci Transl Med 2016): tau PET (flortaucipir
+            AV-1451) cortical SUVR with cerebellar reference rarely exceeds
+            3.5 even in severe AD; > 5.0 indicates processing or transcription
+            error.
+
+  # ---- Centiloid ----
+  - name: "centiloid"
+    unit: "centiloid"
+    description: "Klunk 2015 centiloid scale: standardized amyloid PET quantification (CL=0 = amyloid-negative young controls, CL=100 = typical AD)."
+    bounds:
+      - bound_type: "hard_min"
+        value: -25.0
+        guideline_section: "Klunk 2015 §Results: amyloid-negative cohort distribution"
+        citation:
+          citation_pmid: "25282030"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: |
+            Klunk 2015 Table 2: amyloid-negative young-control cohort centiloid
+            distribution spans approximately -10 to +10, with 99.5 percentile
+            absolute floor at approximately -25; values < -25 are below documented
+            distribution and indicate processing or transcription error.
+      - bound_type: "hard_max"
+        value: 200.0
+        guideline_section: "Klunk 2015 + AD upper-tail literature"
+        citation:
+          citation_pmid: "25282030"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: |
+            Klunk 2015 documented working range extends to roughly 150-180 in
+            severe AD; > 200 is above documented range and indicates processing
+            or transcription error.
+
+  # ---- Amyloid status (categorical) ----
+  - name: "amyloid_status"
+    unit: "categorical"
+    description: "Visual or quantitative amyloid PET status interpretation."
+    measurement_kind: "categorical_set"
+    valid_values: ["Positive", "Negative", "Equivocal"]
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        guideline_section: "FDA-approved amyloid PET tracer labels (florbetapir, flutemetamol, florbetaben)"
+        citation:
+          citation_pmid: "23083843"
+          citation_doi: "10.1212/WNL.0b013e31827b1ad7"
+          citation_text: |
+            Johnson KA et al. Appropriate use criteria for amyloid PET
+            (Alzheimers Dement 2013): amyloid PET visual read is reported as
+            Positive / Negative; some clinical practices report Equivocal as
+            a third category. Other values indicate transcription error.
+      - bound_type: "hard_max"
+        value: 0.0
+        guideline_section: "Categorical placeholder bound"
+        citation:
+          citation_pmid: "23083843"
+          citation_doi: "10.1212/WNL.0b013e31827b1ad7"
+          citation_text: "Categorical measurement; bounds present only to satisfy schema's min-bound requirement."
+
+  # ---- Regional SUVRs ----
+  - name: "frontal_suvr"
+    unit: "suvr"
+    description: "Frontal cortex SUVR."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.5
+        guideline_section: "Klunk 2015 cortical SUVR floor"
+        citation:
+          citation_pmid: "25282030"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: "Cortical SUVR < 0.5 indicates processing error."
+      - bound_type: "hard_max"
+        value: 5.0
+        guideline_section: "Brier 2016 cortical SUVR ceiling"
+        citation:
+          citation_pmid: "27098020"
+          citation_doi: "10.1126/scitranslmed.aaf2362"
+          citation_text: "Frontal SUVR > 5.0 above documented range."
+
+  - name: "parietal_suvr"
+    unit: "suvr"
+    description: "Parietal cortex SUVR."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.5
+        guideline_section: "Klunk 2015 cortical SUVR floor"
+        citation:
+          citation_pmid: "25282030"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: "Cortical SUVR < 0.5 indicates processing error."
+      - bound_type: "hard_max"
+        value: 5.0
+        guideline_section: "Brier 2016 cortical SUVR ceiling"
+        citation:
+          citation_pmid: "27098020"
+          citation_doi: "10.1126/scitranslmed.aaf2362"
+          citation_text: "Parietal SUVR > 5.0 above documented range."
+
+  - name: "temporal_suvr"
+    unit: "suvr"
+    description: "Temporal cortex SUVR."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.5
+        guideline_section: "Klunk 2015 cortical SUVR floor"
+        citation:
+          citation_pmid: "25282030"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: "Cortical SUVR < 0.5 indicates processing error."
+      - bound_type: "hard_max"
+        value: 5.0
+        guideline_section: "Brier 2016 cortical SUVR ceiling"
+        citation:
+          citation_pmid: "27098020"
+          citation_doi: "10.1126/scitranslmed.aaf2362"
+          citation_text: "Temporal SUVR > 5.0 above documented range."
+
+  - name: "precuneus_suvr"
+    unit: "suvr"
+    description: "Precuneus SUVR (early-deposit region for amyloid)."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.5
+        guideline_section: "Klunk 2015 cortical SUVR floor"
+        citation:
+          citation_pmid: "25282030"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: "Cortical SUVR < 0.5 indicates processing error."
+      - bound_type: "hard_max"
+        value: 5.0
+        guideline_section: "Brier 2016 cortical SUVR ceiling"
+        citation:
+          citation_pmid: "27098020"
+          citation_doi: "10.1126/scitranslmed.aaf2362"
+          citation_text: "Precuneus SUVR > 5.0 above documented range."
+
+  - name: "cingulate_suvr"
+    unit: "suvr"
+    description: "Cingulate cortex SUVR."
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.5
+        guideline_section: "Klunk 2015 cortical SUVR floor"
+        citation:
+          citation_pmid: "25282030"
+          citation_doi: "10.1016/j.jalz.2014.07.003"
+          citation_text: "Cortical SUVR < 0.5 indicates processing error."
+      - bound_type: "hard_max"
+        value: 5.0
+        guideline_section: "Brier 2016 cortical SUVR ceiling"
+        citation:
+          citation_pmid: "27098020"
+          citation_doi: "10.1126/scitranslmed.aaf2362"
+          citation_text: "Cingulate SUVR > 5.0 above documented range."

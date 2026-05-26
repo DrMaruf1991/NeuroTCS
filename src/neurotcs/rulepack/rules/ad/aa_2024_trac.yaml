@@ -1,0 +1,264 @@
+# NeuroTCS Rule Pack: Treatment-Related Amyloid Clearance (TRAC)
+# Schema: 1.2.0 | Status: PRODUCTION
+#
+# Encodes the TRAC framework (La Joie et al., Alzheimer's & Dementia
+# 2025;21:e70997, DOI 10.1002/alz.70997, PMCID PMC12657122) for auditing
+# amyloid biomarker trajectories in the era of anti-Aβ therapies.
+#
+# Key insight: under TRAC, A+ -> A- (amyloid clearance) becomes a
+# CLINICALLY ADMISSIBLE biomarker transition WHEN the patient has received
+# anti-Aβ therapy. Without this rule pack, such transitions would be
+# flagged as inadmissible by the AA 2024 staging pack (amyloid does not
+# naturally clear), incorrectly penalizing successfully-treated patients.
+#
+# This pack uses schema v1.2.0's `required_conditions` field on each
+# treatment-dependent transition. The audit core checks the patient's
+# `treatment_status` per-visit context and admits the transition only
+# when an anti-Aβ therapy was active or recently discontinued.
+
+schema_version: "1.4.0"
+rulepack_id: "ad/aa_2024_trac@1.1.1"
+ruleset_version: "1.1.0"
+effective_date: "2026-05-27"
+status: "production"
+disease_domain: "alzheimers"
+framework_name: "Treatment-Related Amyloid Clearance (TRAC) framework: amyloid biomarker trajectories under anti-Aβ therapy"
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, KIUT, Uzbekistan"
+clinical_source_authority: >-
+  Treatment-related amyloid clearance (TRAC): a framework to characterize
+  patients in the era of anti-amyloid therapies (La Joie R, Cummings JL,
+  Dage JL, et al., Alzheimer's & Dementia 2025;21(11):e70997,
+  DOI 10.1002/alz.70997, PMCID PMC12657122). Alzheimer's Association-convened
+  workgroup; led by UCSF (Renaud La Joie, PhD). Received 2025-07-22,
+  accepted 2025-11-18, published online ~2025-11-26. Complementary to and
+  consistent with the AA 2024 Revised Criteria (Jack CR Jr et al., DOI
+  10.1002/alz.13859, PMID 38934362). FDA-approved anti-Aβ therapies covered:
+  lecanemab (Leqembi, Eisai/Biogen; FDA accelerated approval 2023-01-06,
+  traditional/full approval 2023-07-06, maintenance dosing 2025-01) and
+  donanemab (Kisunla, donanemab-azbt, Eli Lilly; FDA approval 2024-07-02,
+  modified titration label 2025-07-09 per TRAILBLAZER-ALZ 6).
+reviewers: []
+
+# Endorsing bodies (schema_version 1.4.0; added 2026-05-27 per gap-check Finding A).
+# Verbatim primary sources:
+#   - Alzheimer's Association workgroup convener (https://medconnection.ucsfhealth.org/news/...)
+#   - Authorship affiliations from PMID 41298245 (peer-reviewed in Alz & Dementia 2025)
+#   - FDA prescribing information (Leqembi, Kisunla) cited in §4 of La Joie 2025
+endorsing_bodies:
+  - "Alzheimer's Association (workgroup convener; senior author Maria C. Carrillo)"
+  - "UCSF Weill Institute for Neurosciences, Edward and Pearl Fein Memory and Aging Center (Renaud La Joie, lead author, PMID 41298245)"
+  - "U.S. Food and Drug Administration (LEQEMBI accelerated approval 2023-01-06, traditional approval 2023-07-06, maintenance dosing 2025-01; KISUNLA approval 2024-07-02, modified titration label 2025-07-09)"
+  - "Eisai / Biogen (Clarity AD trial protocol; lecanemab anti-amyloid antibody)"
+  - "Eli Lilly (TRAILBLAZER-ALZ 2 trial protocol; donanemab-azbt anti-amyloid antibody)"
+  - "Kirk Kerkorian School of Medicine, University of Nevada Las Vegas, Chambers-Grundy Center for Transformative Neuroscience (Jeffrey L. Cummings, co-author)"
+  - "Indiana University School of Medicine Department of Neurology (Jeffrey L. Dage, co-author; Shannon L. Risacher, co-author)"
+  - "UC San Diego (Douglas Galasko, co-author)"
+  - "University of Pittsburgh (Milos D. Ikonomovic, Thomas K. Karikari, co-authors)"
+  - "UC Berkeley (Susan M. Landau, co-author; Centiloid)"
+  - "Washington University in St. Louis (Jorge J. Llibre-Guerra, co-author)"
+  - "University College London / National Hospital for Neurology and Neurosurgery (Catherine J. Mummery, co-author)"
+  - "Amsterdam UMC / Lund University BioFINDER (Rik Ossenkoppele, Ruben Smith, co-authors)"
+  - "Massachusetts General Hospital / Harvard Medical School (Julie C. Price, co-author)"
+  - "Yale School of Medicine (Christopher H. van Dyck, co-author)"
+  - "Centiloid Working Group (TRAC uses Centiloid units; Klunk et al. 2015 referenced throughout)"
+
+anchor_citation:
+  citation_pmid: "41298245"
+  citation_doi: "10.1002/alz.70997"
+  citation_text: >-
+    La Joie R, Cummings JL, Dage JL, et al. Treatment-related amyloid
+    clearance (TRAC): a framework to characterize patients in the era
+    of anti-amyloid therapies. Alzheimer's & Dementia 2025;21(11):e70997.
+    DOI 10.1002/alz.70997. PMCID PMC12657122.
+
+# State space: amyloid biomarker trajectory states.
+# Per La Joie 2025: TRAC labels are END-states applied to amyloid PET
+# trajectories of patients who meet the three prerequisites (pretreatment
+# A+ confirmation, anti-Aβ therapy, follow-up biomarker showing partial
+# or full clearance). This pack encodes those end-states plus the
+# pretreatment states they emerge from.
+state_space:
+  - name: "A_neg"
+    description: "Amyloid PET below positivity threshold; never on anti-Aβ therapy (or pretreatment baseline of a future treatment trajectory)."
+    ordinal_rank: 0
+  - name: "A_pos"
+    description: "Amyloid PET above positivity threshold; pretreatment baseline OR on/post anti-Aβ without significant Centiloid drop yet."
+    ordinal_rank: 1
+  - name: "Partial_TRAC"
+    description: "Pretreatment A+ confirmed; anti-Aβ therapy active or discontinued; follow-up amyloid PET shows significant Centiloid drop from baseline BUT remains above the positivity threshold (La Joie 2025 partial TRAC)."
+    ordinal_rank: 2
+  - name: "Full_TRAC"
+    description: "Pretreatment A+ confirmed; anti-Aβ therapy active or discontinued; follow-up amyloid PET below positivity threshold (lecanemab interruption criterion: 1 scan <11 CL OR 2 consecutive <25 CL; donanemab fibrillar clearance criterion: <24.1 CL per TRAILBLAZER-ALZ trials). La Joie 2025 full TRAC."
+    ordinal_rank: 3
+
+admissible_transitions:
+
+  # --- Natural progression (no treatment required) ---
+
+  - from_state: "A_neg"
+    to_state: "A_pos"
+    min_delta_t_days: 365.0
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 AA Revised Criteria: natural amyloid accumulation in
+        asymptomatic and at-risk individuals. Annual conversion rate
+        approximately 0.5-2% in clinic-attending cohorts.
+    guideline_section: "Jack 2024 §3 'Integrated biological-clinical staging', Table 6 (Stage 0 -> Stage 1 biological onset)"
+    override_allowed: false
+    notes: >-
+      Minimum 365-day window reflects measurement-noise floor; clinically
+      meaningful amyloid accumulation typically observed across years.
+
+  # --- Treatment-dependent transitions (REQUIRE anti-Aβ therapy) ---
+
+  - from_state: "A_pos"
+    to_state: "Partial_TRAC"
+    citation:
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025: 'Partial TRAC means that PET levels dropped
+        significantly but remain above the threshold.' Requires
+        pretreatment A+ confirmation and active or completed anti-Aβ therapy.
+    guideline_section: "La Joie 2025 §2 'TRAC framework definition', Figure 1 (right panel: [18F]Florbetaben trajectory)"
+    override_allowed: false
+    required_conditions:
+      treatment_status:
+        - "anti_amyloid_active"
+        - "anti_amyloid_discontinued"
+    conditions_evaluated_at: "to_visit"
+    notes: >-
+      The follow-up scan (to-visit) is the one that proves the partial
+      clearance; therefore treatment_status is checked at the to-visit.
+
+  - from_state: "A_pos"
+    to_state: "Full_TRAC"
+    citation:
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025: 'Full TRAC indicates that PET levels have dropped
+        below a predetermined positivity threshold.' Lecanemab trial
+        interruption criterion 1 scan <11 CL OR 2 consecutive <25 CL;
+        donanemab fibrillar clearance criterion <24.1 CL.
+    guideline_section: "La Joie 2025 §2 'TRAC framework definition' + Footnote on TRAILBLAZER-ALZ centiloid criteria"
+    override_allowed: false
+    required_conditions:
+      treatment_status:
+        - "anti_amyloid_active"
+        - "anti_amyloid_discontinued"
+    conditions_evaluated_at: "to_visit"
+    notes: >-
+      Drug-specific Centiloid thresholds are encoded here as guideline
+      notes only; quantitative threshold enforcement is the responsibility
+      of the input contract v1.1 biomarker pipeline, not the rule pack.
+
+  - from_state: "Partial_TRAC"
+    to_state: "Full_TRAC"
+    citation:
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025: 'Within a given trial, higher doses and longer
+        treatment duration were associated with higher rates of full TRAC.'
+        Continued anti-Aβ exposure drives Partial -> Full TRAC progression.
+    guideline_section: "La Joie 2025 §4 'Dose-response and treatment duration'"
+    override_allowed: false
+    required_conditions:
+      treatment_status:
+        - "anti_amyloid_active"
+        - "anti_amyloid_discontinued"
+    conditions_evaluated_at: "to_visit"
+
+  # --- Re-accumulation after treatment discontinuation ---
+
+  - from_state: "Full_TRAC"
+    to_state: "Partial_TRAC"
+    min_delta_t_days: 365.0
+    citation:
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025: post-discontinuation, slow re-accumulation of
+        amyloid is biologically expected (rate considerably slower than
+        natural untreated A- -> A+ accumulation in some studies). TRAC
+        status persists as a historical label per the framework.
+    guideline_section: "La Joie 2025 §5 'Post-treatment surveillance and label persistence'"
+    override_allowed: false
+    required_conditions:
+      treatment_status:
+        - "anti_amyloid_discontinued"
+    conditions_evaluated_at: "to_visit"
+
+  - from_state: "Partial_TRAC"
+    to_state: "A_pos"
+    min_delta_t_days: 365.0
+    citation:
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025: re-accumulation to pretreatment A+ levels may occur
+        over years after discontinuation. Patient retains historical TRAC
+        designation per framework note on label persistence.
+    guideline_section: "La Joie 2025 §5"
+    override_allowed: false
+    required_conditions:
+      treatment_status:
+        - "anti_amyloid_discontinued"
+    conditions_evaluated_at: "to_visit"
+    notes: >-
+      Although the patient's CURRENT amyloid PET is again A+, the
+      historical TRAC label remains medically relevant for prognosis,
+      retreatment decisions, and trial eligibility per La Joie 2025.
+
+# Inadmissible transitions: documented for reviewer clarity and to
+# explicitly flag the kinds of trajectories that would be biologically
+# implausible OUTSIDE the TRAC framework.
+inadmissible_transitions:
+
+  - from_state: "A_pos"
+    to_state: "A_neg"
+    reason: >-
+      Spontaneous amyloid clearance from A+ to A- WITHOUT anti-Aβ therapy
+      is biologically implausible. Such transitions either reflect
+      measurement error, mislabeling, or unreported anti-amyloid treatment.
+      The TRAC framework specifically distinguishes treatment-related
+      from spontaneous clearance and provides only treatment-related
+      admissible paths (A+ -> Partial_TRAC -> Full_TRAC).
+    citation:
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025: 'TRAC designates biomarker-defined pharmacodynamic
+        changes' that 'apply to individuals with treatment with an Aβ-
+        targeting therapy.' Untreated clearance is not within the TRAC
+        framework's scope and is not biologically expected.
+    guideline_section: "La Joie 2025 §1-2"
+
+  - from_state: "A_neg"
+    to_state: "Partial_TRAC"
+    reason: >-
+      Partial_TRAC requires pretreatment A+ confirmation per La Joie 2025
+      criterion (1) of the three required conditions. An A_neg baseline
+      patient cannot enter Partial_TRAC.
+    citation:
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025: TRAC 'applies to individuals with (1) pretreatment
+        biomarker confirmation of cerebral Aβ deposition.'
+    guideline_section: "La Joie 2025 §2 'TRAC framework definition', three required conditions"
+
+  - from_state: "A_neg"
+    to_state: "Full_TRAC"
+    reason: >-
+      Same as A_neg -> Partial_TRAC: Full_TRAC also requires pretreatment
+      A+ baseline per La Joie 2025 condition (1).
+    citation:
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025: TRAC 'applies to individuals with (1) pretreatment
+        biomarker confirmation of cerebral Aβ deposition.'
+    guideline_section: "La Joie 2025 §2"
+
+# pTCS priors empty for v1.0.0 — La Joie 2025 does not publish per-state
+# annual transition probabilities (the paper proposes the framework but
+# population rates are still being characterized). Future versions will
+# populate priors as RWD from anti-Aβ therapy cohorts accumulates.
+transition_priors: []

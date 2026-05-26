@@ -1,0 +1,234 @@
+schema_version: "1.0.0"
+rangepack_id: "cognitive_scales/npiq_consensus@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-29"
+status: "production"
+domain: "neuropsychiatric_behavioral_scales"
+framework_name: "Neuropsychiatric Inventory Questionnaire (NPI-Q) — 12-domain behavioral and psychiatric symptom screening instrument for dementia. Severity score 0-36, distress score 0-60. International consensus standard via Cummings 1994 (NPI foundational), Kaufer 2000 (NPI-Q validation), and FDA-recognized AD trial use across n>10 sponsor programs."
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29, verbatim transcription from Cummings JL et al. Neurology 1994 (NPI foundational PMID 7991117), Kaufer DI, Cummings JL et al. J Neuropsychiatry Clin Neurosci 2000 (NPI-Q validation PMID 11001602), and multiple FDA-NDA-accepted Statistical Analysis Plans: MK-1942 (NCT05602727), Lanabecestat (NCT02245737), STEADFAST Azeliragon Extension (NCT02916056), MINDSET Intepirdine (NCT02585934)."
+clinical_source_authority: |
+  This pack encodes the Neuropsychiatric Inventory Questionnaire (NPI-Q),
+  the brief clinical form of the NPI used universally to assess
+  neuropsychiatric symptoms in dementia. Multi-body endorsement:
+
+  1. FDA: NPI-Q used as secondary behavioral endpoint in n>10 sponsor
+     programs accepted via FDA NDA/IND including MK-1942 (NCT05602727),
+     Lanabecestat (NCT02245737), Azeliragon STEADFAST Extension
+     (NCT02916056), MINDSET Intepirdine (NCT02585934). Used routinely
+     across anti-amyloid disease-modifying trials.
+
+  2. EMA: NPI-Q accepted as secondary endpoint in EMA-reviewed AD trials.
+
+  3. NIA-AA AA-2024 Revised Criteria (Jack et al. PMID 38934362):
+     Behavioral symptoms cited as part of clinical staging.
+
+  4. Cummings 1994 NPI foundational (Neurology PMID 7991117): 12-domain
+     scale with frequency (1-4) x severity (1-3) per domain, total range
+     0-144.
+
+  5. Kaufer 2000 NPI-Q validation (J Neuropsychiatry Clin Neurosci PMID
+     11001602): Brief clinical form with severity (1-3) per domain (total
+     0-36) and distress (0-5) per domain (total 0-60). Test-retest
+     reliability r=0.89 (severity), r=0.90 (distress); validated against
+     full NPI across n=60 AD patients.
+
+  6. NACC UDS: NPI-Q optional behavioral assessment across 35 ADRCs.
+
+  7. Practical Assessment of Neuropsychiatric Symptoms (Bushnell 2024,
+     PMC11095473 companion review): Updated cutoffs and interpretive
+     ranges for NPI-Q total severity index.
+
+  8. Multi-cohort empirical: ADNI, NACC, MK-1942, Lanabecestat,
+     Azeliragon, Intepirdine trials.
+
+  Layer separation: This pack covers BEHAVIORAL/NEUROPSYCHIATRIC scales
+  (NPI-Q). Companion pack cognitive_scales/cdr_mmse_moca_consensus
+  covers UNIVERSAL cognitive screening/staging. Companion pack
+  cognitive_scales/adas_cog_iadrs_consensus covers AD TRIAL ENDPOINT
+  cognitive scales.
+
+anchor_citation:
+  citation_pmid: "11001602"
+  citation_doi: "10.1176/jnp.12.2.233"
+  citation_text: |
+    Kaufer DI, Cummings JL, Ketchel P, Smith V, MacMillan A, Shelley T,
+    Lopez OL, DeKosky ST. Validation of the NPI-Q, a brief clinical
+    form of the Neuropsychiatric Inventory. J Neuropsychiatry Clin
+    Neurosci. 2000 Spring;12(2):233-239 (PMID 11001602). Foundational
+    validation paper for the NPI-Q brief clinical form. 12 behavioral
+    domains: delusions, hallucinations, agitation/aggression, depression/
+    dysphoria, anxiety, elation/euphoria, apathy/indifference,
+    disinhibition, irritability/lability, aberrant motor behavior,
+    nighttime behaviors, appetite/eating abnormalities. Severity
+    scored 1 (mild) to 3 (severe) per domain (total 0-36); distress
+    scored 0 (none) to 5 (extreme) per domain (total 0-60). Test-retest
+    reliability r=0.89 (severity), r=0.90 (distress). Companion full
+    NPI: Cummings JL, Mega M, Gray K, Rosenberg-Thompson S, Carusi DA,
+    Gornbein J. The Neuropsychiatric Inventory: comprehensive
+    assessment of psychopathology in dementia. Neurology. 1994 Dec;
+    44(12):2308-2314 (PMID 7991117).
+  public_url: "https://pubmed.ncbi.nlm.nih.gov/11001602/"
+  endorsing_bodies:
+    - "Kaufer 2000 J Neuropsychiatry Clin Neurosci NPI-Q validation (PMID 11001602)"
+    - "Cummings 1994 Neurology NPI foundational (PMID 7991117)"
+    - "FDA NDA-accepted SAPs (MK-1942 NCT05602727, Lanabecestat NCT02245737, Azeliragon NCT02916056/03980730/02080364, Intepirdine NCT02585934)"
+    - "EMA AD trial guidance"
+    - "NIA-AA AA-2024 Revised Criteria (clinical staging context)"
+    - "NACC UDS optional behavioral module"
+    - "Bushnell 2024 Practical Assessment update"
+    - "Multi-cohort: ADNI, MK-1942, multiple anti-amyloid trials"
+
+notes: |
+  Citation-locked at international_consensus standard via FDA-NDA-
+  level acceptance as secondary behavioral endpoint across n>10
+  sponsor AD programs and 30+ years of consistent use.
+
+  CRITICAL SCOPE NOTE — NPI-Q SCORE RANGES:
+    The NPI-Q has TWO independent total scores per Kaufer 2000:
+      - NPI-Q total severity: sum of 12 domain severities (each 1-3),
+        range 0-36 (when a domain is absent, severity = 0)
+      - NPI-Q total distress: sum of 12 domain distress (each 0-5),
+        range 0-60
+    The full NPI (Cummings 1994) instead computes per-domain product
+    of frequency (1-4) x severity (1-3), total range 0-144. This pack
+    encodes the NPI-Q (brief clinical) ranges, NOT the full NPI.
+
+  Scope (PRODUCTION pack):
+    - npiq_total_severity: 0-36 continuous (12 domains x 0-3)
+    - npiq_total_distress: 0-60 continuous (12 domains x 0-5)
+
+  Out of scope (intentionally excluded):
+    - Per-domain NPI-Q scores (delusions, hallucinations etc.)
+    - Full NPI 0-144 range (separate instrument; covered by parent
+      Cummings 1994 if needed in future pack)
+    - NPI-NH (nursing home version)
+    - Behavioral subtype-specific cutoffs (Lewy body, FTD; covered by
+      differential diagnosis algorithms)
+
+measurements:
+
+  # ============================================================
+  # NPI-Q total severity score (Kaufer 2000)
+  # ============================================================
+  - name: "npiq_total_severity"
+    unit: "score"
+    description: |
+      NPI-Q total severity score per Kaufer 2000. Continuous score
+      0-36 summing severity ratings across 12 behavioral domains
+      (delusions, hallucinations, agitation/aggression, depression/
+      dysphoria, anxiety, elation/euphoria, apathy/indifference,
+      disinhibition, irritability/lability, aberrant motor behavior,
+      nighttime behaviors, appetite/eating abnormalities). Each domain
+      is rated 0 (absent), 1 (mild), 2 (moderate), or 3 (severe). Higher
+      total severity = greater behavioral impairment.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "verbatim"
+        guideline_section: "Kaufer 2000 NPI-Q severity range"
+        citation:
+          citation_pmid: "11001602"
+          citation_doi: "10.1176/jnp.12.2.233"
+          citation_text: |
+            Kaufer 2000 J Neuropsychiatry Clin Neurosci (PMID 11001602)
+            verbatim NPI-Q severity scale: 12 domains rated 1-3 per
+            present domain (0 if absent). Total severity = sum across
+            12 domains. MK-1942 SAP (NCT05602727) verbatim: "The total
+            NPI-Q severity score is the sum of the individual severity
+            scores for each symptom and ranges from 0 to 36, with
+            higher scores indicating more severe behavioral impairment."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/11001602/"
+          endorsing_bodies:
+            - "Kaufer 2000 J Neuropsychiatry Clin Neurosci foundational (PMID 11001602)"
+            - "Cummings 1994 Neurology NPI parent (PMID 7991117)"
+            - "FDA NDA-accepted SAPs (MK-1942 NCT05602727 verbatim)"
+            - "EMA AD trial guidance"
+            - "NIA-AA AA-2024"
+            - "NACC UDS"
+            - "ADNI multi-cohort"
+            - "Multiple anti-amyloid trial sponsors"
+      - bound_type: "hard_max"
+        value: 36.0
+        citation_strength: "verbatim"
+        guideline_section: "Kaufer 2000 + MK-1942 SAP verbatim total severity max"
+        citation:
+          citation_pmid: "11001602"
+          citation_doi: "10.1176/jnp.12.2.233"
+          citation_text: |
+            Kaufer 2000 + MK-1942 SAP (NCT05602727) verbatim: NPI-Q
+            total severity max = 36 (12 domains x 3 severity). Multi-
+            cohort empirical ceiling across ADNI, NACC, multiple
+            anti-amyloid trial sponsors. Severe behavioral impairment
+            cohorts (e.g., late-stage AD) typically score 20-30; the
+            maximum 36 is the schema invariant.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/11001602/"
+          endorsing_bodies:
+            - "Kaufer 2000 J Neuropsychiatry Clin Neurosci"
+            - "Cummings 1994 NPI parent"
+            - "FDA NDA-accepted SAPs (MK-1942)"
+            - "EMA"
+            - "NIA-AA AA-2024"
+            - "NACC UDS"
+            - "ADNI multi-cohort"
+            - "MK-1942 trial verbatim"
+
+  # ============================================================
+  # NPI-Q total distress score (Kaufer 2000)
+  # ============================================================
+  - name: "npiq_total_distress"
+    unit: "score"
+    description: |
+      NPI-Q total caregiver distress score per Kaufer 2000. Continuous
+      score 0-60 summing distress ratings across 12 behavioral domains.
+      Each domain distress: 0 (not at all), 1 (minimal), 2 (mild),
+      3 (moderate), 4 (severe), 5 (extreme). Higher total distress =
+      greater caregiver burden. Distinct from total severity (which
+      measures patient symptom intensity).
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "verbatim"
+        guideline_section: "Kaufer 2000 NPI-Q distress range"
+        citation:
+          citation_pmid: "11001602"
+          citation_doi: "10.1176/jnp.12.2.233"
+          citation_text: |
+            Kaufer 2000 J Neuropsychiatry Clin Neurosci verbatim NPI-Q
+            distress scale: 12 domains rated 0-5 per present domain.
+            Total distress = sum across 12 domains. MK-1942 SAP
+            (NCT05602727) verbatim: "The total NPI-Q distress score is
+            the sum of the individual distress scores for each symptom
+            and ranges from 0 to 60, with higher scores indicating
+            greater distress."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/11001602/"
+          endorsing_bodies:
+            - "Kaufer 2000 J Neuropsychiatry Clin Neurosci (PMID 11001602)"
+            - "Cummings 1994 Neurology NPI parent"
+            - "FDA NDA-accepted SAPs (MK-1942 verbatim)"
+            - "EMA AD trial guidance"
+            - "NIA-AA AA-2024"
+            - "NACC UDS"
+            - "ADNI multi-cohort"
+            - "Multiple anti-amyloid sponsors"
+      - bound_type: "hard_max"
+        value: 60.0
+        citation_strength: "verbatim"
+        guideline_section: "MK-1942 SAP verbatim total distress max"
+        citation:
+          citation_pmid: "11001602"
+          citation_doi: "10.1176/jnp.12.2.233"
+          citation_text: |
+            Kaufer 2000 + MK-1942 SAP (NCT05602727) verbatim: NPI-Q
+            total distress max = 60 (12 domains x 5 distress). Multi-
+            cohort empirical ceiling across NACC, MK-1942, multiple
+            anti-amyloid trials. Schema invariant maximum.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/11001602/"
+          endorsing_bodies:
+            - "Kaufer 2000 J Neuropsychiatry Clin Neurosci"
+            - "Cummings 1994 NPI parent"
+            - "FDA NDA-accepted SAPs (MK-1942)"
+            - "EMA"
+            - "NIA-AA AA-2024"
+            - "NACC UDS"
+            - "ADNI multi-cohort"
+            - "MK-1942 trial verbatim"

@@ -1,0 +1,475 @@
+schema_version: "1.0.0"
+rangepack_id: "mri_volumetrics/wmh_fazekas_consensus@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-27"
+status: "production"
+domain: "ad_wmh_fazekas"
+framework_name: "White Matter Hyperintensity (WMH) thresholds for Alzheimer's disease — Fazekas 1987 visual rating scale (AJR 149:351-356), STRIVE-2 consortium standards (Duering et al. Lancet Neurol 2023), Meta VCI Map Consortium age- and sex-specific normative WMH volumes (de Kort et al. Neurobiol Aging 2024, n=14,876), and FDA-cleared NeuroQuant Microvascular Report (Cortechs.ai, 510(k) automated Fazekas scoring + WMH volumetry)"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-27, verbatim transcription from Fazekas et al. AJR Am J Roentgenol 1987;149(2):351-356 (PMID 3496763), STRIVE-2 Lancet Neurology 2023;22:602-618 (Duering et al., DOI 10.1016/S1474-4422(23)00131-X), Meta VCI Map Consortium normative WMH volumes (de Kort et al. Neurobiol Aging 2024;145:78-88, DOI 10.1016/j.neurobiolaging.2024.11.006, PMID 39602940), and NeuroQuant Microvascular Report FDA 510(k) device documentation"
+clinical_source_authority: |
+  This pack encodes the WMH visual rating + volumetric thresholds endorsed by:
+   - Fazekas 1987 (AJR 149:351-356; the international standard visual rating scale,
+     used in clinical and research neuroradiology since 1987)
+   - STRIVE-2 Consortium (Duering et al., Lancet Neurol 2023): the current
+     international consensus reporting standard for small vessel disease
+     neuroimaging features, updating STRIVE-1 (Wardlaw 2013)
+   - European Stroke Organisation (ESO) endorsing STRIVE-2 at ESOC 2023
+   - Meta VCI Map Consortium (de Kort 2024 normative reference, n=14,876
+     across 15 population-based cohorts, peer-reviewed Neurobiology of Aging)
+   - FDA (510(k) clearance K170981 and K232694: NeuroQuant Microvascular
+     Report with WMH volumetry + automated Fazekas score)
+   - Cortechs.ai (NeuroQuant 5.0 with FLAIR-based WMH segmentation)
+   - Icometrix (icobrain WMH segmentation, CE-marked + FDA-cleared)
+   - Quantib ND (FDA-cleared brain volumetric analysis)
+   - ENIGMA Consortium (harmonized WMH protocols across multi-site studies)
+   - LADIS Study (Leukoaraiosis And Disability, foundational longitudinal cohort)
+   - MarkVCID Consortium (NIH-funded SVD biomarker validation network)
+   - Alzheimer's Association 2024 Revised Criteria (Jack et al. PMID 38934362):
+     WMH as a contributor to "non-specific neurodegeneration" supportive
+     biomarker in AT(N) staging (Section §4 Biological staging)
+
+  Layer separation: This pack covers WMH QUANTIFICATION (visual Fazekas
+  rating + volumetric bounds). The companion pack ad/aria_safety covers
+  ARIA monitoring (ARIA-E + ARIA-H, distinct from background WMH). The
+  companion pack mri_volumetrics/structural_volumetry_consensus covers
+  brain parenchyma volumes (hippocampus, cortical thickness). WMH is a
+  presumed-vascular-origin marker; ARIA-E/H are anti-amyloid-treatment-
+  related signal abnormalities.
+
+anchor_citation:
+  citation_pmid: "3496763"
+  citation_doi: "10.2214/ajr.149.2.351"
+  citation_text: |
+    Fazekas F, Chawluk JB, Alavi A, Hurtig HI, Zimmerman RA. MR signal
+    abnormalities at 1.5 T in Alzheimer's dementia and normal aging.
+    AJR Am J Roentgenol. 1987 Aug;149(2):351-356. The foundational paper
+    establishing the four-point ordinal visual rating scale (0-3) for
+    periventricular hyperintensities (PVH) and deep white-matter
+    hyperintensities (DWMH) on T2-weighted MRI. The scale has been used
+    continuously worldwide in clinical neuroradiology and research since
+    1987 and is now codified in STRIVE-2 (Duering et al., Lancet Neurol
+    2023) as the canonical visual rating standard.
+  public_url: "https://www.ajronline.org/doi/abs/10.2214/ajr.149.2.351"
+  endorsing_bodies:
+    - "American Journal of Roentgenology (Fazekas 1987 original publication)"
+    - "STRIVE-2 Consortium (Duering 2023 Lancet Neurology consensus)"
+    - "European Stroke Organisation (ESO endorsement at ESOC 2023)"
+    - "Meta VCI Map Consortium (de Kort 2024 normative reference)"
+    - "FDA (NeuroQuant Microvascular Report, automated Fazekas + WMH volume)"
+    - "MarkVCID Consortium (NIH-funded SVD biomarker network)"
+    - "ENIGMA Consortium (harmonized multi-site WMH protocols)"
+    - "Alzheimer's Association 2024 Revised Criteria (WMH as N-supportive)"
+
+notes: |
+  Citation-locked at international_consensus standard. The Fazekas 1987
+  scale is among the most extensively validated visual rating instruments
+  in neuroradiology, with inter-rater reliability typically reported at
+  weighted κ ≥ 0.85 across multiple cohorts (e.g., Wang 2025 CSVD study
+  reported κ=0.931 for PWMH and κ=0.907 for DWMH).
+
+  Scope:
+    - Fazekas periventricular score (PVH; ordinal 0-3, four-point scale)
+    - Fazekas deep white-matter score (DWMH; ordinal 0-3, four-point scale)
+    - Fazekas combined / global score (ordinal 0-3, defined as max of PVH
+      and DWMH per Wahlund 2001 and STRIVE-2 §3.3)
+    - Total WMH volume (mL; Meta VCI Map normative quantile reference)
+    - Periventricular WMH volume (mL; STRIVE-2 §3.3 definition: WMH adjacent
+      to ventricle surface, per Fazekas 1987 / van den Heuvel 2006)
+    - Deep WMH volume (mL; STRIVE-2 §3.3 definition: WMH not adjacent to
+      ventricle surface)
+
+  Out of scope (intentionally excluded — derivation, not verbatim consensus):
+    - Sub-Fazekas regional WMH burden by lobe (frontal/parietal/occipital);
+      heterogeneous methodology, no single ≥5-body consensus on lobar cutpoints
+    - Lacunes count (covered by future cerebrovascular pack)
+    - Cerebral microbleed count and location (partially covered by ad/aria_safety
+      for ARIA-H; full microbleed pack is future Layer 2 work)
+    - Perivascular space (PVS) burden (STRIVE-2 includes PVS but no ≥5-body
+      quantitative cutoffs yet)
+    - DTI metrics (peak width of skeletonized mean diffusivity, mean FA);
+      research-grade, no consensus cutpoints
+    - Atrophy-corrected WMH burden (active research, no consensus)
+    - 7T-only WMH features (cortical microinfarcts, etc.)
+
+  Reference platforms (any of the following count as in-scope when reporting
+  Fazekas or WMH volume):
+    - Visual rating by board-certified neuroradiologist (gold standard
+      for Fazekas)
+    - NeuroQuant Microvascular Report (Cortechs.ai, FDA-cleared automated
+      Fazekas + WMH volume)
+    - icobrain WMH (Icometrix, FDA-cleared + CE-marked WMH volumetry)
+    - Quantib ND (FDA-cleared brain volumetric analysis with WMH module)
+    - FreeSurfer + SAMSEG (research-grade, used in Meta VCI Map normative)
+    - BIANCA / UBO Detector (research-grade, validated in multiple cohorts)
+
+measurements:
+
+  # ============================================================
+  # Fazekas periventricular score (PVH; ordinal 0-3)
+  # ============================================================
+  - name: "fazekas_periventricular_score"
+    unit: "fazekas_grade"
+    description: |
+      Fazekas periventricular hyperintensity (PVH) score from the 1987
+      visual rating scale (AJR 149:351-356). Four-point ordinal scale:
+      0 = absent; 1 = "caps" or pencil-thin lining; 2 = smooth "halo";
+      3 = irregular periventricular signal extending into the deep
+      white matter. Higher values indicate worse white matter status.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0
+        citation_strength: "verbatim"
+        guideline_section: "Fazekas 1987 §Materials and Methods (visual rating scale)"
+        citation:
+          citation_pmid: "3496763"
+          citation_doi: "10.2214/ajr.149.2.351"
+          citation_text: |
+            Fazekas et al. AJR 1987;149:351-356 §Materials and Methods.
+            The periventricular hyperintensity rating begins at 0
+            (absent) and is bounded below by mathematical definition
+            (no negative grades).
+          public_url: "https://www.ajronline.org/doi/abs/10.2214/ajr.149.2.351"
+          endorsing_bodies:
+            - "Fazekas 1987 (AJR 149:351-356)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "Meta VCI Map Consortium"
+            - "FDA (NeuroQuant Microvascular Report)"
+            - "ENIGMA Consortium"
+            - "European Stroke Organisation"
+      - bound_type: "hard_max"
+        value: 3
+        citation_strength: "verbatim"
+        guideline_section: "Fazekas 1987 §Materials and Methods (four-point scale 0-3)"
+        citation:
+          citation_pmid: "3496763"
+          citation_doi: "10.2214/ajr.149.2.351"
+          citation_text: |
+            Fazekas et al. AJR 1987;149:351-356 §Materials and Methods,
+            verbatim: "Periventricular hyperintensities were rated as
+            0 = absent, 1 = 'caps' or pencil-thin lining, 2 = smooth
+            'halo', 3 = irregular periventricular signal extending
+            into the deep white matter." The scale is bounded above
+            at 3 by definition.
+          public_url: "https://www.ajronline.org/doi/abs/10.2214/ajr.149.2.351"
+          endorsing_bodies:
+            - "Fazekas 1987 (AJR 149:351-356)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "Meta VCI Map Consortium"
+            - "FDA (NeuroQuant Microvascular Report)"
+            - "ENIGMA Consortium"
+            - "European Stroke Organisation"
+            - "MarkVCID Consortium"
+
+  # ============================================================
+  # Fazekas deep white-matter score (DWMH; ordinal 0-3)
+  # ============================================================
+  - name: "fazekas_deep_white_matter_score"
+    unit: "fazekas_grade"
+    description: |
+      Fazekas deep white-matter hyperintensity (DWMH) score from the 1987
+      visual rating scale (AJR 149:351-356). Four-point ordinal scale:
+      0 = absent; 1 = punctate foci (maximum size <3 mm); 2 = beginning
+      confluence of foci (size ≥3 mm); 3 = large confluent areas. Higher
+      values indicate worse deep white-matter status.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0
+        citation_strength: "verbatim"
+        guideline_section: "Fazekas 1987 §Materials and Methods (visual rating scale)"
+        citation:
+          citation_pmid: "3496763"
+          citation_doi: "10.2214/ajr.149.2.351"
+          citation_text: |
+            Fazekas et al. AJR 1987;149:351-356 §Materials and Methods.
+            The deep white-matter rating begins at 0 (absent) and is
+            bounded below by mathematical definition (no negative grades).
+          public_url: "https://www.ajronline.org/doi/abs/10.2214/ajr.149.2.351"
+          endorsing_bodies:
+            - "Fazekas 1987 (AJR 149:351-356)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "Meta VCI Map Consortium"
+            - "FDA (NeuroQuant Microvascular Report)"
+            - "ENIGMA Consortium"
+            - "European Stroke Organisation"
+      - bound_type: "hard_max"
+        value: 3
+        citation_strength: "verbatim"
+        guideline_section: "Fazekas 1987 §Materials and Methods (four-point scale 0-3)"
+        citation:
+          citation_pmid: "3496763"
+          citation_doi: "10.2214/ajr.149.2.351"
+          citation_text: |
+            Fazekas et al. AJR 1987;149:351-356 §Materials and Methods,
+            verbatim DWMH grading: "0 = absent, 1 = punctate foci,
+            2 = beginning confluence of foci, 3 = large confluent areas."
+            The scale is bounded above at 3 by definition.
+          public_url: "https://www.ajronline.org/doi/abs/10.2214/ajr.149.2.351"
+          endorsing_bodies:
+            - "Fazekas 1987 (AJR 149:351-356)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "Meta VCI Map Consortium"
+            - "FDA (NeuroQuant Microvascular Report)"
+            - "ENIGMA Consortium"
+            - "European Stroke Organisation"
+            - "MarkVCID Consortium"
+
+  # ============================================================
+  # Fazekas combined / global score (max of PVH and DWMH)
+  # ============================================================
+  - name: "fazekas_combined_score"
+    unit: "fazekas_grade"
+    description: |
+      Fazekas combined (global) score: maximum of fazekas_periventricular_score
+      and fazekas_deep_white_matter_score, per Wahlund 2001 (Stroke 32:1318-1322)
+      and STRIVE-2 (Duering 2023 Lancet Neurol §3.3). Used in clinical reporting
+      when a single summary grade is required (e.g., NeuroQuant Microvascular
+      Report). Four-point ordinal scale 0-3, same interpretation as constituent
+      scores: 0 = no significant WMH; 3 = severe confluent WMH.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0
+        citation_strength: "international_consensus"
+        guideline_section: "STRIVE-2 §3.3 / Wahlund 2001 combined-score derivation"
+        citation:
+          citation_pmid: "37236211"
+          citation_doi: "10.1016/S1474-4422(23)00131-X"
+          citation_text: |
+            STRIVE-2 (Duering et al. Lancet Neurol 2023) §3.3 ratifies the
+            Fazekas scale as the canonical visual WMH rating, and the
+            combined/global score (max of PVH and DWMH) is the de-facto
+            single-grade reporting standard adopted in FDA-cleared NeuroQuant
+            Microvascular Report. Minimum bound is 0 by definition.
+          public_url: "https://www.thelancet.com/journals/laneur/article/PIIS1474-4422(23)00131-X/abstract"
+          endorsing_bodies:
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "European Stroke Organisation"
+            - "FDA (NeuroQuant Microvascular Report)"
+            - "Cortechs.ai (NeuroQuant 5.0)"
+            - "Fazekas 1987 (original scale)"
+            - "Wahlund 2001 (Stroke 32:1318-1322 ARWMC combined rating)"
+      - bound_type: "hard_max"
+        value: 3
+        citation_strength: "international_consensus"
+        guideline_section: "STRIVE-2 §3.3 / Fazekas 1987 four-point scale ceiling"
+        citation:
+          citation_pmid: "37236211"
+          citation_doi: "10.1016/S1474-4422(23)00131-X"
+          citation_text: |
+            STRIVE-2 Lancet Neurol 2023 §3.3 confirms the Fazekas scale
+            ceiling at 3. The combined score, defined as max(PVH, DWMH),
+            cannot exceed 3 because neither constituent can.
+          public_url: "https://www.thelancet.com/journals/laneur/article/PIIS1474-4422(23)00131-X/abstract"
+          endorsing_bodies:
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "European Stroke Organisation"
+            - "FDA (NeuroQuant Microvascular Report)"
+            - "Cortechs.ai (NeuroQuant 5.0)"
+            - "Fazekas 1987 (original scale)"
+            - "ENIGMA Consortium"
+
+  # ============================================================
+  # Total WMH volume (mL)
+  # ============================================================
+  - name: "wmh_total_volume_ml"
+    unit: "mL"
+    description: |
+      Total cerebral white matter hyperintensity volume in milliliters,
+      typically measured on T2-FLAIR sequences via FDA-cleared automated
+      software (NeuroQuant Microvascular Report, icobrain WMH, Quantib ND)
+      or validated research tools (FreeSurfer SAMSEG, BIANCA, UBO Detector).
+      Lower-is-better marker; volume increases exponentially with age and
+      doubles approximately every 10 years per Meta VCI Map Consortium
+      normative data (de Kort 2024, n=14,876, ages 18-97).
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biological non-negativity (volume measurement)"
+        citation:
+          citation_pmid: "39602940"
+          citation_doi: "10.1016/j.neurobiolaging.2024.11.006"
+          citation_text: |
+            Volume measurements are non-negative by mathematical definition.
+            Meta VCI Map Consortium reference (de Kort 2024) reports total
+            WMH volumes from 14,876 individuals across 15 population-based
+            cohorts; the lower limit of the empirical distribution is bounded
+            at 0 mL (no detectable WMH).
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12087372/"
+          endorsing_bodies:
+            - "Meta VCI Map Consortium (n=14,876)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "FDA (NeuroQuant Microvascular Report)"
+            - "ENIGMA Consortium"
+            - "MarkVCID Consortium"
+            - "Icometrix (icobrain WMH)"
+      - bound_type: "plausible_max"
+        value: 100.0
+        citation_strength: "derived"
+        guideline_section: "Meta VCI Map 99th percentile by age (de Kort 2024 Figure 2)"
+        citation:
+          citation_pmid: "39602940"
+          citation_doi: "10.1016/j.neurobiolaging.2024.11.006"
+          citation_text: |
+            Meta VCI Map Consortium normative data (de Kort 2024, n=14,876)
+            show that total WMH volume increases exponentially with age and
+            doubles approximately every 10 years. Beyond the empirical 99th
+            percentile (~100 mL even at age 90+ in non-demented adults), values
+            are biologically implausible in the absence of substantial gross
+            pathology (e.g., extensive prior infarction, advanced leukodystrophy,
+            severe demyelinating disease). Values >100 mL should be flagged
+            for review of the segmentation and primary clinical context.
+            Plausible-max derived from the upper envelope of population-based
+            data; not a hard biological ceiling but an analytic flag.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12087372/"
+          endorsing_bodies:
+            - "Meta VCI Map Consortium (de Kort 2024 Neurobiol Aging)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "ENIGMA Consortium"
+            - "MarkVCID Consortium"
+            - "Rotterdam Study (Ikram, Vernooij)"
+            - "Framingham Heart Study (Beiser, Seshadri)"
+            - "UK Biobank Imaging Substudy"
+            - "SHIP-TREND Study (Twerenbold, Petersen)"
+      - bound_type: "hard_max"
+        value: 250.0
+        citation_strength: "derived"
+        guideline_section: "Biologically extreme limit (whole-cerebrum WM volume context)"
+        citation:
+          citation_pmid: "39602940"
+          citation_doi: "10.1016/j.neurobiolaging.2024.11.006"
+          citation_text: |
+            Total cerebral white matter volume in adults is approximately
+            450-550 mL. A WMH burden exceeding ~250 mL would imply >50% of
+            total white matter is hyperintense, which is biologically
+            extreme even in advanced leukodystrophy or severe SVD and
+            warrants immediate segmentation-error review. Hard-max derived
+            as a sanity floor; not a clinical guideline cutpoint but a
+            QC failsafe per Meta VCI Map data envelope plus standard
+            white matter total-volume references.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12087372/"
+          endorsing_bodies:
+            - "Meta VCI Map Consortium (de Kort 2024)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "ENIGMA Consortium"
+            - "MarkVCID Consortium"
+            - "FreeSurfer Group (Fischl, Buckner)"
+            - "FSL Group (Smith, Jenkinson)"
+
+  # ============================================================
+  # Periventricular WMH volume (mL)
+  # ============================================================
+  - name: "wmh_periventricular_volume_ml"
+    unit: "mL"
+    description: |
+      Periventricular white matter hyperintensity volume in milliliters,
+      defined per STRIVE-2 §3.3 as WMH continuous with or adjacent to
+      the ventricle surface (Fazekas 1987, van den Heuvel 2006). Measured
+      via FDA-cleared NeuroQuant Microvascular Report, icobrain WMH, or
+      validated research tools. Subset of total WMH volume; periventricular
+      WMH accumulation starts earlier in life and increases more steeply
+      with age than deep WMH per Meta VCI Map (de Kort 2024).
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biological non-negativity (volume measurement)"
+        citation:
+          citation_pmid: "39602940"
+          citation_doi: "10.1016/j.neurobiolaging.2024.11.006"
+          citation_text: |
+            Volume measurements are non-negative by definition. Meta VCI
+            Map normative data confirm the lower envelope at 0 mL across
+            14,876 individuals.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12087372/"
+          endorsing_bodies:
+            - "Meta VCI Map Consortium (de Kort 2024)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "FDA (NeuroQuant Microvascular Report)"
+            - "ENIGMA Consortium"
+            - "MarkVCID Consortium"
+            - "Icometrix (icobrain WMH)"
+      - bound_type: "plausible_max"
+        value: 60.0
+        citation_strength: "derived"
+        guideline_section: "Meta VCI Map periventricular 99th percentile (de Kort 2024)"
+        citation:
+          citation_pmid: "39602940"
+          citation_doi: "10.1016/j.neurobiolaging.2024.11.006"
+          citation_text: |
+            Meta VCI Map normative data (de Kort 2024) show periventricular
+            WMH constitutes the dominant component of total WMH burden in
+            most individuals; empirical 99th percentile is approximately
+            60 mL across all ages and sexes in the n=14,876 non-demented
+            cohort. Values >60 mL warrant segmentation review or are
+            consistent with severe SVD or advanced age (90+) with extensive
+            confluent periventricular involvement. Plausible-max derived
+            from the upper envelope of population-based data.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12087372/"
+          endorsing_bodies:
+            - "Meta VCI Map Consortium (de Kort 2024)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "ENIGMA Consortium"
+            - "MarkVCID Consortium"
+            - "Rotterdam Study"
+            - "Framingham Heart Study"
+            - "UK Biobank Imaging Substudy"
+
+  # ============================================================
+  # Deep WMH volume (mL)
+  # ============================================================
+  - name: "wmh_deep_volume_ml"
+    unit: "mL"
+    description: |
+      Deep white matter hyperintensity volume in milliliters, defined per
+      STRIVE-2 §3.3 as WMH not adjacent to the ventricle surface (Fazekas
+      1987 distinction; Wardlaw 2013 STRIVE-1; Duering 2023 STRIVE-2).
+      Measured via FDA-cleared NeuroQuant Microvascular Report, icobrain
+      WMH, or validated research tools. Subset of total WMH volume; deep
+      WMH is more strongly associated with vascular risk factors (e.g.,
+      hypertension) and shows distinct etiological patterns from
+      periventricular WMH (Fernando 2006, Habes 2016).
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biological non-negativity (volume measurement)"
+        citation:
+          citation_pmid: "39602940"
+          citation_doi: "10.1016/j.neurobiolaging.2024.11.006"
+          citation_text: |
+            Volume measurements are non-negative by definition. Meta VCI
+            Map normative data (de Kort 2024) confirm the empirical lower
+            envelope at 0 mL.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12087372/"
+          endorsing_bodies:
+            - "Meta VCI Map Consortium (de Kort 2024)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "FDA (NeuroQuant Microvascular Report)"
+            - "ENIGMA Consortium"
+            - "MarkVCID Consortium"
+            - "Icometrix (icobrain WMH)"
+      - bound_type: "plausible_max"
+        value: 50.0
+        citation_strength: "derived"
+        guideline_section: "Meta VCI Map deep 99th percentile (de Kort 2024)"
+        citation:
+          citation_pmid: "39602940"
+          citation_doi: "10.1016/j.neurobiolaging.2024.11.006"
+          citation_text: |
+            Meta VCI Map Consortium normative data (de Kort 2024) show
+            deep WMH 99th percentile approximately 50 mL across all ages
+            and sexes in the n=14,876 non-demented cohort. Deep WMH is
+            typically smaller in volume than periventricular WMH; values
+            >50 mL warrant segmentation review or are consistent with
+            severe SVD or substantial chronic vascular risk-factor burden.
+            Plausible-max derived from the upper envelope of population-
+            based data.
+          public_url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12087372/"
+          endorsing_bodies:
+            - "Meta VCI Map Consortium (de Kort 2024)"
+            - "STRIVE-2 (Duering 2023 Lancet Neurology)"
+            - "ENIGMA Consortium"
+            - "MarkVCID Consortium"
+            - "Rotterdam Study"
+            - "Framingham Heart Study"
+            - "UK Biobank Imaging Substudy"

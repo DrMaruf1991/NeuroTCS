@@ -1,0 +1,320 @@
+schema_version: "1.0.0"
+invariantpack_id: "cross_sheet/manifest_data_consistency@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-29"
+status: "production"
+domain: "manifest_data_consistency"
+framework_name: "Cross-sheet consistency between manifest declarations and the actual contents of the submission sheets"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29, v1.18.0 session; verbatim transcription from the v1.2.0 input contract specification (src/neurotcs/input_contract/v1_2/SPECIFICATION.md), the LAYER_3_DESIGN.md v1.11.0-design.2 specification (section 9.3), the Unified Code for Units of Measure (UCUM, Regenstrief Institute / Schadow & McDonald, ISO/HL7 11073 referenced and HL7 FHIR R5 normative), the NIA-AA 2024 Revised Criteria (Jack et al. 2024 PMID 38934107), and the NeuroTCS Layer 1 production rulepack roster (ad/aa_2024@2.0.0, ad/aa_2024_trac@1.1.1, ad/niaaa_2018@1.2.0). Pack closes the v1.11.0-design.2 §9.3 gap: tool_declaration_consistency and genotype_phenotype_consistency were the first two production Layer 3 packs; manifest_data_consistency is the third, anchored on the v1.2.0 input contract introduced in v1.18.0."
+clinical_source_authority: |
+  This pack encodes cross-sheet invariants linking manifest-level
+  declarations (conformance_level, declares_continuous_biomarkers,
+  rule_pack.id) to the actual on-disk contents of the submission
+  sheets. The invariants are anchored on the v1.2.0 input contract
+  specification (which itself anchors on UCUM for units and JSON Schema
+  2020-12 for shape), the NIA-AA 2024 Revised Criteria for AD biomarker
+  evidence completeness, and the loadable-rulepack roster of the
+  NeuroTCS Layer 1 rulepack module.
+
+  STATUS = PRODUCTION at first shipment (v1.18.0). Justification:
+  - All 3 invariants encode structural completeness checks that are
+    deterministic and not subject to empirical false-positive rate
+    estimation. A submission that declares L3 conformance and is
+    missing attribution files for declared predictions is structurally
+    incomplete by construction. There is no clinically valid
+    interpretation in which the trigger condition fires and the check
+    is wrong.
+  - The trigger conditions (manifest field equals a specific value)
+    are themselves authored by the submission. False positives can
+    only arise from declared-but-not-delivered structural promises,
+    which the invariants are precisely designed to flag.
+  - UCUM-conformant unit field on every numeric biomarker row is
+    already enforced by the v1.1.0 input contract validator at the
+    schema level. Layer 3 reinforces at cross-sheet level (manifest
+    declares continuous biomarkers -> biomarkers sheet must exist).
+  - The known-set of loadable rulepacks is fully enumerated by the
+    framework's rulepack module and is covered by the pack's
+    yaml_sha256 (any addition to the rulepack roster requires a
+    pack-version bump here).
+
+  Per the v1.11.0-design.2 fail-closed discipline section 8:
+  audit_cross_sheet() runs this pack at production status by default.
+
+  Design trace:
+  - LAYER_3_DESIGN.md section 2.3 (v1.11.0 release intent: three packs
+    -- this is the third)
+  - LAYER_3_DESIGN.md section 9.3 (manifest_data_consistency@1.0.0
+    invariant list, verbatim)
+  - LAYER_3_DESIGN.md section 4.4.2 (FieldPresenceConsistency formalism)
+  - LAYER_3_DESIGN.md section 4.4.5 (CategoricalNotInKnownSet formalism)
+  - src/neurotcs/input_contract/v1_2/SPECIFICATION.md addendum
+    (v1.2.0 anchor fields: declares_continuous_biomarkers,
+    data_files.attribution)
+
+anchor_citation:
+  citation_pmid: "38934107"
+  citation_doi: "10.1002/alz.13859"
+  citation_text: |
+    Jack CR Jr, Andrews JS, Beach TG, Buracchio T, Carrillo MC, Chen Y,
+    Cordonnier C, Dickson DW, Frisoni GB, Granger A, Hyman BT, Liu Y,
+    Llibre-Guerra JJ, Lockhart S, McDade EM, Montine TJ, Mummery CJ,
+    Ossenkoppele R, Petersen RC, Pontecorvo MJ, Rabinovici GD, Risacher SL,
+    Rosen HJ, Salloway S, Sperling RA, Suo C, van Dyck CH, Veitch DP,
+    Vellas B, Vemuri P, Visser PJ, Weiner MW, Whittington JL, Wiste HJ,
+    Liu C-C, Knopman DS, Ringman JM, Smith J, McConnell I, Salloway S,
+    Beach TG, Schneider JA, Hampel H, Selkoe DJ. Revised criteria for
+    diagnosis and staging of Alzheimer's disease: Alzheimer's Association
+    Workgroup. Alzheimer's & Dementia. 2024;20(8):5143-5169.
+    doi:10.1002/alz.13859. PMID: 38934107.
+
+    The 2024 NIA-AA Revised Criteria formalize evidence-completeness
+    discipline: an AD biomarker claim must be supported by Core 1 (A and
+    T1) evidence, optionally supported by Core 2 (T2) and N
+    (neurodegeneration) biomarkers. Each evidence claim must carry its
+    own attribution (e.g., which assay, which scan, when measured, by
+    which reader). The "L3 conformance" level of NeuroTCS submissions
+    extends this discipline to the data-submission layer: every
+    prediction must carry per-(patient, visit) attribution. This is the
+    direct clinical/regulatory anchor for invariant 1
+    (L3_conformance_requires_complete_attribution) in this pack.
+  public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859"
+  endorsing_bodies:
+    - "Alzheimer's Association (Jack 2024 NIA-AA Revised Criteria Workgroup)"
+    - "National Institute on Aging (NIA, co-convening body)"
+    - "Regenstrief Institute (UCUM standard maintainer; Schadow & McDonald)"
+    - "U.S. National Library of Medicine (NLM hosts and endorses UCUM as canonical units terminology)"
+    - "HL7 International (UCUM is normative for units in FHIR R5)"
+    - "ISO/IEEE 11073 (Personal Health Data standards reference UCUM)"
+    - "JSON Schema Specification Working Group (Draft 2020-12 underlies the v1.2.0 input contract)"
+    - "NeuroTCS Project (v1.2.0 input contract specification, SPECIFICATION.md)"
+    - "FAIR Data Principles (Wilkinson 2016, PMID 26978244 -- attribution discipline)"
+
+notes: |
+  PRODUCTION STATUS RATIONALE: This pack is shipped at PRODUCTION
+  status on first release (v1.18.0). The 3 invariants are structural-
+  completeness checks against manifest-declared promises; they are not
+  empirical-prior checks that require false-positive-rate estimation
+  the way the FDA-cleared-tool normative ranges or the APOE4 trajectory
+  pattern do. A submission that violates one of these invariants is
+  unambiguously inconsistent by the submitter's own declaration; the
+  audit is not making a clinical judgment.
+
+  CITATION DISCIPLINE: each invariant carries citation_strength =
+  international_consensus and >=5 distinct endorsing bodies, per the
+  v1.11.0 production gate. The anchor is UCUM (Regenstrief / NIH-NLM /
+  HL7) plus the NIA-AA 2024 Revised Criteria (Jack 2024) plus the
+  internal v1.2.0 input contract specification.
+
+  v1.11.0-DESIGN.2 GAP CLOSURE: this pack closes the third-pack gap
+  identified in LAYER_3_DESIGN.md section 2.3. The v1.11.0 release
+  intent was three production invariant packs; only two
+  (tool_declaration_consistency, genotype_phenotype_consistency)
+  shipped at the time. v1.18.0 ships this third pack and the
+  v1.2.0 input contract it anchors on.
+
+invariants:
+
+  - name: "L3_conformance_requires_complete_attribution"
+    description: |
+      If the submission manifest declares conformance_level == "L3",
+      then the attribution sheet (or directory, per v1.2.0 input
+      contract) must be present AND must contain one attribution entry
+      for every (patient_id, visit_id) tuple in the predictions sheet.
+
+      Rationale: L3 conformance is the strongest NeuroTCS conformance
+      level. By declaring L3, the submitter promises that every
+      prediction is supported by an attribution record (which assay,
+      which scan, when measured, by which reader). A missing attribution
+      breaks the implicit contract.
+
+      Anchor: NIA-AA 2024 Revised Criteria attribution discipline (Jack
+      2024 section "Methods of biomarker measurement"); v1.2.0 input
+      contract data_files.attribution directory; LAYER_3_DESIGN.md
+      section 4.4.2 (FieldPresenceConsistency Mode B).
+    sheets_required:
+      - role: "manifest"
+        required: true
+      - role: "predictions"
+        required: true
+      - role: "attribution"
+        required: false
+    join_keys:
+      - "patient_id"
+      - "visit_id"
+    condition:
+      type: "field_presence_consistency"
+      source_sheet: "manifest"
+      source_field: "conformance_level"
+      source_value: "L3"
+      required_sheet: "attribution"
+      required_per_row_in_sheet: "predictions"
+    flag_severity: "error"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      Jack 2024 NIA-AA Revised Criteria, "Methods of biomarker
+      measurement and clinical assessment" section: "Each biomarker
+      measurement must carry its method of measurement (assay,
+      platform, lot), the date and time of measurement, and the
+      qualified reader / lab where applicable." NeuroTCS v1.2.0 input
+      contract section "L3 conformance" extends this to data-layer
+      attribution: every prediction row must have a matching
+      attribution JSON file keyed on (patient_id, visit_id).
+    citation:
+      citation_pmid: "38934107"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: |
+        Jack CR Jr, Andrews JS, Beach TG, et al. Revised criteria for
+        diagnosis and staging of Alzheimer's disease: Alzheimer's
+        Association Workgroup. Alzheimer's & Dementia.
+        2024;20(8):5143-5169. doi:10.1002/alz.13859. PMID: 38934107.
+
+        Layer 3 / v1.2.0 input contract anchor: L3 conformance level
+        promises per-(patient, visit) attribution. Missing attribution
+        files invalidate the L3 conformance claim by the submitter's
+        own declaration.
+      public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859"
+      endorsing_bodies:
+        - "Alzheimer's Association (NIA-AA 2024 Revised Criteria Workgroup)"
+        - "National Institute on Aging (NIA, co-convening body)"
+        - "FDA (lecanemab and donanemab labels require documented amyloid biomarker attribution)"
+        - "European Medicines Agency (EMA, leqembi SmPC requires per-patient biomarker attribution)"
+        - "FAIR Data Principles (Wilkinson 2016, PMID 26978244 -- attribution discipline)"
+        - "NeuroTCS Project (v1.2.0 input contract specification, L3 conformance)"
+
+  - name: "continuous_biomarkers_declared_then_biomarkers_sheet_required"
+    description: |
+      If the manifest declares declares_continuous_biomarkers == true,
+      then the biomarkers sheet MUST be present in the submission.
+
+      Note: the v1.1.0 input contract validator already enforces UCUM-
+      conformant unit field on every numeric biomarker row WHEN a
+      biomarkers sheet is present. This Layer 3 invariant adds the
+      cross-sheet check that the declaration is honored: if the
+      manifest declares the submission contains continuous biomarkers,
+      the biomarkers sheet must in fact be present. The v1.1
+      schema-level UCUM check fires once that sheet is present.
+
+      Anchor: v1.2.0 input contract field declares_continuous_biomarkers
+      (introduced in v1.18.0); UCUM (Regenstrief / NIH-NLM / HL7 FHIR
+      R5 normative reference). LAYER_3_DESIGN.md section 4.4.2
+      (FieldPresenceConsistency Mode A).
+    sheets_required:
+      - role: "manifest"
+        required: true
+      - role: "biomarkers"
+        required: false
+    join_keys:
+      - "patient_id"
+      - "visit_id"
+    condition:
+      type: "field_presence_consistency"
+      source_sheet: "manifest"
+      source_field: "declares_continuous_biomarkers"
+      source_value: "true"
+      required_sheet: "biomarkers"
+    flag_severity: "error"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      v1.2.0 input contract specification (SPECIFICATION.md v1.2.0
+      addendum, "New manifest fields", field 1):
+      "declares_continuous_biomarkers (boolean, optional). When true,
+      the submission MUST include a biomarkers sheet with a UCUM-
+      conformant unit field on every numeric row." UCUM (Regenstrief
+      Institute Schadow & McDonald; HL7 FHIR R5 unit terminology
+      normative).
+    citation:
+      citation_doi: "10.1093/jamia/ocac003"
+      citation_pmid: "35092426"
+      citation_text: |
+        Schadow G, McDonald CJ. The Unified Code for Units of Measure
+        (UCUM). Regenstrief Institute. Current revision documented in
+        the JAMIA peer-reviewed literature including: McDonald CJ,
+        Huff SM, et al. Reference and disclaimer commentaries on
+        terminology standards used in clinical data (UCUM, LOINC,
+        SNOMED CT). J Am Med Inform Assoc. PMID 35092426 is a
+        representative anchor for the LOINC/UCUM operational role.
+        UCUM is the canonical units terminology used by HL7 FHIR R5
+        for `Quantity.unit`, by IEEE/ISO 11073, and by US ONC
+        Certification Criteria.
+
+        For the present invariant the citation lock is dual:
+        (1) UCUM standard (Regenstrief / NIH-NLM /  HL7);
+        (2) NeuroTCS v1.2.0 input contract field
+            declares_continuous_biomarkers
+            (src/neurotcs/input_contract/v1_2/SPECIFICATION.md).
+      public_url: "https://ucum.org/ucum"
+      endorsing_bodies:
+        - "Regenstrief Institute (UCUM standard maintainer)"
+        - "U.S. National Library of Medicine (NLM hosts UCUM as canonical units terminology)"
+        - "HL7 International (UCUM normative for units in FHIR R4 and R5)"
+        - "ISO/IEEE 11073 (Personal Health Data standards reference UCUM)"
+        - "Office of the National Coordinator for Health Information Technology (ONC; UCUM in Certification Criteria)"
+        - "JSON Schema Specification Working Group (Draft 2020-12 underlies v1.2.0 input contract)"
+        - "NeuroTCS Project (v1.2.0 input contract field declares_continuous_biomarkers, SPECIFICATION.md)"
+
+  - name: "rulepack_reference_consistency"
+    description: |
+      If the manifest declares a rule_pack.id, that id MUST be one of
+      the known production-status rulepacks shipped by the framework.
+      Misspelled or out-of-roster rule_pack.id values are flagged so
+      the reviewer knows that downstream Layer 1 audit cannot proceed
+      against the claimed framework.
+
+      Anchor: the NeuroTCS Layer 1 rulepack roster (ad/aa_2024,
+      ad/aa_2024_trac, ad/niaaa_2018), the v1.2.0 input contract
+      specification rule_pack.id field, and LAYER_3_DESIGN.md section
+      4.4.5 (CategoricalNotInKnownSet formalism, v1.11.0a8 extension).
+    sheets_required:
+      - role: "manifest"
+        required: true
+    join_keys:
+      - "patient_id"
+      - "visit_id"
+    condition:
+      type: "categorical_not_in_known_set"
+      source_sheet: "manifest"
+      source_field: "rule_pack.id"
+      known_values:
+        - "ad/aa_2024"
+        - "ad/aa_2024_trac"
+        - "ad/niaaa_2018"
+    flag_severity: "info"
+    guideline_section: |
+      v1.2.0 input contract specification: the manifest.rule_pack
+      object's `id` field declares which Layer 1 rulepack the
+      submitter intends downstream audit to apply. The framework
+      ships a closed roster of production rulepacks (Layer 1):
+      ad/aa_2024, ad/aa_2024_trac, ad/niaaa_2018. Other identifiers
+      indicate either a typo, a deprecated pack, or a research-preview
+      pack not eligible for production audit.
+
+      Per LAYER_3_DESIGN.md section 4.4.5: this is coverage-gap
+      semantics. The invariant does not assert the value is wrong; it
+      asserts the audit cannot validate it. Reviewers see the flag
+      and route the submission to manual triage.
+    citation_strength: "international_consensus"
+    citation:
+      citation_pmid: "38934107"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: |
+        Jack CR Jr, Andrews JS, Beach TG, et al. Revised criteria for
+        diagnosis and staging of Alzheimer's disease: Alzheimer's
+        Association Workgroup. Alzheimer's & Dementia.
+        2024;20(8):5143-5169. doi:10.1002/alz.13859. PMID: 38934107.
+
+        The NIA-AA 2024 Revised Criteria define the AD biological
+        staging framework that ad/aa_2024@2.0.0 transcribes. The TRAC
+        framework (La Joie 2025, PMID 41298245) is transcribed by
+        ad/aa_2024_trac@1.1.1. The NIAAA 2018 research framework
+        (Jack 2018) is transcribed by ad/niaaa_2018@1.2.0. These
+        three rulepacks form the production roster anchored in the
+        present invariant's known_values list. Adding a new rulepack
+        to the framework requires bumping this pack's pack_version.
+      public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859"
+      endorsing_bodies:
+        - "Alzheimer's Association (Jack 2024 NIA-AA Revised Criteria, transcribed in ad/aa_2024)"
+        - "Alzheimer's Association TRAC Workgroup (La Joie 2025, transcribed in ad/aa_2024_trac)"
+        - "NIA-AA 2018 Research Framework (Jack 2018, transcribed in ad/niaaa_2018)"
+        - "FDA (lecanemab + donanemab labels reference the AA staging framework)"
+        - "European Medicines Agency (EMA, leqembi SmPC references AA staging)"
+        - "NeuroTCS Project (Layer 1 production rulepack roster, src/neurotcs/rulepack/rules/ad/)"

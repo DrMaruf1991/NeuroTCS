@@ -1,0 +1,628 @@
+# NeuroTCS Rule Pack: Alzheimer's Disease — AA 2024 Revised Criteria
+# (See accompanying docs for full source-tracking commentary.)
+# Schema 1.3.0. Source: Jack 2024 PMID 38934362 DOI 10.1002/alz.13859.
+# External parameters (tau_pet_mod_vs_high_cutpoint,
+# neocortical_meta_roi_definition, amyloid_pet_positivity_threshold)
+# are documented in docs/validation/aa_2024_audit_protocol.md.
+# They are caller-supplied at audit time; the rule pack encodes
+# structure only, not threshold values. This is faithful to
+# Jack 2024 §4.6 which explicitly declines to commit to a single
+# cutpoint methodology.
+
+schema_version: 1.4.0
+rulepack_id: ad/aa_2024@2.1.0
+ruleset_version: 2.1.0
+effective_date: '2026-05-27'
+status: production
+disease_domain: alzheimers
+framework_name: Alzheimer's Association 2024 Revised Criteria (integrated biological
+  + clinical staging, Table 7)
+transcribed_by: Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo
+  International University in Tashkent (KIUT), Uzbekistan
+clinical_source_authority: Revised criteria for diagnosis and staging of Alzheimer's
+  disease (Jack CR Jr et al., Alzheimer's & Dementia 2024;20(8):5143-5169, DOI 10.1002/alz.13859,
+  PMID 38934362) - Alzheimer's Association Workgroup. Section §4 Biological staging
+  defines Tables 3, 4, 5 (PET-based and conceptual fluid). Section §5 Clinical staging
+  defines Table 6 (stages 0 through 6). Section §6 Integrated staging defines Table
+  7 (alphanumeric scheme). Open access under CC BY-NC-ND 4.0 license.
+reviewers: []
+
+# Endorsing bodies (schema_version 1.4.0; added 2026-05-27 per gap-check Finding A).
+# Verbatim primary sources:
+#   - Alzheimer's Association: workgroup convener (https://www.alz.org/news/2024/revised-alzheimers-diagnostic-staging-criteria)
+#   - Authorship affiliations from PMID 38934362 (peer-reviewed in Alz & Dementia)
+endorsing_bodies:
+  - "Alzheimer's Association (workgroup convener; senior author Maria C. Carrillo; alz.org press release 2024-06-27)"
+  - "Mayo Clinic Department of Radiology (Clifford R. Jack Jr., lead author, PMID 38934362)"
+  - "U.S. Food and Drug Administration, Office of Neuroscience (Teresa Buracchio, co-author affiliation)"
+  - "The Michael J. Fox Foundation for Parkinson's Research (Billy Dunn, co-author affiliation)"
+  - "Banner Sun Health Research Institute, Civin Laboratory for Neuropathology (Thomas G. Beach, co-author)"
+  - "Lund University / Skåne University Hospital BioFINDER (Oskar Hansson, co-author)"
+  - "University of California Berkeley, School of Public Health (William Jagust, co-author)"
+  - "Washington University in St. Louis Knight ADRC (Eric McDade, co-author; DIAN-TU)"
+  - "Amsterdam UMC Alzheimer Center / Amsterdam Dementia Cohort (Philip Scheltens, Charlotte E. Teunissen, co-authors)"
+  - "Harvard Medical School / Mass General Brigham (Reisa Sperling, co-author; A4 / AHEAD 3-45 studies)"
+  - "BarcelonaBeta Brain Research Center (Jose Luis Molinuevo, co-author)"
+  - "Wisconsin Alzheimer's Disease Research Center, University of Wisconsin-Madison (Ozioma C. Okonkwo, co-author; WRAP)"
+  - "Alzheimer's Therapeutic Research Institute, University of Southern California (Michael S. Rafii, co-author)"
+  - "Takeda Pharmaceuticals (J. Scott Andrews, co-author; global evidence & outcomes affiliation)"
+  - "Novartis Neuroscience Global Drug Development (Ana Graf, co-author)"
+  - "ALZFORUM peer commentary on AA-2024 (Revised Again: Alzheimer's Diagnostic Criteria Get Another Makeover)"
+  - "International Working Group (IWG) on AD diagnosis (concurrent independent criteria comparison)"
+anchor_citation:
+  citation_pmid: '38934362'
+  citation_doi: 10.1002/alz.13859
+  citation_text: 'Jack CR Jr, Andrews JS, Beach TG, Buracchio T, Dunn B, Graf A, Hansson
+    O, Ho C, Jagust W, McDade E, Molinuevo JL, Okonkwo OC, Pani L, Rafii MS, Scheltens
+    P, Siemers E, Snyder HM, Sperling R, Teunissen CE, Carrillo MC. Revised criteria
+    for diagnosis and staging of Alzheimer''s disease: Alzheimer''s Association Workgroup.
+    Alzheimer''s & Dementia 2024;20(8):5143-5169.'
+state_space:
+- name: Stage_0
+  description: Asymptomatic, deterministic gene carrier (ADAD mutation or trisomy
+    21 / DSAD). Biomarkers in normal range. Per Jack 2024 Table 6 row 1 and §5.2.
+  ordinal_rank: 0
+- name: Stage_1A
+  description: Asymptomatic; A+T2- on PET (Table 7 cell 1A, Table 4 stage A).
+  ordinal_rank: 1
+- name: Stage_1B
+  description: Asymptomatic; A+T2MTL+ on PET (Table 7 cell 1B, Table 4 stage B).
+  ordinal_rank: 2
+- name: Stage_1C
+  description: Asymptomatic; A+T2MOD+ on PET (Table 7 cell 1C). Off-diagonal.
+  ordinal_rank: 3
+- name: Stage_1D
+  description: Asymptomatic; A+T2HIGH+ on PET (Table 7 cell 1D). Rare.
+  ordinal_rank: 4
+- name: Stage_2A
+  description: 'Transitional decline (Table 6 stage 2: persistent >=6 months); A+T2-.'
+  ordinal_rank: 5
+- name: Stage_2B
+  description: Transitional decline; A+T2MTL+. Diagonal of Table 7.
+  ordinal_rank: 6
+- name: Stage_2C
+  description: Transitional decline; A+T2MOD+. Off-diagonal.
+  ordinal_rank: 7
+- name: Stage_2D
+  description: Transitional decline; A+T2HIGH+. Off-diagonal.
+  ordinal_rank: 8
+- name: Stage_3A
+  description: MCI-equivalent (Table 6 stage 3); A+T2-. Off-diagonal; copathology
+    likely.
+  ordinal_rank: 9
+- name: Stage_3B
+  description: MCI-equivalent; A+T2MTL+. Off-diagonal.
+  ordinal_rank: 10
+- name: Stage_3C
+  description: MCI-equivalent; A+T2MOD+. Diagonal of Table 7.
+  ordinal_rank: 11
+- name: Stage_3D
+  description: MCI-equivalent; A+T2HIGH+. Off-diagonal.
+  ordinal_rank: 12
+- name: Stage_4-6A
+  description: Dementia (Table 6 stages 4/5/6); A+T2-. Copathology-dominant (Figure
+    2 LATE example).
+  ordinal_rank: 13
+- name: Stage_4-6B
+  description: Dementia; A+T2MTL+. Off-diagonal.
+  ordinal_rank: 14
+- name: Stage_4-6C
+  description: Dementia; A+T2MOD+. Off-diagonal but common.
+  ordinal_rank: 15
+- name: Stage_4-6D
+  description: Dementia; A+T2HIGH+. Diagonal endpoint (Table 7 'from 1A to 4-6D').
+  ordinal_rank: 16
+admissible_transitions:
+- from_state: Stage_0
+  to_state: Stage_1A
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: 'Jack 2024 §5.2 (verbatim): "A person with DSAD or ADAD would
+    move from stage 0 into stage 1 when a diagnostic Core 1 biomarker(s) became positive."
+    The paper specifies the destination clinical stage (1) and the trigger (Core 1
+    biomarker positivity) but does not enumerate which biological sub-stage (1A, 1B,
+    1C, or 1D) is the entry point. Clinical inference: by definition of biological
+    stage A (Table 4: A+T2-), the FIRST positive Core 1 biomarker (amyloid PET or
+    biofluid) WITH a still-negative tau PET places the individual in Stage_1A. Entry
+    directly into 1B/1C/1D would require simultaneous Core 1 AND Core 2 abnormality,
+    which contradicts §4.3 stereotypical sequence "A to T2 to N to C."'
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: 'Jack 2024 §5.2 (Stage 0): "A person with DSAD or ADAD would move
+      from stage 0 into stage 1 when a diagnostic Core 1 biomarker(s) became positive."'
+  guideline_section: Jack 2024 §5.2 + Table 6 row 1 footnote a + Table 7 col 'Clinical
+    Stage 1' row 'Initial biological stage (A)'
+  override_allowed: false
+  notes: Stage 0 is ONLY reachable by genetic determinism (Down syndrome, ADAD mutation).
+    The audit kernel should never observe a non-genetic subject in Stage 0.
+- from_state: Stage_1A
+  to_state: Stage_1B
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: 'Jack 2024 §4.3 (verbatim): "abnormal amyloid PET (A) precedes
+      tau PET (T2)... Amyloidosis appears to facilitate topographic spread of tauopathy,
+      with the latter most commonly, but not always, beginning in medial temporal
+      areas."'
+  guideline_section: Jack 2024 §4.3 + Table 4 (Stage A -> Stage B)
+  override_allowed: false
+- from_state: Stage_1B
+  to_state: Stage_1C
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: 'Biological B -> C requires neocortical tau uptake to cross
+    the moderate cutpoint. Jack 2024 §4.6: cutpoint operationalization is "an area
+    of active research." The audit caller must supply tau_pet_mod_vs_high_cutpoint
+    and neocortical_meta_roi_definition.'
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 + Table 4 + §4.6 cutpoint caveat.
+  guideline_section: Jack 2024 §4.3, §4.6 + Table 4 (Stage B -> Stage C)
+  override_allowed: false
+- from_state: Stage_1C
+  to_state: Stage_1D
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: 'Jack 2024 §4.6 (verbatim): "the distinction between moderate
+    (stage C) and high (stage D) neocortical tau uptake could be operationalized in
+    different ways. Methods for quantification of tau PET is an area of active research,
+    and selecting the best cutpoint to distinguish moderate versus high uptake will
+    be informed by upcoming research findings." Canonical clinical_inference case
+    in the paper.'
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.6 (moderate-vs-high cutpoint).
+  guideline_section: Jack 2024 §4.6 + Table 4 (Stage C -> Stage D)
+  override_allowed: false
+- from_state: Stage_2A
+  to_state: Stage_2B
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 + Table 4 (Stage A -> Stage B).
+  guideline_section: Jack 2024 §4.3 + Table 4
+  override_allowed: false
+- from_state: Stage_2B
+  to_state: Stage_2C
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: Cutpoint-dependent per §4.6 (B -> C neocortical threshold).
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 + Table 4 (Stage B -> Stage C).
+  guideline_section: Jack 2024 §4.3, §4.6
+  override_allowed: false
+- from_state: Stage_2C
+  to_state: Stage_2D
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: Cutpoint-dependent per §4.6 (C -> D moderate-vs-high).
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 + Table 4 (Stage C -> Stage D).
+  guideline_section: Jack 2024 §4.6
+  override_allowed: false
+- from_state: Stage_3A
+  to_state: Stage_3B
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 + Table 4.
+  guideline_section: Jack 2024 §4.3 + Table 4
+  override_allowed: false
+- from_state: Stage_3B
+  to_state: Stage_3C
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: Cutpoint-dependent per §4.6.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 + Table 4 (Stage B -> Stage C).
+  guideline_section: Jack 2024 §4.3, §4.6
+  override_allowed: false
+- from_state: Stage_3C
+  to_state: Stage_3D
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: Moderate-vs-high cutpoint per §4.6.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 + Table 4 (Stage C -> Stage D).
+  guideline_section: Jack 2024 §4.6
+  override_allowed: false
+- from_state: Stage_4-6A
+  to_state: Stage_4-6B
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 + Table 4.
+  guideline_section: Jack 2024 §4.3 + Table 4
+  override_allowed: false
+- from_state: Stage_4-6B
+  to_state: Stage_4-6C
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: Cutpoint-dependent (B -> C neocortical threshold) per §4.6.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 + Table 4 (Stage B -> Stage C).
+  guideline_section: Jack 2024 §4.6
+  override_allowed: false
+- from_state: Stage_4-6C
+  to_state: Stage_4-6D
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: Moderate-vs-high cutpoint per §4.6.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 + Table 4 (Stage C -> Stage D).
+  guideline_section: Jack 2024 §4.6
+  override_allowed: false
+- from_state: Stage_1A
+  to_state: Stage_2A
+  min_delta_t_days: 180.0
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: 'Jack 2024 Table 6 stage 2 row 3: "Decline from previous level
+      of cognitive or neurobehavioral function that represents a change from individual
+      baseline within the past 1 to 3 years, and has been persistent for at least
+      6 months."'
+  guideline_section: Jack 2024 §5.1 + Table 6 (stage 1 -> stage 2)
+  override_allowed: false
+  notes: 180-day minimum enforces 6-month persistence criterion.
+- from_state: Stage_2A
+  to_state: Stage_3A
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: 'Jack 2024 Table 6 stage 3: "Performance in the impaired/abnormal
+      range on objective cognitive tests... cognitive difficulty may result in detectable
+      functional impact on complex ADLs."'
+  guideline_section: Jack 2024 §5.1 + Table 6 (stage 2 -> stage 3)
+  override_allowed: false
+- from_state: Stage_3A
+  to_state: Stage_4-6A
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: 'Jack 2024 Table 6 stage 4: "Progressive cognitive and mild functional
+      impairment on instrumental ADLs, with independence in basic ADLs." Stages 4,
+      5, 6 collapsed in Table 7 column "Clinical Stages 4-6".'
+  guideline_section: Jack 2024 §5.1, §6 + Table 6 stages 4-6 + Table 7 col 5
+  override_allowed: false
+- from_state: Stage_1B
+  to_state: Stage_2B
+  min_delta_t_days: 180.0
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6 stage 2 (6-month persistence).
+  guideline_section: Jack 2024 §5.1 + Table 6
+  override_allowed: false
+- from_state: Stage_2B
+  to_state: Stage_3B
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6 (stage 2 -> 3).
+  guideline_section: Jack 2024 §5.1 + Table 6
+  override_allowed: false
+- from_state: Stage_3B
+  to_state: Stage_4-6B
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6 (stages 3 -> 4-6).
+  guideline_section: Jack 2024 §5.1, §6 + Table 6 + Table 7 col 5
+  override_allowed: false
+- from_state: Stage_1C
+  to_state: Stage_2C
+  min_delta_t_days: 180.0
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6 stage 2 (6-month persistence).
+  guideline_section: Jack 2024 §5.1 + Table 6
+  override_allowed: false
+- from_state: Stage_2C
+  to_state: Stage_3C
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6 (stage 2 -> 3).
+  guideline_section: Jack 2024 §5.1 + Table 6
+  override_allowed: false
+- from_state: Stage_3C
+  to_state: Stage_4-6C
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6 (stages 3 -> 4-6).
+  guideline_section: Jack 2024 §5.1, §6 + Table 6 + Table 7 col 5
+  override_allowed: false
+- from_state: Stage_1D
+  to_state: Stage_2D
+  min_delta_t_days: 180.0
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6 stage 2 (6-month persistence).
+  guideline_section: Jack 2024 §5.1 + Table 6
+  override_allowed: false
+- from_state: Stage_2D
+  to_state: Stage_3D
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6 (stage 2 -> 3).
+  guideline_section: Jack 2024 §5.1 + Table 6
+  override_allowed: false
+- from_state: Stage_3D
+  to_state: Stage_4-6D
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6 (stages 3 -> 4-6).
+  guideline_section: Jack 2024 §5.1, §6 + Table 6 + Table 7 col 5
+  override_allowed: false
+- from_state: Stage_1A
+  to_state: Stage_2B
+  min_delta_t_days: 180.0
+  max_delta_t_days: null
+  attribution_type: guideline_quote
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: 'Jack 2024 Table 7 §Note (verbatim): "The typical expected progression
+      trajectory is along the diagonal shaded cells, from 1A to 4-6D."'
+  guideline_section: Jack 2024 §6 + Table 7 diagonal
+  override_allowed: false
+  notes: Diagonal advance (clinical +1, biological +1). 180-day minimum enforces stage
+    2's 6-month persistence.
+- from_state: Stage_2B
+  to_state: Stage_3C
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: Diagonal step Stage_2B -> Stage_3C combines clinical progression
+    (stage 2 -> 3, guideline_quote per Table 6) with biological progression (B ->
+    C, cutpoint-dependent per §4.6). Since one of the two components is cutpoint-dependent,
+    the composite transition inherits clinical_inference attribution.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 7 diagonal + §4.6 cutpoint caveat.
+  guideline_section: Jack 2024 §6 + Table 7
+  override_allowed: false
+- from_state: Stage_3C
+  to_state: Stage_4-6D
+  min_delta_t_days: null
+  max_delta_t_days: null
+  attribution_type: clinical_inference
+  inference_rationale: Diagonal step combines clinical progression (stage 3 -> 4-6)
+    with biological C -> D (cutpoint-dependent moderate-vs-high per §4.6).
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 7 diagonal + §4.6 cutpoint caveat.
+  guideline_section: Jack 2024 §6 + Table 7
+  override_allowed: false
+inadmissible_transitions:
+- from_state: Stage_1B
+  to_state: Stage_1A
+  reason: 'Jack 2024 §4.3 (verbatim): "abnormal amyloid PET (A) precedes tau PET (T2),
+    which, in turn, leads to neurodegeneration (N) and clinical symptoms (C), A to
+    T2 to N to C." Sequence is unidirectional in natural history (untreated). NOTE:
+    TRAC-treated subjects use companion pack ad/aa_2024_trac.'
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: 'Jack 2024 §4.3 (verbatim): "abnormal amyloid PET (A) precedes
+      tau PET (T2), which, in turn, leads to neurodegeneration (N) and clinical symptoms
+      (C), A to T2 to N to C." Sequence is unidirectional in natural history (untreated).'
+  guideline_section: Jack 2024 §4.3 (unidirectional biological sequence)
+- from_state: Stage_1C
+  to_state: Stage_1B
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_1D
+  to_state: Stage_1C
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_2B
+  to_state: Stage_2A
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_2C
+  to_state: Stage_2B
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_2D
+  to_state: Stage_2C
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_3B
+  to_state: Stage_3A
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_3C
+  to_state: Stage_3B
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_3D
+  to_state: Stage_3C
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_4-6B
+  to_state: Stage_4-6A
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_4-6C
+  to_state: Stage_4-6B
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_4-6D
+  to_state: Stage_4-6C
+  reason: Jack 2024 §4.3 unidirectional sequence.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 §4.3 unidirectional sequence.
+  guideline_section: Jack 2024 §4.3
+- from_state: Stage_4-6A
+  to_state: Stage_3A
+  reason: 'Jack 2024 Table 6: stages 4-6 are progressively worsening dementia. Reversion
+    from dementia to MCI is not contemplated in the staging scheme. NOTE: Reversible
+    causes require human review.'
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: 'Jack 2024 Table 6: stages 4-6 are progressively worsening dementia.
+      Reversion from dementia to MCI is not contemplated in the staging scheme.'
+  guideline_section: Jack 2024 Table 6
+- from_state: Stage_4-6B
+  to_state: Stage_3B
+  reason: Jack 2024 Table 6 (clinical staging is progressive).
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6 (clinical staging is progressive).
+  guideline_section: Jack 2024 Table 6
+- from_state: Stage_4-6C
+  to_state: Stage_3C
+  reason: Jack 2024 Table 6.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6.
+  guideline_section: Jack 2024 Table 6
+- from_state: Stage_4-6D
+  to_state: Stage_3D
+  reason: Jack 2024 Table 6.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 Table 6.
+  guideline_section: Jack 2024 Table 6
+- from_state: Stage_1A
+  to_state: Stage_0
+  reason: 'Jack 2024 §5.2 (verbatim): "Stage 0 represents part of the AD continuum
+    and is defined as genetically determined AD (which includes ADAD or DSAD) in an
+    individual who is biomarker negative and clinically asymptomatic." Once a Core
+    1 biomarker is positive, the subject cannot return to biomarker-negative Stage
+    0. NOTE: Anti-amyloid treatment can render amyloid PET subdetection (§9 TRAC),
+    but Jack 2024 §9: "The underlying AD pathophysiologic process is therefore still
+    active in an individual who has had fibrillar amyloid removed to below PET detection
+    levels." TRAC subjects do NOT return to Stage 0.'
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: 'Jack 2024 §5.2 (verbatim): "Stage 0 represents part of the AD
+      continuum and is defined as genetically determined AD (which includes ADAD or
+      DSAD) in an individual who is biomarker negative and clinically asymptomatic."
+      Once a Core 1 biomarker is positive, the subject cannot return to biomarker-negative
+      Stage 0.'
+  guideline_section: Jack 2024 §5.2 + Table 6 row 1

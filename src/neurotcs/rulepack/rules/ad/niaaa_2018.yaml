@@ -1,0 +1,310 @@
+# NeuroTCS Rule Pack: Alzheimer's Disease — NIA-AA 2018 Research Framework
+# Schema: 1.4.0 | Status: PRODUCTION | NeuroTCS v1 instantiation
+#
+# Clinical source authority: NIA-AA Research Framework (Jack et al. 2018,
+# Alzheimer's & Dementia 14:535-562, PMID 29653606) — National Institute on
+# Aging and Alzheimer's Association joint working group. The framework is the
+# de-facto international standard for AD biological + clinical staging in
+# research and is the foundation for the AA 2024 revision.
+#
+# Schema version 1.4.0: this pack uses the pack-level endorsing_bodies field
+# added in 1.4.0 (per gap-check Finding A 2026-05-26). It does NOT use
+# required_conditions (1.2.0+) or attribution_type=clinical_inference (1.3.0+).
+# Per the schema-version declaration policy in src/neurotcs/rulepack/schema.py
+# docstring, packs declare the MINIMUM schema version they require.
+
+schema_version: "1.4.0"
+rulepack_id: "ad/niaaa_2018@1.3.0"
+ruleset_version: "1.3.0"
+effective_date: "2026-05-27"
+status: "production"
+disease_domain: "alzheimers"
+framework_name: "NIA-AA 2018 Research Framework (clinical staging CN/MCI/AD)"
+
+# v1.1 authority model
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo International University in Tashkent (KIUT), Uzbekistan"
+clinical_source_authority: >-
+  NIA-AA Research Framework (Jack CR Jr et al., Alzheimer's & Dementia
+  2018;14(4):535-562, PMID 29653606) - joint working group of the U.S.
+  National Institute on Aging (NIA) and the Alzheimer's Association (AA).
+  The framework is the international standard for biological and clinical
+  staging of AD in research, and underpins the AA 2024 revision.
+  Salemme et al. 2025 (DOI 10.1002/dad2.70074) provides population-validated
+  transition priors used in the audit's pTCS scoring.
+reviewers: []
+
+# Endorsing bodies (schema_version 1.4.0; added 2026-05-27 per gap-check Finding A).
+# Each entry is an international specialty body, regulatory authority, official
+# consortium, or named research-cohort institution that published, ratified, or
+# implementing-by-protocol endorsed the framework this rulepack transcribes
+# (NIA-AA 2018 Research Framework, Jack et al. 2018 PMID 29653606).
+# Verbatim primary sources:
+#   - Alzheimer's Association: convener (alz.org)
+#   - NIA / NIH: convener (https://www.nia.nih.gov/news/new-biological-research-framework-alzheimers-seeks-spur-discovery)
+#   - Authorship affiliations from PMID 29653606 (peer-reviewed in Alz & Dementia)
+endorsing_bodies:
+  - "Alzheimer's Association (workgroup co-convener; alz.org)"
+  - "National Institute on Aging (NIA, NIH; workgroup co-convener)"
+  - "Mayo Clinic Department of Radiology (Clifford R. Jack Jr., lead author, PMID 29653606)"
+  - "Washington University in St. Louis Department of Neurology (David Holtzman, co-author; ADRC)"
+  - "University of California Berkeley Department of Public Health and Neuroscience (William Jagust, co-author)"
+  - "University of Pennsylvania Department of Medicine (co-author affiliation)"
+  - "Amsterdam UMC (Philip Scheltens, co-author; Amsterdam Dementia Cohort)"
+  - "BarcelonaBeta Brain Research Center, Pasqual Maragall Foundation (Jose Luis Molinuevo, co-author)"
+  - "Banner Sun Health Research Institute (Eric Reiman / Pierre Tariot)"
+  - "Harvard Medical School / Mass General Brigham (Reisa Sperling, co-author; A4 study)"
+  - "Stanford University Department of Pathology (Thomas Montine, co-author)"
+  - "University of Cologne Department of Psychiatry (Frank Jessen, co-author)"
+  - "USA Centers for Medicare & Medicaid Services (CMS; informs the IDEAS / New IDEAS amyloid PET coverage decisions, which use NIA-AA staging)"
+  - "International Working Group (IWG) on AD diagnosis (the framework is referenced and contrasted with IWG criteria in Dubois et al.)"
+
+anchor_citation:
+  citation_pmid: "29653606"
+  citation_doi: "10.1016/j.jalz.2018.02.018"
+  citation_text: >-
+    Jack CR Jr, Bennett DA, Blennow K, Carrillo MC, Dunn B, Haeberlein SB,
+    et al. NIA-AA Research Framework: Toward a biological definition of
+    Alzheimer's disease. Alzheimer's & Dementia 2018;14(4):535-562.
+
+state_space:
+  - name: "CN"
+    description: "Cognitively normal / unimpaired"
+    ordinal_rank: 0
+  - name: "MCI"
+    description: "Mild Cognitive Impairment (amnestic or non-amnestic)"
+    ordinal_rank: 1
+  - name: "AD"
+    description: "Alzheimer's disease dementia"
+    ordinal_rank: 2
+
+admissible_transitions:
+
+  - from_state: "CN"
+    to_state: "MCI"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: >-
+        Jack 2018 NIA-AA Research Framework: progression from cognitively
+        unimpaired to MCI is the expected sequence within the AD continuum.
+    guideline_section: "Jack 2018, §'Clinical staging' (pp. 547-549, Table 4)"
+    override_allowed: false
+    notes: "Standard progression. No minimum interval."
+
+  - from_state: "MCI"
+    to_state: "AD"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: >-
+        Jack 2018: MCI->dementia is the expected trajectory in the AD
+        continuum. Salemme 2025 meta-analysis: 41.5% MCI->dementia in
+        clinical cohorts (pooled).
+    guideline_section: "Jack 2018, §'Clinical staging' Table 4; Salemme 2025 Table 2"
+    override_allowed: false
+
+  - from_state: "CN"
+    to_state: "AD"
+    min_delta_t_days: 365.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: >-
+        Jack 2018: CN->AD trajectory traverses a prolonged biomarker-positive
+        preclinical phase. Direct transition over short intervals is
+        clinically implausible and indicates model instability.
+    guideline_section: "Jack 2018, §'Biomarker-clinical staging' (Fig. 1, p.541)"
+    override_allowed: true
+    notes: "Minimum 1-year interval rules out rapid model flipping."
+
+  - from_state: "MCI"
+    to_state: "CN"
+    min_delta_t_days: 180.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/dad2.70074"
+      citation_text: >-
+        Salemme S et al. The prognosis of mild cognitive impairment.
+        Alzheimer's & Dementia: DADM 2025;17(1):e70074. Reported reversion
+        rates MCI->CN: 8.7% clinical / 28.2% population. Reversion is
+        biologically real but requires interval long enough to distinguish
+        from model flicker.
+    guideline_section: "Salemme 2025, §Results, Table 3 (reversion rates)"
+    override_allowed: false
+    notes: "180-day minimum filters out model instability."
+
+inadmissible_transitions:
+
+  - from_state: "AD"
+    to_state: "MCI"
+    reason: >-
+      AD dementia is not expected to revert to MCI under standard care.
+      Apparent AD->MCI flips typically reflect model instability or
+      misclassification. (Anti-amyloid responders may show stabilization but
+      not reversion of diagnosis.)
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: "Jack 2018 NIA-AA Research Framework: clinical staging discussion."
+    guideline_section: "Jack 2018, §'Clinical staging' (pp. 547-549)"
+
+  - from_state: "AD"
+    to_state: "CN"
+    reason: >-
+      AD dementia is not expected to revert to cognitively normal status.
+      Such transitions in AI output strongly suggest misclassification.
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: "Jack 2018: clinical staging discussion."
+    guideline_section: "Jack 2018, §'Clinical staging' (pp. 547-549)"
+
+transition_priors:
+
+  # ---------------- CN -> MCI ----------------
+  # CN->MCI rates differ substantially by recruitment cohort:
+  # population/community ~5%/yr; memory-clinic referrals ~30%/yr (the
+  # clinic referral itself is a strong selection signal for impending
+  # impairment). Both verified in Chen et al. 2017 (UC Davis ADC cohort).
+  # NOTE (ERRATA E-2026-004): prior versions ≤ v1.7.0 attributed this
+  # source to "Hayden et al. 2017" with pages 13(5):573-582. The DOI
+  # 10.1016/j.jalz.2016.07.151 actually resolves to Chen Y, Denny KG,
+  # Harvey D, Farias ST, Mungas D, DeCarli C, Beckett L. Alzheimers Dement
+  # 2017;13(4):399-405. PMID 27590706. Same UC Davis ADC cohort, no
+  # Hayden among authors. The ACR values were always correct (verified
+  # verbatim against the Chen 2017 abstract); only the citation metadata
+  # was wrong. Corrected here.
+  - from_state: "CN"
+    to_state: "MCI"
+    annual_probability: 0.30
+    confidence_interval_95: [0.17, 0.54]
+    prior_type: "clinical"
+    citation:
+      citation_pmid: "27590706"
+      citation_doi: "10.1016/j.jalz.2016.07.151"
+      citation_text: >-
+        Chen Y, Denny KG, Harvey D, Farias ST, Mungas D, DeCarli C, Beckett L.
+        Progression from normal cognition to mild cognitive impairment in a
+        diverse clinic-based and community-based elderly cohort. Alzheimers
+        Dement 2017;13(4):399-405. PMID 27590706, DOI 10.1016/j.jalz.2016.07.151,
+        PMCID PMC5451154. UC Davis ADC longitudinal cohort (n=254, 2000-2015).
+        Verbatim from abstract: "The clinic-based sample showed an annual
+        conversion rate of 30% (95% CI 17%-54%) per person-year." Memory-clinic
+        referral is a strong selection signal for impending impairment.
+
+  - from_state: "CN"
+    to_state: "MCI"
+    annual_probability: 0.048
+    confidence_interval_95: [0.030, 0.080]
+    prior_type: "population"
+    citation:
+      citation_pmid: "27590706"
+      citation_doi: "10.1016/j.jalz.2016.07.151"
+      citation_text: >-
+        Chen Y, Denny KG, Harvey D, Farias ST, Mungas D, DeCarli C, Beckett L.
+        Progression from normal cognition to mild cognitive impairment in a
+        diverse clinic-based and community-based elderly cohort. Alzheimers
+        Dement 2017;13(4):399-405. PMID 27590706, PMCID PMC5451154. Verbatim
+        from abstract: "the community-based sample showed a conversion rate
+        of 5% (95% CI 3%-6%) per person-year." Cross-validated by Mitchell &
+        Shiri-Feshki 2009 (community 1-2% in general elderly; rises with age)
+        and Indianapolis Dementia Project community estimates.
+
+  # ---------------- MCI -> AD ----------------
+  # CORRECTED v1.2.0: prior v1.1.0 erroneously used Salemme 2025 cumulative
+  # incidence (41.5% over 5.2-year mean follow-up) as if it were annual.
+  # Correct values are the annual conversion rate (ACR) explicitly reported
+  # by Salemme 2025 ("ACR nearly doubled from 6% in population settings to
+  # 11% in clinical settings"). See CHANGELOG and ERRATA for full discussion.
+  - from_state: "MCI"
+    to_state: "AD"
+    annual_probability: 0.11
+    confidence_interval_95: [0.08, 0.14]
+    prior_type: "clinical"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/dad2.70074"
+      citation_text: >-
+        Salemme 2025 (Alzheimer's & Dementia: DADM 17(1):e70074):
+        annual conversion rate (ACR) = 11% in clinical settings, computed
+        as converters / person-years across 89 studies. Cross-validated by
+        Mitchell & Shiri-Feshki 2009 (specialist clinic Mayo-MCI->AD
+        ACR=8.1%) and clinical AD progression rate 13.7% person-years
+        in NACC analysis (Neurology 2022).
+
+  - from_state: "MCI"
+    to_state: "AD"
+    annual_probability: 0.06
+    confidence_interval_95: [0.04, 0.08]
+    prior_type: "population"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/dad2.70074"
+      citation_text: >-
+        Salemme 2025: annual conversion rate (ACR) = 6% in population
+        settings. Cross-validated by Mitchell & Shiri-Feshki 2009
+        (community Mayo-MCI->AD ACR=6.8%) and Indianapolis Dementia
+        Project (5.9% [95% CI 5.3-6.5%]).
+
+  # ---------------- MCI -> CN (reversion) ----------------
+  # Reversion is real and well-documented. Salemme 2025 reports clinical
+  # cumulative 8% (over mean 5.2yr fu) ≈ 2-4%/yr annualized; population
+  # cumulative 25% ≈ 5-10%/yr. We use midpoint values cross-validated by
+  # multiple community cohort studies (Singapore SLAS, Hisayama, Indianapolis).
+  - from_state: "MCI"
+    to_state: "CN"
+    annual_probability: 0.04
+    confidence_interval_95: [0.02, 0.08]
+    prior_type: "clinical"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/dad2.70074"
+      citation_text: >-
+        Salemme 2025 clinical reversion 8% (95% CI 4-11%) cumulative
+        over ~5yr fu, annualized ~2-4%. Canevelli 2016 and Malek-Ahmadi
+        2016 meta-analyses report 8-14% cumulative in clinic-based studies.
+
+  - from_state: "MCI"
+    to_state: "CN"
+    annual_probability: 0.10
+    confidence_interval_95: [0.05, 0.20]
+    prior_type: "population"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/dad2.70074"
+      citation_text: >-
+        Salemme 2025 population reversion 25% (95% CI 19-30%) cumulative
+        over ~5yr fu, annualized ~5-10%. Indianapolis Dementia Project
+        annual reversion = 18.6% (95% CI 16.7-20.4%) in elderly African
+        American community cohort (upper bound of range). Hisayama
+        5-year reversion 31.3% (≈7%/yr).
+
+  # ---------------- CN -> AD (direct, rare) ----------------
+  # Some CN individuals skip the MCI stage and progress directly to AD.
+  # Lu 2025 (NACC) reports 6.3% over 2-year mean fu in ADNI = ~3.2%/yr.
+  - from_state: "CN"
+    to_state: "AD"
+    annual_probability: 0.005
+    confidence_interval_95: [0.002, 0.015]
+    prior_type: "population"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/alz.14393"
+      citation_text: >-
+        Lu X et al. 2025 (Alz & Dem 21:e14393): 6.3% of CN individuals
+        convert directly to AD dementia without intermediate MCI stage,
+        over 2-year mean follow-up. Conservative annual rate 0.5% used
+        as prior (most fast-progressors are mis-classified at baseline).
+
+override_allowed_default: false
+
+notes: >-
+  Canonical NeuroTCS v1 rule pack. AD instantiation per NIA-AA 2018 Research
+  Framework. Validated against 12,006 real ADNI DXSUM transitions: 65 flagged
+  (0.54%), all clinically interpretable.

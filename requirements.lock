@@ -1,0 +1,58 @@
+# NeuroTCS v1.8.1 — locked dependency versions
+# ================================================
+#
+# These are the EXACT versions used to produce the four-cohort triangulation
+# locked invariants (audit_ids and cTCS values) in docs/datasheet/ad_neurotcs_datasheet.md
+# Section A. An external collaborator wanting to verify those invariants
+# bit-exactly should install these versions, NOT the floors in pyproject.toml.
+#
+# Python: 3.12.3 (Ubuntu 24.04 stock build, GCC 13.3.0)
+# Generated:  2026-05-23 (v1.8.0 lock — four-cohort triangulation)
+# Updated:    2026-05-24 (v1.8.1 — documentation, test hygiene, no dep changes)
+#
+# Verified pytest counts (the count depends on whether cohort env vars are set):
+#   397 passed = framework-only (no NEUROTCS_* env vars set; cohort tests skip)
+#   404 passed = full suite (all four NEUROTCS_* env vars set + files exist)
+# Both outcomes are correct behavior. v1.8.0 framework count was 407 due to
+# a hardcoded fallback path that v1.8.1 removed (Issue 5+14+20).
+#
+# v1.8.0 → v1.8.1 changes:
+#   - same pinned versions (no dependency bumps; verified compatibility)
+#   - documentation, test hygiene, CI matrix, reference_adapters reorganization
+#   - audit invariants UNCHANGED — all 5 cohorts byte-exact under v1.8.1
+#
+# Usage:
+#     pip install -r requirements.lock --break-system-packages
+#     pip install -e .
+#     # framework-only (expect 397 passed):
+#     pytest tests/ -q
+#     # full suite (expect 404 passed):
+#     NEUROTCS_MIRIAD_DIR=<path> NEUROTCS_NACC_CSV=<path> \
+#     NEUROTCS_ADNI_DXSUM_RDA=<path> NEUROTCS_OASIS3_CDR=<path> \
+#     pytest tests/ -q
+#
+# Floor versions live in pyproject.toml; floors are what NeuroTCS DECLARES as
+# minimum compatible. Pins below are what NeuroTCS was TESTED with. The pins
+# are the canonical reproducible environment for verifying locked invariants.
+
+# Core data + schema stack
+pydantic==2.13.4
+PyYAML==6.0.3
+pandas==3.0.2
+pyarrow==24.0.0
+jsonschema==4.26.0
+pyreadr==0.5.6
+
+# Numeric stack
+numpy==2.4.4
+scipy==1.17.1
+
+# Test + lint
+pytest==9.0.3
+ruff==0.15.13
+
+# NOTE: pytest-cov and fhir.resources are declared in pyproject.toml but are
+# optional for verifying invariants. They are NOT pinned here because the
+# AD-lock test suite does not require them. An external collaborator running
+# just the verification pipeline can omit them; a developer extending the
+# package should install them per pyproject.toml.

@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install neurotcs (editable)
+        run: pip install -e .
+
+      - name: Install dev tools
+        run: pip install pytest ruff
+
+      - name: Lint with ruff (blocking — fails CI on any violation)
+        run: ruff check src/ tests/ scripts/
+
+      # --- Single source of truth for test discovery (v1.7.1 fix) ---
+      # Replaces per-file invocations so every test under tests/ is
+      # gated by CI automatically as new modules ship. Includes the
+      # five v1.7.0 module test suites (sample_size, fairness,
+      # silent_deployment, scanner_factorial, threshold_derivation)
+      # and the locked OASIS-3 invariant test.
+      - name: Run full test suite (pytest auto-discovery)
+        run: python -m pytest tests/ -q
+
+      - name: Verify all AD rule packs load
+        run: python scripts/ci/verify_rule_packs.py
+
+      - name: Verify audit_core + v1.7.x public API
+        run: python scripts/ci/verify_public_api.py
+
+      - name: Build wheel + sdist
+        run: |
+          pip install build
+          python -m build
+          ls -la dist/
+
+  citations:
+    name: Citation resolver (Crossref + PubMed EUtils)
+    runs-on: ubuntu-latest
+    # Don't block merges if Crossref is down; gate releases via manual review.
+    # When the citation resolver returns non-zero, the CI run shows a warning
+    # but doesn't fail the build — this avoids upstream outages blocking work
+    # while still surfacing citation drift loudly in PR view.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML requests
+
+      - name: Verify every citation_pmid + citation_doi resolves and matches YAML metadata
+        run: python scripts/verify_citations.py --offline

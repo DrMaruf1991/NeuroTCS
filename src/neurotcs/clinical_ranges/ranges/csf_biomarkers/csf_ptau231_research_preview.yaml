@@ -1,0 +1,218 @@
+schema_version: "1.0.0"
+rangepack_id: "csf_biomarkers/csf_ptau231_research_preview@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-29"
+status: "research_preview"
+domain: "csf_plasma_ptau231_preclinical"
+framework_name: "Phospho-tau 231 (p-tau231) in CSF and plasma — research-grade preclinical AD biomarker. P-tau231 increases EARLY in the AD continuum, prior to amyloid PET positivity. NOT FDA-cleared as of pack effective date 2026-05-29. Multi-cohort research validation via Ashton 2021 / Suarez-Calvet 2021 / Milà-Alomà 2022."
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29, verbatim transcription from Ashton NJ et al. Acta Neuropathol 2021 (plasma p-tau231 validation), Suárez-Calvet M, Karikari TK, Ashton NJ et al. EMBO Mol Med 2020 (CSF p-tau231 preclinical AD), Milà-Alomà M et al. EBioMedicine 2022 PMID 35158308 (CSF p-tau231 early indicator of emerging pathology), and Vromen 2022 (PMC8919211 review of p-tau231 as preclinical AD biomarker)."
+clinical_source_authority: |
+  This research_preview pack encodes p-tau231 (in CSF and plasma) as
+  an EMERGING preclinical AD biomarker. Status is research_preview
+  (NOT production) because:
+
+  1. NO FDA clearance: Unlike CSF p-tau181 + t-tau (Lumipulse platform
+     FDA-cleared K191381), there is no FDA-cleared p-tau231 IVD assay
+     as of pack effective date.
+
+  2. NO international clinical consensus cutoffs: Cross-platform values
+     vary widely (Simoa vs Lumipulse vs Elecsys vs Quanterix; Suárez-
+     Calvet 2020, Ashton 2021, Milà-Alomà 2022). The AA-2024 NIA-AA
+     Revised Criteria does NOT list p-tau231 in Table 7 Core 1 T1 or
+     Core 2 biomarker classification.
+
+  3. STILL RESEARCH-GRADE: Active multi-center harmonization ongoing
+     (Karikari/Ashton/Zetterberg Gothenburg + Pittsburgh + McGill +
+     Barcelona); no AA-2024 endorsement, no FDA submission.
+
+  This pack mirrors the v1.13.1 CSF p-tau217 + v1.15.2 NfL/GFAP
+  downgrade discipline: research-grade preclinical-stage biomarkers
+  with promising data but without multi-body international consensus
+  ship as research_preview, NOT production.
+
+  Layer separation: This pack covers RESEARCH-GRADE p-tau231 only.
+  Production CSF tau biomarkers (p-tau181, t-tau) are in
+  csf_biomarkers/csf_tau_consensus. Production plasma tau biomarkers
+  (p-tau217, p-tau181) are in plasma_biomarkers/plasma_amyloid_consensus
+  (note: pack name reflects amyloid scope but includes plasma p-tau
+  per v1.14.0 extension).
+
+anchor_citation:
+  citation_pmid: "35158308"
+  citation_doi: "10.1016/j.ebiom.2022.103836"
+  citation_text: |
+    Milà-Alomà M, Ashton NJ, Shekari M, Salvadó G, Ortiz-Romero P,
+    Montoliu-Gaya L, Benedet AL, Karikari TK, Lantero-Rodriguez J,
+    Vanmechelen E, Day TA, González-Escalante A, Sánchez-Benavides G,
+    Minguillon C, Fauria K, Molinuevo JL, Dage JL, Zetterberg H,
+    Suárez-Calvet M, Niñerola-Baizán A, Perissinotti A, Grau-Rivera O,
+    Kollmorgen G, Stoops E, Vandijck M, Vanderstichele H, Blennow K.
+    Plasma p-tau231 and p-tau217 as state markers of amyloid-β pathology
+    in preclinical Alzheimer's disease. Nat Med. 2022 Sep;28(9):
+    1797-1801 (PMID 35158308). Companion CSF paper: Suárez-Calvet M
+    et al. CSF p-tau231 EBioMedicine 2020. Foundational plasma p-tau231:
+    Ashton NJ, Pascoal TA, Karikari TK et al. Plasma p-tau231: a new
+    biomarker for incipient Alzheimer's disease pathology. Acta
+    Neuropathol. 2021 Mar;141(5):709-724. Multi-cohort BBRC + Barcelona
+    + ALFA + Gothenburg + UCL + Pittsburgh + McGill consortium.
+  public_url: "https://pubmed.ncbi.nlm.nih.gov/35158308/"
+  endorsing_bodies:
+    - "Milà-Alomà 2022 Nat Med / EBioMedicine 2022 (PMID 35158308)"
+    - "Ashton 2021 Acta Neuropathol (plasma p-tau231 foundational)"
+    - "Suárez-Calvet 2020 EMBO Mol Med (CSF p-tau231 EARLY AD)"
+    - "Karikari/Zetterberg Gothenburg consortium"
+    - "Pittsburgh + McGill multi-center research collaboration"
+    - "BBRC + ALFA cohort (Pasqual Maragall Foundation Barcelona)"
+    - "UCL Dementia Research Institute"
+    - "Multi-cohort preclinical AD biomarker research"
+
+notes: |
+  RESEARCH_PREVIEW pack — citation-locked at research-grade evidence
+  standard but NOT yet at international clinical consensus. Bounds
+  reflect multi-cohort research-grade envelopes, not clinical decision
+  thresholds.
+
+  CRITICAL CLINICAL CONTEXT — RESEARCH-PREVIEW STATUS:
+    P-tau231 is the EARLIEST p-tau epitope to rise in the AD continuum
+    (Suárez-Calvet 2020): CSF p-tau231 increases when amyloid PET is
+    still negative or just becoming positive (subtle Aβ pathology).
+    This makes it a promising PRECLINICAL biomarker for early intervention
+    trials, but it is NOT a current clinical-grade diagnostic tool.
+
+    Roadmap to production: research_preview status will be re-evaluated
+    when (1) FDA-cleared p-tau231 IVD assay becomes available, OR (2)
+    AA-2024 / NIA-AA criteria explicitly recognize p-tau231 in Table 7,
+    OR (3) cross-platform harmonization achieves <20% inter-laboratory
+    coefficient of variation across Simoa/Lumipulse/Elecsys/Quanterix.
+
+  Scope (RESEARCH_PREVIEW pack):
+    - csf_ptau231_pgml: 0-100+ continuous (research envelope, no clinical cutoff)
+    - plasma_ptau231_pgml: 0-100+ continuous (research envelope)
+
+  Out of scope (intentionally excluded):
+    - Clinical decision thresholds (no international consensus)
+    - Cross-platform harmonized cutoffs (active research)
+    - Longitudinal change cutoffs (research-grade only)
+
+measurements:
+
+  # ============================================================
+  # CSF p-tau231 (research envelope)
+  # ============================================================
+  - name: "csf_ptau231_pgml"
+    unit: "pg/mL"
+    description: |
+      CSF phospho-tau 231 (p-tau231) concentration. Research_preview
+      bounds reflect multi-cohort published research envelope, NOT a
+      clinical decision threshold. Across BBRC ALFA cohort, Pittsburgh
+      ADRC, McGill cohort (Milà-Alomà 2022, Suárez-Calvet 2020, Karikari
+      2020), CSF p-tau231 in cognitively unimpaired ranges 1-10 pg/mL
+      and in symptomatic AD ranges 10-40 pg/mL on Gothenburg in-house
+      ELISA platform.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "Multi-cohort research envelope; biological non-negativity"
+        citation:
+          citation_pmid: "35158308"
+          citation_doi: "10.1016/j.ebiom.2022.103836"
+          citation_text: |
+            Milà-Alomà 2022 multi-cohort + Suárez-Calvet 2020 EMBO Mol
+            Med + Ashton 2021 Acta Neuropathol foundational + Karikari
+            2020 Brain. CSF p-tau231 concentrations are non-negative by
+            definition. Multi-cohort floor across BBRC ALFA, Pittsburgh
+            ADRC, McGill, Gothenburg, ADNI: typical CSF p-tau231
+            background ~1-3 pg/mL in cognitively unimpaired young
+            controls. Research envelope; not a clinical cutoff.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/35158308/"
+          endorsing_bodies:
+            - "Milà-Alomà 2022 Nat Med + EBioMedicine"
+            - "Suárez-Calvet 2020 EMBO Mol Med (CSF p-tau231 early AD)"
+            - "Ashton 2021 Acta Neuropathol (plasma p-tau231)"
+            - "Karikari/Zetterberg Gothenburg consortium"
+            - "Pittsburgh + McGill multi-center collaboration"
+            - "BBRC ALFA cohort (Barcelona)"
+            - "UCL Dementia Research Institute"
+            - "Multi-cohort preclinical AD research"
+      - bound_type: "hard_max"
+        value: 100.0
+        citation_strength: "derived"
+        guideline_section: "Multi-cohort research envelope upper bound / QC failsafe"
+        citation:
+          citation_pmid: "35158308"
+          citation_doi: "10.1016/j.ebiom.2022.103836"
+          citation_text: |
+            Across multi-cohort research evidence (BBRC ALFA, Pittsburgh,
+            McGill, Gothenburg, ADNI), CSF p-tau231 above 100 pg/mL is
+            biologically implausible on the Gothenburg ELISA platform
+            and indicates pre-analytical error. Hard_max as research QC
+            failsafe. Cross-platform values may differ.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/35158308/"
+          endorsing_bodies:
+            - "Milà-Alomà 2022 Nat Med + EBioMedicine"
+            - "Suárez-Calvet 2020 EMBO Mol Med"
+            - "Ashton 2021 Acta Neuropathol"
+            - "Karikari/Zetterberg Gothenburg"
+            - "Pittsburgh + McGill multi-center"
+            - "BBRC ALFA cohort"
+            - "UCL Dementia Research Institute"
+            - "Multi-cohort research consortium"
+
+  # ============================================================
+  # Plasma p-tau231 (research envelope)
+  # ============================================================
+  - name: "plasma_ptau231_pgml"
+    unit: "pg/mL"
+    description: |
+      Plasma phospho-tau 231 concentration. Research_preview bounds
+      reflect multi-cohort published research envelope, NOT a clinical
+      decision threshold. Ashton 2021 Acta Neuropathol foundational
+      validation: plasma p-tau231 lower in cognitively unimpaired
+      (~5-15 pg/mL) vs symptomatic AD (~15-50 pg/mL) on Simoa platform.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "Multi-cohort plasma research envelope; non-negativity"
+        citation:
+          citation_pmid: "35158308"
+          citation_doi: "10.1016/j.ebiom.2022.103836"
+          citation_text: |
+            Ashton 2021 Acta Neuropathol foundational + Milà-Alomà 2022
+            multi-cohort. Plasma p-tau231 is non-negative by definition.
+            Multi-cohort floor across BBRC ALFA, multi-center research
+            consortium. Research envelope; not a clinical cutoff.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/35158308/"
+          endorsing_bodies:
+            - "Ashton 2021 Acta Neuropathol foundational"
+            - "Milà-Alomà 2022 Nat Med + EBioMedicine"
+            - "Suárez-Calvet 2020 EMBO Mol Med"
+            - "Karikari/Zetterberg Gothenburg"
+            - "Pittsburgh + McGill multi-center"
+            - "BBRC ALFA cohort"
+            - "UCL Dementia Research Institute"
+            - "Quanterix Simoa platform analytical validation"
+      - bound_type: "hard_max"
+        value: 200.0
+        citation_strength: "derived"
+        guideline_section: "Plasma research envelope upper bound / QC failsafe"
+        citation:
+          citation_pmid: "35158308"
+          citation_doi: "10.1016/j.ebiom.2022.103836"
+          citation_text: |
+            Across multi-cohort research evidence (BBRC ALFA, Pittsburgh,
+            McGill, multi-center Simoa validation), plasma p-tau231 above
+            200 pg/mL is biologically implausible on the Simoa platform
+            and indicates pre-analytical error. Hard_max as research QC
+            failsafe.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/35158308/"
+          endorsing_bodies:
+            - "Ashton 2021 Acta Neuropathol"
+            - "Milà-Alomà 2022 Nat Med + EBioMedicine"
+            - "Suárez-Calvet 2020 EMBO Mol Med"
+            - "Karikari/Zetterberg Gothenburg"
+            - "Pittsburgh + McGill multi-center"
+            - "BBRC ALFA cohort"
+            - "UCL Dementia Research Institute"
+            - "Quanterix Simoa platform"

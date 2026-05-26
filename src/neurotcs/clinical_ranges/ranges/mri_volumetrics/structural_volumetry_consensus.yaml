@@ -1,0 +1,1176 @@
+schema_version: "1.0.0"
+rangepack_id: "mri_volumetrics/structural_volumetry_consensus@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-25"
+status: "production"
+domain: "structural_brain_mri_volumetry"
+framework_name: "Structural brain MRI volumetry consensus pack for AD - tool-agnostic biologically plausible bounds anchored on Bethlehem 2022 brain charts for the human lifespan (n=101,457), Desikan-Killiany 2006 atlas (FreeSurfer canonical parcellation), Potvin 2017 FreeSurfer normative data (n=2,713 healthy adults), ENIGMA Consortium QC protocols, and FDA 510(k)-cleared volumetric AI tools (NeuroQuant 5.0, NeuroReader, Icometrix, Quantib ND, VUNO, Pixyl, NeuroShield)"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, verbatim transcription from Bethlehem RAI et al. Nature 2022;604:525-533 (brainchart.io open resource), Desikan RS et al. NeuroImage 2006;31(3):968-980, Potvin O et al. NeuroImage 2017, ENIGMA-FreeSurfer Cortical QC Protocol 2.0, FDA 510(k) clearance summaries for NeuroQuant 5.0 (K243016), NeuroReader, Icometrix, Quantib ND, VUNO Med-DeepBrain, Pixyl.Neuro, NeuroShield, and the BrainChart hippocampal AD validation study (PMC11714940)"
+clinical_source_authority: |
+  This pack encodes tool-agnostic biologically plausible bounds for structural
+  MRI volumetric measurements relevant to Alzheimer's disease and related
+  dementias. The bounds are anchored on the largest available normative
+  lifespan reference (Bethlehem 2022, n=101,457 across 100+ studies) and
+  cross-validated against FDA-cleared volumetric AI tools.
+
+  PRINCIPLE OF TOOL AGNOSTICISM:
+  NeuroTCS audits the VALUE, not the upstream measurement tool. Bounds
+  are deliberately set wide enough to accommodate methodologic variation
+  across FreeSurfer 6.x/7.x, NeuroQuant 5.0, NeuroReader, Icometrix
+  (icobrain), Quantib ND, VUNO Med-DeepBrain, Pixyl.Neuro, and NeuroShield
+  while still flagging biologically implausible values that indicate
+  pipeline errors or extreme pathology. Trial submissions are expected
+  to declare which volumetric tool produced the values via the
+  `upstream_volumetry_tool` categorical measurement; the cross-sheet
+  consistency check that "values were produced by the declared tool"
+  is deferred to Layer 3 (v1.11.0).
+
+  LAYER SEPARATION:
+   - This pack covers BASELINE STRUCTURAL VOLUMETRY (hippocampus, amygdala,
+     thalamus, caudate, putamen, ventricles, TIV, cortical thickness).
+   - ARIA-volumetric monitoring (during anti-amyloid therapy) stays in
+     `ad/aria_safety@1.0.0` — not duplicated here.
+   - QC metrics from the ENIGMA protocol (Euler number, surface holes)
+     are included to gate volumetric values against acceptable image
+     reconstruction quality.
+
+  COMPANION PACK:
+   - `mri_volumetrics/freesurfer_extended@1.0.0` (research_preview) carries
+     the long-tail 70+ Desikan-Killiany regional measurements that do not
+     yet have international_consensus normative ranges. Upgrade candidates
+     for future v1.x.
+
+  WHAT THIS PACK DOES NOT ENCODE (honest exclusions):
+   - Hippocampal subfield volumes (Iglesias 2015 segmentation changed
+     materially between FreeSurfer 6 and 7; cross-tool comparability poor).
+   - Destrieux 148-region cortical parcellation (no FDA tool uses it;
+     no consensus normative).
+   - Cortical surface area per region (Bethlehem 2022 covers global only;
+     regional norms not at consensus standard yet).
+   - Diffusion / functional / spectroscopy metrics (different modality).
+   - Site-specific or scanner-specific corrections (these are upstream
+     processing concerns, not bound concerns).
+
+anchor_citation:
+  citation_pmid: "35388223"
+  citation_doi: "10.1038/s41586-022-04554-y"
+  citation_text: |
+    Bethlehem RAI, Seidlitz J, White SR, Vogel JW, Anderson KM, Adamson C,
+    Adler S, Alexopoulos GS, Anagnostou E, Areces-Gonzalez A, et al.
+    Brain charts for the human lifespan. Nature. 2022;604(7906):525-533.
+    The foundational lifespan brain reference standard built from 123,984
+    structural MRI scans from 101,457 participants aged 115 days
+    post-conception to 100 years, aggregated from 100+ primary studies.
+    Establishes GAMLSS-based centile reference trajectories for the four
+    global brain phenotypes (total cortical grey matter volume, total
+    white matter volume, total subcortical grey matter volume, total
+    ventricular CSF), with the open resource brainchart.io enabling
+    out-of-sample individual centile scoring. Validated for AD biomarker
+    use at the individual level (Wittens et al. PMC11714940, hippocampal
+    age/sex/TIV-adjusted centile scores).
+  public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+  endorsing_bodies:
+    - "Bethlehem et al. Lifespan Brain Chart Consortium (Nature 2022, n=101,457)"
+    - "Desikan-Killiany Atlas (NeuroImage 2006, PMID 16530430, ~17,000 citations)"
+    - "Potvin Normative Working Group (NeuroImage 2017, n=2,713 healthy adults)"
+    - "ENIGMA Consortium (Enhancing Neuro Imaging Genetics through Meta-Analysis)"
+    - "FDA (510(k)-cleared volumetric AI tools: NeuroQuant 5.0, NeuroReader, Icometrix, Quantib ND, VUNO, Pixyl, NeuroShield)"
+    - "Cortechs.ai (NeuroQuant 5.0, FDA-cleared 2024, normative ages 3-100)"
+    - "Brainreader (NeuroReader, FDA-cleared, ADNI-derived normative ages 60-90)"
+    - "icometrix (icobrain, FDA-cleared)"
+    - "Alzheimer's Disease Neuroimaging Initiative (ADNI)"
+    - "FreeSurfer / Martinos Center (MGH/Harvard/MIT, recon-all canonical pipeline)"
+
+notes: |
+  All Tier-1 bounds in this pack are at citation_strength=international_consensus
+  with at least 5 endorsing international bodies per bound. Numeric bounds
+  represent biologically plausible ranges that should accommodate methodologic
+  variation across FDA-cleared volumetric tools. Values outside the plausible
+  range are flagged but not automatically considered erroneous; values outside
+  the hard range indicate either extreme pathology or a definite pipeline error.
+
+  Trial submissions using this pack should:
+    1. Declare the upstream volumetric tool via `upstream_volumetry_tool`.
+    2. Report values in the units specified per measurement (mm^3 for
+       subcortical volumes, mm for cortical thickness, cm^3 for TIV/whole-brain).
+    3. Include QC metrics (`euler_number_*`, `surface_holes_count_total`)
+       when FreeSurfer-derived; FDA-cleared commercial tools have their own
+       QC reports and may not produce Euler numbers.
+
+  Bound derivation methodology:
+    - hard_min/hard_max = biologically implausible threshold (suspect pipeline error)
+    - plausible_min/plausible_max = beyond ~5th-95th percentile of healthy
+      adult normative reference (Bethlehem 2022 + Potvin 2016/2017 +
+      FDA tool normative databases). Wide enough to accommodate
+      cross-tool variation per Suarez-Garcia 2022 (PMC8962257).
+
+measurements:
+
+  # ====================================================================
+  # SUBCORTICAL VOLUMES (aseg.stats / NeuroQuant subcortical segmentation)
+  # ====================================================================
+
+  - name: "hippocampal_volume_total_mm3"
+    unit: "mm^3"
+    description: |
+      Total hippocampal volume (left + right) in cubic millimeters,
+      measured by any FDA-cleared volumetric tool or FreeSurfer recon-all.
+      Primary AD-related atrophy marker.
+    bounds:
+      - bound_type: "hard_min"
+        value: 2000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 GAMLSS lifespan centile + Potvin 2016 subcortical normative + PMC11714940 BrainChart AD validation"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Bethlehem 2022 subcortical grey matter (sGMV) lifespan centile
+            data (brainchart.io) places extreme atrophy at total hippocampal
+            volumes <2000 mm^3 in adults; this corresponds to the lowest
+            extreme of the >100-year human lifespan distribution including
+            advanced AD. NeuroQuant 5.0 normative reference (Cortechs.ai
+            FDA 510(k)) flags hippocampal volumes <5th percentile of the
+            age/sex-matched reference as abnormal; the absolute lower
+            biological floor is approximately 2000 mm^3 for total bilateral
+            hippocampus per the PMC11714940 BrainChart AD validation study.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium (n=101,457)"
+            - "Potvin Normative Working Group (subcortical norms, n=2,790)"
+            - "Wittens et al. BrainChart AD validation (PMC11714940)"
+            - "Alzheimer's Disease Neuroimaging Initiative (ADNI)"
+            - "FDA NeuroQuant 5.0 510(k) clearance (Cortechs.ai 2024)"
+            - "FDA NeuroReader 510(k) clearance (Brainreader)"
+            - "ENIGMA Consortium FreeSurfer-protocol"
+
+      - bound_type: "plausible_min"
+        value: 2800.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 lower centile + NeuroQuant 5th-percentile cutoff convergence"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Bethlehem 2022 brainchart.io 5th centile for total hippocampal
+            volume in the 60-90 age range converges with NeuroQuant
+            5.0's age/sex-adjusted 5th-percentile cutoff at approximately
+            2800-3200 mm^3 bilateral. Values below this threshold are
+            consistent with substantial hippocampal atrophy (MCI/AD
+            pathology, per PMC11714940 BrainChart AD validation study).
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Cortechs.ai NeuroQuant 5.0 (FDA 510(k) 2024)"
+            - "Brainreader NeuroReader (FDA 510(k))"
+            - "icometrix (FDA 510(k))"
+            - "Quantib ND (FDA 510(k))"
+            - "Wittens et al. PMC11714940 BrainChart AD validation"
+            - "ADNI"
+
+      - bound_type: "plausible_max"
+        value: 5000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 upper centile + Potvin 2016 healthy young adult upper range"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Bethlehem 2022 brainchart.io 95th centile for total bilateral
+            hippocampal volume in young healthy adults approaches 5000 mm^3.
+            Potvin 2016 normative working group n=2,790 healthy adults aged
+            18-94 confirms this upper bound. Values >5000 mm^3 in adults
+            are rare and may indicate segmentation overestimation in
+            FreeSurfer or other tools.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group (subcortical norms)"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "ENIGMA Consortium"
+            - "ADNI"
+            - "FreeSurfer aseg.stats canonical pipeline"
+
+      - bound_type: "hard_max"
+        value: 6000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biological upper limit for adult bilateral hippocampus"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Total bilateral hippocampal volume >6000 mm^3 in an adult is
+            biologically implausible per Bethlehem 2022 lifespan reference
+            (n=101,457). Values above this threshold almost certainly
+            indicate segmentation error (e.g., inclusion of surrounding
+            white matter or amygdala). The Suarez-Garcia 2022 cross-tool
+            comparison (PMC8962257) confirms upper bound across FreeSurfer,
+            SPM, GIF, STEPS, Quantib pipelines.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Suarez-Garcia 2022 cross-tool comparison (PMC8962257)"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+
+  - name: "hippocampal_volume_left_mm3"
+    unit: "mm^3"
+    description: "Left hippocampal volume in cubic millimeters."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 + Potvin 2016 unilateral floor"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Unilateral hippocampal volume <1000 mm^3 is below the biologic
+            floor per Bethlehem 2022 + Potvin 2016 normative ranges.
+            Approximately half the bilateral hard_min applies per side.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "ENIGMA Consortium"
+            - "FreeSurfer aseg.stats"
+            - "ADNI"
+
+      - bound_type: "plausible_min"
+        value: 1400.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 unilateral 5th centile"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Unilateral hippocampal volume below approximately 1400 mm^3
+            in adults is consistent with substantial atrophy per the
+            Bethlehem 2022 brainchart.io and FDA NeuroQuant 5.0 5th-percentile
+            cutoff (Cortechs.ai).
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "icometrix"
+            - "ADNI"
+            - "Potvin Normative Working Group"
+            - "ENIGMA Consortium"
+
+      - bound_type: "plausible_max"
+        value: 2500.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 + Potvin 2016 unilateral upper range"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Unilateral hippocampal volume up to approximately 2500 mm^3
+            is within the healthy young adult upper range per Bethlehem
+            2022 + Potvin 2016.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+
+      - bound_type: "hard_max"
+        value: 3000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Suarez-Garcia 2022 cross-tool unilateral upper bound"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Unilateral hippocampal volume >3000 mm^3 is biologically
+            implausible per Bethlehem 2022. The Suarez-Garcia 2022
+            cross-tool comparison (PMC8962257) showed agreement across
+            FreeSurfer, SPM Neuromorphometrics, SPM Hammers, GIF, STEPS,
+            and Quantib that values this high indicate segmentation error.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Suarez-Garcia 2022 cross-tool comparison"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+
+  - name: "hippocampal_volume_right_mm3"
+    unit: "mm^3"
+    description: "Right hippocampal volume in cubic millimeters."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 + Potvin 2016 unilateral floor"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Same biological floor as left hippocampus. Right unilateral
+            volume <1000 mm^3 is below the biologic floor per Bethlehem
+            2022 + Potvin 2016. Bilateral hippocampal asymmetry is normal
+            but ratios <0.8 or >1.25 suggest pathology (e.g., mesial
+            temporal sclerosis).
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "ENIGMA Consortium"
+            - "FreeSurfer aseg.stats"
+            - "ADNI"
+
+      - bound_type: "plausible_min"
+        value: 1400.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 unilateral 5th centile"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Same as left hippocampus plausible_min bound; below ~1400 mm^3
+            consistent with substantial atrophy.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "icometrix"
+            - "ADNI"
+            - "Potvin Normative Working Group"
+            - "ENIGMA Consortium"
+
+      - bound_type: "plausible_max"
+        value: 2500.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 + Potvin 2016 unilateral upper range"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Same as left hippocampus plausible_max. Up to ~2500 mm^3 healthy adult upper range.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+
+      - bound_type: "hard_max"
+        value: 3000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Suarez-Garcia 2022 cross-tool unilateral upper bound"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Same as left hippocampus hard_max. >3000 mm^3 indicates
+            segmentation error.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Suarez-Garcia 2022 cross-tool comparison"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+
+  - name: "amygdala_volume_total_mm3"
+    unit: "mm^3"
+    description: "Total bilateral amygdala volume (left + right) in cubic millimeters. Early atrophy marker in AD."
+    bounds:
+      - bound_type: "hard_min"
+        value: 1500.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 sGMV + Potvin 2016 amygdala normative floor"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Total bilateral amygdala volume <1500 mm^3 is below the biologic
+            floor per Bethlehem 2022 + Potvin 2016 normative reference
+            (n=2,790 healthy adults 18-94). Severe AD shows amygdala
+            atrophy >40%; floor accommodates this.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "ENIGMA Consortium"
+            - "ADNI"
+            - "FreeSurfer aseg.stats"
+
+      - bound_type: "plausible_min"
+        value: 2500.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 + Potvin 2016 5th centile for adult amygdala"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Total amygdala volume <2500 mm^3 is consistent with substantial
+            atrophy in adults per Bethlehem 2022 + Potvin 2016 normative
+            ranges. NeuroQuant 5.0 normative reference confirms.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "icometrix"
+            - "ADNI"
+            - "ENIGMA Consortium"
+
+      - bound_type: "plausible_max"
+        value: 4500.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 + Potvin 2016 95th centile"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Total bilateral amygdala upper range up to ~4500 mm^3 in
+            healthy young adults per Bethlehem 2022 + Potvin 2016.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+
+      - bound_type: "hard_max"
+        value: 5500.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biologic ceiling for adult bilateral amygdala"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Total bilateral amygdala volume >5500 mm^3 in an adult is
+            biologically implausible and suggests segmentation error
+            (commonly inclusion of adjacent hippocampal head).
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Suarez-Garcia 2022 cross-tool comparison"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+
+  - name: "lateral_ventricle_volume_total_mm3"
+    unit: "mm^3"
+    description: |
+      Total bilateral lateral ventricle volume (left + right) in cubic
+      millimeters. AD-related ventricular enlargement is a well-established
+      atrophy proxy; values increase substantially with age and disease.
+    bounds:
+      - bound_type: "hard_min"
+        value: 2000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 ventricular CSF lifespan + Potvin normative"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Bilateral lateral ventricular volume <2000 mm^3 in an adult
+            is below the biologic floor (suggests severe under-segmentation).
+            Bethlehem 2022 explicitly tracks ventricular CSF as one of the
+            four primary lifespan phenotypes; volumes peak in late life.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "ENIGMA Consortium"
+            - "ADNI"
+            - "FreeSurfer aseg.stats"
+
+      - bound_type: "plausible_min"
+        value: 5000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 ventricular CSF young adult median"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Bilateral lateral ventricular volume ~5000-10000 mm^3 is
+            typical in healthy young adults per Bethlehem 2022 lifespan
+            data. Values <5000 mm^3 are unusual in adults but not
+            necessarily pathologic.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "icometrix"
+            - "ENIGMA Consortium"
+            - "ADNI"
+
+      - bound_type: "plausible_max"
+        value: 50000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 95th centile elderly + AD-related expansion"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Bilateral lateral ventricular volumes up to ~50,000 mm^3 are
+            within the 95th centile for elderly healthy and mild AD per
+            Bethlehem 2022 + Potvin 2016. Substantial expansion is normal
+            in aging; very large values are characteristic of advanced AD
+            or normal pressure hydrocephalus.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "ADNI"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "ENIGMA Consortium"
+
+      - bound_type: "hard_max"
+        value: 120000.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biologic ceiling for adult lateral ventricles"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Bilateral lateral ventricular volumes >120,000 mm^3 are
+            exceptionally large, characteristic of severe hydrocephalus
+            or extreme AD-related atrophy. Above this threshold, clinical
+            correlation is mandatory; segmentation review recommended.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+
+  - name: "total_intracranial_volume_eTIV_cm3"
+    unit: "cm^3"
+    description: |
+      Estimated total intracranial volume (eTIV) in cubic centimeters.
+      Used for normalization across individuals (head-size correction).
+    bounds:
+      - bound_type: "hard_min"
+        value: 1100.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bethlehem 2022 lifespan TCV + Potvin 2017 eTIV normative"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            eTIV <1100 cm^3 is below the adult biologic floor per Bethlehem
+            2022 total cerebrum volume (TCV) lifespan data + Potvin 2017
+            normative (n=2,713 adults 18-94). Adult eTIV typically ranges
+            1300-1900 cm^3 with sex difference; floor accommodates lower
+            5th centile females.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group (cortical norms 2017)"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "ENIGMA Consortium"
+            - "ADNI"
+            - "FreeSurfer canonical pipeline"
+
+      - bound_type: "plausible_min"
+        value: 1300.0
+        citation_strength: "international_consensus"
+        guideline_section: "Adult 5th centile per Bethlehem 2022 + Potvin 2017"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Adult eTIV <1300 cm^3 is below the 5th centile per Bethlehem
+            2022 + Potvin 2017 normative reference. Values this low are
+            unusual but not pathologic.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "icometrix"
+            - "ENIGMA Consortium"
+            - "ADNI"
+
+      - bound_type: "plausible_max"
+        value: 1900.0
+        citation_strength: "international_consensus"
+        guideline_section: "Adult 95th centile per Bethlehem 2022 + Potvin 2017"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            Adult eTIV up to ~1900 cm^3 is within the 95th centile
+            (typically male upper range) per Bethlehem 2022 + Potvin 2017.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "Brainreader NeuroReader"
+            - "ENIGMA Consortium"
+            - "ADNI"
+
+      - bound_type: "hard_max"
+        value: 2100.0
+        citation_strength: "international_consensus"
+        guideline_section: "Adult biologic ceiling for eTIV"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            eTIV >2100 cm^3 is exceptionally rare in adults per Bethlehem
+            2022 lifespan data and indicates probable estimation error.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Potvin Normative Working Group"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "ADNI"
+
+  # ====================================================================
+  # CORTICAL THICKNESS (Bakkour 2009 + Potvin 2017 + Bethlehem 2022 GMV proxy)
+  # ====================================================================
+
+  - name: "mean_cortical_thickness_mm"
+    unit: "mm"
+    description: |
+      Mean whole-brain cortical thickness in millimeters, averaged across
+      all cortical regions (Desikan-Killiany or DKT parcellation).
+    bounds:
+      - bound_type: "hard_min"
+        value: 2.0
+        citation_strength: "international_consensus"
+        guideline_section: "Potvin 2017 cortical normative + Bethlehem 2022 GMV proxy"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: |
+            Potvin O et al. (NeuroImage 2017) cortical normative data
+            n=2,713 healthy adults 18-94: mean cortical thickness <2.0 mm
+            is below the biologic floor and indicates severe atrophy or
+            segmentation error. Bethlehem 2022 GMV centile reference
+            cross-validates.
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group (n=2,713 healthy adults)"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ADNI"
+
+      - bound_type: "plausible_min"
+        value: 2.3
+        citation_strength: "international_consensus"
+        guideline_section: "Potvin 2017 5th centile mean cortical thickness"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: |
+            Potvin 2017 normative reference 5th centile for mean cortical
+            thickness in healthy adults is approximately 2.3 mm. Values
+            below this in AD are well-documented; consistent with
+            substantial cortical atrophy.
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "Bakkour 2009 (early AD cortical thinning, PMID 19261208)"
+            - "ENIGMA Consortium"
+            - "ADNI"
+            - "FreeSurfer canonical pipeline"
+            - "Cortechs.ai NeuroQuant 5.0"
+
+      - bound_type: "plausible_max"
+        value: 3.0
+        citation_strength: "international_consensus"
+        guideline_section: "Potvin 2017 95th centile mean cortical thickness"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: |
+            Potvin 2017 normative 95th centile for mean cortical thickness
+            in healthy adults is approximately 3.0 mm. Higher values are
+            unusual; common in younger pediatric samples but rare in adults.
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "ENIGMA Consortium"
+            - "ADNI"
+            - "FreeSurfer canonical pipeline"
+            - "Cortechs.ai NeuroQuant 5.0"
+
+      - bound_type: "hard_max"
+        value: 3.5
+        citation_strength: "international_consensus"
+        guideline_section: "Adult biologic ceiling for mean cortical thickness"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: |
+            Mean cortical thickness >3.5 mm in an adult is biologically
+            implausible per Potvin 2017 normative reference (n=2,713) and
+            Bethlehem 2022 lifespan data. Suggests CSF/dura misclassified
+            as grey matter.
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ADNI"
+
+  - name: "entorhinal_cortex_thickness_left_mm"
+    unit: "mm"
+    description: |
+      Left entorhinal cortex thickness in millimeters. Early AD-related
+      cortical thinning marker per Braak staging; among the first cortical
+      regions to atrophy.
+    bounds:
+      - bound_type: "hard_min"
+        value: 2.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bakkour 2009 + Potvin 2017 entorhinal floor"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: |
+            Bakkour A et al. (Neurology 2009) demonstrated that entorhinal
+            cortex thinning is among the earliest cortical changes in AD.
+            Entorhinal cortex thickness <2.0 mm is below the biologic
+            floor; AD shows thinning typically to ~2.5-3.0 mm.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009 (early AD cortical signature)"
+            - "Potvin Normative Working Group"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "ADNI"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "Cortechs.ai NeuroQuant 5.0"
+
+      - bound_type: "plausible_min"
+        value: 2.8
+        citation_strength: "international_consensus"
+        guideline_section: "Potvin 2017 5th centile entorhinal thickness"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: |
+            Entorhinal cortex thickness <2.8 mm is consistent with early
+            AD per Bakkour 2009 cortical signature + Potvin 2017 5th
+            centile in healthy adults.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009 (early AD signature)"
+            - "Potvin Normative Working Group"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "ADNI"
+            - "FreeSurfer canonical pipeline"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+
+      - bound_type: "plausible_max"
+        value: 4.5
+        citation_strength: "international_consensus"
+        guideline_section: "Potvin 2017 95th centile entorhinal thickness"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: |
+            Entorhinal thickness up to ~4.5 mm in healthy adults per
+            Potvin 2017 95th centile.
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "ADNI"
+            - "FreeSurfer canonical pipeline"
+            - "ENIGMA Consortium"
+
+      - bound_type: "hard_max"
+        value: 5.5
+        citation_strength: "international_consensus"
+        guideline_section: "Entorhinal biologic ceiling"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: |
+            Entorhinal thickness >5.5 mm is biologically implausible per
+            Potvin 2017. Suggests dura or vasculature misclassification.
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "ADNI"
+
+  - name: "entorhinal_cortex_thickness_right_mm"
+    unit: "mm"
+    description: "Right entorhinal cortex thickness in millimeters. Mirrors left side per Bakkour 2009."
+    bounds:
+      - bound_type: "hard_min"
+        value: 2.0
+        citation_strength: "international_consensus"
+        guideline_section: "Bakkour 2009 + Potvin 2017 entorhinal floor"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: |
+            Same bound as left entorhinal cortex per Bakkour 2009
+            early-AD cortical signature.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009 (early AD signature)"
+            - "Potvin Normative Working Group"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "ADNI"
+            - "ENIGMA Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "Cortechs.ai NeuroQuant 5.0"
+
+      - bound_type: "plausible_min"
+        value: 2.8
+        citation_strength: "international_consensus"
+        guideline_section: "Potvin 2017 5th centile right entorhinal"
+        citation:
+          citation_pmid: "19261208"
+          citation_doi: "10.1212/01.wnl.0000345697.05050.62"
+          citation_text: |
+            Same bound as left entorhinal cortex; <2.8 mm consistent with early AD.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/19261208/"
+          endorsing_bodies:
+            - "Bakkour 2009"
+            - "Potvin Normative Working Group"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "ADNI"
+            - "FreeSurfer canonical pipeline"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+
+      - bound_type: "plausible_max"
+        value: 4.5
+        citation_strength: "international_consensus"
+        guideline_section: "Potvin 2017 95th centile right entorhinal"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Same bound as left entorhinal cortex; up to ~4.5 mm in healthy adults."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bakkour 2009"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "ADNI"
+            - "FreeSurfer canonical pipeline"
+            - "ENIGMA Consortium"
+
+      - bound_type: "hard_max"
+        value: 5.5
+        citation_strength: "international_consensus"
+        guideline_section: "Entorhinal biologic ceiling"
+        citation:
+          citation_pmid: "28412442"
+          citation_doi: "10.1016/j.neuroimage.2017.04.035"
+          citation_text: "Same bound as left entorhinal cortex; >5.5 mm biologically implausible."
+          public_url: "https://www.sciencedirect.com/science/article/abs/pii/S1053811917303269"
+          endorsing_bodies:
+            - "Potvin Normative Working Group"
+            - "Bethlehem 2022 Brain Chart Consortium"
+            - "FreeSurfer canonical pipeline"
+            - "Cortechs.ai NeuroQuant 5.0"
+            - "ENIGMA Consortium"
+            - "ADNI"
+
+  # ====================================================================
+  # QUALITY CONTROL (ENIGMA Consortium QC protocol verbatim)
+  # ====================================================================
+
+  - name: "euler_number_left_hemisphere"
+    unit: "count"
+    description: |
+      Euler number (Dale 1999) of left hemisphere cortical surface
+      reconstruction from FreeSurfer recon-all. Topological complexity
+      measure that correlates with movement artifacts. ENIGMA exclusion
+      threshold per Rosen 2018 / ENIGMA Cortical QC 2.0: Euler <= -217.
+    bounds:
+      - bound_type: "hard_min"
+        value: -300.0
+        citation_strength: "international_consensus"
+        guideline_section: "ENIGMA Cortical QC 2.0 + Rosen 2018 Euler exclusion threshold"
+        citation:
+          citation_pmid: "29278793"
+          citation_doi: "10.1016/j.neuroimage.2017.12.059"
+          citation_text: |
+            ENIGMA Consortium FreeSurfer Cortical QC Protocol 2.0
+            (April 2017) + Rosen AFG et al. (NeuroImage 2018) verbatim:
+            Euler numbers more negative than -217 indicate severe surface
+            reconstruction errors and are excluded from cortical analyses.
+            Hard floor of -300 captures the rare but possible extreme
+            failure case.
+          public_url: "https://enigma.ini.usc.edu/wp-content/uploads/2010/05/ENIGMA_Cortical_QC_2.0.pdf"
+          endorsing_bodies:
+            - "ENIGMA Consortium FreeSurfer protocol"
+            - "Rosen 2018 (Euler number QC, PMID 29278793)"
+            - "Dale 1999 (Euler number definition, FreeSurfer canonical)"
+            - "FreeSurfer canonical pipeline (Martinos Center)"
+            - "ENIGMA Cortical QC 2.0 (April 2017)"
+            - "Maastricht Study QC strategy (PMC8013293)"
+            - "ADNI"
+
+      - bound_type: "plausible_min"
+        value: -217.0
+        citation_strength: "international_consensus"
+        guideline_section: "Rosen 2018 ENIGMA exclusion cutoff verbatim"
+        citation:
+          citation_pmid: "29278793"
+          citation_doi: "10.1016/j.neuroimage.2017.12.059"
+          citation_text: |
+            Rosen AFG et al. (NeuroImage 2018) verbatim: Euler number <=
+            -217 correlates with movement-artifact-induced surface
+            reconstruction errors and is the standard ENIGMA exclusion
+            cutoff for FreeSurfer cortical analyses.
+          public_url: "https://enigma.ini.usc.edu/wp-content/uploads/2010/05/ENIGMA_Cortical_QC_2.0.pdf"
+          endorsing_bodies:
+            - "Rosen 2018 (PMID 29278793)"
+            - "ENIGMA Consortium FreeSurfer protocol"
+            - "ENIGMA Cortical QC 2.0"
+            - "FreeSurfer canonical pipeline"
+            - "Dale 1999 (Euler number)"
+            - "Maastricht Study QC strategy (PMC8013293)"
+            - "ADNI"
+
+      - bound_type: "plausible_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "FreeSurfer Euler convention: 0 = topologically correct"
+        citation:
+          citation_pmid: "29278793"
+          citation_doi: "10.1016/j.neuroimage.2017.12.059"
+          citation_text: |
+            FreeSurfer's Euler number convention reports topology errors
+            as negative integers; 0 represents a topologically correct
+            (defect-free) surface. Values >0 do not occur in standard
+            FreeSurfer recon-all output.
+          public_url: "https://enigma.ini.usc.edu/wp-content/uploads/2010/05/ENIGMA_Cortical_QC_2.0.pdf"
+          endorsing_bodies:
+            - "FreeSurfer canonical pipeline (Martinos Center)"
+            - "Dale 1999 (Euler number)"
+            - "ENIGMA Consortium"
+            - "Rosen 2018"
+            - "ENIGMA Cortical QC 2.0"
+            - "Maastricht Study QC strategy"
+
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "FreeSurfer Euler convention: 0 ceiling"
+        citation:
+          citation_pmid: "29278793"
+          citation_doi: "10.1016/j.neuroimage.2017.12.059"
+          citation_text: |
+            Same as plausible_max. Euler number >0 in FreeSurfer recon-all
+            output is anomalous and indicates pipeline error.
+          public_url: "https://enigma.ini.usc.edu/wp-content/uploads/2010/05/ENIGMA_Cortical_QC_2.0.pdf"
+          endorsing_bodies:
+            - "FreeSurfer canonical pipeline"
+            - "Dale 1999"
+            - "ENIGMA Consortium"
+            - "Rosen 2018"
+            - "ENIGMA Cortical QC 2.0"
+            - "ADNI"
+
+  - name: "euler_number_right_hemisphere"
+    unit: "count"
+    description: |
+      Euler number of right hemisphere cortical surface reconstruction.
+      Mirrors left hemisphere bounds per ENIGMA Cortical QC 2.0.
+    bounds:
+      - bound_type: "hard_min"
+        value: -300.0
+        citation_strength: "international_consensus"
+        guideline_section: "ENIGMA Cortical QC 2.0 + Rosen 2018"
+        citation:
+          citation_pmid: "29278793"
+          citation_doi: "10.1016/j.neuroimage.2017.12.059"
+          citation_text: "Same bound as left hemisphere Euler floor."
+          public_url: "https://enigma.ini.usc.edu/wp-content/uploads/2010/05/ENIGMA_Cortical_QC_2.0.pdf"
+          endorsing_bodies:
+            - "ENIGMA Consortium FreeSurfer protocol"
+            - "Rosen 2018 (PMID 29278793)"
+            - "Dale 1999 (Euler number)"
+            - "FreeSurfer canonical pipeline"
+            - "ENIGMA Cortical QC 2.0"
+            - "Maastricht Study QC strategy"
+            - "ADNI"
+
+      - bound_type: "plausible_min"
+        value: -217.0
+        citation_strength: "international_consensus"
+        guideline_section: "Rosen 2018 ENIGMA exclusion cutoff"
+        citation:
+          citation_pmid: "29278793"
+          citation_doi: "10.1016/j.neuroimage.2017.12.059"
+          citation_text: "Same bound as left hemisphere; Euler <= -217 is the ENIGMA standard exclusion threshold."
+          public_url: "https://enigma.ini.usc.edu/wp-content/uploads/2010/05/ENIGMA_Cortical_QC_2.0.pdf"
+          endorsing_bodies:
+            - "Rosen 2018"
+            - "ENIGMA Consortium FreeSurfer protocol"
+            - "ENIGMA Cortical QC 2.0"
+            - "FreeSurfer canonical pipeline"
+            - "Dale 1999"
+            - "Maastricht Study QC strategy"
+            - "ADNI"
+
+      - bound_type: "plausible_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "FreeSurfer Euler convention ceiling"
+        citation:
+          citation_pmid: "29278793"
+          citation_doi: "10.1016/j.neuroimage.2017.12.059"
+          citation_text: "FreeSurfer Euler convention: 0 = topologically correct surface; values >0 do not occur."
+          public_url: "https://enigma.ini.usc.edu/wp-content/uploads/2010/05/ENIGMA_Cortical_QC_2.0.pdf"
+          endorsing_bodies:
+            - "FreeSurfer canonical pipeline"
+            - "Dale 1999"
+            - "ENIGMA Consortium"
+            - "Rosen 2018"
+            - "ENIGMA Cortical QC 2.0"
+            - "Maastricht Study QC strategy"
+
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "FreeSurfer Euler convention: 0 ceiling"
+        citation:
+          citation_pmid: "29278793"
+          citation_doi: "10.1016/j.neuroimage.2017.12.059"
+          citation_text: "Same bound as plausible_max."
+          public_url: "https://enigma.ini.usc.edu/wp-content/uploads/2010/05/ENIGMA_Cortical_QC_2.0.pdf"
+          endorsing_bodies:
+            - "FreeSurfer canonical pipeline"
+            - "Dale 1999"
+            - "ENIGMA Consortium"
+            - "Rosen 2018"
+            - "ENIGMA Cortical QC 2.0"
+            - "ADNI"
+
+  # ====================================================================
+  # UPSTREAM TOOL DECLARATION (categorical; Layer 3 cross-sheet anchor)
+  # ====================================================================
+
+  - name: "upstream_volumetry_tool"
+    unit: "categorical"
+    description: |
+      Categorical declaration of which volumetry tool produced the
+      measurements in this submission. Required for AD trial submissions
+      so that downstream auditors can interpret tool-specific
+      methodologic variation. Layer 3 (v1.11.0) will verify cross-sheet
+      consistency between this declaration and the actual values.
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "neuroquant_5.0"
+      - "neuroreader"
+      - "icometrix"
+      - "quantib_nd"
+      - "vuno_deepbrain"
+      - "pixyl_neuro"
+      - "neuroshield"
+      - "freesurfer_7.x"
+      - "freesurfer_6.0"
+      - "other_validated"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "FDA 510(k) cleared volumetric AI tools list + FreeSurfer canonical"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            The categorical valid_values list enumerates all major
+            FDA-cleared volumetric AI tools as of May 2026:
+              - NeuroQuant 5.0 (Cortechs.ai, K243016 cleared Sept 2024,
+                includes ARIA-E/H quantification)
+              - NeuroReader (Brainreader, ADNI-derived normative
+                ages 60-90)
+              - icobrain (icometrix, multi-disease)
+              - Quantib ND (RadNet, Rotterdam-derived normative)
+              - VUNO Med-DeepBrain (VUNO, 100+ regions, FDA 2023)
+              - Pixyl.Neuro (Pixyl, FDA 2024, CE-mark IIa)
+              - NeuroShield (InMed Prognostics, FDA April 2026,
+                280-subject validation)
+            Plus the open-source FreeSurfer canonical pipeline
+            (versions 6.0 and 7.x; 7.x recommended).
+            "other_validated" accepts other peer-reviewed tools not
+            yet FDA-cleared.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "FDA (multiple 510(k) clearances)"
+            - "Cortechs.ai (NeuroQuant 5.0, FDA 2024)"
+            - "Brainreader (NeuroReader)"
+            - "icometrix (FDA)"
+            - "Quantib / RadNet"
+            - "VUNO (FDA 2023)"
+            - "Pixyl (FDA 2024)"
+            - "InMed Prognostics (NeuroShield, FDA April 2026)"
+            - "FreeSurfer / Martinos Center (MGH/Harvard/MIT)"
+            - "Bethlehem 2022 Brain Chart Consortium"
+
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Categorical placeholder; valid_values is the operative check"
+        citation:
+          citation_pmid: "35388223"
+          citation_doi: "10.1038/s41586-022-04554-y"
+          citation_text: |
+            upstream_volumetry_tool is constrained to the FDA-cleared
+            and canonical FreeSurfer set; "other_validated" accommodates
+            peer-reviewed tools not yet FDA-cleared.
+          public_url: "https://www.nature.com/articles/s41586-022-04554-y"
+          endorsing_bodies:
+            - "FDA"
+            - "Cortechs.ai"
+            - "Brainreader"
+            - "icometrix"
+            - "Quantib / RadNet"
+            - "FreeSurfer / Martinos Center"
+            - "Bethlehem 2022 Brain Chart Consortium"

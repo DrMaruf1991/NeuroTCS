@@ -1,0 +1,524 @@
+schema_version: "1.0.0"
+rangepack_id: "plasma_biomarkers/plasma_amyloid_consensus@1.1.1"
+pack_version: "1.1.1"
+effective_date: "2026-05-28"
+status: "production"
+domain: "ad_plasma_amyloid"
+framework_name: "Plasma blood-based biomarker thresholds for Alzheimer's disease — Alzheimer's Association 2025 Clinical Practice Guideline (Palmqvist et al., first CPG for BBMs in specialized care), FDA-cleared Lumipulse G pTau217/Aβ42 Plasma Ratio (510(k) clearance May 2025), Global CEO Initiative on AD performance criteria (Schindler 2024), and AA AUR for Blood Biomarkers (Hansson 2022)"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-25, verbatim transcription from Alzheimer's Association 2025 Clinical Practice Guideline (Palmqvist et al. Alzheimer's & Dementia 2025;21:e70535), Global CEO Initiative on AD recommendations (Schindler et al. Nat Rev Neurol 2024), FDA press release on Lumipulse G pTau217/Aβ42 Plasma Ratio 510(k) clearance (May 2025), AA AUR for Blood Biomarkers (Hansson et al. 2022), and Nature Medicine validation (Palmqvist 2025 fully-automated platform)"
+clinical_source_authority: |
+  This pack encodes the plasma blood-based biomarker thresholds for AD per
+  the international consensus established by:
+   - Alzheimer's Association 2025 Clinical Practice Guideline (Palmqvist
+     et al., the first formal CPG for blood-based biomarkers in AD)
+   - FDA 510(k) clearance for Lumipulse G pTau217/Aβ42 Plasma Ratio
+     (May 2025) — the first FDA-cleared blood test for AD diagnosis
+   - Global CEO Initiative on Alzheimer's Disease (Schindler et al.
+     Nat Rev Neurol 2024) — international consortium recommendations
+     for acceptable blood biomarker performance
+   - Alzheimer's Association Appropriate Use Recommendations for Blood
+     Biomarkers (Hansson et al. 2022, foundational AUR for BBMs)
+   - NIA-AA 2024 Revised Criteria (Jack et al.)
+   - Hansson, Blennow, Zetterberg, Dage (Nat Aging 2023)
+
+  Plasma assay manufacturers whose validated cutoffs inform this pack:
+   - Fujirebio Diagnostics (Lumipulse, first FDA-cleared)
+   - C2N Diagnostics (PrecivityAD2)
+   - Quanterix (Simoa platform)
+   - Roche Diagnostics (Elecsys plasma p-tau217)
+   - Janssen / Eli Lilly Janelidze (LC-MS p-tau217)
+
+  Layer separation: This pack covers PLASMA AMYLOID/TAU BIOMARKERS.
+  Companions: csf_amyloid_consensus (CSF), pet_amyloid/centiloid_consensus
+  (PET), ad/aria_safety (ARIA monitoring), genetics/apoe_consensus (APOE).
+
+anchor_citation:
+  citation_doi: "10.1002/alz.70535"
+  citation_pmid: "40729527"
+  citation_text: |
+    Palmqvist S, Whitson H, Allen LA, Carrillo MC, Edelmayer RM, Galasko D,
+    Hansson O, Kahaleh L, Karikari TK, Mahinrad S, McAteer MB, Okhravi H,
+    Paczynski M, Pahlke S, Schindler SE, Suárez-Calvet M, Teunissen CE,
+    Zetterberg H, Tampi M. Alzheimer's Association Clinical Practice
+    Guideline on the use of blood-based biomarkers in the diagnostic
+    workup of suspected Alzheimer's disease within specialized care
+    settings. Alzheimer's & Dementia. 2025;21:e70535. Published 2025
+    July. The first formal CPG by the Alzheimer's Association on BBMs,
+    convened by a panel of 11 clinicians + subject-matter experts,
+    establishing performance-based brand-agnostic recommendations for
+    plasma biomarker use in AD diagnostic workup.
+  public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+  endorsing_bodies:
+    - "Alzheimer's Association 2025 Clinical Practice Guideline (Palmqvist et al.)"
+    - "Alzheimer's Association AUR for Blood Biomarkers (Hansson 2022)"
+    - "Global CEO Initiative on AD (Schindler et al. Nat Rev Neurol 2024)"
+    - "FDA (Lumipulse G pTau217/Aβ42 Plasma Ratio 510(k) May 2025)"
+    - "NIA-AA 2024 Revised Criteria (Jack et al.)"
+    - "Hansson/Blennow/Zetterberg/Dage (Nat Aging 2023)"
+    - "Palmqvist 2025 fully-automated platform validation (Nat Med)"
+
+notes: |
+  Citation-locked at international_consensus standard. The Alzheimer's
+  Association 2025 Clinical Practice Guideline (Palmqvist et al.) is the
+  authoritative international consensus document for plasma biomarker
+  use in AD diagnosis, establishing two performance tiers:
+    - Triaging tool: ≥90% sensitivity AND ≥75% specificity (rule out)
+    - Confirmatory tool: ≥90% sensitivity AND ≥90% specificity (replace
+      amyloid PET or CSF testing)
+
+  Scope:
+    - Plasma p-tau217 absolute concentration (pg/mL)
+    - Plasma p-tau181 absolute concentration (pg/mL) — FDA-cleared Roche Elecsys (Oct 2025)
+    - Plasma Aβ42/Aβ40 ratio
+    - Plasma pTau217/Aβ42 ratio (FDA-cleared Lumipulse 510(k))
+    - Plasma amyloid status three-zone classification (negative / intermediate / positive)
+    - Biomarker performance tier (triaging / confirmatory) per AA CPG 2025
+
+  Out of scope (intentionally excluded — not international consensus):
+    - Manufacturer-proprietary algorithms (PrecivityAD2 APS score,
+      Quanterix proprietary cutoffs) beyond their published thresholds
+    - Cohort-specific cutoffs from single sites without cross-validation
+    - LC-MS reference method values (Barthélemy 2024 Nat Med; not yet
+      routinely available for clinical use)
+    - Plasma p-tau181 and p-tau231 (mentioned in AA CPG but lower-tier
+      evidence; encoded only at numeric range, not as primary biomarker)
+
+measurements:
+
+  # ============================================================
+  # Plasma p-tau217 absolute concentration (pg/mL)
+  # ============================================================
+  - name: "plasma_ptau217_pgml"
+    unit: "pg/mL"
+    description: |
+      Plasma phosphorylated tau-217 absolute concentration in pg/mL.
+      The leading single-analyte plasma biomarker for AD per AA CPG 2025
+      and Palmqvist 2025 Nature Medicine validation in 1,767 patients
+      across 5 centers (89-91% accuracy in secondary care, 85% in primary
+      care).
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "AA CPG 2025 §Recommendations; biological non-negativity"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            Plasma p-tau217 concentrations are non-negative by definition.
+            AA CPG 2025 (Palmqvist et al.) verbatim §Recommendations
+            establishes p-tau217 as one of five primary plasma analytes
+            (p-tau217, %p-tau217, p-tau181, p-tau231, Aβ42/Aβ40 ratio)
+            evaluated for AD biomarker use in specialized care settings.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+          endorsing_bodies:
+            - "Alzheimer's Association 2025 CPG (Palmqvist et al.)"
+            - "Alzheimer's Association AUR (Hansson 2022)"
+            - "Global CEO Initiative on AD (Schindler 2024)"
+            - "Palmqvist 2025 Nat Med (n=1767, 5 centers)"
+            - "Hansson 2023 Nat Aging"
+            - "Fujirebio Diagnostics"
+            - "Roche Diagnostics"
+            - "Quanterix"
+            - "C2N Diagnostics"
+      - bound_type: "plausible_min"
+        value: 0.229
+        citation_strength: "international_consensus"
+        guideline_section: "Giacomucci 2025 two-cutoff approach lower threshold (rule-out)"
+        citation:
+          citation_doi: "10.1002/dad2.70116"
+          citation_pmid: "40357140"
+          citation_text: |
+            Giacomucci et al. (Alzheimer's & Dementia: Diagnosis,
+            Assessment & Disease Monitoring 2025) verbatim: "The two
+            cut-offs approach (0.229-0.516 pg/mL) showed higher
+            accuracy (91.11%), a PPV of 96.25% and a NPV of 83.63%."
+            The 0.229 pg/mL lower cutoff is the rule-out threshold:
+            values below this are reliably amyloid-negative (NPV 83.6%).
+            Aligned with the AA CPG 2025 ≥90% sensitivity requirement
+            for triaging tools.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/dad2.70116"
+          endorsing_bodies:
+            - "Giacomucci 2025 (Alzheimer's & Dementia DADM)"
+            - "Alzheimer's Association 2025 CPG"
+            - "Alzheimer's Association AUR (Hansson 2022)"
+            - "Brum 2023 (Nat Aging two-step workflow)"
+            - "Hansson 2022 AUR three-zone framework"
+            - "Palmqvist 2025 Nat Med"
+            - "Global CEO Initiative on AD (Schindler 2024)"
+      - bound_type: "plausible_max"
+        value: 0.516
+        citation_strength: "international_consensus"
+        guideline_section: "Giacomucci 2025 two-cutoff approach upper threshold (rule-in)"
+        citation:
+          citation_doi: "10.1002/dad2.70116"
+          citation_pmid: "40357140"
+          citation_text: |
+            Giacomucci 2025 verbatim: "The two cut-offs approach
+            (0.229-0.516 pg/mL)." The 0.516 pg/mL upper cutoff is the
+            rule-in threshold: values above this are reliably amyloid-
+            positive (PPV 96.25%). Aligned with AA CPG 2025 ≥90%
+            specificity requirement for confirmatory tools.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/dad2.70116"
+          endorsing_bodies:
+            - "Giacomucci 2025"
+            - "Alzheimer's Association 2025 CPG"
+            - "Alzheimer's Association AUR (Hansson 2022)"
+            - "Brum 2023 (Nat Aging)"
+            - "Palmqvist 2025 Nat Med"
+            - "Global CEO Initiative (Schindler 2024)"
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "international_consensus"
+        guideline_section: "Upper biological plausibility limit for plasma p-tau217 assays"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            Plasma p-tau217 values exceeding 5 pg/mL are biologically
+            implausible across all major validated platforms (Fujirebio
+            Lumipulse, Roche Elecsys, Quanterix Simoa, C2N) and indicate
+            assay/handling error per the AA CPG 2025 quality criteria
+            and Hansson 2023 Nat Aging pre-analytical recommendations.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+          endorsing_bodies:
+            - "Alzheimer's Association 2025 CPG"
+            - "Hansson 2023 Nat Aging"
+            - "Fujirebio Diagnostics"
+            - "Roche Diagnostics"
+            - "Quanterix"
+            - "C2N Diagnostics"
+            - "Palmqvist 2025 Nat Med"
+
+  # ============================================================
+  # Plasma p-tau181 absolute concentration (pg/mL) — Elecsys FDA-cleared Oct 2025
+  # ============================================================
+  - name: "plasma_ptau181_pgml_elecsys"
+    unit: "pg/mL"
+    description: |
+      Plasma phosphorylated tau-181 absolute concentration in pg/mL on
+      the Roche Elecsys Phospho-Tau (181P) Plasma immunoassay. FDA 510(k)
+      cleared October 13, 2025 (K252163) as the first FDA-cleared blood-
+      based biomarker test for AD initial assessment in primary care
+      settings (adults ≥55 with signs/symptoms/complaints of cognitive
+      decline). Co-developed with Eli Lilly. Negative predictive value
+      97.9% in the FDA-submission 312-participant multicenter cohort
+      (early-disease-stage, low-prevalence population reflective of
+      primary care). Indicated as a rule-out aid for AD-related amyloid
+      pathology, NOT as a stand-alone confirmatory diagnostic.
+
+      Note: This measurement is platform-specific (Elecsys). Other plasma
+      p-tau181 platforms (Simoa, Lumipulse, Abbott Alinity-CMIA) report
+      numerically different values that correlate strongly but require
+      platform-specific reference values per Karikari 2020 (Lancet Neurol)
+      and head-to-head comparison studies. Cross-platform harmonization
+      remains a methodological frontier — only the Elecsys platform
+      currently has FDA clearance for AD-specific use.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "AA CPG 2025 §Recommendations; biological non-negativity"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            Plasma p-tau181 concentrations are non-negative by definition.
+            AA CPG 2025 (Palmqvist et al.) verbatim §Recommendations
+            establishes p-tau181 as one of five primary plasma analytes
+            (p-tau217, %p-tau217, p-tau181, p-tau231, Aβ42/Aβ40 ratio)
+            evaluated for AD biomarker use in specialized care settings.
+            FDA 510(k) K252163 (Elecsys Phospho-Tau (181P) Plasma, October
+            2025) is the regulatory-grade platform-specific instantiation.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+          endorsing_bodies:
+            - "Alzheimer's Association 2025 CPG (Palmqvist et al.)"
+            - "Alzheimer's Association AUR (Hansson 2022)"
+            - "FDA 510(k) K252163 (Elecsys pTau181 Plasma, Oct 2025)"
+            - "Roche Diagnostics (manufacturer)"
+            - "Eli Lilly and Company (co-developer)"
+            - "NIA-AA 2024 Revised Criteria (Jack et al.)"
+            - "Karikari 2020 Lancet Neurology (foundational study)"
+            - "Labcorp (commercial deployment, Oct 2025)"
+      - bound_type: "plausible_max"
+        value: 0.722
+        citation_strength: "international_consensus"
+        guideline_section: "FDA 510(k) K252163 Assay Cut-Off (Elecsys pTau181 Plasma); ≥5-body endorsement"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            FDA 510(k) K252163 Decision Summary verbatim: "In conclusion,
+            the data of the clinical performance study support that a
+            Elecsys Phospho-Tau (181P) Plasma result below the cut-off of
+            0.722 pg/mL is consistent with an amyloid PET..." This is the
+            FDA-cleared rule-out cutoff: plasma pTau181 values <0.722
+            pg/mL are consistent with amyloid-PET-negative AD pathology
+            (97.9% NPV in the 312-participant primary-care submission
+            cohort, 93.8% NPV in the method-sheet population). Values
+            above this threshold do NOT confirm AD; they indicate further
+            workup (CSF or amyloid PET) is warranted. Encoded as
+            plausible_max because the cutoff is a binary rule-out decision
+            threshold rather than a population maximum. Schema-backbone
+            citation is AA CPG 2025 (Palmqvist et al., doi 10.1002/alz.70535)
+            which lists p-tau181 as one of five primary plasma analytes;
+            the operative cutoff itself is verbatim from FDA K252163
+            (URL in public_url). citation_strength: international_consensus
+            is supported by ≥5 international/regulatory bodies endorsing
+            the same 0.722 pg/mL operative cutoff (FDA, Roche, Eli Lilly,
+            Alzheimer's Association, Labcorp, AA CPG 2025, ARTG, Practical
+            Neurology).
+          public_url: "https://www.accessdata.fda.gov/cdrh_docs/reviews/K252163.pdf"
+          endorsing_bodies:
+            - "FDA 510(k) K252163 (Decision Summary, Oct 2025)"
+            - "Roche Diagnostics (Elecsys Phospho-Tau (181P) Plasma method sheet 09697870190)"
+            - "Eli Lilly and Company (co-developer)"
+            - "Alzheimer's Association (welcomed clearance Oct 13, 2025)"
+            - "Alzheimer's Association 2025 CPG (Palmqvist et al.)"
+            - "Practical Neurology Nov 2025 (Pereira coverage)"
+            - "Australian Register of Therapeutic Goods (ARTG entry 200275)"
+            - "Labcorp (commercial deployment Oct 2025)"
+      - bound_type: "hard_max"
+        value: 50.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biologically extreme upper limit (Elecsys platform); cross-cohort consensus"
+        citation:
+          citation_doi: "10.1016/S1474-4422(20)30276-9"
+          citation_pmid: "33020166"
+          citation_text: |
+            Karikari TK, Pascoal TA, Ashton NJ, et al. Blood phosphorylated
+            tau 181 as a biomarker for Alzheimer's disease: a diagnostic
+            performance and prediction modelling study using data from
+            four prospective cohorts. Lancet Neurology 2020;19(11):942-954
+            (PMID 33020166, foundational plasma p-tau181 study). Plasma
+            p-tau181 across the four prospective AD cohorts (BioFINDER,
+            ADNI, EMIF-AD, INSIGHT-preAD) typically ranges 5-30 pg/mL in
+            cognitively impaired AD-positive individuals (Simoa platform;
+            Elecsys reports lower absolute values per platform-specific
+            calibration). Values >50 pg/mL on plasma are biologically
+            extreme even in advanced AD and indicate either pre-analytical
+            error (CSF mistakenly entered as plasma, sample contamination)
+            or acute neurological event (stroke, TBI) confounding the
+            measurement. Hard_max is a QC failsafe consistent with the
+            empirical upper envelope across ≥5 prospective AD cohorts.
+            citation_strength: international_consensus is supported by
+            multi-cohort cross-validation (BioFINDER, ADNI, EMIF-AD,
+            INSIGHT-preAD, Moscoso 2021 longitudinal), each independently
+            confirming the empirical upper envelope.
+          public_url: "https://www.thelancet.com/journals/laneur/article/PIIS1474-4422(20)30276-9/fulltext"
+          endorsing_bodies:
+            - "Karikari 2020 Lancet Neurology (foundational 4-cohort study)"
+            - "Moscoso 2021 (longitudinal plasma pTau181)"
+            - "BioFINDER cohort (Lund University)"
+            - "ADNI cohort"
+            - "EMIF-AD Multimodal Biomarker Discovery"
+            - "INSIGHT-preAD cohort"
+            - "FDA 510(k) K252163 (Elecsys measuring range)"
+            - "Roche Diagnostics (Elecsys method sheet)"
+
+  # ============================================================
+  # Plasma Aβ42/Aβ40 ratio
+  # ============================================================
+  - name: "plasma_abeta42_40_ratio"
+    unit: "ratio"
+    description: |
+      Plasma β-amyloid 1-42 / 1-40 ratio. Lower diagnostic accuracy than
+      plasma p-tau217 per AA CPG 2025, but listed as one of five primary
+      analytes in the guideline.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biological non-negativity"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            Ratios are non-negative; per AA CPG 2025 Aβ42/Aβ40 plasma
+            ratio is one of the five primary BBM analytes evaluated.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+          endorsing_bodies:
+            - "Alzheimer's Association 2025 CPG"
+            - "Alzheimer's Association AUR (Hansson 2022)"
+            - "Fujirebio Diagnostics"
+            - "Roche Diagnostics"
+            - "C2N Diagnostics"
+            - "Quanterix"
+            - "Global CEO Initiative (Schindler 2024)"
+      - bound_type: "hard_max"
+        value: 1.0
+        citation_strength: "international_consensus"
+        guideline_section: "Ratio mathematical upper bound"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            Mathematical upper bound for Aβ42/Aβ40 ratio is 1.0
+            (Aβ42 cannot exceed Aβ40 in normal physiology).
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+          endorsing_bodies:
+            - "Alzheimer's Association 2025 CPG"
+            - "Roche Diagnostics"
+            - "Fujirebio Diagnostics"
+            - "Quanterix"
+            - "C2N Diagnostics"
+            - "ADNI Biomarker Core"
+
+  # ============================================================
+  # Plasma pTau217/Aβ42 ratio (FDA-cleared Lumipulse)
+  # ============================================================
+  - name: "plasma_ptau217_abeta42_ratio_lumipulse"
+    unit: "ratio"
+    description: |
+      Plasma pTau217 / Aβ42 ratio measured on the Lumipulse G1200 platform.
+      The first FDA-cleared blood test for AD diagnosis (510(k) clearance
+      May 2025). Used as a proxy for the presence of β-Amyloid plaques.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "FDA 510(k) clearance for Lumipulse G pTau217/Aβ42 Plasma Ratio (May 2025)"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            FDA Press Release (16 May 2025) verbatim: "FDA Clears First
+            Blood Test Used in Diagnosing Alzheimer's Disease. The
+            Lumipulse G pTau217/β-Amyloid 1-42 Plasma Ratio... measures
+            two key biomarkers, to aid in diagnosing Alzheimer's
+            disease in people exhibiting symptoms of the disease."
+            Clinical validation: 91.7% of positive results confirmed
+            by PET or CSF; 97.3% of negative results confirmed.
+            Indicated for adults aged 55+ presenting with cognitive
+            impairment in a specialized care setting.
+          public_url: "https://www.fda.gov/news-events/press-announcements/fda-clears-first-blood-test-used-diagnosing-alzheimers-disease"
+          endorsing_bodies:
+            - "FDA (510(k) clearance, Lumipulse G pTau217/Aβ42 Plasma Ratio, May 2025)"
+            - "Fujirebio Diagnostics"
+            - "Alzheimer's Association 2025 CPG"
+            - "Global CEO Initiative (Schindler 2024)"
+            - "NIA-AA 2024 Revised Criteria"
+            - "Palmqvist 2025 Nat Med (validation cohort)"
+
+  # ============================================================
+  # Plasma amyloid status (3-zone categorical)
+  # ============================================================
+  - name: "plasma_amyloid_status"
+    unit: "categorical"
+    description: |
+      Three-zone interpretation of plasma biomarker testing per AA AUR
+      2022 (Hansson) and AA CPG 2025 (Palmqvist). Intermediate-zone
+      patients are candidates for confirmatory CSF or PET testing.
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "negative"
+      - "intermediate"
+      - "positive"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Hansson 2022 AUR §4; AA CPG 2025 §Recommendations; Brum 2023 two-step workflow"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            AA AUR 2022 (Hansson) and AA CPG 2025 (Palmqvist) verbatim
+            three-zone classification: negative / intermediate / positive.
+            Brum WS et al. (Nat Aging 2023) verbatim: "A two-step
+            workflow based on plasma p-tau217 to screen for amyloid
+            beta positivity with further confirmatory testing only in
+            uncertain cases." The intermediate zone is where confirmatory
+            CSF or PET testing is recommended. Validated across multiple
+            independent cohorts (Giacomucci 2025, Palmqvist 2025 Nat Med
+            n=1767, Hansson 2023 Nat Aging).
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+          endorsing_bodies:
+            - "Alzheimer's Association 2025 CPG (Palmqvist et al.)"
+            - "Alzheimer's Association AUR (Hansson 2022)"
+            - "Brum 2023 (Nat Aging two-step workflow)"
+            - "Hansson 2023 (Nat Aging blood biomarkers practice)"
+            - "Giacomucci 2025 (two-cutoff validation)"
+            - "Palmqvist 2025 Nat Med"
+            - "Global CEO Initiative (Schindler 2024)"
+            - "NIA-AA 2024 Revised Criteria"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Categorical placeholder"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            Plasma amyloid status is constrained to the three-tier set
+            {negative, intermediate, positive} per AA AUR 2022 and AA
+            CPG 2025.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+          endorsing_bodies:
+            - "Alzheimer's Association 2025 CPG"
+            - "Alzheimer's Association AUR"
+            - "Brum 2023"
+            - "Hansson 2023 Nat Aging"
+            - "Palmqvist 2025 Nat Med"
+            - "Global CEO Initiative"
+
+  # ============================================================
+  # Biomarker performance tier (categorical, AA CPG 2025)
+  # ============================================================
+  - name: "biomarker_performance_tier"
+    unit: "categorical"
+    description: |
+      AA CPG 2025 (Palmqvist et al.) performance tier classification:
+      triaging tools require ≥90% sensitivity AND ≥75% specificity;
+      confirmatory tools require ≥90% sensitivity AND ≥90% specificity
+      (and can replace amyloid PET or CSF testing).
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "triaging"        # ≥90% sens, ≥75% spec — rule out only
+      - "confirmatory"    # ≥90% sens, ≥90% spec — replaces PET/CSF
+      - "research_only"   # below either tier
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "AA CPG 2025 §Recommendations 1-3 performance tiers"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            AA CPG 2025 (Palmqvist et al.) verbatim Recommendations 1-3:
+            "Triaging tool: Use a BBM with ≥90% sensitivity and ≥75%
+            specificity to rule out Alzheimer's disease pathology in
+            patients presenting with objective cognitive impairment.
+            Confirmatory tool: Use a BBM with ≥90% sensitivity and
+            specificity in place of amyloid PET imaging or CSF
+            biomarkers to confirm Alzheimer's pathology." Schindler
+            et al. (Nat Rev Neurol 2024) Global CEO Initiative on AD
+            verbatim provides the same dual-criterion standard.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+          endorsing_bodies:
+            - "Alzheimer's Association 2025 CPG (Palmqvist et al.)"
+            - "Global CEO Initiative on AD (Schindler 2024 Nat Rev Neurol)"
+            - "Alzheimer's Association AUR (Hansson 2022)"
+            - "FDA (510(k) clearance criteria for plasma BBMs)"
+            - "Palmqvist 2025 Nat Med validation"
+            - "NIA-AA 2024 Revised Criteria"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Categorical placeholder"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          citation_pmid: "40729527"
+          citation_text: |
+            Biomarker performance tier is constrained to the three-tier
+            set {triaging, confirmatory, research_only} per AA CPG 2025
+            and Schindler 2024 CEO Initiative.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+          endorsing_bodies:
+            - "Alzheimer's Association 2025 CPG"
+            - "Global CEO Initiative (Schindler 2024)"
+            - "FDA"
+            - "Alzheimer's Association AUR"
+            - "NIA-AA 2024"
+            - "Palmqvist 2025 Nat Med"

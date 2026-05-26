@@ -1,0 +1,234 @@
+cff-version: 1.2.0
+message: "If you use NeuroTCS in your research, please cite it using the metadata below."
+title: "NeuroTCS / temporalmetric: Citation-locked, fail-closed longitudinal medical AI audit framework"
+abstract: >-
+  NeuroTCS is a citation-locked, fail-closed framework for auditing the
+  temporal coherence of longitudinal medical AI predictions against
+  internationally endorsed published clinical guidelines for Alzheimer's
+  disease (AD). As of v1.9.0 the framework is scope-narrowed to AD-only
+  in preparation for FDA Q-Submission (target Q1 2027); non-AD disease
+  packs (PD, MS, oncology, stroke, lung nodule) that previously shipped
+  in v1.7.x have been extracted to seed future per-disease repositories
+  post-FDA-clearance. The framework comprises seven core engineering
+  pieces plus five v1.7.0 methodological modules: (1) categorical input
+  contract, (2) continuous-biomarker input contract with UCUM unit
+  enforcement, (3) citation-locked AD rule packs (NIA-AA 2018 Framework,
+  AA 2024 Revised Criteria with Jack 2024 Table 7 integrated biological
+  + clinical staging, AA 2024 TRAC framework for anti-Aβ therapy
+  trajectories), (4) audit core library (cTCS / pTCS / uTCS with cluster
+  bootstrap, BCa intervals, and Huber M-estimation), (5) FHIR Observation
+  output schema (roadmap v1.9.x+), (6) reference dataset adapters (ADNI,
+  OASIS-3, NACC, MIRIAD shipped with byte-exact four-cohort triangulation
+  lock), and (7) synthetic-trajectory validation harness (roadmap
+  v1.9.x+). v1.7.0 added Riley 2024 sample-size, FUTURE-AI fairness +
+  robustness panels, Kwong 2022 silent-deployment, multi-dimensional
+  scanner factorial, and empirical operational threshold derivation.
+  Schema v1.3.0 distinguishes guideline_quote from clinical_inference
+  attribution. v1.8.0 hallmark result: four-cohort triangulation
+  byte-exact across OASIS-3 (0.994191), ADNI (0.994575), NACC (0.991502),
+  MIRIAD (0.985369), with max pairwise ΔcTCS = 0.009206 (all 6 pairs ≤
+  0.01 world-class threshold).
+type: software
+version: "1.17.0"
+date-released: "2026-05-23"
+license: Apache-2.0
+repository-code: "https://github.com/DrMaruf1991/NeuroTCS"
+url: "https://github.com/DrMaruf1991/NeuroTCS"
+authors:
+  - family-names: "Salokhiddinov"
+    given-names: "Marufjon"
+    name-suffix: "MD PhD"
+    affiliation: "Kimyo International University in Tashkent (KIUT), Uzbekistan"
+keywords:
+  - "medical AI"
+  - "longitudinal audit"
+  - "clinical trial endpoints"
+  - "Alzheimer's disease"
+  - "dementia"
+  - "amyloid"
+  - "tau"
+  - "neuroimaging"
+  - "FDA"
+  - "FHIR"
+references:
+  - type: article
+    authors:
+      - family-names: "Jack"
+        given-names: "Clifford R."
+        name-suffix: "Jr"
+      - family-names: "Bennett"
+        given-names: "David A."
+    title: "NIA-AA Research Framework: Toward a biological definition of Alzheimer's disease"
+    journal: "Alzheimer's & Dementia"
+    volume: 14
+    issue: 4
+    start: 535
+    end: 562
+    year: 2018
+    doi: "10.1016/j.jalz.2018.02.018"
+  - type: article
+    authors:
+      - family-names: "Jack"
+        given-names: "Clifford R."
+        name-suffix: "Jr"
+      - family-names: "Andrews"
+        given-names: "J. Scott"
+    title: "Revised criteria for diagnosis and staging of Alzheimer's disease: Alzheimer's Association Workgroup"
+    journal: "Alzheimer's & Dementia"
+    volume: 20
+    issue: 8
+    start: 5143
+    end: 5169
+    year: 2024
+    doi: "10.1002/alz.13859"
+  # ---- v1.7.0 methodological frameworks (verified during framework audit) ----
+  - type: article
+    authors:
+      - family-names: "Riley"
+        given-names: "Richard D."
+      - family-names: "Snell"
+        given-names: "Kym I. E."
+      - family-names: "Archer"
+        given-names: "Lucinda"
+      - family-names: "Ensor"
+        given-names: "Joie"
+      - family-names: "Debray"
+        given-names: "Thomas P. A."
+      - family-names: "Van Calster"
+        given-names: "Ben"
+      - family-names: "van Smeden"
+        given-names: "Maarten"
+      - family-names: "Collins"
+        given-names: "Gary S."
+    title: "Evaluation of clinical prediction models (part 3): calculating the sample size required for an external validation study"
+    journal: "BMJ"
+    volume: 384
+    start: "e074821"
+    year: 2024
+    doi: "10.1136/bmj-2023-074821"
+    notes: "PMID 38253388. Foundation for neurotcs.sample_size module."
+  - type: article
+    authors:
+      - family-names: "Lekadir"
+        given-names: "Karim"
+      - family-names: "Frangi"
+        given-names: "Alejandro F."
+    title: "FUTURE-AI: international consensus guideline for trustworthy and deployable artificial intelligence in healthcare"
+    journal: "BMJ"
+    volume: 388
+    start: "e081554"
+    year: 2025
+    doi: "10.1136/bmj-2024-081554"
+    notes: "PMID 39909534. 117 experts / 50 countries. 30 recommendations under 6 principles + General. Foundation for neurotcs.fairness module."
+  - type: article
+    authors:
+      - family-names: "Haller"
+        given-names: "Sven"
+      - family-names: "Van Cauter"
+        given-names: "Sofie"
+      - family-names: "Federau"
+        given-names: "Christian"
+      - family-names: "Hedderich"
+        given-names: "Dennis M."
+      - family-names: "Edjlali"
+        given-names: "Myriam"
+    title: "The R-AI-DIOLOGY checklist: a practical checklist for evaluation of artificial intelligence tools in clinical neuroradiology"
+    journal: "Neuroradiology"
+    volume: 64
+    issue: 5
+    start: 851
+    end: 864
+    year: 2022
+    doi: "10.1007/s00234-021-02890-w"
+    notes: "PMID 35098343. ESNR-endorsed 10-aspect neuroradiology AI checklist."
+  - type: article
+    authors:
+      - family-names: "Larson"
+        given-names: "David B."
+      - family-names: "Bhargavan-Chatfield"
+        given-names: "Mythreyi"
+      - family-names: "Tilkin"
+        given-names: "Michael"
+      - family-names: "Coombs"
+        given-names: "Laura"
+      - family-names: "Wald"
+        given-names: "Christoph"
+    title: "The Road Map for ACR Practice Accreditation for Radiology Artificial Intelligence"
+    journal: "Journal of the American College of Radiology"
+    volume: 22
+    issue: 5
+    start: 586
+    end: 592
+    year: 2025
+    doi: "10.1016/j.jacr.2025.02.008"
+    notes: "PMID 40057886. 5 ARCH-AI criteria: governance, model selection, acceptance testing, monitoring, locally developed models. Foundation for neurotcs.threshold_derivation."
+  - type: article
+    authors:
+      - family-names: "Vasey"
+        given-names: "Baptiste"
+      - family-names: "Nagendran"
+        given-names: "Myura"
+      - family-names: "McCulloch"
+        given-names: "Peter"
+    title: "Reporting guideline for the early-stage clinical evaluation of decision support systems driven by artificial intelligence: DECIDE-AI"
+    journal: "Nature Medicine"
+    volume: 28
+    issue: 5
+    start: 924
+    end: 933
+    year: 2022
+    doi: "10.1038/s41591-022-01772-9"
+    notes: "PMID 35585196. 17 AI-specific + 28 subitems + 10 generic items. Single-stage guideline (no Stage A/B/C labels)."
+  - type: article
+    authors:
+      - family-names: "Kwong"
+        given-names: "Jethro C. C."
+      - family-names: "Erdman"
+        given-names: "Lauren"
+      - family-names: "Khondker"
+        given-names: "Adree"
+      - family-names: "Rickard"
+        given-names: "Mandy"
+    title: "The silent trial - the bridge between bench-to-bedside clinical AI applications"
+    journal: "Frontiers in Digital Health"
+    volume: 4
+    start: "929508"
+    year: 2022
+    doi: "10.3389/fdgth.2022.929508"
+    notes: "PMID 36052317. CC-BY 4.0. 4 themes: dataset drift, bias, feasibility, stakeholder attitudes. Foundation for neurotcs.silent_deployment."
+  - type: article
+    authors:
+      - family-names: "Collins"
+        given-names: "Gary S."
+      - family-names: "Moons"
+        given-names: "Karel G. M."
+      - family-names: "Dhiman"
+        given-names: "Paula"
+      - family-names: "Riley"
+        given-names: "Richard D."
+    title: "TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods"
+    journal: "BMJ"
+    volume: 385
+    start: "e078378"
+    year: 2024
+    doi: "10.1136/bmj-2023-078378"
+    notes: "PMID 38626948. 27-item checklist. Cross-reference."
+  - type: article
+    authors:
+      - family-names: "Tejani"
+        given-names: "Ali S."
+      - family-names: "Klontzas"
+        given-names: "Michail E."
+      - family-names: "Gatti"
+        given-names: "Anthony A."
+      - family-names: "Kahn"
+        given-names: "Charles E."
+        name-suffix: "Jr"
+    title: "Checklist for Artificial Intelligence in Medical Imaging (CLAIM): 2024 Update"
+    journal: "Radiology: Artificial Intelligence"
+    volume: 6
+    issue: 4
+    start: "e240300"
+    year: 2024
+    doi: "10.1148/ryai.240300"
+    notes: "PMID 38809149. 72-panelist Delphi consensus. Cross-reference."
