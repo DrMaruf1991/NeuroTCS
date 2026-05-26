@@ -27,7 +27,7 @@ EXPECTED_DEPRECATIONS: dict[str, str | None] = {
     # Deprecated in v1.10.1:
     "vital_signs/standard": None,
     "csf_biomarkers/aa_2024": "csf_biomarkers/csf_amyloid_consensus@1.0.0",
-    "plasma_biomarkers/aa_2024": "plasma_biomarkers/plasma_amyloid_consensus@1.0.0",
+    "plasma_biomarkers/aa_2024": "plasma_biomarkers/plasma_amyloid_consensus@1.1.0",
     "genetics/apoe_valid_genotypes": "genetics/apoe_consensus@1.0.0",
     "pet_amyloid/centiloid": "pet_amyloid/centiloid_consensus@1.0.0",
     # Deprecated in v1.10.2:

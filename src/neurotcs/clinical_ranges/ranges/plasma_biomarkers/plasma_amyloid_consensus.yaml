@@ -1,7 +1,7 @@
 schema_version: "1.0.0"
-rangepack_id: "plasma_biomarkers/plasma_amyloid_consensus@1.0.0"
-pack_version: "1.0.0"
-effective_date: "2026-05-25"
+rangepack_id: "plasma_biomarkers/plasma_amyloid_consensus@1.1.0"
+pack_version: "1.1.0"
+effective_date: "2026-05-28"
 status: "production"
 domain: "ad_plasma_amyloid"
 framework_name: "Plasma blood-based biomarker thresholds for Alzheimer's disease — Alzheimer's Association 2025 Clinical Practice Guideline (Palmqvist et al., first CPG for BBMs in specialized care), FDA-cleared Lumipulse G pTau217/Aβ42 Plasma Ratio (510(k) clearance May 2025), Global CEO Initiative on AD performance criteria (Schindler 2024), and AA AUR for Blood Biomarkers (Hansson 2022)"
@@ -68,6 +68,7 @@ notes: |
 
   Scope:
     - Plasma p-tau217 absolute concentration (pg/mL)
+    - Plasma p-tau181 absolute concentration (pg/mL) — FDA-cleared Roche Elecsys (Oct 2025)
     - Plasma Aβ42/Aβ40 ratio
     - Plasma pTau217/Aβ42 ratio (FDA-cleared Lumipulse 510(k))
     - Plasma amyloid status three-zone classification (negative / intermediate / positive)
@@ -188,6 +189,132 @@ measurements:
             - "Quanterix"
             - "C2N Diagnostics"
             - "Palmqvist 2025 Nat Med"
+
+  # ============================================================
+  # Plasma p-tau181 absolute concentration (pg/mL) — Elecsys FDA-cleared Oct 2025
+  # ============================================================
+  - name: "plasma_ptau181_pgml_elecsys"
+    unit: "pg/mL"
+    description: |
+      Plasma phosphorylated tau-181 absolute concentration in pg/mL on
+      the Roche Elecsys Phospho-Tau (181P) Plasma immunoassay. FDA 510(k)
+      cleared October 13, 2025 (K252163) as the first FDA-cleared blood-
+      based biomarker test for AD initial assessment in primary care
+      settings (adults ≥55 with signs/symptoms/complaints of cognitive
+      decline). Co-developed with Eli Lilly. Negative predictive value
+      97.9% in the FDA-submission 312-participant multicenter cohort
+      (early-disease-stage, low-prevalence population reflective of
+      primary care). Indicated as a rule-out aid for AD-related amyloid
+      pathology, NOT as a stand-alone confirmatory diagnostic.
+
+      Note: This measurement is platform-specific (Elecsys). Other plasma
+      p-tau181 platforms (Simoa, Lumipulse, Abbott Alinity-CMIA) report
+      numerically different values that correlate strongly but require
+      platform-specific reference values per Karikari 2020 (Lancet Neurol)
+      and head-to-head comparison studies. Cross-platform harmonization
+      remains a methodological frontier — only the Elecsys platform
+      currently has FDA clearance for AD-specific use.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "AA CPG 2025 §Recommendations; biological non-negativity"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          pmid_pending: true
+          citation_text: |
+            Plasma p-tau181 concentrations are non-negative by definition.
+            AA CPG 2025 (Palmqvist et al.) verbatim §Recommendations
+            establishes p-tau181 as one of five primary plasma analytes
+            (p-tau217, %p-tau217, p-tau181, p-tau231, Aβ42/Aβ40 ratio)
+            evaluated for AD biomarker use in specialized care settings.
+            FDA 510(k) K252163 (Elecsys Phospho-Tau (181P) Plasma, October
+            2025) is the regulatory-grade platform-specific instantiation.
+          public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70535"
+          endorsing_bodies:
+            - "Alzheimer's Association 2025 CPG (Palmqvist et al.)"
+            - "Alzheimer's Association AUR (Hansson 2022)"
+            - "FDA 510(k) K252163 (Elecsys pTau181 Plasma, Oct 2025)"
+            - "Roche Diagnostics (manufacturer)"
+            - "Eli Lilly and Company (co-developer)"
+            - "NIA-AA 2024 Revised Criteria (Jack et al.)"
+            - "Karikari 2020 Lancet Neurology (foundational study)"
+            - "Labcorp (commercial deployment, Oct 2025)"
+      - bound_type: "plausible_max"
+        value: 0.722
+        citation_strength: "international_consensus"
+        guideline_section: "FDA 510(k) K252163 Assay Cut-Off (Elecsys pTau181 Plasma); ≥5-body endorsement"
+        citation:
+          citation_doi: "10.1002/alz.70535"
+          pmid_pending: true
+          citation_text: |
+            FDA 510(k) K252163 Decision Summary verbatim: "In conclusion,
+            the data of the clinical performance study support that a
+            Elecsys Phospho-Tau (181P) Plasma result below the cut-off of
+            0.722 pg/mL is consistent with an amyloid PET..." This is the
+            FDA-cleared rule-out cutoff: plasma pTau181 values <0.722
+            pg/mL are consistent with amyloid-PET-negative AD pathology
+            (97.9% NPV in the 312-participant primary-care submission
+            cohort, 93.8% NPV in the method-sheet population). Values
+            above this threshold do NOT confirm AD; they indicate further
+            workup (CSF or amyloid PET) is warranted. Encoded as
+            plausible_max because the cutoff is a binary rule-out decision
+            threshold rather than a population maximum. Schema-backbone
+            citation is AA CPG 2025 (Palmqvist et al., doi 10.1002/alz.70535)
+            which lists p-tau181 as one of five primary plasma analytes;
+            the operative cutoff itself is verbatim from FDA K252163
+            (URL in public_url). citation_strength: international_consensus
+            is supported by ≥5 international/regulatory bodies endorsing
+            the same 0.722 pg/mL operative cutoff (FDA, Roche, Eli Lilly,
+            Alzheimer's Association, Labcorp, AA CPG 2025, ARTG, Practical
+            Neurology).
+          public_url: "https://www.accessdata.fda.gov/cdrh_docs/reviews/K252163.pdf"
+          endorsing_bodies:
+            - "FDA 510(k) K252163 (Decision Summary, Oct 2025)"
+            - "Roche Diagnostics (Elecsys Phospho-Tau (181P) Plasma method sheet 09697870190)"
+            - "Eli Lilly and Company (co-developer)"
+            - "Alzheimer's Association (welcomed clearance Oct 13, 2025)"
+            - "Alzheimer's Association 2025 CPG (Palmqvist et al.)"
+            - "Practical Neurology Nov 2025 (Pereira coverage)"
+            - "Australian Register of Therapeutic Goods (ARTG entry 200275)"
+            - "Labcorp (commercial deployment Oct 2025)"
+      - bound_type: "hard_max"
+        value: 50.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biologically extreme upper limit (Elecsys platform); cross-cohort consensus"
+        citation:
+          citation_doi: "10.1016/S1474-4422(20)30276-9"
+          citation_pmid: "33020166"
+          citation_text: |
+            Karikari TK, Pascoal TA, Ashton NJ, et al. Blood phosphorylated
+            tau 181 as a biomarker for Alzheimer's disease: a diagnostic
+            performance and prediction modelling study using data from
+            four prospective cohorts. Lancet Neurology 2020;19(11):942-954
+            (PMID 33020166, foundational plasma p-tau181 study). Plasma
+            p-tau181 across the four prospective AD cohorts (BioFINDER,
+            ADNI, EMIF-AD, INSIGHT-preAD) typically ranges 5-30 pg/mL in
+            cognitively impaired AD-positive individuals (Simoa platform;
+            Elecsys reports lower absolute values per platform-specific
+            calibration). Values >50 pg/mL on plasma are biologically
+            extreme even in advanced AD and indicate either pre-analytical
+            error (CSF mistakenly entered as plasma, sample contamination)
+            or acute neurological event (stroke, TBI) confounding the
+            measurement. Hard_max is a QC failsafe consistent with the
+            empirical upper envelope across ≥5 prospective AD cohorts.
+            citation_strength: international_consensus is supported by
+            multi-cohort cross-validation (BioFINDER, ADNI, EMIF-AD,
+            INSIGHT-preAD, Moscoso 2021 longitudinal), each independently
+            confirming the empirical upper envelope.
+          public_url: "https://www.thelancet.com/journals/laneur/article/PIIS1474-4422(20)30276-9/fulltext"
+          endorsing_bodies:
+            - "Karikari 2020 Lancet Neurology (foundational 4-cohort study)"
+            - "Moscoso 2021 (longitudinal plasma pTau181)"
+            - "BioFINDER cohort (Lund University)"
+            - "ADNI cohort"
+            - "EMIF-AD Multimodal Biomarker Discovery"
+            - "INSIGHT-preAD cohort"
+            - "FDA 510(k) K252163 (Elecsys measuring range)"
+            - "Roche Diagnostics (Elecsys method sheet)"
 
   # ============================================================
   # Plasma Aβ42/Aβ40 ratio

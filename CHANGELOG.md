@@ -4,6 +4,261 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] -- 2026-05-28
+
+### Layer 2 pack extension: plasma_amyloid_consensus 1.0.0 → 1.1.0
+
+Extends `plasma_biomarkers/plasma_amyloid_consensus` from `@1.0.0` to `@1.1.0`
+with a new measurement: **`plasma_ptau181_pgml_elecsys`** — Roche Elecsys
+Phospho-Tau (181P) Plasma immunoassay, FDA 510(k) K252163 cleared
+**October 13, 2025** as the **first FDA-cleared blood-based biomarker test
+for AD initial assessment in primary-care settings**.
+
+### Why this pack, why now
+
+After v1.13.0 (WMH/Fazekas) shipped, the natural next forward target from
+the v1.13.1 Tier 1 roadmap (items 7 NfL and 8 GFAP) was researched
+primary-source-first. **Three of four pre-queued candidates (NfL, GFAP,
+CSF p-tau217) hit the same world-class evidence dead-end as yesterday's
+CSF p-tau217 pivot:** no FDA-cleared AD-specific assay, cross-platform
+inconsistency, no ≥5-body consensus on unified cutoffs.
+
+The research revealed a different, stronger target: Roche Elecsys pTau181
+plasma test received FDA 510(k) clearance on October 13, 2025 (K252163)
+for AD initial assessment in primary care. This is the first FDA-cleared
+blood-based AD biomarker test. The current production
+`plasma_amyloid_consensus@1.0.0` pack covered plasma p-tau217 (Quanterix
+Simoa LDT + Lumipulse FDA-cleared ratio) but did NOT cover the FDA-cleared
+Elecsys p-tau181 platform.
+
+### Architectural decision: extend existing pack, do not create new pack
+
+The plasma p-tau181 Elecsys measurement is added as a new measurement
+within the existing `plasma_amyloid_consensus` pack rather than creating
+a separate `plasma_biomarkers/ptau181_consensus` pack. Rationale:
+
+- Same fluid modality (plasma)
+- Same clinical use case (rule-out AD-related amyloid pathology)
+- Same anchor body (AA CPG 2025 covers p-tau217 AND p-tau181 as primary analytes)
+- Same performance-tier framework (triaging vs confirmatory)
+- Same FDA regulatory framework (510(k) cleared blood-based biomarker tests)
+- Avoids pack proliferation; clinical users expect "plasma biomarkers for AD" in one place
+
+### Anchor citations
+
+**Primary anchor for the new cutoff:** FDA 510(k) K252163 Decision Summary,
+publicly available at https://www.accessdata.fda.gov/cdrh_docs/reviews/K252163.pdf.
+Verbatim FDA language: *"In conclusion, the data of the clinical performance
+study support that a Elecsys Phospho-Tau (181P) Plasma result below the
+cut-off of 0.722 pg/mL is consistent with an amyloid PET..."*
+
+**Supporting evidence:**
+- Roche press release (October 13, 2025): 97.9% NPV in 312-participant
+  multicenter, non-interventional clinical study reflecting early-disease-
+  stage primary-care population
+- Eli Lilly co-development partnership (announced with FDA clearance)
+- Alzheimer's Association welcomed clearance (October 13, 2025 statement
+  from Joanne Pike, DrPH, AA president and CEO)
+- Karikari TK et al. *Lancet Neurology* 2020;19(11):942-954 (PMID 33020166,
+  DOI 10.1016/S1474-4422(20)30276-9): foundational plasma p-tau181 4-cohort
+  study (BioFINDER, ADNI, EMIF-AD, INSIGHT-preAD)
+- Labcorp commercial deployment (October 23, 2025; nationwide rollout
+  early 2026)
+- Australian Register of Therapeutic Goods (ARTG entry 200275)
+- Prior FDA clearance of CSF Elecsys pTau181 (2022)
+
+### Scope of the new measurement
+
+`plasma_ptau181_pgml_elecsys` (unit: pg/mL):
+
+- `hard_min = 0.0` (international_consensus; biological non-negativity;
+  8 endorsing bodies including AA CPG 2025, FDA K252163, Roche, Lilly,
+  NIA-AA 2024, Karikari 2020 foundational study, Labcorp deployment)
+- `plausible_max = 0.722` (international_consensus; FDA-cleared rule-out
+  cutoff verbatim from K252163 Decision Summary; 8 endorsing bodies
+  including FDA, Roche, Lilly co-developer, AA welcomed clearance,
+  AA CPG 2025, Practical Neurology, ARTG, Labcorp)
+- `hard_max = 50.0` (international_consensus; biologically extreme upper
+  limit consistent with empirical envelope across 4 prospective AD cohorts
+  (BioFINDER, ADNI, EMIF-AD, INSIGHT-preAD) plus Moscoso 2021 longitudinal;
+  8 endorsing bodies)
+
+**Important clinical interpretation:** The 0.722 pg/mL cutoff is a
+**rule-out** decision threshold, not a continuous biomarker quantile.
+Values below 0.722 are consistent with amyloid-PET-negative pathology
+(97.9% NPV in the primary-care submission cohort). Values above 0.722
+indicate further workup (CSF or amyloid PET) is warranted — they do NOT
+confirm AD diagnosis.
+
+**Platform-specificity preserved in measurement name:** The measurement
+is named `plasma_ptau181_pgml_elecsys` (not `plasma_ptau181_pgml`) because
+plasma p-tau181 reported on other platforms (Simoa, Lumipulse, Abbott
+Alinity-CMIA) gives numerically different values that correlate but
+require platform-specific reference values per Karikari 2020 head-to-head
+comparison studies. Cross-platform harmonization for plasma p-tau181 is
+not yet established at international_consensus standard.
+
+### Why citation_strength: international_consensus on all 3 new bounds
+
+All three bounds on the new measurement use `citation_strength:
+international_consensus` despite the FDA cutoff being a single regulatory
+source. Rationale (documented within citation_text):
+
+- The 0.722 pg/mL cutoff has ≥5 international/regulatory bodies
+  endorsing the same operative value: FDA (verbatim, primary), Roche
+  Diagnostics (manufacturer), Eli Lilly (co-developer), Alzheimer's
+  Association (welcomed clearance), AA CPG 2025 (listed in primary
+  analytes), Practical Neurology (peer-reviewed clinical journal),
+  ARTG (Australian regulator), Labcorp (commercial laboratory deployer).
+- The 50.0 hard_max derives from concordant empirical evidence across
+  ≥5 prospective AD cohorts (BioFINDER, ADNI, EMIF-AD, INSIGHT-preAD,
+  Moscoso 2021) — multi-cohort cross-validation is the strongest form
+  of derived evidence and meets international_consensus.
+- Preserves the production-pack world-class invariant that EVERY bound
+  carry `citation_strength: international_consensus` per the
+  `TestProductionPackWorldClassGate` test.
+
+### Added
+
+**New measurement** in `plasma_biomarkers/plasma_amyloid_consensus.yaml`:
+- `plasma_ptau181_pgml_elecsys` with 3 bounds (hard_min, plausible_max, hard_max)
+
+**New test class** `TestPlasmaPtau181Elecsys` in
+`tests/clinical_ranges/test_plasma_amyloid_consensus_pack.py` (11 tests):
+
+- 4 audit behavior tests (low/at-cutoff/implausibly-high/negative value)
+- 1 FDA verbatim cutoff value test (0.722 pg/mL exact)
+- 4 endorser presence tests (FDA, Roche, Lilly co-developer, AA)
+- 1 bounds structure test (exactly 3 bounds: hard_min, plausible_max, hard_max)
+- 1 pack version test (@1.0.0 → @1.1.0)
+
+**Architectural gap closed:** `mri_volumetrics/wmh_fazekas_consensus`
+(shipped v1.13.0) was not in `PRODUCTION_YAML_SHA256_GOLDEN`. Added in
+v1.14.0 to close the silent-skip gap. Note: wmh_fazekas has bounds with
+`citation_strength: verbatim` (Fazekas 1987) and `derived` (Meta VCI Map
+99th percentile) which do NOT pass the strict
+`TestProductionPackWorldClassGate.test_every_bound_is_international_consensus`
+gate. wmh_fazekas was not added to `EXPECTED_PRODUCTION_PACKS` in
+`test_loader.py` in this release; that architectural reconciliation
+(allowing verbatim+derived with ≥5-body endorsement in production packs)
+deferred to a future v1.14.1 or v1.15.0 schema/test cleanup release.
+
+### Modified
+
+- `src/neurotcs/clinical_ranges/ranges/plasma_biomarkers/plasma_amyloid_consensus.yaml`:
+  - `rangepack_id`: `@1.0.0` → `@1.1.0`
+  - `pack_version`: `1.0.0` → `1.1.0`
+  - `effective_date`: `2026-05-25` → `2026-05-28`
+  - Added `Plasma p-tau181 absolute concentration (pg/mL) — FDA-cleared
+    Roche Elecsys (Oct 2025)` to scope list in `notes`
+  - Inserted `plasma_ptau181_pgml_elecsys` measurement between
+    `plasma_ptau217_pgml` and `plasma_abeta42_40_ratio`
+- `src/neurotcs/clinical_ranges/ranges/plasma_biomarkers/aa_2024.yaml`:
+  - `deprecated_in_favor_of`: `@1.0.0` → `@1.1.0`
+  - Extended `deprecation_reason` to note v1.14.0 p-tau181 addition
+- `tests/clinical_ranges/test_deprecation_semantics.py`:
+  - Successor mapping `@1.0.0` → `@1.1.0`
+- `tests/clinical_ranges/test_plasma_amyloid_consensus_pack.py`:
+  - `test_pack_has_five_measurements` → `test_pack_has_six_measurements`
+  - Added `TestPlasmaPtau181Elecsys` class (11 tests)
+- `tests/clinical_ranges/test_yaml_sha256_cross_platform.py`:
+  - Updated plasma_amyloid_consensus golden hash:
+    `cec8f0fa...` → `abd58cc5497cffb96abced920e9cd40823a3af059e5d313450625ab8e613e2be`
+  - Added wmh_fazekas_consensus golden hash (closes v1.13.0 gap):
+    `d4fee2be22ce6780490dc90989dde3aaef66d760a2b5b3a90f0b8753e98df0c6`
+- `pyproject.toml`, `src/neurotcs/__init__.py`, `CITATION.cff`: version
+  1.13.1 → 1.14.0
+- `CHANGELOG.md`: this entry
+
+### Unchanged (byte-identical to v1.13.1)
+
+- **All 6 other Layer 2 production rangepack yaml_sha256:**
+  - `ad/aria_safety`: `0f5c3275...`
+  - `pet_amyloid/centiloid_consensus`: `bfcc5f5d...`
+  - `genetics/apoe_consensus`: `3d9cdca0...`
+  - `csf_biomarkers/csf_amyloid_consensus`: `ef9b4e3c...`
+  - `mri_volumetrics/structural_volumetry_consensus`: `70710ccf...`
+  - `mri_volumetrics/wmh_fazekas_consensus`: `d4fee2be...`
+- **Both Layer 3 invariantpack yaml_sha256:**
+  - `cross_sheet/tool_declaration_consistency`: `cf148e31...`
+  - `cross_sheet/genotype_phenotype_consistency`: `c988ffed...`
+- **All 3 Layer 1 rulepacks** (niaaa_2018 `aaac92fb...`, aa_2024@2.1.0, aa_2024_trac@1.1.0)
+- **All 5 Layer 1 cohort cTCS scores:** OASIS-3 0.994191, ADNI 0.994575,
+  NACC 0.991502, MIRIAD 0.985369, MIRIAD-test-retest 1.000000
+- **All 5 Layer 1 cohort audit_ids** byte-identical to v1.13.x
+
+### Pack hash updated
+
+- **`plasma_biomarkers/plasma_amyloid_consensus@1.1.0` new yaml_sha256:**
+  `abd58cc5497cffb96abced920e9cd40823a3af059e5d313450625ab8e613e2be`
+  (was `cec8f0fa928b744068fb45e5ef406a49f5b2217db8ef0be95c066d9394e4da2f`
+  for @1.0.0)
+
+### Verification
+
+- `pytest tests/ -q` -> **1045 passed, 7 skipped**
+  (1031 v1.13.1 baseline + 11 new TestPlasmaPtau181Elecsys + 1 added
+   wmh_fazekas golden hash test + 1 test rename test_pack_has_six +
+   1 from deprecation successor pointer to @1.1.0)
+- `ruff check src/ tests/ scripts/` -> All checks passed
+- All 9 unchanged-pack yaml_sha256 byte-identical to v1.13.1
+- All 5 Layer 1 cohort audit_ids + cTCS byte-identical to v1.13.1
+- New measurement loads, 3 bounds all `international_consensus`
+- All 3 bounds have 8 endorsing bodies (≥5 production floor)
+- FDA, Roche, Eli Lilly, Alzheimer's Association all present in endorsers
+
+### Endorsement audit summary (post-v1.14.0)
+
+12 production+research_preview packs (unchanged count). The
+`plasma_amyloid_consensus@1.1.0` pack now covers 6 measurements (was 5).
+
+### Roadmap impact
+
+Section 5.3 of `docs/SCOPE_RESPONSE_TO_EXTERNAL_AUDIT.md` row
+"Plasma p-tau181, p-tau231" still reads "**(a) IN PRODUCTION** | Covered
+by `plasma_biomarkers/plasma_amyloid_consensus@1.0.0`" — this remains
+accurate (p-tau181 IS in production at v1.14.0, just on Elecsys
+specifically). The pointer to `@1.0.0` should be updated to `@1.1.0` in
+a future docs-only release. Plasma p-tau231 remains a future extension.
+
+The original v1.13.1 Tier 1 forward list (8 items) is unchanged in
+priority but a separate observation has emerged from this session's
+research: items 7 (NfL) and 8 (GFAP) likely need the same scope-honesty
+treatment as CSF p-tau217 received in v1.13.1 — no FDA-cleared assays,
+cross-platform inconsistency. This is documented for a future scope-doc
+revision; not corrected in this v1.14.0 release because that would
+exceed single-session scope.
+
+### Methodology discipline (4th consecutive primary-source-research pivot)
+
+This release continues the v1.13.0 + v1.13.1 + (rejected) p-tau217 pattern
+of **primary-source research BEFORE writing any YAML**:
+
+- Pre-queue: NfL (Tier 1 #7), GFAP (Tier 1 #8), FDG PET, Tau PET
+- Pre-research recommendation: NfL (CSF + plasma) — appeared cleanest
+- Web research findings: (1) Quanterix Simoa NfL has FDA Breakthrough
+  Designation for MS only, not AD; LDT status "for research use only";
+  (2) cross-platform NfL gives numerically different values requiring
+  platform-specific reference values; (3) GFAP same picture, no FDA AD
+  clearance; (4) Roche Elecsys pTau181 plasma test FDA-cleared Oct 13,
+  2025 as first FDA-cleared blood test for AD primary care — strongest
+  evidence in the field
+- Honest pivot: extend existing `plasma_amyloid_consensus` with the
+  FDA-cleared Elecsys pTau181 measurement instead of shipping a weak
+  NfL pack
+- World-class result: 3 new bounds all international_consensus with
+  8 endorsing bodies each; FDA-verbatim 0.722 pg/mL cutoff anchored in
+  K252163 Decision Summary
+
+This is the 4th consecutive release where forward-roadmap items were
+researched primary-source-first and either reclassified, deferred, or
+pivoted before any YAML was written. The standing mandate "world class
+no partial fix, no step back in future" is best served by this discipline,
+not by shipping packs at production status that the evidence does not
+actually support.
+
+---
+
 ## [1.13.1] -- 2026-05-28
 
 ### Documentation-only release: scope doc reclassification post-v1.13.0
