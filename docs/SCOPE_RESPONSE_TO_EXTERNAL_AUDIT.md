@@ -149,15 +149,17 @@ This is the operative section. Every auditor item from both documents is categor
 | MRI ARIA-H reads | **(a) IN PRODUCTION** | Covered by `ad/aria_safety@1.0.0`. |
 | Amyloid PET (Centiloid, regional SUVR, status) | **(a) IN PRODUCTION** | Covered by `pet_amyloid/centiloid_consensus@1.0.0` (3 measurements, 10 bounds). |
 | Tau PET (regional SUVR, Braak stage, MTL vs neocortical) | **(a) IN PRODUCTION** | Covered by **dual-pack family** (v1.15.0): `tau_pet/tau_consensus@1.0.0` (production, 6 measurements / 13 bounds, FDA Tauvid (flortaucipir) PI §2.4 verbatim visual interpretation criteria including the 1.65× cerebellar threshold; anchor Mattay 2020 J Nucl Med PMID 32709695) AND `tau_pet/tau_research_preview@1.0.0` (research_preview, 6 measurements / 16 bounds, Schöll 2016 / Maass 2017 / Pascoal 2021 SUVR cutoffs + PET-Braak 0-VI staging + Villemagne 2023 CenTauR universal scale). Tracer scope: flortaucipir only. MK-6240 PDUFA Aug 13 2026 not yet approved; future v2.0.0 will add MK-6240 after FDA action. |
-| FDG PET | (a) | Future Layer 2 pack. Anchors: Mosconi 2009/2013 metabolic patterns, ADNI FDG normative. Estimated 1-2 sessions. |
+| FDG PET | **(a) IN PRODUCTION** | Covered by `fdg_pet/fdg_consensus@1.0.0` (v1.16.0, 7 measurements / 18 bounds). Anchors: FDA Fludeoxyglucose F-18 Injection PI (74-370 MBq), CMS NCD 220.6.13 AD/FTD differential diagnosis (Sept 15 2004), AA-2024 NIA-AA Core 2 N-marker classification (Jack 2024), SNMMI Procedure Standard/EANM Practice Guideline v2.0 (Arbizu Oct 2024), EANM Brain FDG-PET v3 (2022), Mosconi 2008 J Nucl Med multicenter standardization (PMID 18287270, n=548 across 7 sites), Bailly 2015 BioMed Res Int (PMC4539420, precuneus/PCC SUVR anchors). |
 | Diffusion MRI (DTI FA, MD, RD) | (c) | Needs clinical judgment: which tracts, which atlas (ICBM-DTI-81, JHU), which normative reference. Evidence exists but no single ≥5-body consensus on cutoffs. |
 | ASL / perfusion MRI (CBF) | (c) | Same as DTI: no consensus cutoffs at international_consensus standard yet. |
 | fMRI / resting-state functional connectivity | (c) | Research-grade for AD trial endpoints; no consensus cutoffs. |
 | Susceptibility-weighted imaging (SWI) | **(a) IN PRODUCTION** | Covered by `ad/aria_safety@1.0.0` as a contributor to ARIA-H detection (NeuroQuant 5.0 SWI capability noted in v1.10.2). |
 
-**Group 2 subtotal: 9 (a) [6 in production / 3 future], 0 (b), 3 (c).**
+**Group 2 subtotal: 9 (a) [7 in production / 2 future], 0 (b), 3 (c).**
 
 *Change from v1.13.1: Tau PET moved from "(a) future" to "(a) IN PRODUCTION" with the v1.15.0 ship of the `tau_pet/tau_consensus@1.0.0` + `tau_pet/tau_research_preview@1.0.0` dual pack family. In-production count: 5 → 6; future count: 4 → 3. Group totals 9/0/3 unchanged.*
+
+*Change from v1.15.2: FDG PET moved from "(a) future" to "(a) IN PRODUCTION" with the v1.16.0 ship of `fdg_pet/fdg_consensus@1.0.0` (FDA + CMS + AA-2024 Core 2 N + SNMMI/EANM 2024 v2.0 + EANM Brain FDG-PET v3 + Mosconi 2008 multicenter + Bailly 2015 SUVR anchors; 7 measurements, 18 bounds, 7-8 endorsers per bound). In-production count: 6 → 7; future count: 3 → 2. Group totals 9/0/3 unchanged.*
 
 ### 5.3 Document 1, Group 3 -- Fluid biomarkers (16 items)
 
@@ -322,6 +324,43 @@ group header item counts (5.2, 5.3, 5.4, 5.5). The v1.12.1 verified
 ground-truth recount was: **66 (a) / 26 (b) / 25 (c) / 117 items.**
 See CHANGELOG.md v1.12.1 entry for the full reconciliation.
 
+**Update note (2026-05-28, NeuroTCS v1.16.0):** One item reclassified
+since v1.15.2, originating from v1.16.0 development:
+
+1. **FDG PET (Group 2, Section 5.2):** Moved from "(a) future" to
+   "(a) IN PRODUCTION" with the v1.16.0 ship of `fdg_pet/fdg_consensus@1.0.0`.
+   The pack encodes brain [18F]FDG PET clinical-grade parameters for AD
+   differential diagnosis at world-class evidence standard:
+   FDA Fludeoxyglucose F-18 Injection Prescribing Information verbatim
+   dose envelope (74-370 MBq); CMS National Coverage Determination 220.6.13
+   regulatory-grade AD/FTD differential diagnosis coverage (Sept 15, 2004;
+   reviewed Sept 10, 2024); AA-2024 NIA-AA Revised Criteria Core 2 N-marker
+   classification (Jack et al. PMID 38934362); SNMMI Procedure Standard/
+   EANM Practice Guideline for Brain [18F]FDG PET Imaging Version 2.0
+   (Arbizu et al., J Nucl Med Oct 2024); EANM Brain FDG-PET Procedure
+   Guideline Version 3 (2022, PMID 35094103); Mosconi 2008 J Nucl Med
+   multicenter standardization across 7 sites (PMID 18287270, n=548);
+   Bailly 2015 BioMed Res Int multi-site French validation cohort
+   (PMC4539420, n=47, cerebellum-referenced precuneus and posterior
+   cingulate SUVR anchors). 7 measurements, 18 bounds, 7-8 endorsers
+   per bound. All bounds pass the v1.15.1 reconciled world-class gate
+   (endorser floor + valid strength form + multi-source markers for
+   derived bounds).
+
+Net effect on totals: **(a) 61 unchanged**, **in-production 23 → 24**,
+**future (a) 38 → 37**. (b) 26 unchanged. (c) 30 unchanged. Total 117
+unchanged.
+
+Note: FDG PET is the first Tier 2 item shipped from the v1.15.2 roadmap
+(was Tier 2 item #6 = FDG PET Layer 2 pack). It qualified for production
+not via FDA AD-specific indication (FDG is FDA-approved for epilepsy/
+oncology/cardiology, NOT AD) but via the regulatory-grade CMS NCD 220.6.13
+coverage decision + AA-2024 Core 2 N-marker international consensus +
+SNMMI/EANM 2024 v2.0 joint procedure standard. This is the same evidence
+architecture pattern as wmh_fazekas_consensus (Fazekas 1987 verbatim +
+Meta VCI Map derived): mixed citation_strength forms unified by ≥5-body
+endorsement and multi-source derivation.
+
 **Update note (2026-05-28, NeuroTCS v1.15.2):** Five additional items
 reclassified since v1.13.1, originating from v1.14.0 + v1.15.0 + v1.15.1
 development work and the v1.15.2 documentation reconciliation:
@@ -368,8 +407,8 @@ measurement; the old `@1.0.0` citation was stale).
 
 | Category | Count | % |
 |---|---|---|
-| **(a) In-scope, in production / already used / partially addressed** | **23** | **~20%** |
-| **(a) In-scope, future pack/layer** | **38** | **~32%** |
+| **(a) In-scope, in production / already used / partially addressed** | **24** | **~21%** |
+| **(a) In-scope, future pack/layer** | **37** | **~31%** |
 | **(a) Subtotal: in-scope (in production + future)** | **61** | **~52%** |
 | **(b) Out-of-scope, belongs in different tool** | **26** | **~22%** |
 | **(c) Genuine roadmap gap, needs clinical judgment or maturing evidence** | **30** | **~26%** |
@@ -398,9 +437,9 @@ This is preserved in the 117-row count (it appears as a distinct row in
 the auditor's Document 2 table). The duplicate is acknowledged here so
 downstream consumers can adjust the totals if they prefer to deduplicate.
 
-**The headline number (post-v1.15.2):** the auditor identified 117 distinct
-gap rows across Documents 1 and 2. **~52% are in-scope for NeuroTCS** (23
-already in production or addressed, 38 future); **~22% are explicitly
+**The headline number (post-v1.16.0):** the auditor identified 117 distinct
+gap rows across Documents 1 and 2. **~52% are in-scope for NeuroTCS** (24
+already in production or addressed, 37 future); **~22% are explicitly
 out-of-scope** with named alternative tools (CDISC validators, EDC systems,
 image-QC tools, etc.); **~26% need clinical judgment or maturing evidence**
 before they can be scoped.
@@ -416,11 +455,13 @@ applied to CSF p-tau217. No partial fix; no aspiration without evidence.
 
 ---
 
-## 6. Defensible roadmap for the 38 in-scope future items
+## 6. Defensible roadmap for the 37 in-scope future items
 
-Realistic estimate: 38 future (a) items at the v1.10.x pace of ~1-2 packs per session = **19-28 additional implementation sessions**. Roughly 10-18 months of disciplined work.
+Realistic estimate: 37 future (a) items at the v1.10.x pace of ~1-2 packs per session = **19-28 additional implementation sessions**. Roughly 10-18 months of disciplined work.
 
 *Change from v1.13.1: 43 → 38 future items. Tau PET dual pack shipped in v1.15.0 (`tau_pet/tau_consensus@1.0.0` + `tau_pet/tau_research_preview@1.0.0`, now in-production). CSF NfL, CSF GFAP, Plasma NfL, Plasma GFAP downgraded to (c) in v1.15.2 (no FDA AD-specific clearance, cross-platform inconsistency, non-specific to AD — same world-class evidence standard that drove the v1.13.1 CSF p-tau217 downgrade).*
+
+*Change from v1.15.2: 38 → 37 future items. FDG PET Layer 2 pack shipped in v1.16.0 as `fdg_pet/fdg_consensus@1.0.0` — the first Tier 2 item closed from the v1.15.2 roadmap. Anchored to FDA + CMS + AA-2024 + SNMMI/EANM + Mosconi 2008 multicenter + Bailly 2015 multi-site cohort.*
 
 ### 6.1 Priority tiers
 
@@ -436,29 +477,28 @@ The 38 future items split into three tiers by clinical importance + evidence rea
 
 *Change from v1.13.1: 8 items → 5 items. Item 6 (Tau PET regional SUVR + Braak Layer 2 pack) DONE in v1.15.0 as a dual-pack family. Items 7 (NfL Layer 2 pack) and 8 (GFAP Layer 2 pack) DOWNGRADED to (c) in v1.15.2 after primary-source research found no FDA AD-specific clearance, cross-platform inconsistency, and non-AD-specific elevation patterns. All 5 remaining Tier 1 items are Layer 3 invariants from Group 8 (anti-amyloid safety endpoints) — partially covered by the existing `genotype_phenotype_consistency` and `tool_declaration_consistency` Layer 3 packs designed in `LAYER_3_DESIGN.md`.*
 
-**Tier 2 -- Medium priority, evidence ready (13 items, ~13 sessions):**
+**Tier 2 -- Medium priority, evidence ready (12 items, ~12 sessions):**
 
-6. FDG PET Layer 2 pack
-7. CSF t-tau extension
-8. CSF p-tau181 extension
-9. CSF p-tau231 extension
-10. Plasma p-tau231 extension (in shared `plasma_amyloid_consensus` row)
-11. TREM2 variants Layer 2 pack
-12. ADAS-Cog Layer 2 pack
-13. MoCA Layer 2 pack
-14. CDR/MMSE Layer 2 plausibility bounds
-15. iADRS composite Layer 2 pack
-16. NPI-Q Layer 2 pack
-17. UPSIT olfactory Layer 2 pack
-18. Microbleeds non-ARIA Layer 2 pack
+6. CSF t-tau extension
+7. CSF p-tau181 extension
+8. CSF p-tau231 extension
+9. Plasma p-tau231 extension (in shared `plasma_amyloid_consensus` row)
+10. TREM2 variants Layer 2 pack
+11. ADAS-Cog Layer 2 pack
+12. MoCA Layer 2 pack
+13. CDR/MMSE Layer 2 plausibility bounds
+14. iADRS composite Layer 2 pack
+15. NPI-Q Layer 2 pack
+16. UPSIT olfactory Layer 2 pack
+17. Microbleeds non-ARIA Layer 2 pack
 
-*Change from v1.13.1: Tier 2 was 15 items (numbered 11-25 in v1.13.1). Plasma NfL and Plasma GFAP removed (downgraded to (c) in v1.15.2). Tier 2 now 13 items.*
+*Change from v1.13.1: Tier 2 was 15 items (numbered 11-25 in v1.13.1). Plasma NfL and Plasma GFAP removed (downgraded to (c) in v1.15.2). FDG PET shipped in v1.16.0 (was item 6). Tier 2 now 12 items.*
 
 **Tier 3 -- Lower priority, Layer 4 dependent (20 items, ~18-20 sessions):**
 
 19-38. Various Layer 4 (inclusion/protocol/missing-data) items, screen failures, endpoint derivation Layer 3 invariants, outcome adjudication consistency invariants, study-partner reliability framework, and additional in-scope (a) items from the corrected ground-truth recount (depends on Layer 4 design first).
 
-*Tier 3 numbering note: cumulative numbering is 5 + 13 + 20 = 38. (v1.13.1: 8 + 15 + 20 = 43; v1.15.2: minus 1 Tier 1 (Tau PET done), minus 2 Tier 1 (NfL/GFAP downgraded), minus 2 Tier 2 (Plasma NfL/GFAP downgraded) = 38.)*
+*Tier 3 numbering note: cumulative numbering is 5 + 12 + 20 = 37 (v1.16.0). (v1.13.1: 8 + 15 + 20 = 43; v1.15.2: minus 1 Tier 1 (Tau PET done), minus 2 Tier 1 (NfL/GFAP downgraded), minus 2 Tier 2 (Plasma NfL/GFAP downgraded) = 38.)*
 
 ### 6.2 Sequencing recommendation
 
@@ -474,9 +514,9 @@ Complete the v1.11.0 arc first (a2, a3, rc1, final = 4 sessions). Then begin the
 | Tier 1 roadmap | v1.11.1 - v1.11.7 | 5-7 sessions | 2-3 months |
 | Tier 2 roadmap + Layer 4 design | v1.12.0-design, v1.12.x, v1.13.x | 13 sessions | 5-7 months |
 | Tier 3 roadmap | v1.14.x + | 18-20 sessions | 6-11 months |
-| **Total** | **v1.11.0 - v1.14.x** | **~40-44 sessions** | **14-23 months** |
+| **Total** | **v1.11.0 - v1.14.x** | **~39-43 sessions** | **13-22 months** |
 
-*Tier 1 reduced from 8-10 to 5-7 sessions in v1.15.2: Tau PET done in v1.15.0; NfL/GFAP downgraded to (c). Tier 2 reduced from 15 to 13 sessions: Plasma NfL/GFAP downgraded. Total session estimate reduced accordingly (45-49 → 40-44).*
+*Tier 1 reduced from 8-10 to 5-7 sessions in v1.15.2: Tau PET done in v1.15.0; NfL/GFAP downgraded to (c). Tier 2 reduced from 15 to 13 sessions in v1.15.2 (Plasma NfL/GFAP downgraded), then from 13 to 12 sessions in v1.16.0 (FDG PET shipped). Total session estimate reduced accordingly (45-49 → 39-43).*
 
 This is honest. It is not "we'll cover everything in two sessions." It is also not "we'll never cover this." It is a disciplined multi-year roadmap at world-class evidence standard.
 
@@ -536,7 +576,7 @@ This is the honest version of "this is not a partial fix; this is a deliberate h
 
 If the auditor reads only one paragraph of this document, it should be this:
 
-> *You are correct that NeuroTCS is not a complete AD trial-data recognizer. It was never designed to be one and is not described in that way in the v1.x scope documents (see `docs/SCOPE.md`). NeuroTCS is a citation-locked, fail-closed audit framework for the logical consistency of AD trial biomarker data, operating at three layers: temporal coherence of categorical state trajectories (Layer 1, production since v1.8.x), per-visit plausibility of continuous biomarker values against published normative ranges (Layer 2, production since v1.10.0 with 8 packs as of v1.15.1 — ad/aria_safety, pet_amyloid/centiloid_consensus, genetics/apoe_consensus, csf_biomarkers/csf_amyloid_consensus, plasma_biomarkers/plasma_amyloid_consensus, mri_volumetrics/structural_volumetry_consensus, mri_volumetrics/wmh_fazekas_consensus, tau_pet/tau_consensus, plus 2 research_preview packs), and cross-sheet consistency between manifest declarations and observed values (Layer 3, in development per `LAYER_3_DESIGN.md` v1.11.0-design.2). Of the 117 gap rows your review identified, ~52% (61 items) are in-scope for NeuroTCS, of which 23 are already in production or addressed and 38 are on a disciplined 19-28 session roadmap (estimated 10-18 months). ~22% (26 items) are explicitly out-of-scope, with named alternative tools (CDISC SDTM validators, EDC systems, image-QC tools, CLIA-certified bioanalytical labs) recommended. ~26% (30 items) are genuine roadmap gaps awaiting maturing evidence or convergent clinical-judgment standards; each will be revisited when its specific blocking condition resolves. The framework's hard boundaries -- no measurement, no SDTM structural validation, no event adjudication, no replacement for human expert review -- are documented in section 3 of this response. We welcome integration with the upstream and adjacent tools that handle the layers above and below us.*
+> *You are correct that NeuroTCS is not a complete AD trial-data recognizer. It was never designed to be one and is not described in that way in the v1.x scope documents (see `docs/SCOPE.md`). NeuroTCS is a citation-locked, fail-closed audit framework for the logical consistency of AD trial biomarker data, operating at three layers: temporal coherence of categorical state trajectories (Layer 1, production since v1.8.x), per-visit plausibility of continuous biomarker values against published normative ranges (Layer 2, production since v1.10.0 with 9 packs as of v1.16.0 — ad/aria_safety, pet_amyloid/centiloid_consensus, genetics/apoe_consensus, csf_biomarkers/csf_amyloid_consensus, plasma_biomarkers/plasma_amyloid_consensus, mri_volumetrics/structural_volumetry_consensus, mri_volumetrics/wmh_fazekas_consensus, tau_pet/tau_consensus, fdg_pet/fdg_consensus, plus 2 research_preview packs), and cross-sheet consistency between manifest declarations and observed values (Layer 3, in development per `LAYER_3_DESIGN.md` v1.11.0-design.2). Of the 117 gap rows your review identified, ~52% (61 items) are in-scope for NeuroTCS, of which 24 are already in production or addressed and 37 are on a disciplined 19-28 session roadmap (estimated 10-18 months). ~22% (26 items) are explicitly out-of-scope, with named alternative tools (CDISC SDTM validators, EDC systems, image-QC tools, CLIA-certified bioanalytical labs) recommended. ~26% (30 items) are genuine roadmap gaps awaiting maturing evidence or convergent clinical-judgment standards; each will be revisited when its specific blocking condition resolves. The framework's hard boundaries -- no measurement, no SDTM structural validation, no event adjudication, no replacement for human expert review -- are documented in section 3 of this response. We welcome integration with the upstream and adjacent tools that handle the layers above and below us.*
 
 That paragraph is the public-facing position. Sections 1-8 above are the technical support for it.
 
@@ -565,6 +605,7 @@ To be explicit about what this scope-response document does NOT commit to:
 | `v1.11.0a1-scope-response` | 2026-05-25 | Initial scope-response document. Triage of 117 auditor-identified gap rows. Roadmap for in-scope future items. Out-of-scope statements. Acknowledgment of evidence-or-judgment-pending items. (NOTE: original v1.11.0a1-scope-response numbers (54/27/34/115) reflected arithmetic errors corrected in NeuroTCS v1.12.1 — see CHANGELOG.md.) |
 | `v1.12.1` | 2026-05-27 | Section 5.11 arithmetic corrected via independent Python text-parser recount. Old totals 54/27/34/115 → verified 66/26/25/117. Section header counts 5.2/5.3/5.4/5.5 fixed. Subtotals in 5.2/5.3/5.5/5.10 fixed. In-scope split corrected (15+39=54 → 21+45=66). Downstream references in sections 6, 7, 8, 9 updated to match. Phantom "PET reconstruction QC" row removed from section 7. |
 | `v1.13.1` | 2026-05-28 | Two items reclassified after v1.13.0 work: (1) WMH/Fazekas moved from "(a) future" to "(a) IN PRODUCTION" with the v1.13.0 ship of `mri_volumetrics/wmh_fazekas_consensus@1.0.0` (Fazekas 1987 + STRIVE-2 + Meta VCI Map). (2) CSF p-tau217 reclassified from "(a) future" to "(c) needs maturing evidence" after primary-source research found no FDA-cleared CSF cutoff exists, plasma p-tau217 is already in production, and cross-platform CSF cutoffs lack ≥5-body consensus. Net: (a) 66 → 65, (c) 25 → 26, in-production 21 → 22, future 45 → 43. Sections 5.2, 5.3, 5.11, 6 header, 6.1 Tier 1, 8, 9 updated. |
+| `v1.16.0` | 2026-05-28 | **First Tier 2 forward pack shipped.** FDG PET Layer 2 pack shipped as `fdg_pet/fdg_consensus@1.0.0` (7 measurements / 18 bounds at world-class evidence standard). Anchored to FDA Fludeoxyglucose F-18 Injection PI verbatim dose envelope (74-370 MBq) + CMS NCD 220.6.13 regulatory-grade AD/FTD coverage + AA-2024 NIA-AA Core 2 N-marker classification + SNMMI/EANM 2024 v2.0 joint procedure standard + EANM Brain FDG-PET Guideline v3 (2022) + Mosconi 2008 J Nucl Med multicenter (n=548 across 7 sites) + Bailly 2015 BioMed Res Int multi-site validation cohort. All bounds clear the v1.15.1 reconciled world-class gate (endorser floor + valid strength form + multi-source markers for derived bounds). FDG PET qualifies for production status not via FDA AD-specific indication (FDG is FDA-approved for epilepsy/oncology/cardiology, NOT AD-specific) but via the multi-body international consensus (CMS + AA-2024 + SNMMI + EANM + ADNI + Mosconi + Bailly). Net effect: (a) 61 unchanged, in-production 23 → 24, future (a) 38 → 37, (b)/(c) unchanged, total 117 unchanged. Tier 2 dropped from 13 to 12 items. Section 5.2, 5.11, 6 header, 6.1, 6.3, 9 updated. NO existing YAML/code/schema touched; 1 NEW pack added cleanly with byte-exact invariance preserved on all 12 pre-existing active packs and all 5 Layer 1 cohort audit_ids. |
 | `v1.15.2` | 2026-05-28 | **Documentation reconciliation closing four releases of stale content.** Five items reclassified: (1) Tau PET moved from "(a) future" to "(a) IN PRODUCTION" with v1.15.0 dual pack family `tau_pet/tau_consensus@1.0.0` (FDA Tauvid PI §2.4 verbatim 1.65× cerebellar threshold) + `tau_pet/tau_research_preview@1.0.0` (Schöll/Maass/Pascoal/CenTauR). (2-5) CSF NfL, CSF GFAP, Plasma NfL, Plasma GFAP all DOWNGRADED from "(a) future" to "(c) needs maturing evidence" following the v1.13.1 CSF p-tau217 precedent: no FDA AD-specific clearance exists (Quanterix Simoa NfL FDA Breakthrough Designation is MS-only), cross-platform inconsistency (Simoa vs Elecsys vs MSD), and non-AD-specificity (NfL elevated in MS/ALS/TBI/stroke/aging; GFAP elevated in TBI/stroke/MS/prion disease). All four downgrades were documented in v1.13.1/v1.14.0 CHANGELOGs as "future scope downgrade following p-tau217 pattern" but not actually executed in the scope doc until v1.15.2. Net: (a) 65 → 61 (1 to in-prod, 4 to (c)), (c) 26 → 30, in-production 22 → 23, future 43 → 38. Tier 1 dropped from 8 items to 5 items (Tau PET done, NfL/GFAP downgraded). Plasma pack citations updated `@1.0.0` → `@1.1.0` (cosmetic, pack extended in v1.14.0 with FDA-cleared Elecsys pTau181). Sections 5.2, 5.3, 5.11, 6 header, 6.1, 6.3, 8, 9 updated. No code, schema, or test changes. |
 
 Modifications to this document require bumping to `v1.11.0a1-scope-response.2`, `.3`, etc., with explicit changelog of which items moved between categories and why.

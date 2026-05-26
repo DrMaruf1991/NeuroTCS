@@ -147,16 +147,22 @@ class TestRosterCounts:
 
     v1.15.0 adds tau_pet/tau_consensus to production and
     tau_pet/tau_research_preview to research_preview:
-    (8 prod, 2 preview, 6 deprecated, 16 total)."""
+    (8 prod, 2 preview, 6 deprecated, 16 total).
 
-    def test_eight_production_packs(self) -> None:
+    v1.16.0 adds fdg_pet/fdg_consensus to production (Tier 2 item #1 from
+    v1.15.2 roadmap; CMS NCD 220.6.13 + AA-2024 Core 2 N + SNMMI/EANM 2024
+    v2.0 + EANM Brain FDG-PET v3 + Mosconi 2008 multicenter + Bailly 2015
+    SUVR anchors): (9 prod, 2 preview, 6 deprecated, 17 total)."""
+
+    def test_nine_production_packs(self) -> None:
         packs = list_rangepacks()
         prod = [p for p in packs if p.get("status") == "production"]
-        assert len(prod) == 8
+        assert len(prod) == 9
 
     def test_two_research_preview_packs(self) -> None:
         """v1.15.0: research_preview pack count grows from 1 to 2 with
-        tau_pet/tau_research_preview joining mri_volumetrics/freesurfer_extended."""
+        tau_pet/tau_research_preview joining mri_volumetrics/freesurfer_extended.
+        v1.16.0: unchanged."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
         assert len(preview) == 2
@@ -171,11 +177,10 @@ class TestRosterCounts:
         assert names == set(EXPECTED_DEPRECATIONS.keys())
 
     def test_total_pack_count(self) -> None:
-        """v1.15.0 adds 2 packs (tau_pet/tau_consensus production +
-        tau_pet/tau_research_preview preview). Net: 16 total packs
-        (8 prod + 2 preview + 6 deprecated)."""
+        """v1.16.0 adds 1 pack (fdg_pet/fdg_consensus production).
+        Net: 17 total packs (9 prod + 2 preview + 6 deprecated)."""
         packs = list_rangepacks()
-        assert len(packs) == 16  # 8 prod + 2 preview + 6 deprecated
+        assert len(packs) == 17  # 9 prod + 2 preview + 6 deprecated
 
 
 class TestDeprecationSchemaValidator:

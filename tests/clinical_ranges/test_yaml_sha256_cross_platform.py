@@ -56,6 +56,8 @@ PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
         "d4fee2be22ce6780490dc90989dde3aaef66d760a2b5b3a90f0b8753e98df0c6",
     "tau_pet/tau_consensus":
         "76c8ff423ff25731dbba961d2f8ef18e341ea18335b9a303c4b3c0412b7ba9cb",
+    "fdg_pet/fdg_consensus":
+        "eb3893444a26ae41178901445706d9dc5966480250c05b791e540db2f8afb275",
 }
 
 

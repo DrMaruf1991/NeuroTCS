@@ -4,6 +4,216 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] -- 2026-05-28
+
+### First Tier 2 forward pack shipped: FDG PET Layer 2 pack
+
+This release ships the FDG PET production rangepack `fdg_pet/fdg_consensus@1.0.0`,
+closing the first Tier 2 item from the v1.15.2 roadmap (was Tier 2 item #6 in
+v1.15.2 ordering). The pack encodes brain [18F]FDG PET clinical-grade
+parameters for Alzheimer's disease differential diagnosis at world-class
+evidence standard.
+
+### Why FDG PET qualifies for production despite no FDA AD-specific indication
+
+FDG (fluorodeoxyglucose F-18) is FDA-approved as a radiopharmaceutical for
+**epilepsy, oncology, and cardiology** indications. It is NOT FDA-approved
+with an AD-specific indication on the drug label. This is similar in form
+to the regulatory gap that drove the v1.13.1 CSF p-tau217 downgrade and the
+v1.15.2 NfL/GFAP downgrades — but FDG PET qualifies for production where
+those did not, because:
+
+1. **CMS NCD 220.6.13** (effective Sept 15, 2004; reviewed Sept 10, 2024)
+   provides regulatory-grade coverage for FDG-PET in AD/FTD differential
+   diagnosis with specific clinical criteria. This is a regulatory-grade
+   indication from CMS even though it's not on the FDA drug label.
+
+2. **AA-2024 NIA-AA Revised Criteria (Jack et al. 2024, PMID 38934362)**
+   classifies FDG-PET as a Core 2 biomarker (N — neurodegeneration),
+   Table 7. This is operative international consensus.
+
+3. **SNMMI Procedure Standard/EANM Practice Guideline for Brain [18F]FDG
+   PET Imaging Version 2.0** (Arbizu et al., J Nucl Med Oct 17, 2024)
+   joint standard explicitly covers cognitive impairment and dementia as
+   a common clinical indication.
+
+4. **EANM Brain FDG-PET Procedure Guideline Version 3** (2022, PMID
+   35094103) provides the dose envelope (125-250 MBq, typically 150 MBq).
+
+5. **Mosconi 2008 J Nucl Med multicenter standardization** (PMID 18287270)
+   foundational n=548 across 7 international sites (NYU, Hammersmith,
+   Munich, Florence, Cologne, Dresden, Mayo Clinic).
+
+6. **Bailly 2015 BioMed Res Int multi-site French validation cohort**
+   (PMC4539420, n=47 across Tours/Caen/Toulouse) cerebellum-referenced
+   precuneus and posterior cingulate SUVR anchors.
+
+Total ≥7 endorsing bodies per bound (well above the v1.15.1 reconciled
+world-class gate floor of ≥5).
+
+### Pack architecture: mixed citation strengths unified by multi-body endorsement
+
+Same architectural pattern as wmh_fazekas_consensus (v1.13.0/v1.15.1):
+
+- **Verbatim bounds** (6/18 = 33%): FDA Fludeoxyglucose F-18 Injection PI
+  dose envelope (74-370 MBq verbatim) + EANM Brain FDG-PET v3 plausible_max
+  (250 MBq verbatim) + FDA hard_max (370 MBq verbatim).
+- **International_consensus bounds** (6/18 = 33%): CMS NCD 220.6.13
+  indication status enum + SNMMI/EANM 2024 v2.0 + Mosconi 2008 reference
+  region enum + four-category visual interpretation pattern.
+- **Derived bounds** (6/18 = 33%): Multi-cohort uptake-time bounds (EANM v3
+  + Bailly 2015 + Mosconi 2008 + ADNI PET Core) and SUVR cutoffs (Bailly
+  2015 + Mosconi 2008 + ADNI PET Core + Minoshima 1997).
+
+All bounds clear the v1.15.1 reconciled world-class gate (endorser floor +
+valid strength form + multi-source markers for derived bounds).
+
+### Pack contents
+
+`fdg_pet/fdg_consensus@1.0.0` — 7 measurements / 18 bounds:
+
+1. `fdg_pet_dose_mbq` (3 bounds, FDA verbatim 74-370 MBq + EANM v3
+   verbatim 250 MBq clinical-practice envelope)
+2. `fdg_pet_uptake_time_min` (3 bounds, EANM v3 + multi-cohort derived
+   30-60 min clinical practice, 20-min QC floor, 120-min pharmacokinetic
+   ceiling)
+3. `fdg_pet_reference_region` (categorical enum: pons / cerebellum /
+   whole_brain)
+4. `fdg_pet_visual_read_pattern` (categorical enum: ad_pattern /
+   ftd_pattern / dlbd_pattern / vascular_or_normal_or_other)
+5. `fdg_pet_precuneus_suvr_cerebellum` (3 bounds, Bailly 2015 anchored:
+   HC=1.26, MCI=1.09, AD=1.02; envelope 0.3-1.5 plausible, 0.3-3.0 hard)
+6. `fdg_pet_posterior_cingulate_suvr_cerebellum` (3 bounds, Bailly 2015
+   anchored: HC=1.22, MCI=1.06, AD=0.96; envelope 0.3-1.5 plausible,
+   0.3-3.0 hard)
+7. `fdg_pet_cms_indication_status` (categorical enum: ncd_220_6_13_covered
+   / ncd_220_6_13_clinical_trial_only / not_covered)
+
+### Added
+
+- `src/neurotcs/clinical_ranges/ranges/fdg_pet/fdg_consensus.yaml` —
+  new production rangepack, yaml_sha256:
+  `eb3893444a26ae41178901445706d9dc5966480250c05b791e540db2f8afb275`
+- `tests/clinical_ranges/test_fdg_consensus_pack.py` — 27 pack-specific
+  tests covering pack-level invariants, FDA + EANM dose envelopes, uptake
+  time bounds, reference region enum, visual read pattern enum, Bailly
+  2015 + Mosconi 2008 SUVR anchors, CMS NCD 220.6.13 indication enum,
+  endorser-floor + world-class evidence bar enforcement, multi-body
+  regulatory endorsement coverage (FDA, CMS, SNMMI, EANM, AA-2024)
+
+### Modified
+
+- `tests/clinical_ranges/test_loader.py`:
+  - `EXPECTED_PRODUCTION_PACKS` now includes `fdg_pet/fdg_consensus`
+- `tests/clinical_ranges/test_yaml_sha256_cross_platform.py`:
+  - `PRODUCTION_YAML_SHA256_GOLDEN` adds fdg_pet/fdg_consensus golden hash
+- `tests/clinical_ranges/test_deprecation_semantics.py`:
+  - `TestRosterCounts.test_eight_production_packs` →
+    `test_nine_production_packs` (expects 9 production packs)
+  - `test_total_pack_count` updated 16 → 17
+- `docs/SCOPE_RESPONSE_TO_EXTERNAL_AUDIT.md`:
+  - Section 5.2 FDG PET row: (a) future → (a) IN PRODUCTION with full
+    citation chain
+  - Section 5.2 subtotal: 6 in-prod / 3 future → 7 in-prod / 2 future
+  - Section 5.11 v1.16.0 update note prepended
+  - Section 5.11 in-production count 23 → 24, future (a) 38 → 37
+  - Section 6 header: 38 → 37 future items
+  - Section 6.1 Tier 2: 13 → 12 items (FDG PET removed)
+  - Section 6.3 estimated timeline: 40-44 → 39-43 sessions
+  - Section 9 (auditor response): updated pack count 8 → 9 production
+  - Section 11 (revision history): v1.16.0 row added
+- `pyproject.toml`, `src/neurotcs/__init__.py`, `CITATION.cff`: version
+  1.15.2 → 1.16.0
+- `CHANGELOG.md`: this entry
+
+### Unchanged (byte-identical to v1.15.2)
+
+NO existing YAML, code, or schema files modified. 1 NEW pack added cleanly.
+
+- All 8 PRE-EXISTING Layer 2 production rangepack yaml_sha256 byte-identical:
+  - ad/aria_safety: `0f5c3275...`
+  - pet_amyloid/centiloid_consensus: `bfcc5f5d...`
+  - genetics/apoe_consensus: `3d9cdca0...`
+  - csf_biomarkers/csf_amyloid_consensus: `ef9b4e3c...`
+  - plasma_biomarkers/plasma_amyloid_consensus: `abd58cc5...`
+  - mri_volumetrics/structural_volumetry_consensus: `70710ccf...`
+  - mri_volumetrics/wmh_fazekas_consensus: `d4fee2be...`
+  - tau_pet/tau_consensus: `76c8ff42...`
+- Both research_preview pack yaml_sha256 byte-identical:
+  - mri_volumetrics/freesurfer_extended (unchanged)
+  - tau_pet/tau_research_preview: `c30ac885...`
+- Both Layer 3 invariantpack yaml_sha256 byte-identical
+- All 3 Layer 1 rulepacks byte-identical (niaaa_2018 `aaac92fb...`)
+- All 5 Layer 1 cohort cTCS + audit_ids byte-identical:
+  OASIS-3 0.994191 `77f1945358e6b1db...`, ADNI 0.994575 `5a52facd1e679f56...`,
+  NACC 0.991502 `f233935d7a1c2d72...`, MIRIAD 0.985369 `59ac763dfc4cd009...`,
+  MIRIAD-test-retest 1.000000 `94126769ef6c468e...`
+
+### Verification
+
+- `pytest tests/ -q` → **1170 passed, 7 skipped** (was 1131 in v1.15.2;
+  +39 from 27 new pack-specific tests + parametrized world-class gate
+  expansion across 9 packs)
+- `ruff check` → All checks passed
+- All 12 PRE-EXISTING active pack hashes byte-identical to v1.15.2
+- All 5 Layer 1 cohort audit_ids + cTCS byte-identical to v1.15.2
+- New `fdg_pet/fdg_consensus@1.0.0` passes the reconciled world-class gate
+
+### Pack roster post-v1.16.0
+
+**9 production + 2 research_preview + 6 deprecated = 17 total** (was 16
+in v1.15.2; +1 fdg_pet/fdg_consensus).
+
+### Roadmap status
+
+| Tier | v1.15.2 | v1.16.0 | Δ |
+|---|---|---|---|
+| Tier 1 (5 ARIA Layer 3 invariants) | 5 items | 5 items | unchanged |
+| Tier 2 (Layer 2 packs + extensions) | 13 items | **12 items** | -1 (FDG PET shipped) |
+| Tier 3 (Layer 4 dependent) | 20 items | 20 items | unchanged |
+| **Total future (a)** | **38** | **37** | **-1** |
+| In-production | 23 | **24** | **+1** |
+
+### Standing mandate honored
+
+> world class no partial fix, end-to-end, root-to-root, no hallucinations,
+> double-test always, no step back in future.
+
+This release demonstrates the world-class Tier 2 pack-building discipline:
+
+1. **Primary-source research FIRST** — 4 web searches before any YAML
+   construction. Verified FDA fludeoxyglucose label dose, CMS NCD 220.6.13
+   coverage criteria, EANM v3 brain FDG-PET dose envelope, SNMMI/EANM
+   2024 v2.0 procedure standard, AA-2024 Core 2 N-marker classification,
+   Mosconi 2008 multicenter methodology, Bailly 2015 cerebellum-referenced
+   SUVR anchors.
+
+2. **Honest scope qualification** — FDG PET does NOT have FDA AD-specific
+   indication. The pack qualifies for production via regulatory-grade
+   CMS coverage + AA-2024 international consensus + SNMMI/EANM joint
+   procedure standard, NOT via aspirational FDA-label assumption. This
+   is the same honesty discipline that drove the v1.13.1 CSF p-tau217
+   downgrade and v1.15.2 NfL/GFAP downgrades.
+
+3. **Mixed citation strengths via reconciled gate** — 6 verbatim + 6 IC +
+   6 derived bounds, all unified by ≥7-body endorsement and (for derived)
+   multi-source markers. The v1.15.1 reconciled gate architecture works
+   correctly for this evidence pattern.
+
+4. **Byte-exact invariance preserved** — all 12 pre-existing active pack
+   hashes byte-identical to v1.15.2. All 5 Layer 1 cohort audit_ids
+   byte-identical. The NEW pack adds cleanly without any drift.
+
+5. **Documentation reconciliation in same release** — scope doc Section
+   5.2, 5.11, 6.1, 6.3, 9, 11 updated in v1.16.0. No documentation drift
+   accumulating for future releases to clean up.
+
+This is what world-class Tier 2 forward pack-building looks like end-to-end:
+research, design, build, test, byte-exact verify, deploy, doc-reconcile,
+all in one release.
+
+---
+
 ## [1.15.2] -- 2026-05-28
 
 ### Documentation reconciliation: 4 releases of stale scope-doc content closed

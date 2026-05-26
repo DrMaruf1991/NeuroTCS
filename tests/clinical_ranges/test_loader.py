@@ -51,6 +51,7 @@ EXPECTED_PRODUCTION_PACKS = {
     "mri_volumetrics/structural_volumetry_consensus",  # NEW in v1.10.2
     "mri_volumetrics/wmh_fazekas_consensus",  # NEW in v1.15.1 (was silently skipped in v1.13.0)
     "tau_pet/tau_consensus",  # NEW in v1.15.0
+    "fdg_pet/fdg_consensus",  # NEW in v1.16.0 (Tier 2 item #1 from v1.15.2 roadmap)
 }
 
 EXPECTED_RESEARCH_PREVIEW_PACKS = {
