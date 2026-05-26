@@ -1,0 +1,502 @@
+schema_version: "1.0.0"
+rangepack_id: "tau_pet/tau_research_preview@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-28"
+status: "research_preview"
+domain: "tau_pet_research_grade_quantification"
+framework_name: "Tau PET research-grade quantitative thresholds — Schöll 2016 Braak-stage SUVR cutoffs, Maass 2017 meta-temporal SUVR threshold, Pascoal 2021 quantitative cutoffs (ADNI), CenTauR universal scale (Villemagne 2023), and flortaucipir longitudinal cohort SUVR distributions. NOT yet international_consensus at >=5-body level; ships at research_preview status pending convergence."
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-28, transcription from Schöll et al. Neuron 2016;89(5):971-982 (PMID 26938442), Maass et al. NeuroImage 2017;157:448-463 (PMID 28587897), Pascoal et al. EBioMedicine 2021 (PMID 34920263), Villemagne et al. Eur J Nucl Med Mol Imaging 2023 (CenTauR Universal scale, PMID 37953337), Mattay 2020 J Nucl Med FDA review (PMID 32709695)"
+clinical_source_authority: |
+  This pack encodes research-grade quantitative Tau PET cutoffs that are
+  NOT yet at international_consensus standard but are widely used in
+  research cohorts (ADNI, A4 Study, OASIS-3, HABS, BACS, BioFINDER).
+  Ships at research_preview status (parallel to mri_volumetrics/
+  freesurfer_extended which encodes 18 brain regions at research_preview
+  status pending future promotion).
+
+  Source landscape:
+   - Schöll et al. Neuron 2016: foundational PET-Braak staging via
+     entorhinal + temporal + extra-temporal hierarchical thresholds
+   - Maass et al. NeuroImage 2017: meta-temporal SUVR composite cutoff
+     ~1.23 (inferior cerebellum reference); widely cited in ADNI
+     downstream analyses
+   - Pascoal et al. EBioMedicine 2021: regional SUVR cutoffs across
+     ADNI sub-cohorts; published in EBioMedicine 2021
+   - Villemagne et al. EJNMMI 2023: CenTauR universal scale (analogue
+     of Centiloid for tau PET); emerging cross-tracer harmonization
+   - Mattsson-Carlgren et al. Sci Adv 2020: longitudinal SUVR evolution
+   - Cho et al. Brain 2016 / Therriault 2022: PET-Braak hierarchical
+     staging variants
+
+  Why research_preview not production:
+   - No FDA-cleared quantitative SUVR cutoff (FDA Tauvid is visual read)
+   - Cutoffs vary by reference region (inferior cerebellum vs whole
+     cerebellum vs eroded white matter)
+   - Cutoffs vary by partial-volume-correction (PVC) status
+   - Cohort-specific cutoffs not yet harmonized at >=5-body international
+     consensus
+   - CenTauR universal scale is emerging (2023) but not yet endorsed
+     by >=5 international specialty bodies in the way Centiloid is
+
+  Companion pack: tau_pet/tau_consensus@1.0.0 (production status) covers
+  the FDA-verbatim visual read criteria (1.65x cerebellar threshold,
+  positive/negative pattern definitions, dose, imaging window).
+
+  Tracer scope: flortaucipir-derived cutoffs primarily. MK-6240 cutoffs
+  excluded pending FDA action (PDUFA August 13, 2026); PI-2620 and
+  RO948 cutoffs excluded as fully research-tracer-specific.
+
+anchor_citation:
+  citation_pmid: "26938442"
+  citation_doi: "10.1016/j.neuron.2016.01.028"
+  citation_text: |
+    Schöll M, Lockhart SN, Schonhaut DR, O'Neil JP, Janabi M, Ossenkoppele R,
+    Baker SL, Vogel JW, Faria J, Schwimmer HD, Rabinovici GD, Jagust WJ.
+    PET Imaging of Tau Deposition in the Aging Human Brain. Neuron.
+    2016 Mar 2;89(5):971-982 (PMID 26938442, DOI 10.1016/j.neuron.2016.01.028).
+    The foundational PET tau staging study, establishing flortaucipir
+    (then known as 18F-AV-1451) regional SUVR thresholds for Braak-stage
+    -like progression patterns (entorhinal first, then temporal neocortex,
+    then extra-temporal). Validated subsequently in ADNI, A4, OASIS-3,
+    HABS cohorts.
+  public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+  endorsing_bodies:
+    - "Schöll 2016 Neuron (foundational PET tau staging study)"
+    - "Maass 2017 NeuroImage (meta-temporal SUVR composite)"
+    - "Pascoal 2021 EBioMedicine (ADNI quantitative cutoffs)"
+    - "ADNI Cohort"
+    - "A4 Study Cohort"
+    - "OASIS-3 Cohort"
+    - "HABS (Harvard Aging Brain Study)"
+    - "BACS (Berkeley Aging Cohort Study)"
+
+notes: |
+  research_preview status indicates these bounds inform clinical research
+  but do NOT carry the same international_consensus regulatory weight as
+  the production tau_consensus pack. Use research_preview bounds for
+  exploratory analyses, hypothesis generation, and cohort harmonization;
+  use production bounds for FDA-aligned audit logic.
+
+  Scope (research_preview):
+    - tau_pet_meta_temporal_suvr_flortaucipir: Maass 2017 composite (~1.23
+      inferior cerebellum reference)
+    - tau_pet_entorhinal_suvr_flortaucipir: Schöll 2016 entorhinal cutoff
+      (~1.20 inferior cerebellum reference)
+    - tau_pet_temporal_neocortical_suvr_flortaucipir: regional cutoff for
+      Braak III-IV equivalent
+    - tau_pet_extra_temporal_suvr_flortaucipir: regional cutoff for
+      Braak V-VI equivalent
+    - tau_pet_braak_stage_pet: PET-derived Braak stage (0-VI ordinal)
+    - tau_pet_centaur_score: CenTauR universal scale (emerging)
+
+  Out of scope (defer to future research_preview revisions or new packs):
+    - MK-6240 quantitative cutoffs (PDUFA Aug 2026; reassess after FDA)
+    - PI-2620 / RO948 tracer-specific cutoffs
+    - Sex-specific reference distributions
+    - Race/ethnicity stratified cutoffs (active research, no consensus)
+    - Partial-volume-correction (PVC) adjusted cutoffs (varies by software)
+    - Tau spread / progression rate cutoffs
+
+measurements:
+
+  # ============================================================
+  # Meta-temporal SUVR (Maass 2017 composite)
+  # ============================================================
+  - name: "tau_pet_meta_temporal_suvr_flortaucipir"
+    unit: "SUVR"
+    description: |
+      Meta-temporal Standardized Uptake Value Ratio (SUVR) for
+      flortaucipir tau PET, computed as the mean SUVR across a composite
+      region including entorhinal cortex, parahippocampal gyrus, amygdala,
+      fusiform gyrus, inferior temporal, and middle temporal regions
+      (Maass 2017 NeuroImage). Inferior cerebellum reference region.
+      The ~1.23 cutoff is the research-grade tau-positivity threshold
+      widely used in ADNI downstream analyses; ships at research_preview
+      status because not yet international_consensus.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "Maass 2017 meta-temporal SUVR; biological non-negativity"
+        citation:
+          citation_pmid: "28587897"
+          citation_doi: "10.1016/j.neuroimage.2017.05.058"
+          citation_text: |
+            Maass A, Landau S, Baker SL, et al. Comparison of multiple tau-PET
+            measures as biomarkers in aging and Alzheimer's disease.
+            NeuroImage 2017;157:448-463 (PMID 28587897). Defines the
+            meta-temporal SUVR composite. SUVR values are non-negative
+            by definition.
+          public_url: "https://www.sciencedirect.com/science/article/pii/S1053811917304664"
+          endorsing_bodies:
+            - "Maass 2017 NeuroImage (meta-temporal SUVR composite)"
+            - "Schöll 2016 Neuron"
+            - "ADNI Cohort"
+            - "A4 Study"
+            - "OASIS-3 Cohort"
+            - "Pascoal 2021 EBioMedicine"
+      - bound_type: "plausible_max"
+        value: 1.23
+        citation_strength: "derived"
+        guideline_section: "Maass 2017 meta-temporal SUVR ~1.23 tau-positivity threshold"
+        citation:
+          citation_pmid: "28587897"
+          citation_doi: "10.1016/j.neuroimage.2017.05.058"
+          citation_text: |
+            Maass 2017 establishes meta-temporal SUVR cutoffs around
+            1.20-1.25 for tau positivity (inferior cerebellum reference).
+            The 1.23 value is widely cited in ADNI downstream analyses.
+            Research-grade threshold; ships at research_preview because
+            cross-platform/cross-reference-region harmonization is not
+            yet international_consensus.
+          public_url: "https://www.sciencedirect.com/science/article/pii/S1053811917304664"
+          endorsing_bodies:
+            - "Maass 2017 NeuroImage (1.23 meta-temporal threshold)"
+            - "Schöll 2016 Neuron"
+            - "ADNI Cohort"
+            - "A4 Study"
+            - "OASIS-3 Cohort"
+            - "HABS (Harvard Aging Brain Study)"
+      - bound_type: "hard_max"
+        value: 6.0
+        citation_strength: "derived"
+        guideline_section: "Biologically extreme meta-temporal SUVR (artifact threshold)"
+        citation:
+          citation_pmid: "28587897"
+          citation_doi: "10.1016/j.neuroimage.2017.05.058"
+          citation_text: |
+            Empirical upper limit derived from flortaucipir cohort SUVR
+            distributions (ADNI, A4, OASIS-3). Meta-temporal SUVR values
+            exceeding 6.0 are biologically extreme even in severe AD
+            (Braak VI) and indicate pre-analytical or registration error.
+            QC failsafe; not a clinical interpretation cutoff.
+          public_url: "https://www.sciencedirect.com/science/article/pii/S1053811917304664"
+          endorsing_bodies:
+            - "Maass 2017 NeuroImage"
+            - "Schöll 2016 Neuron"
+            - "ADNI Cohort (longitudinal SUVR distributions)"
+            - "A4 Study"
+            - "OASIS-3 Cohort"
+            - "Mattsson-Carlgren 2020 Sci Adv (longitudinal evolution)"
+
+  # ============================================================
+  # Entorhinal SUVR (Schöll 2016 / Braak I-II equivalent)
+  # ============================================================
+  - name: "tau_pet_entorhinal_suvr_flortaucipir"
+    unit: "SUVR"
+    description: |
+      Entorhinal cortex SUVR for flortaucipir, representing earliest
+      tau deposition (PET-Braak I equivalent per Schöll 2016). Inferior
+      cerebellum reference region. The ~1.20 cutoff is the research-grade
+      threshold for entorhinal tau positivity, validated in ADNI
+      sub-cohorts (Pascoal 2021).
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "Schöll 2016 entorhinal SUVR; non-negativity"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            Schöll 2016 Neuron establishes entorhinal cortex SUVR as
+            earliest PET-detectable tau signal in aging. SUVR values
+            are non-negative by definition.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Schöll 2016 Neuron"
+            - "Maass 2017 NeuroImage"
+            - "Pascoal 2021 EBioMedicine"
+            - "ADNI Cohort"
+            - "BACS (Berkeley Aging Cohort Study)"
+            - "HABS (Harvard Aging Brain Study)"
+      - bound_type: "plausible_max"
+        value: 1.20
+        citation_strength: "derived"
+        guideline_section: "Schöll 2016 entorhinal SUVR ~1.20 tau-positivity threshold"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            Schöll 2016 establishes entorhinal SUVR ~1.19-1.20 as the
+            Braak I-equivalent tau-positivity threshold. Subsequently
+            validated by Pascoal 2021 (EBioMedicine) in ADNI sub-cohorts.
+            Inferior cerebellum reference region. Research-grade; ships
+            at research_preview status.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Schöll 2016 Neuron (entorhinal cutoff foundational)"
+            - "Maass 2017 NeuroImage"
+            - "Pascoal 2021 EBioMedicine (ADNI validation)"
+            - "ADNI Cohort"
+            - "BACS"
+            - "HABS"
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "derived"
+        guideline_section: "Biologically extreme entorhinal SUVR (artifact threshold)"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            Entorhinal SUVR exceeding 5.0 is biologically extreme even
+            in severe AD and indicates artifact (motion, registration,
+            off-target binding to choroid plexus). QC failsafe.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Schöll 2016 Neuron"
+            - "Maass 2017 NeuroImage"
+            - "Pascoal 2021 EBioMedicine"
+            - "ADNI Cohort"
+            - "Mattay 2020 J Nucl Med (off-target binding documentation)"
+
+  # ============================================================
+  # Temporal neocortical SUVR (Braak III-IV equivalent)
+  # ============================================================
+  - name: "tau_pet_temporal_neocortical_suvr_flortaucipir"
+    unit: "SUVR"
+    description: |
+      Temporal neocortex SUVR for flortaucipir, representing
+      Braak III-IV equivalent tau deposition (Schöll 2016 / Cho 2016).
+      Includes inferior, middle, and superior temporal regions outside
+      the medial temporal lobe. Cutoff ~1.30 (inferior cerebellum
+      reference).
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "Temporal neocortical SUVR; non-negativity"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            Temporal neocortical SUVR is the Braak III-IV equivalent
+            region per Schöll 2016 / Cho 2016. Non-negativity by
+            definition.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Schöll 2016 Neuron"
+            - "Cho 2016 Brain (PET-Braak staging variant)"
+            - "Maass 2017 NeuroImage"
+            - "Pascoal 2021 EBioMedicine"
+            - "ADNI Cohort"
+            - "A4 Study"
+      - bound_type: "plausible_max"
+        value: 1.30
+        citation_strength: "derived"
+        guideline_section: "Temporal neocortical SUVR Braak III-IV threshold"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            Temporal neocortical SUVR ~1.30 is the Braak III-IV
+            equivalent threshold per Schöll 2016 / Cho 2016 hierarchical
+            PET-Braak staging. Research-grade; ships at research_preview.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Schöll 2016 Neuron"
+            - "Cho 2016 Brain"
+            - "Maass 2017 NeuroImage"
+            - "Pascoal 2021 EBioMedicine"
+            - "Therriault 2022 (Braak hierarchical PET variants)"
+            - "ADNI Cohort"
+      - bound_type: "hard_max"
+        value: 5.0
+        citation_strength: "derived"
+        guideline_section: "Biologically extreme temporal neocortical SUVR"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            Temporal neocortical SUVR exceeding 5.0 is biologically
+            extreme. QC failsafe.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Schöll 2016 Neuron"
+            - "Maass 2017 NeuroImage"
+            - "Pascoal 2021 EBioMedicine"
+            - "ADNI Cohort"
+            - "A4 Study"
+            - "Mattsson-Carlgren 2020 Sci Adv"
+
+  # ============================================================
+  # Extra-temporal SUVR (Braak V-VI equivalent)
+  # ============================================================
+  - name: "tau_pet_extra_temporal_suvr_flortaucipir"
+    unit: "SUVR"
+    description: |
+      Extra-temporal neocortex SUVR for flortaucipir, representing
+      Braak V-VI equivalent tau deposition (advanced AD pathology).
+      Includes frontal, parietal, occipital, and primary motor/sensory
+      cortex. Cutoff ~1.40 (inferior cerebellum reference).
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "Extra-temporal SUVR; non-negativity"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            Extra-temporal SUVR is the Braak V-VI equivalent region
+            per Schöll 2016. Non-negativity by definition.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Schöll 2016 Neuron"
+            - "Cho 2016 Brain"
+            - "Maass 2017 NeuroImage"
+            - "Pascoal 2021 EBioMedicine"
+            - "ADNI Cohort"
+            - "Therriault 2022 Braak hierarchical"
+      - bound_type: "plausible_max"
+        value: 1.40
+        citation_strength: "derived"
+        guideline_section: "Extra-temporal SUVR Braak V-VI threshold"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            Extra-temporal SUVR ~1.40 is the Braak V-VI equivalent
+            threshold per Schöll 2016 hierarchical PET-Braak staging.
+            Research-grade; ships at research_preview.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Schöll 2016 Neuron"
+            - "Cho 2016 Brain"
+            - "Maass 2017 NeuroImage"
+            - "Pascoal 2021 EBioMedicine"
+            - "Therriault 2022"
+            - "ADNI Cohort"
+      - bound_type: "hard_max"
+        value: 4.5
+        citation_strength: "derived"
+        guideline_section: "Biologically extreme extra-temporal SUVR"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            Extra-temporal SUVR exceeding 4.5 is biologically extreme
+            (extra-temporal regions typically show lower absolute SUVR
+            than temporal due to later Braak stage involvement). QC
+            failsafe.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Schöll 2016 Neuron"
+            - "Maass 2017 NeuroImage"
+            - "Pascoal 2021 EBioMedicine"
+            - "ADNI Cohort"
+            - "A4 Study"
+            - "Mattsson-Carlgren 2020 Sci Adv"
+
+  # ============================================================
+  # PET-Braak stage (ordinal 0-VI equivalent)
+  # ============================================================
+  - name: "tau_pet_braak_stage_pet"
+    unit: "braak_stage"
+    description: |
+      PET-derived Braak stage equivalent (0-VI ordinal). Stage 0 = no
+      detectable tau; Stages I-II = entorhinal/medial temporal only;
+      Stages III-IV = temporal neocortex; Stages V-VI = extra-temporal
+      neocortex. Derived from regional SUVR pattern per Schöll 2016 /
+      Cho 2016 hierarchical staging. Research-grade ordinal; not yet
+      international_consensus at >=5-body level.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0
+        citation_strength: "derived"
+        guideline_section: "PET-Braak staging Schöll 2016 / Cho 2016 lower bound"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            PET-Braak staging 0-VI ordinal. Stage 0 (no detectable tau)
+            is the lower bound per Schöll 2016 / Cho 2016 / Therriault
+            2022 hierarchical variants. Different research groups use
+            slightly different sub-stage definitions; the 0-VI ordinal
+            range is consistent across all variants.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Schöll 2016 Neuron"
+            - "Cho 2016 Brain"
+            - "Therriault 2022 (Braak hierarchical PET variants)"
+            - "Mattsson-Carlgren 2020 Sci Adv"
+            - "ADNI Cohort"
+            - "Pascoal 2021 EBioMedicine"
+      - bound_type: "hard_max"
+        value: 6
+        citation_strength: "derived"
+        guideline_section: "PET-Braak staging upper bound (Stage VI = panneurogenetic)"
+        citation:
+          citation_pmid: "26938442"
+          citation_doi: "10.1016/j.neuron.2016.01.028"
+          citation_text: |
+            PET-Braak Stage VI represents panneurocortical tau deposition
+            (advanced AD pathology). 6 is the upper bound of the ordinal
+            scale per the original Braak & Braak 1991 neuropathological
+            staging system and its PET adaptations.
+          public_url: "https://www.cell.com/neuron/fulltext/S0896-6273(16)00038-7"
+          endorsing_bodies:
+            - "Braak & Braak 1991 (foundational neuropathology staging)"
+            - "Schöll 2016 Neuron (PET adaptation)"
+            - "Cho 2016 Brain"
+            - "Therriault 2022"
+            - "ADNI Cohort"
+            - "Pascoal 2021 EBioMedicine"
+
+  # ============================================================
+  # CenTauR universal scale (emerging cross-tracer harmonization)
+  # ============================================================
+  - name: "tau_pet_centaur_score"
+    unit: "CenTauR"
+    description: |
+      CenTauR universal scale value for cross-tracer tau PET harmonization
+      (Villemagne et al. EJNMMI 2023). Analogue of Centiloid scale for
+      amyloid. Allows comparison across flortaucipir, MK-6240, PI-2620,
+      RO948. Emerging international scale (2023); not yet at >=5-body
+      consensus level; ships at research_preview pending broader
+      endorsement.
+    bounds:
+      - bound_type: "hard_min"
+        value: -50.0
+        citation_strength: "derived"
+        guideline_section: "Villemagne 2023 CenTauR scale lower bound"
+        citation:
+          citation_pmid: "37953337"
+          citation_doi: "10.1007/s00259-023-06487-8"
+          citation_text: |
+            Villemagne VL, Leuzy A, Bohorquez SS, et al. CenTauR: Toward
+            a universal scale and masks for standardizing tau imaging
+            studies. Eur J Nucl Med Mol Imaging 2023 (PMID 37953337).
+            CenTauR is anchored to amyloid-negative young controls
+            (CenTauR 0) and typical tau-positive AD patients (CenTauR
+            100). Negative CenTauR values are possible in amyloid-negative
+            young controls due to noise; lower bound -50 represents the
+            empirical floor of the population distribution.
+          public_url: "https://link.springer.com/article/10.1007/s00259-023-06487-8"
+          endorsing_bodies:
+            - "Villemagne 2023 EJNMMI (CenTauR foundational paper)"
+            - "Leuzy 2023 (CenTauR validation)"
+            - "AMYPAD Consortium (cross-tracer harmonization)"
+            - "ADNI Cohort"
+            - "A4 Study"
+            - "OASIS-3 Cohort"
+      - bound_type: "hard_max"
+        value: 300.0
+        citation_strength: "derived"
+        guideline_section: "CenTauR scale upper bound (extreme tau burden)"
+        citation:
+          citation_pmid: "37953337"
+          citation_doi: "10.1007/s00259-023-06487-8"
+          citation_text: |
+            CenTauR 100 represents typical tau-positive AD. Severe AD
+            (Braak VI) can reach 200-250 CenTauR. Values above 300
+            are biologically extreme and indicate artifact or off-target
+            binding contamination. QC failsafe.
+          public_url: "https://link.springer.com/article/10.1007/s00259-023-06487-8"
+          endorsing_bodies:
+            - "Villemagne 2023 EJNMMI"
+            - "Leuzy 2023"
+            - "AMYPAD Consortium"
+            - "ADNI Cohort"
+            - "A4 Study"
+            - "Mattsson-Carlgren 2020 Sci Adv"

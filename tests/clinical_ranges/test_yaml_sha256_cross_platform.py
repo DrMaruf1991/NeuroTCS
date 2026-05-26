@@ -54,6 +54,8 @@ PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
         "70710ccf013b36e5941a440a46df1b169bb505e0787a3163945e880db354191f",
     "mri_volumetrics/wmh_fazekas_consensus":
         "d4fee2be22ce6780490dc90989dde3aaef66d760a2b5b3a90f0b8753e98df0c6",
+    "tau_pet/tau_consensus":
+        "76c8ff423ff25731dbba961d2f8ef18e341ea18335b9a303c4b3c0412b7ba9cb",
 }
 
 

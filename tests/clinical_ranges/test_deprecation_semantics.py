@@ -143,23 +143,25 @@ class TestRosterCounts:
     + mri_volumetrics/freesurfer_extended replacing the deprecated freesurfer at preview.
 
     v1.13.0 adds mri_volumetrics/wmh_fazekas_consensus to production:
-    (7 prod, 1 preview, 6 deprecated, 14 total)."""
+    (7 prod, 1 preview, 6 deprecated, 14 total).
 
-    def test_seven_production_packs(self) -> None:
+    v1.15.0 adds tau_pet/tau_consensus to production and
+    tau_pet/tau_research_preview to research_preview:
+    (8 prod, 2 preview, 6 deprecated, 16 total)."""
+
+    def test_eight_production_packs(self) -> None:
         packs = list_rangepacks()
         prod = [p for p in packs if p.get("status") == "production"]
-        assert len(prod) == 7
+        assert len(prod) == 8
 
-    def test_one_research_preview_pack(self) -> None:
-        """Only mri_volumetrics/freesurfer_extended remains at research_preview
-        in v1.10.2. The other 5 v1.10.0-era research_preview packs were
-        deprecated in v1.10.1; the old mri_volumetrics/freesurfer pack was
-        deprecated in v1.10.2 in favor of structural_volumetry_consensus
-        (production) and freesurfer_extended (this preview pack)."""
+    def test_two_research_preview_packs(self) -> None:
+        """v1.15.0: research_preview pack count grows from 1 to 2 with
+        tau_pet/tau_research_preview joining mri_volumetrics/freesurfer_extended."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
-        assert len(preview) == 1
-        assert preview[0]["name"] == "mri_volumetrics/freesurfer_extended"
+        assert len(preview) == 2
+        names = {p["name"] for p in preview}
+        assert names == {"mri_volumetrics/freesurfer_extended", "tau_pet/tau_research_preview"}
 
     def test_six_deprecated_packs(self) -> None:
         packs = list_rangepacks()
@@ -169,10 +171,11 @@ class TestRosterCounts:
         assert names == set(EXPECTED_DEPRECATIONS.keys())
 
     def test_total_pack_count(self) -> None:
-        """v1.13.0 adds mri_volumetrics/wmh_fazekas_consensus to production.
-        Net: 14 total packs (7 prod + 1 preview + 6 deprecated)."""
+        """v1.15.0 adds 2 packs (tau_pet/tau_consensus production +
+        tau_pet/tau_research_preview preview). Net: 16 total packs
+        (8 prod + 2 preview + 6 deprecated)."""
         packs = list_rangepacks()
-        assert len(packs) == 14  # 7 prod + 1 preview + 6 deprecated
+        assert len(packs) == 16  # 8 prod + 2 preview + 6 deprecated
 
 
 class TestDeprecationSchemaValidator:

@@ -11,7 +11,12 @@ from neurotcs.clinical_ranges.loader import (
 )
 from neurotcs.clinical_ranges.schema import RangePack, RangePackStatus
 
-# v1.10.2: 6 world-class production packs + 1 research_preview + 6 deprecated.
+# v1.15.0: tau_pet/tau_consensus added to production packs.
+# Note: mri_volumetrics/wmh_fazekas_consensus (v1.13.0) is intentionally
+# NOT in this set because its citation_strength includes 'verbatim' and
+# 'derived' bounds that don't pass test_every_bound_is_international_consensus.
+# A future v1.15.x or v1.16.0 will reconcile this by allowing verbatim+derived
+# with >=5-body endorsement in production packs.
 EXPECTED_PRODUCTION_PACKS = {
     "ad/aria_safety",
     "pet_amyloid/centiloid_consensus",
@@ -19,10 +24,12 @@ EXPECTED_PRODUCTION_PACKS = {
     "csf_biomarkers/csf_amyloid_consensus",
     "plasma_biomarkers/plasma_amyloid_consensus",
     "mri_volumetrics/structural_volumetry_consensus",  # NEW in v1.10.2
+    "tau_pet/tau_consensus",  # NEW in v1.15.0
 }
 
 EXPECTED_RESEARCH_PREVIEW_PACKS = {
     "mri_volumetrics/freesurfer_extended",  # NEW in v1.10.2 (replaces freesurfer)
+    "tau_pet/tau_research_preview",  # NEW in v1.15.0
 }
 
 EXPECTED_DEPRECATED_PACKS = {

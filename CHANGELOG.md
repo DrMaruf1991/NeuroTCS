@@ -4,6 +4,144 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] -- 2026-05-28
+
+### Layer 2 dual-pack addition: Tau PET (production + research_preview)
+
+Adds the first Tau PET pack family to NeuroTCS, covering both
+FDA-regulatory and research-grade tau PET quantification:
+
+- **`tau_pet/tau_consensus@1.0.0`** (status: production) — FDA-verbatim
+  Tauvid (flortaucipir F 18) visual interpretation criteria
+- **`tau_pet/tau_research_preview@1.0.0`** (status: research_preview) —
+  Schöll/Maass/Pascoal SUVR cutoffs, PET-Braak staging, CenTauR scale
+
+This is the first dual-tier pack family in NeuroTCS: production-tier
+encodes regulatory-grade FDA-verbatim thresholds; research_preview-tier
+encodes cohort-derived research thresholds widely used in ADNI/A4/OASIS-3
+but not yet at >=5-body international_consensus.
+
+### Primary regulatory anchor (production pack)
+
+**FDA NDA approval, May 28, 2020:** Tauvid (flortaucipir F 18 injection),
+Eli Lilly/Avid Radiopharmaceuticals — the FIRST and only FDA-approved
+tau PET radiotracer for AD evaluation.
+
+**Anchor citation:** Mattay VS, Fotenos AF, Ganley CJ, Marzella L. Brain
+Tau Imaging: Food and Drug Administration Approval of 18F-Flortaucipir
+Injection. J Nucl Med. 2020 Oct;61(10):1411-1412 (PMID 32709695,
+DOI 10.2967/jnumed.120.252510).
+
+**Operative threshold (FDA Tauvid PI §2.4 verbatim):** "The goal of the
+read is to identify and locate areas of flortaucipir activity in the
+neocortex that are greater than the background activity (background
+activity is defined as up to **1.65-fold the measured cerebellar
+average**)."
+
+### Production pack scope: 6 measurements, 13 bounds
+
+All bounds at `citation_strength: international_consensus` with 6-8
+endorsing bodies each (FDA, EMA, Eli Lilly/Avid, SNMMI, EANM, AA 2024
+Revised Criteria, NIA-AA AT(N), ADNI/A4 cohorts):
+
+1. **`tau_pet_neocortical_uptake_ratio_flortaucipir`** (ratio)
+   - hard_min=0.0, plausible_max=1.65 (FDA verbatim), hard_max=20.0
+2. **`tau_pet_visual_read_status_flortaucipir`** (categorical_set)
+   - valid_values: positive, negative (FDA PI §2.4 verbatim)
+3. **`tau_pet_reference_region`** (categorical_set)
+   - valid_values: cerebellum (FDA), inferior_cerebellum, eroded_white_matter
+4. **`tau_pet_target_region`** (categorical_set)
+   - valid_values: posterolateral_temporal, occipital, parietal_precuneus,
+     frontal, medial_temporal, anterolateral_temporal (6 FDA-named regions)
+5. **`tau_pet_imaging_uptake_window_min`** (min)
+   - hard_min=80.0, hard_max=100.0 (FDA PI §2.2)
+6. **`tau_pet_dose_mbq`** (MBq)
+   - hard_min=250.0, hard_max=500.0 (FDA PI §2.1: 370 MBq recommended)
+
+### Research_preview pack scope: 6 measurements, 16 bounds
+
+All bounds at `citation_strength: derived` with 5-6 endorsing bodies:
+
+1. **`tau_pet_meta_temporal_suvr_flortaucipir`** — plausible_max=1.23
+   (Maass 2017 NeuroImage, PMID 28587897)
+2. **`tau_pet_entorhinal_suvr_flortaucipir`** — plausible_max=1.20
+   (Schöll 2016 Neuron, PMID 26938442, PET-Braak I)
+3. **`tau_pet_temporal_neocortical_suvr_flortaucipir`** — plausible_max=1.30
+   (Braak III-IV equivalent)
+4. **`tau_pet_extra_temporal_suvr_flortaucipir`** — plausible_max=1.40
+   (Braak V-VI equivalent)
+5. **`tau_pet_braak_stage_pet`** — hard_min=0, hard_max=6
+6. **`tau_pet_centaur_score`** — hard_min=-50.0, hard_max=300.0
+   (Villemagne 2023 EJNMMI, PMID 37953337)
+
+### Architectural decision: dual-pack separation
+
+The Tau PET domain has a clean regulatory-vs-research split that does
+NOT exist for amyloid PET. FDA Tauvid approval is for **visual read**,
+NOT continuous SUVR. Research SUVR cutoffs vary by reference region,
+PVC status, and cohort. Mixing FDA-verbatim and research-grade
+thresholds in one pack would have required either downgrading the
+whole pack to research_preview or shipping research-grade bounds at
+international_consensus they don't yet earn. The dual-pack split
+preserves world-class invariants on the production pack while making
+research-grade cutoffs available.
+
+### Tracer scope
+
+v1.0.0 covers **flortaucipir only**. MK-6240 has FDA PDUFA target
+August 13, 2026 and is not yet approved. A future v2.0.0 pack will
+incorporate MK-6240 cutoffs after FDA action.
+
+### Added
+
+- `src/neurotcs/clinical_ranges/ranges/tau_pet/tau_consensus.yaml`
+- `src/neurotcs/clinical_ranges/ranges/tau_pet/tau_research_preview.yaml`
+- `tests/clinical_ranges/test_tau_consensus_pack.py` (35 tests)
+- `tests/clinical_ranges/test_tau_research_preview_pack.py` (19 tests)
+
+### Modified
+
+- `tests/clinical_ranges/test_loader.py`: added tau_pet/tau_consensus
+  to EXPECTED_PRODUCTION_PACKS, added tau_pet/tau_research_preview
+  to EXPECTED_RESEARCH_PREVIEW_PACKS.
+- `tests/clinical_ranges/test_deprecation_semantics.py`: roster counts
+  7 prod -> 8 prod, 1 preview -> 2 preview, 14 total -> 16 total.
+- `tests/clinical_ranges/test_yaml_sha256_cross_platform.py`: added
+  tau_pet/tau_consensus golden hash.
+- `pyproject.toml`, `src/neurotcs/__init__.py`, `CITATION.cff`:
+  version 1.14.0 -> 1.15.0.
+- `CHANGELOG.md`: this entry.
+
+### Unchanged (byte-identical to v1.14.0)
+
+All 7 existing Layer 2 production packs, both Layer 3 invariantpacks,
+all 3 Layer 1 rulepacks, all 5 Layer 1 cohort cTCS scores, all 5 Layer 1
+cohort audit_ids.
+
+### New pack hashes (v1.15.0)
+
+- `tau_pet/tau_consensus@1.0.0`:
+  `76c8ff423ff25731dbba961d2f8ef18e341ea18335b9a303c4b3c0412b7ba9cb`
+- `tau_pet/tau_research_preview@1.0.0`:
+  `c30ac88512eba5a43ff2c007455d8b57202dfcbc92704776345d0ff5f9ed5ebb`
+
+### Pack roster post-v1.15.0
+
+8 production + 2 research_preview + 6 deprecated = 16 total.
+
+### Verification
+
+- pytest tests/ -q -> **1114 passed, 7 skipped** (1045 v1.14.0 + 54 new
+  tau tests + 15 from roster/golden updates)
+- ruff check -> All checks passed
+- All 10 unchanged-pack yaml_sha256 byte-identical to v1.14.0
+- All 5 Layer 1 cohort audit_ids + cTCS byte-identical to v1.14.0
+- All 13 production bounds at international_consensus
+- All 16 research_preview bounds at derived
+- FDA, Eli Lilly, EMA, SNMMI, EANM, AA 2024, ADNI all in endorsers
+
+---
+
 ## [1.14.0] -- 2026-05-28
 
 ### Layer 2 pack extension: plasma_amyloid_consensus 1.0.0 → 1.1.0

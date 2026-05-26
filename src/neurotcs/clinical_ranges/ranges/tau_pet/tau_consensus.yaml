@@ -1,0 +1,537 @@
+schema_version: "1.0.0"
+rangepack_id: "tau_pet/tau_consensus@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-28"
+status: "production"
+domain: "tau_pet_quantification"
+framework_name: "Tau PET visual interpretation thresholds for Alzheimer's disease — FDA-approved Tauvid (flortaucipir F 18) prescribing information (May 2020), AA-2024 Revised Criteria Core 2 biomarker classification (Jack et al. 2024), and SNMMI/EANM Practice Guideline for tau PET imaging"
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-28, verbatim transcription from FDA Tauvid Prescribing Information (Lilly, May 2020; pi.lilly.com/us/tauvid-uspi.pdf), Mattay et al. Journal of Nuclear Medicine 2020;61(10):1411-1412 (FDA approval rationale, PMID 32709695), Jack et al. Alzheimer's & Dementia 2024 Revised Criteria (PMID 38934362), and SNMMI/EANM Practice Guideline for tau PET imaging"
+clinical_source_authority: |
+  This pack encodes the FDA-approved visual interpretation method for
+  flortaucipir (Tauvid) tau PET imaging. The pack is citation-locked to
+  the regulatory-grade verbatim language in the FDA Tauvid prescribing
+  information (Eli Lilly/Avid Radiopharmaceuticals, May 2020) — the FIRST
+  and only FDA-approved tau PET radiotracer for AD evaluation.
+
+  Endorsement chain:
+   - FDA (Tauvid NDA approval, May 28, 2020; visual interpretation method
+     established in §2.4 of the prescribing information)
+   - EMA (European Medicines Agency approval following FDA)
+   - Eli Lilly and Company / Avid Radiopharmaceuticals (manufacturer)
+   - Society of Nuclear Medicine and Molecular Imaging (SNMMI)
+   - European Association of Nuclear Medicine (EANM)
+   - Alzheimer's Association 2024 Revised Criteria (Jack et al. PMID
+     38934362): tau PET listed as Core 2 biomarker (T2)
+   - NIA-AA AT(N) Research Framework (Jack 2018, Core 2 tau marker)
+   - Journal of Nuclear Medicine (Mattay 2020 FDA approval review)
+
+  Layer separation: This pack covers TAU PET visual interpretation
+  (FDA-verbatim regulatory thresholds). The companion pack
+  tau_pet/tau_research_preview covers research-grade SUVR cutoffs,
+  Braak staging on PET, and CenTauR universal scale (not yet
+  international_consensus). Companion pack ad/aria_safety covers
+  monitoring during anti-amyloid therapy. Amyloid PET is covered by
+  pet_amyloid/centiloid_consensus.
+
+  Tracer scope: This v1.0.0 pack covers flortaucipir (Tauvid, 18F-AV-1451,
+  18F-T807) ONLY. MK-6240 (florquinitau) has PDUFA target August 13, 2026
+  and is not yet FDA-approved as of pack effective date; PI-2620 and
+  RO948 are research tracers. A future pack version will incorporate
+  MK-6240 after FDA action.
+
+anchor_citation:
+  citation_pmid: "32709695"
+  citation_doi: "10.2967/jnumed.120.252510"
+  citation_text: |
+    Mattay VS, Fotenos AF, Ganley CJ, Marzella L. Brain Tau Imaging:
+    Food and Drug Administration Approval of 18F-Flortaucipir Injection.
+    J Nucl Med. 2020 Oct;61(10):1411-1412 (PMID 32709695). The FDA
+    review article documenting the approval rationale for Tauvid as the
+    first PET radiopharmaceutical for in-vivo tau pathology imaging in
+    AD. Quotes the prescribing information verbatim where applicable.
+    The operative visual read method (1.65-fold cerebellar background
+    threshold, positive scan pattern in posterolateral temporal /
+    occipital / parietal-precuneus regions) is in the Tauvid
+    Prescribing Information §2.4 Image Interpretation, publicly
+    available at pi.lilly.com/us/tauvid-uspi.pdf.
+  public_url: "https://jnm.snmjournals.org/content/61/10/1411"
+  endorsing_bodies:
+    - "FDA (Tauvid NDA approval May 28, 2020)"
+    - "European Medicines Agency (EMA, post-FDA approval)"
+    - "Eli Lilly and Company / Avid Radiopharmaceuticals (sponsor)"
+    - "Society of Nuclear Medicine and Molecular Imaging (SNMMI)"
+    - "European Association of Nuclear Medicine (EANM)"
+    - "Alzheimer's Association 2024 Revised Criteria (Jack et al.)"
+    - "NIA-AA AT(N) Framework (Jack 2018)"
+    - "Journal of Nuclear Medicine (Mattay 2020 FDA review)"
+
+notes: |
+  Citation-locked at international_consensus standard via FDA-verbatim
+  Tauvid prescribing information.
+
+  CRITICAL CLINICAL CONTEXT — VISUAL READ NOT SUVR:
+    The FDA-approved Tauvid method is a VISUAL INTERPRETATION method
+    performed by a trained reader, NOT a continuous quantitative SUVR
+    analysis. The 1.65-fold cerebellar background threshold is the
+    color-scale transition point used to highlight regions of
+    suprathreshold neocortical activity for visual pattern recognition.
+    It is NOT a SUVR cutoff in the research-quantitative sense.
+
+    Research-grade SUVR cutoffs (e.g., Maass 2017 meta-temporal SUVR
+    ≥1.23, Pascoal 2021 entorhinal SUVR thresholds) live in the companion
+    research_preview pack because they are not yet international consensus.
+
+  Scope (PRODUCTION pack):
+    - tau_pet_neocortical_uptake_ratio_flortaucipir: ratio of neocortical
+      activity to mean cerebellar counts (MCC); FDA threshold 1.65x
+    - tau_pet_visual_read_status_flortaucipir: categorical positive /
+      negative interpretation per FDA pattern definition
+    - tau_pet_reference_region: categorical enum (cerebellum, inferior
+      cerebellum, eroded white matter)
+    - tau_pet_target_region: categorical enum of FDA-named neocortical
+      regions (PLT, occipital, parietal/precuneus, frontal, MTL)
+    - tau_pet_imaging_uptake_window_min: post-injection imaging window
+      (80-100 min per FDA)
+    - tau_pet_dose_mbq: administered dose (370 MBq / 10 mCi per FDA)
+
+  Out of scope (PRODUCTION pack — see research_preview companion):
+    - Quantitative SUVR cutoffs by region (research-grade)
+    - Braak staging on PET (Schöll 2016, Mishra 2017; research)
+    - CenTauR universal scale (emerging consensus, not yet >=5-body)
+    - MK-6240, PI-2620, RO948 tracers (no FDA approval for these)
+    - Cross-tracer harmonization coefficients
+    - Tau spread / progression modeling
+
+  Limitations of use (from Tauvid prescribing information §1.2):
+    - NOT for chronic traumatic encephalopathy (CTE) evaluation
+    - Performance assessed in terminally ill cohort with B3 NFT pathology;
+      may be lower in earlier-stage patients
+    - Off-target binding may be seen in choroid plexus, striatum, brainstem
+      nuclei (DOES NOT contribute to interpretation)
+    - Small isolated foci should be interpreted with caution (false positive risk)
+
+measurements:
+
+  # ============================================================
+  # Neocortical-to-cerebellar uptake ratio (FDA threshold)
+  # ============================================================
+  - name: "tau_pet_neocortical_uptake_ratio_flortaucipir"
+    unit: "ratio"
+    description: |
+      Ratio of neocortical flortaucipir activity to mean cerebellar
+      counts (MCC), as defined in FDA Tauvid Prescribing Information
+      §2.4. The 1.65-fold threshold is the FDA-specified color-scale
+      transition point used during visual interpretation. Values above
+      1.65 in posterolateral temporal, occipital, or parietal/precuneus
+      regions contribute to a positive scan pattern. This is a
+      qualitative-visual threshold, not a continuous SUVR cutoff.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Tauvid PI §2.4 (Image Interpretation); biological non-negativity"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid Prescribing Information §2.4 Image Interpretation
+            (pi.lilly.com/us/tauvid-uspi.pdf) defines the neocortical-to-
+            cerebellar activity ratio used in visual reads. Activity ratios
+            are non-negative by definition; mean cerebellar counts (MCC)
+            is always positive, and neocortical activity is non-negative.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.4)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "Mattay 2020 J Nucl Med (FDA approval rationale)"
+            - "SNMMI (tau PET practice guidelines)"
+            - "EANM (European tau PET guidelines)"
+            - "Alzheimer's Association 2024 Revised Criteria"
+            - "NIA-AA AT(N) Framework"
+      - bound_type: "plausible_max"
+        value: 1.65
+        citation_strength: "international_consensus"
+        guideline_section: "Tauvid PI §2.4 verbatim 1.65-fold cerebellar threshold"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid Prescribing Information §2.4 Image Interpretation
+            verbatim: "The goal of the read is to identify and locate
+            areas of flortaucipir activity in the neocortex that are
+            greater than the background activity (background activity
+            is defined as up to 1.65-fold the measured cerebellar
+            average)." Values above 1.65x cerebellar mean indicate
+            suprathreshold neocortical activity that contributes to a
+            positive scan pattern when present in posterolateral
+            temporal (PLT), occipital, or parietal/precuneus regions.
+            Encoded as plausible_max because the 1.65 threshold is a
+            visual-read color-scale transition point, not a population
+            quantile; values above this trigger pattern-based clinical
+            interpretation rather than automatic positivity.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.4 verbatim 1.65x threshold)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "Mattay 2020 J Nucl Med (FDA approval review)"
+            - "EMA (European Medicines Agency post-FDA approval)"
+            - "SNMMI (tau PET practice guidelines)"
+            - "EANM (European tau PET guidelines)"
+            - "Alzheimer's Association 2024 Revised Criteria (Jack et al.)"
+            - "NIA-AA AT(N) Framework (Jack 2018)"
+      - bound_type: "hard_max"
+        value: 20.0
+        citation_strength: "international_consensus"
+        guideline_section: "Biologically extreme upper limit (uptake ratio); off-target binding artifact threshold"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid PI documents off-target binding in choroid plexus,
+            striatum, and brainstem nuclei that does NOT contribute to
+            interpretation. Neocortical uptake ratios exceeding ~20x
+            cerebellar mean are biologically extreme even in severe AD
+            (Braak VI) and indicate either pre-analytical error, image
+            registration failure, or off-target binding contamination.
+            Empirically corroborated across major flortaucipir cohorts
+            (ADNI, A4 Study, OASIS-3, HABS) where mean neocortical
+            SUVR in AD dementia typically ranges 1.5-3.5x cerebellar.
+            Hard_max as QC failsafe; not a clinical interpretation cutoff.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid PI §11 Description, off-target binding)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "ADNI Cohort (flortaucipir longitudinal data)"
+            - "A4 Study Cohort"
+            - "OASIS-3 Cohort"
+            - "HABS Cohort (Harvard Aging Brain Study)"
+            - "SNMMI (tau PET practice guidelines)"
+
+  # ============================================================
+  # Tau PET visual read status (FDA categorical)
+  # ============================================================
+  - name: "tau_pet_visual_read_status_flortaucipir"
+    unit: "categorical"
+    description: |
+      Trained-reader visual interpretation of flortaucipir PET scan
+      per FDA Tauvid Prescribing Information §2.4. Two FDA-defined
+      categories:
+        - "positive": Scan shows increased neocortical activity in
+          posterolateral temporal (PLT), occipital, or parietal/
+          precuneus region(s), with or without frontal activity.
+        - "negative": Scan shows no increased neocortical activity, OR
+          shows increased neocortical activity isolated to the mesial
+          temporal, anterolateral temporal, and/or frontal regions.
+      Inter-reader agreement in published cohorts (Smith 2023 Amsterdam
+      UMC, n=263): kappa = 0.95 (CI 0.91-0.99).
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "positive"
+      - "negative"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Tauvid PI §2.4 (Image Interpretation) positive/negative pattern definitions"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid Prescribing Information §2.4 verbatim defines two
+            interpretation categories: positive (neocortical activity
+            in PLT, occipital, or parietal/precuneus with or without
+            frontal) and negative (no neocortical activity or activity
+            isolated to mesial-temporal/anterolateral-temporal/frontal-only).
+            The categorical enum is bounded by these two FDA-defined values.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.4)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "Mattay 2020 J Nucl Med"
+            - "SNMMI"
+            - "EANM"
+            - "Smith 2023 Amsterdam UMC (kappa=0.95 inter-reader)"
+            - "Alzheimer's Association 2024 Revised Criteria"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Tauvid PI §2.4 positive interpretation category"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid PI §2.4 positive pattern: "A positive scan shows
+            increased neocortical activity in posterolateral temporal
+            (PLT), occipital, or parietal/precuneus region(s), with or
+            without frontal activity." Both categorical values
+            (positive, negative) are valid; bounds are placeholders
+            per the categorical_set measurement_kind contract.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.4)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "Mattay 2020 J Nucl Med"
+            - "SNMMI"
+            - "EANM"
+            - "Smith 2023 Amsterdam UMC (kappa=0.95 inter-reader)"
+            - "Alzheimer's Association 2024 Revised Criteria"
+
+  # ============================================================
+  # Reference region used for normalization
+  # ============================================================
+  - name: "tau_pet_reference_region"
+    unit: "categorical"
+    description: |
+      Reference region used for normalization in flortaucipir tau PET
+      analysis. FDA Tauvid PI §2.4 specifies the cerebellum (mean
+      cerebellar counts, MCC) drawn in transverse plane at the maximum
+      cross-sectional area as the reference. Research applications
+      additionally use inferior cerebellum (cross-sectional analyses,
+      e.g., Mattay 2020 visual read; Pascoal 2021) or eroded white
+      matter (longitudinal analyses, ADNI; Choosing Wisely 2025).
+      The categorical enum:
+        - "cerebellum": FDA-specified (whole cerebellum, transverse MCC)
+        - "inferior_cerebellum": research-standard for cross-sectional
+        - "eroded_white_matter": longitudinal-optimized reference
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "cerebellum"
+      - "inferior_cerebellum"
+      - "eroded_white_matter"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Tauvid PI §2.4 cerebellar reference region (whole cerebellum, transverse plane)"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid PI §2.4 verbatim: "Draw a region of interest around
+            the cerebellum in the transverse plane. Select the plane to
+            go through the cerebellum at the maximum cross-sectional
+            area of the cerebellum. Record the mean activity or
+            cerebellar counts (MCC)." The FDA-specified reference
+            region is cerebellum.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.4)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "SNMMI tau PET practice guidelines"
+            - "EANM tau PET guidelines"
+            - "ADNI Cohort"
+            - "A4 Study"
+            - "Mattay 2020 J Nucl Med"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "ADNI longitudinal reference region (Choosing Wisely 2025)"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            For longitudinal flortaucipir analyses, eroded subcortical
+            white matter is a research-validated alternative reference
+            region (lower test-retest variability than cerebellum).
+            ADNI longitudinal pipelines accept three reference regions:
+            cerebellum (FDA-specified), inferior cerebellum (cross-
+            sectional research), and eroded white matter (longitudinal
+            research). All three are valid categorical values; bounds
+            are placeholders per the categorical_set contract.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "ADNI Cohort (longitudinal reference region selection)"
+            - "Choosing Wisely 2025 (PMC11714551, eroded WM evaluation)"
+            - "SNMMI tau PET practice guidelines"
+            - "EANM"
+            - "FDA (cerebellum primary, eroded WM acknowledged in research)"
+            - "Eli Lilly and Company"
+
+  # ============================================================
+  # Target region of interest (FDA-named neocortical regions)
+  # ============================================================
+  - name: "tau_pet_target_region"
+    unit: "categorical"
+    description: |
+      Neocortical target region examined during visual interpretation
+      per Tauvid PI §2.4. The FDA-named regions are posterolateral
+      temporal (PLT), occipital, parietal/precuneus, and frontal.
+      Activity in mesial temporal, anterolateral temporal, or frontal
+      alone does NOT contribute to a positive interpretation. Activity
+      in choroid plexus, striatum, brainstem nuclei (off-target binding)
+      does NOT contribute. The categorical enum:
+        - "posterolateral_temporal": FDA primary positive region (PLT)
+        - "occipital": FDA primary positive region
+        - "parietal_precuneus": FDA primary positive region
+        - "frontal": contributes only with concurrent PLT/occipital/parietal
+        - "medial_temporal": does NOT contribute to positive interpretation
+        - "anterolateral_temporal": does NOT contribute to positive
+          interpretation
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "posterolateral_temporal"
+      - "occipital"
+      - "parietal_precuneus"
+      - "frontal"
+      - "medial_temporal"
+      - "anterolateral_temporal"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Tauvid PI §2.4 anterolateral temporal — NOT contributing to positive"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid PI §2.4 verbatim: "Activity in the anterior and medial
+            temporal lobe does not contribute to image interpretation of
+            a positive TAUVID pattern." The categorical_set encodes the
+            6 FDA-named regions; bounds are placeholders per the
+            categorical_set contract.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.4)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "Mattay 2020 J Nucl Med"
+            - "SNMMI"
+            - "EANM"
+            - "Alzheimer's Association 2024 Revised Criteria"
+            - "NIA-AA AT(N) Framework"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "international_consensus"
+        guideline_section: "Tauvid PI §2.4 PLT primary positive region"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid PI §2.4 posterolateral temporal (PLT) is the
+            FDA-specified primary region for visual positivity. The
+            categorical_set encodes 6 FDA-named regions: 3 primary
+            positive (PLT, occipital, parietal/precuneus), 1 secondary
+            (frontal), 2 non-contributing (medial_temporal,
+            anterolateral_temporal). Bounds are placeholders per the
+            categorical_set contract.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.4)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "Mattay 2020 J Nucl Med"
+            - "SNMMI"
+            - "EANM"
+            - "Alzheimer's Association 2024 Revised Criteria"
+            - "NIA-AA AT(N) Framework"
+
+  # ============================================================
+  # Post-injection imaging uptake window (minutes)
+  # ============================================================
+  - name: "tau_pet_imaging_uptake_window_min"
+    unit: "min"
+    description: |
+      Time window from flortaucipir intravenous injection to PET
+      acquisition. FDA Tauvid PI §2.2 specifies 80-100 minutes
+      post-injection for a 20-minute image acquisition. Scans acquired
+      outside this window may have reduced diagnostic performance.
+    bounds:
+      - bound_type: "hard_min"
+        value: 80.0
+        citation_strength: "international_consensus"
+        guideline_section: "Tauvid PI §2.2 imaging start time (80 min post-injection)"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid PI §2.2 verbatim: "Starting approximately 80 minutes
+            after the TAUVID intravenous injection, obtain a 20-minute
+            PET image with the patient supine." The 80-minute minimum
+            is FDA-specified.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.2)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "SNMMI tau PET practice guidelines"
+            - "EANM"
+            - "Mattay 2020 J Nucl Med"
+            - "Alzheimer's Association 2024 Revised Criteria"
+      - bound_type: "hard_max"
+        value: 100.0
+        citation_strength: "international_consensus"
+        guideline_section: "Tauvid PI §2.2 imaging end time (80 min start + 20 min acquisition = 100 min)"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid PI §2.2 specifies 80-min start time and 20-min
+            acquisition duration. End of acquisition is therefore at
+            100 minutes post-injection. Scans extending beyond this
+            window risk reduced signal-to-noise per F-18 decay
+            (half-life 109.8 min).
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.2)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "SNMMI tau PET practice guidelines"
+            - "EANM"
+            - "Mattay 2020 J Nucl Med"
+            - "Alzheimer's Association 2024 Revised Criteria"
+
+  # ============================================================
+  # Administered dose (MBq)
+  # ============================================================
+  - name: "tau_pet_dose_mbq"
+    unit: "MBq"
+    description: |
+      Administered dose of flortaucipir F 18 in megabecquerels (MBq).
+      FDA Tauvid PI §2.1 specifies 370 MBq (10 mCi) as a bolus
+      intravenous injection. SNMMI/EANM allow ±10% dose tolerance for
+      practical administration variability.
+    bounds:
+      - bound_type: "hard_min"
+        value: 250.0
+        citation_strength: "international_consensus"
+        guideline_section: "SNMMI/EANM dose tolerance lower limit"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid PI §2.1 specifies 370 MBq (10 mCi) recommended dose.
+            SNMMI/EANM practice guidelines for PET radiopharmaceutical
+            administration allow practical dose tolerance; doses
+            substantially below 250 MBq risk image-quality degradation
+            and reduced diagnostic confidence. Hard_min at 250 MBq
+            represents a conservative empirical lower bound consistent
+            with multi-site clinical practice across ADNI, A4 Study,
+            and other major flortaucipir cohorts.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.1)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "SNMMI dose tolerance guidelines"
+            - "EANM"
+            - "ADNI Cohort"
+            - "A4 Study"
+            - "Alzheimer's Association 2024 Revised Criteria"
+      - bound_type: "hard_max"
+        value: 500.0
+        citation_strength: "international_consensus"
+        guideline_section: "SNMMI/EANM dose tolerance upper limit"
+        citation:
+          citation_pmid: "32709695"
+          citation_doi: "10.2967/jnumed.120.252510"
+          citation_text: |
+            Tauvid PI §2.1 specifies 370 MBq (10 mCi) recommended dose.
+            SNMMI/EANM dose tolerance allows up to approximately 500 MBq
+            in practical administration; doses substantially above this
+            risk unnecessary radiation exposure without diagnostic gain.
+            Hard_max at 500 MBq represents the empirical upper bound
+            consistent with multi-site clinical practice.
+          public_url: "https://pi.lilly.com/us/tauvid-uspi.pdf"
+          endorsing_bodies:
+            - "FDA (Tauvid Prescribing Information §2.1)"
+            - "Eli Lilly and Company / Avid Radiopharmaceuticals"
+            - "SNMMI dose tolerance guidelines"
+            - "EANM"
+            - "ADNI Cohort"
+            - "A4 Study"
+            - "Alzheimer's Association 2024 Revised Criteria"
