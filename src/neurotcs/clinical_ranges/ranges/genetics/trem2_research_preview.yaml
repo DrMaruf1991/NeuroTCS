@@ -1,0 +1,247 @@
+schema_version: "1.0.0"
+rangepack_id: "genetics/trem2_research_preview@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-29"
+status: "research_preview"
+domain: "trem2_variants_ad_risk"
+framework_name: "TREM2 (triggering receptor expressed on myeloid cells 2) rare missense variants R47H (rs75932628) and R62H (rs143332484) as research-grade Alzheimer's disease risk genetic variants. NOT FDA-cleared. NOT a clinical actionable threshold. Multi-cohort genome-wide significant association via Guerreiro 2013 NEJM + Jonsson 2013 NEJM + Sims/Lu 2013 meta-analysis (n=32,598)."
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29, verbatim transcription from Guerreiro R et al. TREM2 Variants in Alzheimer's Disease. NEJM 2013 (PMID 23150908), Jonsson T et al. Variant of TREM2 Associated with the Risk of Alzheimer's Disease. NEJM 2013 (PMID 23150934), Sims R, Lu Y et al. Assessing the role of the TREM2 p.R47H variant as a risk factor for Alzheimer's disease and frontotemporal dementia. PMID 24041969 (meta-analysis n=32,598), Jin SC et al. PMID 24899047 (R62H risk variant)."
+clinical_source_authority: |
+  This research_preview pack encodes TREM2 rare missense variants R47H
+  and R62H as RESEARCH-GRADE AD risk loci. Status is research_preview
+  (NOT production) because:
+
+  1. NO FDA-cleared TREM2 genotyping IVD assay for AD risk prediction.
+
+  2. NO clinical-grade actionable threshold: Unlike APOE ε4 (which has
+     entrenched clinical risk-stratification use across lecanemab/
+     donanemab ARIA risk management plans), TREM2 R47H/R62H risk is
+     RESEARCH-GRADE despite genome-wide significance:
+       - Allelic frequency ~0.6% (very rare; Guerreiro/Jonsson 2013)
+       - Effect size moderate (meta-analysis OR 4.11 95% CI 2.99-5.68
+         per Sims 2013 PMID 24041969 n=32,598; Lu 2014 modest OR 1.67
+         in PMID 25186855 follow-up meta-analysis)
+       - Not a current clinical guideline marker
+
+  3. NOT in AA-2024 NIA-AA Revised Criteria Table 7 (the operative
+     core/non-core AD biomarker classification, Jack 2024 PMID 38934362).
+
+  4. RESEARCH-GRADE despite multi-body genetic validation (NEJM 2013 ×2,
+     Acta Neuropathol, Neurology meta-analyses, Mol Neurodegener):
+     genetic risk markers without clinical-grade actionable thresholds
+     ship as research_preview, NOT production.
+
+  This pack mirrors v1.13.1 CSF p-tau217 + v1.15.2 NfL/GFAP downgrade
+  + v1.17.0 CSF p-tau231 research_preview discipline.
+
+  Layer separation: This pack covers TREM2 RARE MISSENSE VARIANTS
+  (R47H, R62H) only. APOE ε4/ε2 genotyping (clinical-grade actionable
+  via ARIA risk management) is covered separately in
+  ad/aria_safety_consensus (v1.10.x family). APP/PSEN1/PSEN2 autosomal
+  dominant AD variants are out of scope (covered by future
+  genetics/eoad_dominant_consensus pack if needed).
+
+anchor_citation:
+  citation_pmid: "23150908"
+  citation_doi: "10.1056/NEJMoa1211851"
+  citation_text: |
+    Guerreiro R, Wojtas A, Bras J, Carrasquillo M, Rogaeva E, Majounie E,
+    Cruchaga C, Sassi C, Kauwe JS, Younkin S, Hazrati L, Collinge J,
+    Pocock J, Lashley T, Williams J, Lambert JC, Amouyel P, Goate A,
+    Rademakers R, Morgan K, Powell J, St George-Hyslop P, Singleton A,
+    Hardy J; Alzheimer Genetic Analysis Group. TREM2 variants in
+    Alzheimer's disease. N Engl J Med. 2013 Jan 10;368(2):117-127
+    (PMID 23150908). Foundational discovery: TREM2 R47H (rs75932628)
+    confers ~5-fold AD risk (OR 5.05, 95% CI 2.77-9.16, P=9.0×10^-9)
+    in case-control analysis across n=1994 AD patients + n=4062
+    controls. Companion paper same NEJM issue: Jonsson T et al.
+    NEJM 2013;368(2):107-116 (PMID 23150934) — Icelandic discovery
+    cohort, OR 2.92 (95% CI 2.09-4.09, P=3.42×10^-10). Large
+    meta-analysis: Sims R et al. PMID 24041969 (n=32,598 across 4
+    studies, OR 4.11 95% CI 2.99-5.68 P=5.27×10^-18). R62H variant
+    in Jin 2014 PMID 24899047 (OR 2.36 95% CI 1.47-3.80 P=2.36×10^-4).
+  public_url: "https://pubmed.ncbi.nlm.nih.gov/23150908/"
+  endorsing_bodies:
+    - "Guerreiro 2013 NEJM TREM2 R47H foundational (PMID 23150908)"
+    - "Jonsson 2013 NEJM TREM2 R47H Icelandic discovery (PMID 23150934)"
+    - "Sims 2013 meta-analysis n=32,598 (PMID 24041969 OR 4.11)"
+    - "Jin 2014 R62H variant (PMID 24899047)"
+    - "Lu 2014 Neurology follow-up meta-analysis (PMID 25186855)"
+    - "Alzheimer Genetic Analysis Group consortium"
+    - "International Genomics of Alzheimer's Project (IGAP)"
+    - "Multi-cohort AD genetics research"
+
+notes: |
+  RESEARCH_PREVIEW pack — citation-locked at research-grade evidence
+  standard but NOT yet at clinical-grade actionable threshold standard.
+  Bounds encode VARIANT PRESENCE/ABSENCE categorical status, not
+  quantitative risk scores.
+
+  CRITICAL CLINICAL CONTEXT — RESEARCH-PREVIEW STATUS:
+    TREM2 R47H is the second-strongest known AD genetic risk locus
+    after APOE ε4 in terms of effect size, but is much rarer (0.6% vs
+    25% allelic frequency). The Guerreiro 2013 + Jonsson 2013 NEJM
+    discovery papers + Sims 2013 large meta-analysis = robust genome-
+    wide significant association.
+
+    HOWEVER, there is no FDA-cleared TREM2 genotyping IVD assay for AD
+    risk prediction, no clinical guideline supporting routine TREM2
+    screening, no actionable clinical threshold, and no AA-2024
+    recognition in Table 7. This is research-grade genetic information.
+
+    Roadmap to production: research_preview status will be re-evaluated
+    when (1) FDA-cleared TREM2 genotyping IVD becomes available with
+    clinical indication, OR (2) AA-2024 explicitly recognizes TREM2 as
+    a clinical biomarker, OR (3) emerging TREM2-targeted therapies
+    (e.g., AL002 anti-TREM2 antibody) reach approval and TREM2 status
+    becomes treatment-eligibility-defining.
+
+  Scope (RESEARCH_PREVIEW pack):
+    - trem2_r47h_variant_status: present/absent categorical
+    - trem2_r62h_variant_status: present/absent categorical
+
+  Out of scope (intentionally excluded):
+    - Other TREM2 rare variants (T66M, Y38C, etc.) — extremely rare,
+      individual case reports only
+    - TREM2 mRNA expression (research-only)
+    - sTREM2 (soluble TREM2 in CSF) — separate emerging biomarker
+    - Population-stratified risk estimates (effect varies by ancestry;
+      East Asian populations show no significant association per
+      Huang 2015 meta-analysis PMID 25852195)
+    - Clinical risk-stratification thresholds (no consensus)
+    - APP/PSEN1/PSEN2 dominant variants (covered by other pack)
+
+measurements:
+
+  # ============================================================
+  # TREM2 R47H (rs75932628) variant status
+  # ============================================================
+  - name: "trem2_r47h_variant_status"
+    unit: "categorical"
+    description: |
+      TREM2 R47H variant (rs75932628 T allele) status. R47H is a rare
+      missense substitution (arginine-to-histidine at position 47) in
+      exon 2 of TREM2 on chromosome 6p21.1. Allelic frequency ~0.6%
+      in European populations. Confers ~3-5-fold AD risk (OR 4.11
+      meta-analysis n=32,598; OR 2.92 Jonsson; OR 5.05 Guerreiro).
+      Three categorical states:
+        - "absent": homozygous reference C/C
+        - "heterozygous": C/T (one R47H allele)
+        - "homozygous": T/T (extremely rare; both R47H alleles)
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "absent"
+      - "heterozygous"
+      - "homozygous"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "Multi-cohort genome-wide significant association"
+        citation:
+          citation_pmid: "23150908"
+          citation_doi: "10.1056/NEJMoa1211851"
+          citation_text: |
+            Guerreiro 2013 NEJM (PMID 23150908) + Jonsson 2013 NEJM
+            (PMID 23150934) foundational discovery; Sims 2013 large
+            meta-analysis (PMID 24041969 n=32,598 OR 4.11 95% CI
+            2.99-5.68 P=5.27×10^-18); Lu 2014 Neurology follow-up
+            (PMID 25186855). Three categorical states encode the
+            standard biallelic SNP genotype space. Research-grade
+            multi-cohort consensus; no clinical-grade actionable
+            threshold.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/23150908/"
+          endorsing_bodies:
+            - "Guerreiro 2013 NEJM (PMID 23150908)"
+            - "Jonsson 2013 NEJM (PMID 23150934)"
+            - "Sims 2013 meta-analysis n=32,598 (PMID 24041969)"
+            - "Jin 2014 R47H validation (PMID 24899047)"
+            - "Lu 2014 Neurology follow-up (PMID 25186855)"
+            - "Alzheimer Genetic Analysis Group"
+            - "IGAP consortium"
+            - "Multi-cohort AD genetics research"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "Same enum (categorical_set placeholder)"
+        citation:
+          citation_pmid: "23150908"
+          citation_doi: "10.1056/NEJMoa1211851"
+          citation_text: |
+            Same 3-state genotype enum. Categorical_set bounds are
+            placeholders per schema contract; valid_values list carries
+            the operative constraint.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/23150908/"
+          endorsing_bodies:
+            - "Guerreiro 2013 NEJM"
+            - "Jonsson 2013 NEJM"
+            - "Sims 2013 meta-analysis"
+            - "Jin 2014 validation"
+            - "Lu 2014 Neurology"
+            - "Alzheimer Genetic Analysis Group"
+            - "IGAP consortium"
+            - "Multi-cohort AD genetics research"
+
+  # ============================================================
+  # TREM2 R62H (rs143332484) variant status
+  # ============================================================
+  - name: "trem2_r62h_variant_status"
+    unit: "categorical"
+    description: |
+      TREM2 R62H variant (rs143332484) status. R62H is a rare missense
+      substitution (arginine-to-histidine at position 62) in exon 2 of
+      TREM2. Confers ~2-fold AD risk (OR 2.36 95% CI 1.47-3.80
+      P=2.36×10^-4 per Jin 2014 PMID 24899047). Three categorical states:
+        - "absent": homozygous reference
+        - "heterozygous": one R62H allele
+        - "homozygous": both R62H alleles (extremely rare)
+    measurement_kind: "categorical_set"
+    valid_values:
+      - "absent"
+      - "heterozygous"
+      - "homozygous"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "Multi-cohort genome-wide significant association"
+        citation:
+          citation_pmid: "24899047"
+          citation_doi: "10.1093/hmg/ddu277"
+          citation_text: |
+            Jin SC et al. Coding variants in TREM2 increase risk for
+            Alzheimer's disease. Hum Mol Genet. 2014 (PMID 24899047)
+            R62H variant: OR 2.36 (95% CI 1.47-3.80) P=2.36×10^-4 in
+            2082 AD cases + 1648 controls. Gene-based TREM2 SKAT-O test
+            P=5.37×10^-7 OR 2.55 (1.80-3.67). Research-grade multi-cohort
+            consensus; no clinical-grade actionable threshold.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/24899047/"
+          endorsing_bodies:
+            - "Jin 2014 Hum Mol Genet R62H foundational (PMID 24899047)"
+            - "Guerreiro 2013 NEJM (TREM2 parent gene)"
+            - "Jonsson 2013 NEJM (TREM2 parent gene)"
+            - "Sims 2013 meta-analysis (TREM2 gene-level)"
+            - "Lu 2014 Neurology follow-up"
+            - "Alzheimer Genetic Analysis Group"
+            - "IGAP consortium"
+            - "Multi-cohort AD genetics research"
+      - bound_type: "hard_max"
+        value: 0.0
+        citation_strength: "derived"
+        guideline_section: "Same enum (categorical_set placeholder)"
+        citation:
+          citation_pmid: "24899047"
+          citation_doi: "10.1093/hmg/ddu277"
+          citation_text: |
+            Same 3-state genotype enum. Categorical_set bounds are
+            placeholders per schema contract.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/24899047/"
+          endorsing_bodies:
+            - "Jin 2014 Hum Mol Genet R62H foundational"
+            - "Guerreiro 2013 NEJM parent gene"
+            - "Jonsson 2013 NEJM parent gene"
+            - "Sims 2013 meta-analysis"
+            - "Lu 2014 Neurology"
+            - "Alzheimer Genetic Analysis Group"
+            - "IGAP consortium"
+            - "Multi-cohort AD genetics research"

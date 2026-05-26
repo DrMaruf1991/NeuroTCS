@@ -152,22 +152,45 @@ class TestRosterCounts:
     v1.16.0 adds fdg_pet/fdg_consensus to production (Tier 2 item #1 from
     v1.15.2 roadmap; CMS NCD 220.6.13 + AA-2024 Core 2 N + SNMMI/EANM 2024
     v2.0 + EANM Brain FDG-PET v3 + Mosconi 2008 multicenter + Bailly 2015
-    SUVR anchors): (9 prod, 2 preview, 6 deprecated, 17 total)."""
+    SUVR anchors): (9 prod, 2 preview, 6 deprecated, 17 total).
 
-    def test_nine_production_packs(self) -> None:
+    v1.17.0 batch Tier 2 closure adds 6 new production packs covering the
+    full 12-item Tier 2 backlog from v1.16.0:
+      + cognitive_scales/cdr_mmse_moca_consensus (CDR + MMSE + MoCA)
+      + cognitive_scales/adas_cog_iadrs_consensus (ADAS-Cog + iADRS)
+      + cognitive_scales/npiq_consensus (NPI-Q)
+      + olfactory/upsit_consensus (UPSIT 40-item)
+      + mri_volumetrics/microbleeds_boston_consensus (Boston v2.0 CAA)
+      + csf_biomarkers/csf_tau_consensus (CSF p-tau181 + t-tau Lumipulse)
+    Plus 2 new research_preview packs (items that did NOT qualify as
+    production per world-class evidence honesty discipline):
+      + csf_biomarkers/csf_ptau231_research_preview (CSF + plasma p-tau231)
+      + genetics/trem2_research_preview (TREM2 R47H + R62H)
+    Net: (15 prod, 4 preview, 6 deprecated, 25 total)."""
+
+    def test_fifteen_production_packs(self) -> None:
         packs = list_rangepacks()
         prod = [p for p in packs if p.get("status") == "production"]
-        assert len(prod) == 9
+        assert len(prod) == 15
 
-    def test_two_research_preview_packs(self) -> None:
+    def test_four_research_preview_packs(self) -> None:
         """v1.15.0: research_preview pack count grows from 1 to 2 with
         tau_pet/tau_research_preview joining mri_volumetrics/freesurfer_extended.
-        v1.16.0: unchanged."""
+        v1.16.0: unchanged. v1.17.0: grows from 2 to 4 with
+        csf_biomarkers/csf_ptau231_research_preview and
+        genetics/trem2_research_preview added (Tier 2 items that ship
+        as research_preview because no FDA clearance + no AA-2024
+        recognition + no clinical-grade actionable threshold)."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
-        assert len(preview) == 2
+        assert len(preview) == 4
         names = {p["name"] for p in preview}
-        assert names == {"mri_volumetrics/freesurfer_extended", "tau_pet/tau_research_preview"}
+        assert names == {
+            "mri_volumetrics/freesurfer_extended",
+            "tau_pet/tau_research_preview",
+            "csf_biomarkers/csf_ptau231_research_preview",
+            "genetics/trem2_research_preview",
+        }
 
     def test_six_deprecated_packs(self) -> None:
         packs = list_rangepacks()
@@ -177,10 +200,11 @@ class TestRosterCounts:
         assert names == set(EXPECTED_DEPRECATIONS.keys())
 
     def test_total_pack_count(self) -> None:
-        """v1.16.0 adds 1 pack (fdg_pet/fdg_consensus production).
-        Net: 17 total packs (9 prod + 2 preview + 6 deprecated)."""
+        """v1.16.0 adds 1 pack (fdg_pet/fdg_consensus production -> 17 total).
+        v1.17.0 adds 8 packs (6 production + 2 research_preview).
+        Net: 25 total packs (15 prod + 4 preview + 6 deprecated)."""
         packs = list_rangepacks()
-        assert len(packs) == 17  # 9 prod + 2 preview + 6 deprecated
+        assert len(packs) == 25  # 15 prod + 4 preview + 6 deprecated
 
 
 class TestDeprecationSchemaValidator:

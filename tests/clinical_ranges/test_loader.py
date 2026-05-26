@@ -52,11 +52,21 @@ EXPECTED_PRODUCTION_PACKS = {
     "mri_volumetrics/wmh_fazekas_consensus",  # NEW in v1.15.1 (was silently skipped in v1.13.0)
     "tau_pet/tau_consensus",  # NEW in v1.15.0
     "fdg_pet/fdg_consensus",  # NEW in v1.16.0 (Tier 2 item #1 from v1.15.2 roadmap)
+    # v1.17.0: batch Tier 2 closure — 6 new production packs covering all 12 Tier 2 backlog items
+    "cognitive_scales/cdr_mmse_moca_consensus",  # NEW in v1.17.0 (Tier 2 items: CDR/MMSE + MoCA universal scales)
+    "cognitive_scales/adas_cog_iadrs_consensus",  # NEW in v1.17.0 (Tier 2 items: ADAS-Cog + iADRS AD trial endpoints)
+    "cognitive_scales/npiq_consensus",  # NEW in v1.17.0 (Tier 2 item: NPI-Q behavioral)
+    "olfactory/upsit_consensus",  # NEW in v1.17.0 (Tier 2 item: UPSIT olfactory)
+    "mri_volumetrics/microbleeds_boston_consensus",  # NEW in v1.17.0 (Tier 2 item: microbleeds non-ARIA)
+    "csf_biomarkers/csf_tau_consensus",  # NEW in v1.17.0 (Tier 2 items: CSF t-tau + p-tau181 extension)
 }
 
 EXPECTED_RESEARCH_PREVIEW_PACKS = {
     "mri_volumetrics/freesurfer_extended",  # NEW in v1.10.2 (replaces freesurfer)
     "tau_pet/tau_research_preview",  # NEW in v1.15.0
+    # v1.17.0: Tier 2 items that did NOT qualify as production (research-grade only)
+    "csf_biomarkers/csf_ptau231_research_preview",  # NEW in v1.17.0 (CSF + plasma p-tau231 — no FDA, no AA-2024)
+    "genetics/trem2_research_preview",  # NEW in v1.17.0 (TREM2 R47H/R62H — research-grade genetic risk)
 }
 
 EXPECTED_DEPRECATED_PACKS = {

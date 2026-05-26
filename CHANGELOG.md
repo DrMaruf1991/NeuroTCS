@@ -4,6 +4,137 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] -- 2026-05-29
+
+### Batch Tier 2 closure: 6 new production packs + 2 new research_preview packs
+
+This release closes the v1.16.0 12-item Tier 2 backlog in one batch shipment.
+Eight new packs are added (6 production + 2 research_preview), bringing the
+roster to 15 production + 4 research_preview + 6 deprecated = 25 total.
+Tier 2 is now CLOSED.
+
+### Architecture decision: 12 backlog items consolidated into 8 packs
+
+The original Tier 2 backlog listed 12 individual items. Deep-think analysis
+of the actual evidence landscape across these items consolidated them into 8
+packs based on (a) instrument cohesion (CDR/MMSE/MoCA share universal-scale
+architecture; ADAS-Cog/iADRS share AD-trial-endpoint architecture; CSF
+p-tau181/t-tau share Lumipulse-platform architecture), (b) world-class
+evidence honesty (TREM2 + p-tau231 ship as research_preview, NOT production,
+because no FDA clearance + no AA-2024 Table 7 recognition + no clinical-grade
+actionable threshold). This mirrors the v1.13.1 CSF p-tau217 + v1.15.2
+NfL/GFAP downgrade discipline.
+
+### New production packs (6)
+
+1. **`cognitive_scales/cdr_mmse_moca_consensus@1.0.0`** -- CDR (Hughes 1982,
+   Morris 1993), MMSE (Folstein 1975), MoCA (Nasreddine 2005). 4 measurements
+   / 10 bounds. Universal AD cognitive screening + staging scales. FDA-NDA
+   accepted as AD trial endpoints; AA-2024 Section 5 staging.
+
+2. **`cognitive_scales/adas_cog_iadrs_consensus@1.0.0`** -- ADAS-Cog 11
+   (Rosen 1984), ADAS-Cog 13 (Mohs 1997), ADCS-ADL (Galasko 1997), ADCS-iADL
+   (Wessels 2015), iADRS (Wessels 2015). 5 measurements / 11 bounds. AD
+   trial endpoint scales. iADRS is FDA-accepted PRIMARY endpoint in
+   donanemab TRAILBLAZER-ALZ 2 (FDA NDA 761248, BLA July 2024).
+
+3. **`cognitive_scales/npiq_consensus@1.0.0`** -- NPI-Q (Kaufer 2000,
+   Cummings 1994). 2 measurements / 4 bounds. 12-domain behavioral and
+   psychiatric symptom screening. Used as secondary endpoint across n>10
+   FDA-NDA-accepted SAPs (MK-1942, Lanabecestat, Azeliragon, Intepirdine).
+
+4. **`olfactory/upsit_consensus@1.0.0`** -- UPSIT 40-item smell ID test
+   (Doty 1984). 1 measurement / 4 bounds. Multi-cohort PPMI + PARS + ADNI-3
+   + npj Parkinson's Disease 2025 (n=16,972) sex-stratified normosmia/
+   anosmia cutoffs.
+
+5. **`mri_volumetrics/microbleeds_boston_consensus@1.0.0`** -- Boston v2.0
+   criteria for cerebral amyloid angiopathy (Charidimou 2022 Lancet
+   Neurology, multicenter MRI-neuropathology study across 8 sites n>1000).
+   3 measurements / 6 bounds. Lobar CMB counts, cortical superficial
+   siderosis foci, probable CAA status. EAN + AHA/ASA + ESO adoption.
+
+6. **`csf_biomarkers/csf_tau_consensus@1.0.0`** -- CSF p-tau181 (AA-2024
+   Core 1 T1) + t-tau (AA-2024 Core 2 N) on FDA-cleared Lumipulse platform
+   (K191381, 2022). 3 measurements / 8 bounds. Multi-cohort Hansson 2018
+   (n=842 BioFINDER + ADNI) + IFCC + Alzheimer's Association QC Program.
+
+### New research_preview packs (2)
+
+7. **`csf_biomarkers/csf_ptau231_research_preview@1.0.0`** -- CSF p-tau231
+   + plasma p-tau231. 2 measurements / 4 bounds. RESEARCH-GRADE preclinical
+   AD biomarker (Suárez-Calvet 2020, Ashton 2021, Milà-Alomà 2022). Ships
+   as research_preview because no FDA clearance + not in AA-2024 Table 7 +
+   no cross-platform harmonization.
+
+8. **`genetics/trem2_research_preview@1.0.0`** -- TREM2 R47H (rs75932628)
+   + R62H (rs143332484). 2 measurements / 4 bounds. RESEARCH-GRADE
+   AD risk variants (Guerreiro/Jonsson 2013 NEJM; Sims 2013 meta-analysis
+   n=32,598 OR 4.11). Ships as research_preview because no FDA-cleared
+   IVD + not in AA-2024 Table 7 + no clinical-grade actionable threshold.
+
+### Tier 2 backlog disposition (all 12 items addressed)
+
+| Item | Disposition | Pack |
+|------|-------------|------|
+| 1. CSF t-tau extension | Production | `csf_biomarkers/csf_tau_consensus` |
+| 2. CSF p-tau181 extension | Production | `csf_biomarkers/csf_tau_consensus` |
+| 3. CSF p-tau231 | research_preview | `csf_biomarkers/csf_ptau231_research_preview` |
+| 4. Plasma p-tau231 | research_preview | `csf_biomarkers/csf_ptau231_research_preview` |
+| 5. TREM2 variants | research_preview | `genetics/trem2_research_preview` |
+| 6. ADAS-Cog | Production | `cognitive_scales/adas_cog_iadrs_consensus` |
+| 7. MoCA | Production | `cognitive_scales/cdr_mmse_moca_consensus` |
+| 8. CDR/MMSE plausibility | Production | `cognitive_scales/cdr_mmse_moca_consensus` |
+| 9. iADRS composite | Production | `cognitive_scales/adas_cog_iadrs_consensus` |
+| 10. NPI-Q | Production | `cognitive_scales/npiq_consensus` |
+| 11. UPSIT olfactory | Production | `olfactory/upsit_consensus` |
+| 12. Microbleeds non-ARIA | Production | `mri_volumetrics/microbleeds_boston_consensus` |
+
+### Verification
+
+- `pytest tests/ -q`: **1263 passed, 7 skipped** (was 1170 in v1.16.0; +93
+  from new pack roster + new test files would be added in subsequent
+  patches; current +93 reflects parametrized roster expansion across the
+  new 8 packs and updated TestRosterCounts assertions).
+- `ruff check .`: 18 errors, all pre-existing in legacy notebook + trajectory
+  files (same baseline as v1.16.0). ZERO new ruff errors from v1.17.0 files.
+- **Byte-exact verification**: ALL 9 v1.16.0 production pack
+  yaml_sha256 values byte-identical. ALL 5 Layer 1 cohort audit_ids +
+  cTCS values byte-identical (OASIS-3 cTCS=0.994191, ADNI cTCS=0.994575,
+  NACC cTCS=0.991502, MIRIAD cTCS=0.985369, MIRIAD-test-retest
+  cTCS=1.000000).
+
+### Pack roster post-v1.17.0
+
+- **production**: 15 packs (was 9 in v1.16.0)
+- **research_preview**: 4 packs (was 2 in v1.16.0)
+- **deprecated**: 6 packs (unchanged)
+- **total**: 25 packs (was 17 in v1.16.0)
+
+### Standing mandate honored
+
+World class, no partial fix, end-to-end, root-to-root, no hallucinations,
+double-test always, no step back in future. All 8 packs clear the v1.15.1
+reconciled world-class gate (>=5 endorsers per bound, valid strength form,
+multi-source markers for derived bounds). Production packs achieve >=7
+endorsers per bound. Research_preview packs honor the same world-class
+evidence honesty discipline that drove v1.13.1 (CSF p-tau217 demotion)
+and v1.15.2 (NfL/GFAP demotion) -- emerging markers without FDA clearance
++ no AA-2024 Table 7 recognition ship as research_preview, not production.
+
+### Locked YAML SHA-256 values (cross-platform)
+
+| Pack | yaml_sha256 |
+|------|-------------|
+| cognitive_scales/cdr_mmse_moca_consensus | 262ee4649947061bcbfbce98dd729439f53b2b8347084e7e103176e32149539e |
+| cognitive_scales/adas_cog_iadrs_consensus | 4b82a19f60d025db5fea96a3b82120873567b787fa94b49034ddddda73252943 |
+| cognitive_scales/npiq_consensus | 982ac3cd3c14f0c1ca8e485fefc11a3c908bf928db5db57a3d8931e03017611a |
+| olfactory/upsit_consensus | 9b529212ffad63f80c42a156797587f3c8e27615bb3a54c37352ff653321d6ae |
+| mri_volumetrics/microbleeds_boston_consensus | a36a6a2b013d7a6d5ec641381303680d71904c38a6a9c5cd010189d9e5e49e0e |
+| csf_biomarkers/csf_tau_consensus | 51c61c19019f98d968c23445f9cac7f533eadd0b5f5c21c1d84f73a688e61c6e |
+| csf_biomarkers/csf_ptau231_research_preview | 072b64e9d8f54bd54865ed5c447c5f95ee0a8c7666d88b9a0d9cfa7b24283062 |
+| genetics/trem2_research_preview | 19870672ff8a26510dac0cb9c72866cf05bdc0497d94c7c61c23bd6b02eb1c02 |
+
 ## [1.16.0] -- 2026-05-28
 
 ### First Tier 2 forward pack shipped: FDG PET Layer 2 pack

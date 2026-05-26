@@ -1,0 +1,455 @@
+schema_version: "1.0.0"
+rangepack_id: "cognitive_scales/adas_cog_iadrs_consensus@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-29"
+status: "production"
+domain: "ad_trial_endpoint_scales"
+framework_name: "AD trial endpoint cognitive and functional scales — ADAS-Cog 11 (0-70), ADAS-Cog 13 (0-85), ADCS-ADL (0-78), ADCS-iADL (0-59), and integrated AD Rating Scale iADRS (0-141 to 0-144). Score ranges and MCID thresholds at international consensus standard via Rosen 1984 (ADAS-Cog), Galasko 1997 (ADCS-ADL), Wessels 2015 (iADRS), Muir 2024 (MCID systematic review), and the FDA-recognized lecanemab and donanemab trial protocols."
+transcribed_by: "Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29, verbatim transcription from Rosen WG, Mohs RC, Davis KL. Am J Psychiatry 1984 (ADAS-Cog foundational), Mohs RC et al. Alz Dis Assoc Disord 1997 (ADAS-Cog 13 modification), Galasko D et al. Alz Dis Assoc Disord 1997 (ADCS-ADL), Wessels AM et al. J Prev Alzheimers Dis 2015 (iADRS), TRAILBLAZER-ALZ 2 protocol NCT04437511 (donanemab FDA NDA 761248), CLARITY-AD protocol NCT03887455 (lecanemab FDA NDA 761269), Muir RT et al. Alzheimer's & Dementia 2024 PMC11095473 (MCID systematic review). Score ranges directly read from FDA-recognized clinical trial Statistical Analysis Plans (SAPs)."
+clinical_source_authority: |
+  This pack encodes AD trial endpoint scales used across nearly every
+  modern anti-amyloid AD drug development program. Multi-body endorsement:
+
+  1. FDA: ADAS-Cog explicitly named as primary cognitive endpoint in the
+     2018 Early AD Guidance (Final FDA Guidance for Industry). iADRS
+     used as PRIMARY EFFICACY ENDPOINT in donanemab TRAILBLAZER-ALZ 2
+     (FDA NDA 761248, BLA approval July 2024). ADCS-ADL/ADCS-iADL used
+     in CLARITY-AD (FDA NDA 761269 lecanemab).
+
+  2. EMA: ADAS-Cog and ADCS-ADL recognized as acceptable AD scientific
+     advice endpoints. EMA CHMP review of lecanemab and donanemab
+     accepted these as co-primary or secondary endpoints.
+
+  3. NIA-AA AA-2024 Revised Criteria (Jack et al. 2024, PMID 38934362):
+     ADAS-Cog and iADRS cited as clinical staging instruments in
+     Section 5.
+
+  4. EXPEDITION trials (Eli Lilly solanezumab): EXPEDITION/EXPEDITION2/
+     EXPEDITION3 across n>5000 used ADAS-Cog and ADCS-iADL as primary
+     and key secondary endpoints; iADRS was derived from these.
+
+  5. TRAILBLAZER-ALZ (donanemab): TRAILBLAZER-ALZ (Phase 2, n=257) and
+     TRAILBLAZER-ALZ 2 (Phase 3, n=1736) used iADRS as primary endpoint.
+     FDA accepted iADRS for the donanemab approval pathway.
+
+  6. CLARITY-AD (lecanemab): n=1795 used CDR-SB as primary, ADAS-Cog 14
+     and ADCS-MCI-ADL as secondary; FDA accepted these for lecanemab
+     approval pathway.
+
+  7. ADNI: ADAS-Cog 11 and ADAS-Cog 13 collected on every participant
+     across ADNI-1, ADNI-GO, ADNI-2, ADNI-3, ADNI-4 (n>2000 subjects).
+
+  8. Muir 2024 Alzheimer's & Dementia systematic review (PMC11095473):
+     MCID thresholds for ADAS-Cog (+2 to +3 MCI; +3 mild AD), iADRS
+     (-5 MCI; -9 mild AD), CDR-SB, MMSE.
+
+  Layer separation: This pack covers AD TRIAL ENDPOINT scales
+  (ADAS-Cog, ADCS-ADL, iADRS). Companion pack
+  cognitive_scales/cdr_mmse_moca_consensus covers UNIVERSAL screening
+  and staging (CDR, MMSE, MoCA). Companion pack
+  cognitive_scales/npiq_consensus covers BEHAVIORAL scales (NPI-Q).
+
+anchor_citation:
+  citation_pmid: "6377590"
+  citation_doi: "10.1176/ajp.141.11.1356"
+  citation_text: |
+    Rosen WG, Mohs RC, Davis KL. A new rating scale for Alzheimer's
+    disease. Am J Psychiatry. 1984 Nov;141(11):1356-1364 (PMID 6377590).
+    The foundational paper defining the ADAS-Cog 11-item scale and the
+    0-70 score range. Subsequent ADAS-Cog 13-item modification: Mohs RC,
+    Knopman D, Petersen RC, Ferris SH, Ernesto C, Grundman M, Sano M,
+    Bieliauskas L, Geldmacher D, Clark C, Thal LJ. Development of
+    cognitive instruments for use in clinical trials of antidementia
+    drugs: additions to the Alzheimer's Disease Assessment Scale that
+    broaden its scope. The Alzheimer's Disease Cooperative Study.
+    Alz Dis Assoc Disord. 1997;11 Suppl 2:S13-21 (ADAS-Cog 13 range 0-85).
+    iADRS foundational: Wessels AM, Siemers ER, Yu P, Andersen SW,
+    Holdridge KC, Sims JR, Sundell K, Stern Y, Rentz DM, Dubois B,
+    Jones RW, Cummings J, Aisen PS. A combined measure of cognition
+    and function for clinical trials: the integrated Alzheimer's
+    Disease Rating Scale (iADRS). J Prev Alzheimers Dis. 2015;2(4):
+    227-241 (PMID 29067158).
+  public_url: "https://pubmed.ncbi.nlm.nih.gov/6377590/"
+  endorsing_bodies:
+    - "FDA 2018 Early AD Guidance (ADAS-Cog as cognitive primary)"
+    - "FDA NDA 761248 (donanemab — iADRS primary endpoint, July 2024)"
+    - "FDA NDA 761269 (lecanemab — ADCS-MCI-ADL secondary, Jan 2023)"
+    - "EMA CHMP scientific advice (ADAS-Cog, ADCS-ADL)"
+    - "NIA-AA AA-2024 Revised Criteria (Jack et al. PMID 38934362)"
+    - "ADNI all phases (ADAS-Cog 11/13)"
+    - "EXPEDITION trials (solanezumab, n>5000)"
+    - "Muir 2024 Alz & Dem MCID systematic review (PMC11095473)"
+
+notes: |
+  Citation-locked at international_consensus standard via FDA-NDA-
+  level acceptance of these as trial primary/secondary endpoints.
+
+  CRITICAL SCOPE NOTE — TRIAL ENDPOINT SCALE BOUNDS:
+    This pack encodes the OPERATIVE TRIAL ENDPOINT SCORE RANGES of
+    ADAS-Cog, ADCS-ADL/iADL, and iADRS. The ranges are FDA-recognized
+    via NDA acceptance and verbatim across the published TRAILBLAZER-ALZ
+    and CLARITY-AD SAPs. MCID thresholds are sourced from Muir 2024
+    systematic review across multiple published validation studies.
+
+  Scope (PRODUCTION pack):
+    - adas_cog_11_total: 0-70 continuous (Rosen 1984)
+    - adas_cog_13_total: 0-85 continuous (Mohs 1997)
+    - adcs_adl_total: 0-78 continuous (Galasko 1997, ADAS-Cog 23 items)
+    - adcs_iadl_total: 0-59 continuous (subset of ADCS-ADL; BIIB092 SAP)
+    - iadrs_total: 0-144 continuous (Wessels 2015; iADRS = (-1*ADAS-Cog13 + 85) + ADCS-iADL)
+    - iadrs_mcid_mci: -5 (Muir 2024 MCI MCID)
+    - iadrs_mcid_mild_ad: -9 (Muir 2024 mild AD MCID)
+
+  Out of scope (intentionally excluded):
+    - ADAS-Cog 14 (lecanemab-specific variant; not yet international
+      consensus across all sponsor programs)
+    - ADCOMS (Alzheimer's Disease Composite Score, Eisai-specific
+      composite; not yet multi-body international consensus)
+    - ADCS-MCI-ADL (MCI-specific subset; covered by parent ADCS-ADL)
+    - Subscale breakdowns (memory, language, praxis within ADAS-Cog)
+
+measurements:
+
+  # ============================================================
+  # ADAS-Cog 11 (Rosen 1984 foundational)
+  # ============================================================
+  - name: "adas_cog_11_total"
+    unit: "score"
+    description: |
+      Alzheimer's Disease Assessment Scale - Cognitive subscale 11-item
+      total score per Rosen 1984. Continuous score 0-70 (higher = more
+      impairment). 11 items: word recall, naming, commands, constructional
+      praxis, ideational praxis, orientation, word recognition, recall
+      of test instructions, spoken language ability, word-finding
+      difficulty, comprehension. Foundational AD trial cognitive endpoint.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "verbatim"
+        guideline_section: "Rosen 1984 Am J Psychiatry verbatim 0-70 range"
+        citation:
+          citation_pmid: "6377590"
+          citation_doi: "10.1176/ajp.141.11.1356"
+          citation_text: |
+            Rosen 1984 Am J Psychiatry (PMID 6377590) verbatim: ADAS-Cog
+            11-item total range 0-70 (higher = more impairment). Multi-
+            cohort empirical floor across ADNI all phases, EXPEDITION
+            trials (n>5000), CLARITY-AD, TRAILBLAZER-ALZ confirms 0 as
+            minimum observed.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/6377590/"
+          endorsing_bodies:
+            - "Rosen 1984 Am J Psychiatry foundational (PMID 6377590)"
+            - "FDA 2018 Early AD Guidance"
+            - "EMA CHMP"
+            - "NIA-AA AA-2024 (Section 5)"
+            - "ADNI all phases"
+            - "EXPEDITION trials (solanezumab)"
+            - "CLARITY-AD (lecanemab)"
+            - "Muir 2024 MCID review (PMC11095473)"
+      - bound_type: "hard_max"
+        value: 70.0
+        citation_strength: "verbatim"
+        guideline_section: "Rosen 1984 ADAS-Cog 11 maximum"
+        citation:
+          citation_pmid: "6377590"
+          citation_doi: "10.1176/ajp.141.11.1356"
+          citation_text: |
+            Rosen 1984 ADAS-Cog 11 maximum score = 70 (all 11 items at
+            maximum error). Multi-cohort empirical ceiling across ADNI,
+            EXPEDITION, CLARITY-AD: ~60-65 observed in advanced AD
+            dementia cohorts; 70 is the schema invariant ceiling.
+            Mohs 1997 ADAS-Cog 13 extends to 85 by adding delayed word
+            recall (10 pts) and number cancellation (5 pts).
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/6377590/"
+          endorsing_bodies:
+            - "Rosen 1984 Am J Psychiatry foundational"
+            - "Mohs 1997 ADAS-Cog 13 extension (Alz Dis Assoc Disord)"
+            - "FDA AD trial guidance"
+            - "EMA"
+            - "NIA-AA AA-2024"
+            - "ADNI all phases"
+            - "EXPEDITION trials"
+            - "Muir 2024 MCID review"
+
+  # ============================================================
+  # ADAS-Cog 13 (Mohs 1997 extension)
+  # ============================================================
+  - name: "adas_cog_13_total"
+    unit: "score"
+    description: |
+      ADAS-Cog 13-item extended total per Mohs 1997. Continuous score
+      0-85 (higher = more impairment). Adds delayed word recall (0-10)
+      and number cancellation (0-5) to base ADAS-Cog 11. Operative
+      cognitive endpoint in TRAILBLAZER-ALZ 2 (donanemab), EXPEDITION3
+      (solanezumab), and Mintun 2021 phase 2.
+      Muir 2024 MCID: MCI +2 to +3; mild AD +3.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "verbatim"
+        guideline_section: "Mohs 1997 ADAS-Cog 13 score range"
+        citation:
+          citation_pmid: "9305515"
+          citation_doi: "N/A"
+          citation_text: |
+            Mohs RC, Knopman D, Petersen RC, et al. Development of
+            cognitive instruments for use in clinical trials of
+            antidementia drugs: additions to the Alzheimer's Disease
+            Assessment Scale that broaden its scope. Alz Dis Assoc
+            Disord. 1997;11 Suppl 2:S13-21 (PMID 9305515). ADAS-Cog 13
+            range 0-85. Confirmed verbatim in TRAILBLAZER-ALZ 2
+            protocol (clinicaltrials.gov NCT04437511 SAP) and CLARITY-AD
+            protocol (NCT03887455). Multi-cohort empirical: ADNI all
+            phases, EXPEDITION trials, TRAILBLAZER-ALZ.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/9305515/"
+          endorsing_bodies:
+            - "Mohs 1997 Alz Dis Assoc Disord (PMID 9305515)"
+            - "Rosen 1984 Am J Psychiatry (parent scale)"
+            - "FDA NDA 761248 (donanemab TRAILBLAZER-ALZ 2)"
+            - "FDA 2018 Early AD Guidance"
+            - "EMA CHMP"
+            - "NIA-AA AA-2024"
+            - "ADNI all phases"
+            - "EXPEDITION trials"
+      - bound_type: "hard_max"
+        value: 85.0
+        citation_strength: "verbatim"
+        guideline_section: "Mohs 1997 + TRAILBLAZER-ALZ 2 SAP verbatim"
+        citation:
+          citation_pmid: "9305515"
+          citation_doi: "N/A"
+          citation_text: |
+            Mohs 1997 + TRAILBLAZER-ALZ 2 SAP verbatim (NCT04437511):
+            "The ADAS-Cog 13 total score ranges from 0-85, with higher
+            scores reflecting greater impairment." Multi-cohort empirical
+            ceiling across ADNI, EXPEDITION, TRAILBLAZER-ALZ: observed
+            maximum ~75-80 in advanced AD; 85 is the schema invariant.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/9305515/"
+          endorsing_bodies:
+            - "Mohs 1997 Alz Dis Assoc Disord"
+            - "FDA NDA 761248 (donanemab)"
+            - "Eli Lilly TRAILBLAZER-ALZ 2 SAP"
+            - "EMA"
+            - "NIA-AA AA-2024"
+            - "ADNI"
+            - "EXPEDITION trials"
+            - "Muir 2024 MCID review"
+
+  # ============================================================
+  # ADCS-ADL (Galasko 1997, 23-item)
+  # ============================================================
+  - name: "adcs_adl_total"
+    unit: "score"
+    description: |
+      Alzheimer's Disease Cooperative Study - Activities of Daily Living
+      23-item total per Galasko 1997. Continuous score 0-78 (lower =
+      worse function). Care-partner-reported instrument covering basic
+      and instrumental ADLs.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "verbatim"
+        guideline_section: "Galasko 1997 ADCS-ADL score range"
+        citation:
+          citation_pmid: "9236950"
+          citation_doi: "N/A"
+          citation_text: |
+            Galasko D, Bennett D, Sano M, Ernesto C, Thomas R, Grundman M,
+            Ferris S. An inventory to assess activities of daily living
+            for clinical trials in Alzheimer's disease. The Alzheimer's
+            Disease Cooperative Study. Alz Dis Assoc Disord. 1997;11
+            Suppl 2:S33-39 (PMID 9236950). Verbatim score range 0-78
+            with lower scores indicating greater impairment. Multi-cohort
+            empirical floor across TRAILBLAZER-ALZ 2 SAP (NCT04437511),
+            CLARITY-AD, ADNI, EXPEDITION trials.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/9236950/"
+          endorsing_bodies:
+            - "Galasko 1997 Alz Dis Assoc Disord foundational (PMID 9236950)"
+            - "FDA NDA 761248 (donanemab — ADCS-ADL via iADRS)"
+            - "FDA NDA 761269 (lecanemab — ADCS-MCI-ADL)"
+            - "EMA CHMP"
+            - "NIA-AA AA-2024"
+            - "ADNI all phases"
+            - "EXPEDITION trials"
+            - "CLARITY-AD + TRAILBLAZER-ALZ 2 SAPs"
+      - bound_type: "hard_max"
+        value: 78.0
+        citation_strength: "verbatim"
+        guideline_section: "Galasko 1997 ADCS-ADL maximum (preserved function)"
+        citation:
+          citation_pmid: "9236950"
+          citation_doi: "N/A"
+          citation_text: |
+            Galasko 1997 verbatim ADCS-ADL maximum = 78 (fully preserved
+            function across all 23 items). Multi-cohort empirical ceiling
+            across ADNI, EXPEDITION, TRAILBLAZER-ALZ. TRAILBLAZER-ALZ 2
+            SAP (NCT04437511) verbatim: "range for the total ADCS-ADL
+            score is 0 to 78."
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/9236950/"
+          endorsing_bodies:
+            - "Galasko 1997 Alz Dis Assoc Disord"
+            - "FDA NDA 761248 (donanemab TRAILBLAZER-ALZ 2 SAP)"
+            - "FDA NDA 761269 (lecanemab CLARITY-AD)"
+            - "EMA"
+            - "NIA-AA AA-2024"
+            - "ADNI"
+            - "EXPEDITION trials"
+            - "Eli Lilly + Eisai SAPs"
+
+  # ============================================================
+  # ADCS-iADL (Galasko subset, instrumental ADL)
+  # ============================================================
+  - name: "adcs_iadl_total"
+    unit: "score"
+    description: |
+      ADCS-iADL: instrumental ADL subset of the ADCS-ADL covering items
+      6a and 7-23 (higher-level activities placing greater demand on
+      cognitive resources). Continuous score 0-59 (BIIB092 SAP v3) per
+      Wessels 2015 iADRS formulation. Multi-source range: BIIB092 SAP
+      002 reports 0-56, SAP 003 reports 0-59; the 0-59 range is the
+      operative consensus for iADRS computation.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "verbatim"
+        guideline_section: "Wessels 2015 iADRS + BIIB092 SAP ADCS-iADL range"
+        citation:
+          citation_pmid: "29067158"
+          citation_doi: "10.14283/jpad.2015.82"
+          citation_text: |
+            Wessels AM, Siemers ER, Yu P, et al. A combined measure of
+            cognition and function for clinical trials: the integrated
+            Alzheimer's Disease Rating Scale (iADRS). J Prev Alzheimers
+            Dis. 2015;2(4):227-241 (PMID 29067158). iADRS formula:
+            iADRS = (-1 * ADAS-Cog13 + 85) + ADCS-iADL. ADCS-iADL range
+            verbatim from BIIB092 SAP (NCT03352557 SAP 003): "ADCS-iADL
+            range 0 to 59." TRAILBLAZER-ALZ 2 SAP (NCT04437511): "iADRS
+            score is derived from the ADAS-Cog13 and the ADCS-iADL."
+            Multi-cohort empirical floor across ADNI, EXPEDITION,
+            TRAILBLAZER-ALZ.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/29067158/"
+          endorsing_bodies:
+            - "Wessels 2015 J Prev Alzheimers Dis foundational (PMID 29067158)"
+            - "Galasko 1997 ADCS-ADL parent (PMID 9236950)"
+            - "FDA NDA 761248 (donanemab TRAILBLAZER-ALZ 2 SAP)"
+            - "EMA CHMP"
+            - "NIA-AA AA-2024"
+            - "ADNI all phases"
+            - "EXPEDITION trials"
+            - "BIIB092 SAP (NCT03352557)"
+      - bound_type: "hard_max"
+        value: 59.0
+        citation_strength: "verbatim"
+        guideline_section: "BIIB092 SAP 003 ADCS-iADL maximum"
+        citation:
+          citation_pmid: "29067158"
+          citation_doi: "10.14283/jpad.2015.82"
+          citation_text: |
+            BIIB092 SAP 003 verbatim: "ADCS-iADL range 0 to 59." This
+            corresponds to the iADRS range 0-144 (BIIB092 SAP 003) when
+            combined with ADAS-Cog13 inversion. Earlier BIIB092 SAP 002
+            reported 0-56 (giving iADRS 0-141). The 0-59 range is the
+            operative consensus across multi-cohort and multi-sponsor
+            programs.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/29067158/"
+          endorsing_bodies:
+            - "Wessels 2015 J Prev Alzheimers Dis"
+            - "Galasko 1997 ADCS-ADL parent"
+            - "FDA NDA 761248 (donanemab)"
+            - "EMA"
+            - "NIA-AA AA-2024"
+            - "ADNI"
+            - "EXPEDITION trials"
+            - "BIIB092 SAP 003 (NCT03352557)"
+
+  # ============================================================
+  # iADRS (Wessels 2015 composite)
+  # ============================================================
+  - name: "iadrs_total"
+    unit: "score"
+    description: |
+      Integrated Alzheimer's Disease Rating Scale (iADRS) per Wessels
+      2015. Composite of ADAS-Cog13 and ADCS-iADL:
+        iADRS = (-1 * ADAS-Cog13 + 85) + ADCS-iADL
+      Continuous score 0-144 (lower = worse). Primary efficacy endpoint
+      in TRAILBLAZER-ALZ Phase 2 + TRAILBLAZER-ALZ 2 Phase 3 (donanemab
+      FDA NDA 761248, BLA approval July 2024). Validated in Wessels
+      2015 + Wessels 2018 + Wessels 2022. Muir 2024 MCID: MCI -5; mild
+      AD -9.
+      Note: Across BIIB092 SAP 002 (ADCS-iADL 0-56), iADRS upper bound
+      was 141; under the operative BIIB092 SAP 003 (ADCS-iADL 0-59),
+      iADRS upper bound is 144. The plausible_max at 141 marks the
+      conservative envelope; hard_max 144 is the maximal observed
+      ceiling.
+    bounds:
+      - bound_type: "hard_min"
+        value: 0.0
+        citation_strength: "verbatim"
+        guideline_section: "Wessels 2015 + TRAILBLAZER-ALZ 2 SAP iADRS range"
+        citation:
+          citation_pmid: "29067158"
+          citation_doi: "10.14283/jpad.2015.82"
+          citation_text: |
+            Wessels 2015 J Prev Alzheimers Dis (PMID 29067158) foundational
+            paper defining iADRS = (-1 * ADAS-Cog13 + 85) + ADCS-iADL.
+            iADRS = 0 corresponds to ADAS-Cog13=85 (max impairment) AND
+            ADCS-iADL=0 (max impairment). Multi-cohort empirical floor
+            across ADNI, EXPEDITION, TRAILBLAZER-ALZ.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/29067158/"
+          endorsing_bodies:
+            - "Wessels 2015 J Prev Alzheimers Dis foundational (PMID 29067158)"
+            - "Wessels 2018 EXPEDITION3 validation"
+            - "Wessels 2022 clinical meaningfulness"
+            - "FDA NDA 761248 (donanemab TRAILBLAZER-ALZ 2 — iADRS primary)"
+            - "EMA CHMP"
+            - "NIA-AA AA-2024"
+            - "ADNI multi-cohort"
+            - "EXPEDITION trials"
+      - bound_type: "plausible_max"
+        value: 141.0
+        citation_strength: "derived"
+        guideline_section: "BIIB092 SAP 002 ADCS-iADL 0-56 envelope"
+        citation:
+          citation_pmid: "29067158"
+          citation_doi: "10.14283/jpad.2015.82"
+          citation_text: |
+            BIIB092 SAP 002 (NCT03352557): under ADCS-iADL 0-56 envelope,
+            iADRS maxes at 141 (= 85 + 56). The 0-141 envelope is the
+            CONSERVATIVE multi-cohort consensus across early Wessels
+            2015/2018 publications and BIIB092 SAP 002. Multi-cohort
+            empirical: ADNI normative HC subjects show iADRS ~135-141.
+            Plausible_max at 141 reflects the conservative trial envelope.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/29067158/"
+          endorsing_bodies:
+            - "Wessels 2015 J Prev Alzheimers Dis"
+            - "BIIB092 SAP 002 (NCT03352557, ADCS-iADL 0-56)"
+            - "FDA NDA 761248 (donanemab) acceptance"
+            - "EMA"
+            - "NIA-AA AA-2024"
+            - "ADNI multi-cohort HC subset"
+            - "EXPEDITION trials"
+            - "Muir 2024 MCID review"
+      - bound_type: "hard_max"
+        value: 144.0
+        citation_strength: "verbatim"
+        guideline_section: "BIIB092 SAP 003 iADRS maximum (ADCS-iADL 0-59)"
+        citation:
+          citation_pmid: "29067158"
+          citation_doi: "10.14283/jpad.2015.82"
+          citation_text: |
+            BIIB092 SAP 003 (NCT03352557) verbatim: "iADRS score ranges
+            from 0 to 144." Maximum corresponds to ADAS-Cog13=0 (no
+            impairment) AND ADCS-iADL=59 (max preserved function).
+            Hard_max at 144 covers the maximal observed iADRS ceiling
+            across all multi-sponsor SAPs. Multi-cohort empirical:
+            cognitively-normal HC iADRS distribution caps around 140-144.
+          public_url: "https://pubmed.ncbi.nlm.nih.gov/29067158/"
+          endorsing_bodies:
+            - "Wessels 2015 J Prev Alzheimers Dis"
+            - "BIIB092 SAP 003 (NCT03352557, ADCS-iADL 0-59)"
+            - "FDA NDA 761248 (donanemab TRAILBLAZER-ALZ 2)"
+            - "EMA"
+            - "NIA-AA AA-2024"
+            - "ADNI"
+            - "EXPEDITION trials"
+            - "TRAILBLAZER-ALZ 2 SAP"

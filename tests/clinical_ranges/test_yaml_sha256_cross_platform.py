@@ -58,6 +58,19 @@ PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
         "76c8ff423ff25731dbba961d2f8ef18e341ea18335b9a303c4b3c0412b7ba9cb",
     "fdg_pet/fdg_consensus":
         "eb3893444a26ae41178901445706d9dc5966480250c05b791e540db2f8afb275",
+    # v1.17.0: 6 new production packs covering all 12 Tier 2 backlog items
+    "cognitive_scales/cdr_mmse_moca_consensus":
+        "262ee4649947061bcbfbce98dd729439f53b2b8347084e7e103176e32149539e",
+    "cognitive_scales/adas_cog_iadrs_consensus":
+        "4b82a19f60d025db5fea96a3b82120873567b787fa94b49034ddddda73252943",
+    "cognitive_scales/npiq_consensus":
+        "982ac3cd3c14f0c1ca8e485fefc11a3c908bf928db5db57a3d8931e03017611a",
+    "olfactory/upsit_consensus":
+        "9b529212ffad63f80c42a156797587f3c8e27615bb3a54c37352ff653321d6ae",
+    "mri_volumetrics/microbleeds_boston_consensus":
+        "a36a6a2b013d7a6d5ec641381303680d71904c38a6a9c5cd010189d9e5e49e0e",
+    "csf_biomarkers/csf_tau_consensus":
+        "51c61c19019f98d968c23445f9cac7f533eadd0b5f5c21c1d84f73a688e61c6e",
 }
 
 

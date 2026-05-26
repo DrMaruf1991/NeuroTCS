@@ -103,12 +103,20 @@ class TestResearchPreviewAndDeprecatedPacksRejectAudit:
 
 
 class TestPacksListAccurate:
-    """In v1.10.2: 6 production + 1 research_preview + 6 deprecated."""
+    """Tracks the current production / research_preview / deprecated roster.
 
-    def test_exactly_six_production_packs(self):
+    v1.10.2: 6 production + 1 research_preview + 6 deprecated.
+    v1.13.0: +1 production (wmh_fazekas_consensus) -> 7/1/6.
+    v1.15.0: +1 production (tau_pet/tau_consensus) + 1 preview
+             (tau_pet/tau_research_preview) -> 8/2/6.
+    v1.16.0: +1 production (fdg_pet/fdg_consensus) -> 9/2/6.
+    v1.17.0: +6 production + 2 preview (batch Tier 2 closure) -> 15/4/6.
+    """
+
+    def test_exactly_fifteen_production_packs(self):
         packs = list_rangepacks()
         production = [p for p in packs if p.get("status") == "production"]
-        assert len(production) == 6
+        assert len(production) == 15
         names = {p["name"] for p in production}
         assert names == {
             "ad/aria_safety",
@@ -117,16 +125,38 @@ class TestPacksListAccurate:
             "csf_biomarkers/csf_amyloid_consensus",
             "plasma_biomarkers/plasma_amyloid_consensus",
             "mri_volumetrics/structural_volumetry_consensus",  # NEW v1.10.2
+            "mri_volumetrics/wmh_fazekas_consensus",  # NEW v1.13.0 / v1.15.1
+            "tau_pet/tau_consensus",  # NEW v1.15.0
+            "fdg_pet/fdg_consensus",  # NEW v1.16.0
+            # v1.17.0 batch Tier 2 closure (6 new production packs)
+            "cognitive_scales/cdr_mmse_moca_consensus",
+            "cognitive_scales/adas_cog_iadrs_consensus",
+            "cognitive_scales/npiq_consensus",
+            "olfactory/upsit_consensus",
+            "mri_volumetrics/microbleeds_boston_consensus",
+            "csf_biomarkers/csf_tau_consensus",
         }
 
-    def test_one_research_preview_pack(self):
-        """v1.10.2 leaves only mri_volumetrics/freesurfer_extended at
-        research_preview (the long-tail FreeSurfer regions). The old
-        freesurfer pack was deprecated in v1.10.2."""
+    def test_four_research_preview_packs(self):
+        """v1.17.0: research_preview roster includes mri_volumetrics/
+        freesurfer_extended (v1.10.2), tau_pet/tau_research_preview
+        (v1.15.0), csf_biomarkers/csf_ptau231_research_preview (v1.17.0),
+        and genetics/trem2_research_preview (v1.17.0). The latter two
+        ship as research_preview (not production) because they lack FDA
+        clearance + are not in AA-2024 Table 7 + have no clinical-grade
+        actionable threshold — same world-class evidence honesty
+        discipline as v1.13.1 CSF p-tau217 and v1.15.2 NfL/GFAP
+        downgrades."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
-        assert len(preview) == 1
-        assert preview[0]["name"] == "mri_volumetrics/freesurfer_extended"
+        assert len(preview) == 4
+        names = {p["name"] for p in preview}
+        assert names == {
+            "mri_volumetrics/freesurfer_extended",
+            "tau_pet/tau_research_preview",
+            "csf_biomarkers/csf_ptau231_research_preview",
+            "genetics/trem2_research_preview",
+        }
 
     def test_six_deprecated_packs(self):
         packs = list_rangepacks()
