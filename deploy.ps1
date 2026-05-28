@@ -198,8 +198,7 @@ if (-not $Commit) {
 # ---------------------------------------------------------------------------
 Write-Step "Git: branch, add, commit, tag"
 $branch = "release/v$ver"
-git rev-parse --verify $branch 2>$null | Out-Null
-if ($LASTEXITCODE -eq 0) { Abort "branch $branch already exists -- delete it or bump version" }
+if (git show-ref --verify --quiet "refs/heads/$branch") { Abort "branch $branch already exists -- delete it or bump version" }
 git checkout -b $branch
 git add -A
 # final paranoia: re-confirm nothing cache-y got staged
