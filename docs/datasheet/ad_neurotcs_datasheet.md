@@ -731,6 +731,30 @@ evidence; others reflect last-known project status.
     prepare for a future submission; none has been made. ISO 14971 /
     IEC 62304 / EU AI Act conformity assessments are referenced, not executed.
 
+18. **ARIA pack is range-validation, not transition-scoring (scope clarity).**
+    `ad/aria_safety@1.0.0` is a clinical **rangepack**: it validates ARIA-E /
+    ARIA-H severity classes, dose-management/suspend thresholds, surveillance
+    MRI schedule, and APOE-stratified risk — all traced verbatim to FDA labels
+    + ASNR consensus (Cogswell 2022, PMID 35953274), with 19 passing tests. It
+    is **not** part of the cTCS/pTCS temporal-coherence transition engine, which
+    operates on diagnostic-staging packs (NIA-AA 2018, AA-2024). The pack
+    encodes ARIA safety thresholds; it does not score the temporal coherence of
+    dosing *decisions*. (This note exists to prevent both over-claiming ARIA
+    decision-support and under-claiming that ARIA logic is absent.)
+
+19. **Rangepack `canonical_sha256` hashes full pack metadata.** Unlike the
+    rulepack `_canonical_serialize` (fixed in v1.20.0 / ERRATA E-2026-006 to
+    hash only the four scientific fields), `RangePack.canonical_sha256`
+    (schema.py) still serializes the entire model (`model_dump`), so metadata
+    fields (framework_name, descriptions, transcribed_by) feed the hash that
+    enters each `flag_id`. This is the same class of defect resolved for
+    rulepacks; editing a rangepack's prose currently drifts its flag_ids.
+    Scheduled for the same scientific-content partition + re-lock + two-
+    directional proof in a dedicated release. No silent drift risk in the
+    interim: rangepack `yaml_sha256` values are locked in
+    `tests/clinical_ranges/test_yaml_sha256_cross_platform.py`, so any
+    accidental content change fails CI loudly.
+
 ### Resolved (kept for audit trail)
 
 - **Jack 2024 §3 staging transcription — RESOLVED in v1.7.13.** The full
