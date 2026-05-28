@@ -5,6 +5,33 @@ corrections are made transparently and as soon as discovered.
 
 ---
 
+## E-2026-010 · Completeness was operator-dependent; orchestrator now enforces complete-or-refuse (fixed in v1.23.0)
+
+**Discovered:** 2026-05-28
+**Fixed in:** v1.23.0
+**Affected versions:** all versions through v1.22.0 (architectural, not a value error)
+**Severity:** Does NOT affect any published cTCS/uTCS/pTCS value or any locked audit_id. The ADNI Aim 1 (cTCS=0.9946), OASIS-3 Aim 2 (cTCS=0.9942), and MIRIAD fairness results are unchanged. This errata concerns *how completeness is guaranteed*, not any computed number.
+
+### What happened
+
+A blind re-audit of a multi-site AD registry was reported as essentially clean by a careful operator who ran the staging and range layers but did not run the cross-sheet coherence layer, and then described that layer's territory as "out of scope." The cross-sheet pack (shipped and correct since v1.22.0) would have caught the planted cross-modal, monotonicity, and cognitive-coherence errors. No rule pack was wrong; determinism and citations held. The defect was structural: nothing in the code *forced* the audit to be complete, and nothing in the signed output *proved* which layers had run. A clean result could therefore mean "checked and clean" OR "never checked," and the two were indistinguishable to a reader.
+
+A second, related issue: feeding A/T biological tokens (A-T-, A+T-, A+T+) to a Stage_* rule pack produced a cTCS of 0.8637 -- a vocabulary-mismatch artifact that looked like a valid coherence score.
+
+### What changed in v1.23.0
+
+1. **Fail-closed orchestrator** `run_full_audit()` runs every applicable layer and refuses to emit a final `orchestrator_audit_id` if any applicable layer was skipped without an explicitly recorded reason. The reported failure is now structurally impossible.
+2. **Coverage manifest** in a deterministic, additive `orchestrator_audit_id`: a partial run and a complete run produce different ids. Existing per-layer audit_ids are untouched (no re-lock).
+3. **Vocabulary gating**: staging refuses to score data whose vocabulary is absent from the selected pack's state_space. The 0.8637 artifact can no longer be emitted.
+4. **New `ad/at_biological@1.0.0` pack** so A/T trajectories are auditable (catches A+T+->A+T- and A+->A- natural-history regressions) instead of refused.
+5. **`NON_MONOTONIC_VISIT_DATE`** input-contract check: a visit dated before its predecessor is flagged rather than silently re-sorted.
+
+### Honest scope statement
+
+v1.23.0 does not claim to catch every conceivable error. It claims **completeness within a declared scope, with cryptographic proof of what ran**. Cohort-context age plausibility and sex-vocabulary validity are deliberately out of the staging engine (generic data quality); cognition-vs-enrolled-diagnosis coherence is a named future rule. All are documented in SCOPE.md.
+
+---
+
 ## E-2026-001 · MCI→AD transition priors mis-encoded as cumulative when they should have been annual (fixed in v1.5.0)
 
 **Discovered:** 2026-05-18

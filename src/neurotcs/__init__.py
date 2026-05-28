@@ -23,7 +23,7 @@ Public API (the most common imports):
     from neurotcs.silent_deployment import make_silent_deployment_evidence
 """
 
-__version__ = "1.22.0"
+__version__ = "1.23.0"
 __author__ = "Marufjon Salokhiddinov, MD PhD"
 __license__ = "Apache-2.0"
 
@@ -94,6 +94,20 @@ from neurotcs.fairness import (  # noqa: E402,F401
     cohort_fairness_audit,
     fairness_audit,
     robustness_audit,
+)
+
+# v1.23.0: fail-closed orchestrator + vocabulary gating (enforce the definition)
+from neurotcs.orchestration.orchestrator import (  # noqa: E402,F401
+    CoverageManifest,
+    IncompleteAuditError,
+    OrchestratorResult,
+    run_full_audit,
+)
+from neurotcs.orchestration.vocabulary import (  # noqa: E402,F401
+    VocabularyMatch,
+    VocabularyMismatchError,
+    assess_vocabulary,
+    select_rulepack_or_refuse,
 )
 from neurotcs.rulepack.loader import (  # noqa: E402,F401
     LoadedRulePack,
@@ -190,4 +204,13 @@ __all__ = [
     "OperationalThreshold",
     "derive_threshold_conformal",
     "derive_threshold_distribution",
+    # v1.23.0: fail-closed orchestrator + vocabulary gating
+    "run_full_audit",
+    "OrchestratorResult",
+    "CoverageManifest",
+    "IncompleteAuditError",
+    "assess_vocabulary",
+    "select_rulepack_or_refuse",
+    "VocabularyMatch",
+    "VocabularyMismatchError",
 ]

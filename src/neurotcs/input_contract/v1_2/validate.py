@@ -438,6 +438,35 @@ def _step7_temporal_sanity(predictions: pd.DataFrame, manifest: dict,
         report.add_warning("TIE_TIMESTAMP", "predictions:visit_timestamp",
                            f"{n_tied} visits have ties in (patient_id, visit_timestamp)")
 
+    # E023 fix: within-patient visit-date monotonicity. The trajectory builder
+    # silently SORTS by visit_date, so a visit whose visit_id is later but whose
+    # timestamp is earlier than a prior visit_id would be silently reordered and
+    # never flagged. For a *temporal*-coherence tool that silent reordering is a
+    # defect: a backwards-dated visit must surface, not vanish. We detect, per
+    # patient, any row whose visit_id ranks after another row but whose timestamp
+    # is strictly earlier (i.e. visit_id order and timestamp order disagree).
+    if "visit_id" in predictions.columns:
+        n_nonmono = 0
+        for _pid, grp in predictions.groupby("patient_id"):
+            if len(grp) < 2:
+                continue
+            g = grp.sort_values("visit_id")
+            ts = g["_ts_parsed"].to_numpy()
+            # a later visit_id with a strictly earlier timestamp than the running max
+            running_max = ts[0]
+            for k in range(1, len(ts)):
+                if ts[k] < running_max:
+                    n_nonmono += 1
+                else:
+                    running_max = ts[k]
+        if n_nonmono > 0:
+            report.add_error(
+                "NON_MONOTONIC_VISIT_DATE", "predictions:visit_timestamp",
+                f"{n_nonmono} visit(s) have a later visit_id but an earlier "
+                f"timestamp than a prior visit (visit-date ordering contradicts "
+                f"visit_id ordering). Temporal coherence requires monotonic "
+                f"visit dating; silent re-sorting would hide this.")
+
 
 def _step8_cohort_summary_check(predictions: pd.DataFrame, manifest: dict,
                                   report: ValidationReport) -> None:
