@@ -4,6 +4,75 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0] -- 2026-05-28
+
+### Cohort audit_id re-lock per ERRATA E-2026-005
+
+Re-locks MIRIAD longitudinal, MIRIAD test-retest, MIRIAD fairness, and NACC
+audit_ids (both v1 and v2 variants) to reflect the v1.12.0 schema 1.4.0
+endorsing_bodies extension of `ad/niaaa_2018.yaml` (Finding A; commit
+fbcfdfa). This was an intentional, documented FDA-style regulatory metadata
+extension that shifted the rulepack content SHA from `1616F162...` to
+`F8FCD405...`, propagating deterministically into audit_ids of every cohort
+loading that rulepack. The drift went undetected through v1.13.0-v1.18.0
+because real-data tests skip when env vars are unset (CI environment).
+
+Scientific invariants reproduce bit-exactly between v1.7.13 and v1.19.0:
+
+- MIRIAD longitudinal: cTCS=0.9854, n=69, transitions=454, flagged=7 (1.54%)
+- MIRIAD test-retest: n=69 pairs, 0 flagged, cTCS=1.0000
+- NACC: cTCS=0.991502 [BCa 95% CI 0.990833-0.992153], n=56,529 trajectories,
+  158,423 transitions, 1,217 flagged (0.768%)
+
+Old audit_ids preserved as `*_V1_7_13` / `*_V1_8_1` constants in each test
+file for cryptographic continuity (per ERRATA E-2026-001 precedent).
+
+### Supersession (cryptographic continuity chain)
+
+| Cohort | Pre-v1.12.0 (v1.7.13/v1.8.1) | Post-v1.12.0 (v1.19.0) |
+|---|---|---|
+| MIRIAD longitudinal v1 | `947ab24e...` | `59ac763d...` |
+| MIRIAD longitudinal v2 | `aa178e83...` | `c34b3786...` |
+| MIRIAD test-retest v1 | `80430399...` | `94126769...` |
+| MIRIAD test-retest v2 | `dcf8b7de...` | `2cd85d3b...` |
+| MIRIAD fairness v1 | `947ab24e...` | `59ac763d...` |
+| MIRIAD fairness v2 | `aa178e83...` | `c34b3786...` |
+| NACC v1 | `def60e68...` | `f233935d...` |
+| NACC v2 | `9c002cf6...` | `8503a310...` |
+
+OASIS-3 audit_id `fa448b8f...` unchanged (test was locked at v1.8.0, after
+the v1.12.0 endorsing_bodies extension). ADNI audit_id pending verification.
+
+### Test envelope
+
+- v1.18.0: 1264 passed + 20 skipped (Windows), 4 cohort tests FAILING with
+  drift when env vars set
+- v1.19.0: 1269 passed + 15 skipped (Windows), all 5 cohort tests PASSING
+
+Net: +5 tests now passing because cohort locks were updated.
+
+### Files changed
+
+- `ERRATA.md` -- added E-2026-005 entry (4,801 chars) documenting root
+  cause, scientific-invariant preservation, supersession table, and
+  reproduction recipe
+- `tests/audit_core/test_real_nacc_audit.py` -- LOCKED_AUDIT_ID +
+  LOCKED_AUDIT_ID_V2 updated, old preserved as `*_V1_7_13` / `*_V1_8_1`
+- `tests/audit_core/test_real_miriad_audit.py` -- both v1 and v2 audit_ids
+  updated for longitudinal and test-retest, old preserved as `*_V1_7_13`
+- `tests/audit_core/test_real_miriad_fairness_audit.py` -- both v1 and v2
+  audit_ids updated, old preserved as `*_V1_7_13`
+- `pyproject.toml` + `src/neurotcs/__init__.py` -- version bump
+
+### Byte-exact invariants preserved (NOT affected by this release)
+
+- OASIS-3 cTCS=0.994191, audit_id=`fa448b8f...` (unchanged from v1.8.0)
+- All Layer 2 production pack yaml_sha256 hashes unchanged from v1.18.0
+- Layer 3 production roster: `tool_declaration_consistency@1.1.0`,
+  `manifest_data_consistency@1.0.0` (both unchanged from v1.18.0)
+- All v1.18.0 architectural artifacts (input_contract v1_2, Layer 4 design
+  doc, manifest_data_consistency pack) unchanged
+
 ## [1.18.0] -- 2026-05-29
 
 ### Layer 3 gap-closure + Layer 4 design unlock

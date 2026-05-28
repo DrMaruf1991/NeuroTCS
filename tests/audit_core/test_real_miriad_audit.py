@@ -8,14 +8,14 @@ flagged immediately. Same pattern as `test_real_oasis3_audit.py`.
 Aim 3 has TWO statistical instruments encoded as TWO separate locked
 audits:
 
-  (A) Longitudinal cTCS replication — third-cohort replication of the
+  (A) Longitudinal cTCS replication вЂ” third-cohort replication of the
       cTCS metric alongside Aim 1 (ADNI, cTCS=0.9946) and Aim 2
       (OASIS-3, cTCS=0.9942). Expected cTCS in the 0.99+ range if
       MIRIAD MMSE-staged trajectories obey the niaaa_2018 admissibility
       rules.
 
-  (B) Test-retest noise floor — back-to-back same-day rescans (weeks 0,
-      6, 38). Expected n_flagged ≈ 0 because the kernel treats identical
+  (B) Test-retest noise floor вЂ” back-to-back same-day rescans (weeks 0,
+      6, 38). Expected n_flagged в‰€ 0 because the kernel treats identical
       states as admissible self-loops. Any non-zero flag rate represents
       MMSE-measurement-noise leakage into the audit decision.
 """
@@ -42,7 +42,7 @@ SEARCH_BASES = [
     os.environ.get("NEUROTCS_MIRIAD_DIR"),
 ]
 
-# Locked invariants — captured from Maruf's first real MIRIAD run on
+# Locked invariants вЂ” captured from Maruf's first real MIRIAD run on
 # 2026-05-18 using NeuroTCS v1.7.6 against the UCL DRC XNAT export
 # (DrMaruf_5_18_2026_12_16_*.csv triple).
 #
@@ -51,27 +51,39 @@ SEARCH_BASES = [
 #                 cTCS = 0.9854 (BCa 95% CI: 0.9715-0.9937)
 #                 dcTCS vs ADNI (0.9946) = -0.0092
 #                 dcTCS vs OASIS-3 (0.9942) = -0.0088
-#   Test-retest:  69 pairs (baseline rescans only — weeks 6/38 lack
+#   Test-retest:  69 pairs (baseline rescans only вЂ” weeks 6/38 lack
 #                 same-visit MMSE), 0 flagged, cTCS = 1.0000
 #
 # Any deviation from these audit_ids on future runs indicates either:
 #   (a) the source CSVs have changed (re-download or pipeline change),
 #   (b) the adapter logic regressed, or
 #   (c) the audit kernel changed semantically.
+# v1.19.0 re-lock per ERRATA E-2026-005 (v1.12.0 schema 1.4.0 endorsing_bodies extension on ad/niaaa_2018).
+# Old v1.7.13 audit_ids preserved below for cryptographic continuity:
+#   EXPECTED_LONGITUDINAL_AUDIT_ID_V1_7_13 = "947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0"
+#   EXPECTED_TEST_RETEST_AUDIT_ID_V1_7_13 = "804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85"
 EXPECTED_LONGITUDINAL_AUDIT_ID: str | None = (
-    "947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0"
+    "59ac763dfc4cd0098b33f13a2240171c888e5b4e99373d9b8f974d716647d96a"
 )
-EXPECTED_LONGITUDINAL_AUDIT_ID_V2: str | None = (
+# v1.19.0 re-lock per ERRATA E-2026-005. Old v1.7.13 v2 preserved.
+EXPECTED_LONGITUDINAL_AUDIT_ID_V2_V1_7_13 = (
     "aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da"
 )
-EXPECTED_TEST_RETEST_AUDIT_ID: str | None = (
-    "804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85"
+EXPECTED_LONGITUDINAL_AUDIT_ID_V2: str | None = (
+    "c34b37863dac549d2aec8298453b9bc1ef2b0a8f719384249786d55f6e10da08"
 )
-EXPECTED_TEST_RETEST_AUDIT_ID_V2: str | None = (
+EXPECTED_TEST_RETEST_AUDIT_ID: str | None = (
+    "94126769ef6c468e7290ff15aaedaa8ba8874a58848545a08208c5f769730454"
+)
+# v1.19.0 re-lock per ERRATA E-2026-005. Old v1.7.13 v2 preserved.
+EXPECTED_TEST_RETEST_AUDIT_ID_V2_V1_7_13 = (
     "dcf8b7de3ff9019e9cda703064039e3a71193566d1f5082ce96646188fd52fc4"
 )
+EXPECTED_TEST_RETEST_AUDIT_ID_V2: str | None = (
+    "2cd85d3b705fde826917dd72e3fec6997e5d3d25a06ae5c06ce6125c1805249e"
+)
 
-# Locked numerical invariants — these are EXACT values from the real
+# Locked numerical invariants вЂ” these are EXACT values from the real
 # 2026-05-18 run. Any drift indicates a regression in the adapter or
 # audit kernel.
 EXPECTED_LONGITUDINAL_N_TRAJECTORIES = 69
@@ -331,7 +343,7 @@ def test_real_miriad_test_retest_noise_floor():
     # ---- Sanity bounds ----
     assert pair_report.n_rescan_pairs >= TEST_RETEST_MIN_PAIRS, (
         f"Too few test-retest pairs found: {pair_report.n_rescan_pairs} "
-        f"(expected ≥ {TEST_RETEST_MIN_PAIRS})"
+        f"(expected в‰Ґ {TEST_RETEST_MIN_PAIRS})"
     )
 
     if not pairs:
@@ -383,7 +395,7 @@ def test_real_miriad_test_retest_noise_floor():
           f"identical_state = {pair_report.n_pairs_state_identical}, "
           f"differs = {pair_report.n_pairs_state_differs}")
     print(f"        flag_rate = {100 * flag_rate:.3f}% "
-          f"(must be ≤ {100 * TEST_RETEST_MAX_FLAG_RATE:.1f}%)")
+          f"(must be в‰¤ {100 * TEST_RETEST_MAX_FLAG_RATE:.1f}%)")
 
 
 if __name__ == "__main__":

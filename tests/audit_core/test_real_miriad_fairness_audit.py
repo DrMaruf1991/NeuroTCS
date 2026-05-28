@@ -10,20 +10,20 @@ bit-exactly under v1.7.13 and all future releases.
 Real-data results (locked here, must reproduce bit-exactly):
   Cohort:  69 subjects, 454 transitions, 7 flagged (1.54%)
   cTCS:    0.9854 (BCa 95% CI: 0.9715-0.9937)
-  audit_id:    947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0
+  audit_id:    59ac763dfc4cd0098b33f13a2240171c888e5b4e99373d9b8f974d716647d96a
   audit_id_v2: aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da
 
 FUTURE-AI Panel B.4.4 stratification (Lekadir BMJ 2025;388:e081554):
   sex:                F (n=251, 3 flagged), M (n=203, 4 flagged)
   age_band:           <60 (n=31, 0), 60-69 (n=234, 6), 70-79 (n=161, 1),
                       80-89 (n=28, 0)
-  race_ethnicity:     unknown (n=454, 7) — MIRIAD doesn't collect race
-  comorbidity:        unknown (n=454, 7) — not extracted from cohort
-  disease_stage:      unknown (n=454, 7) — not extracted
-  treatment_status:   unknown (n=454, 7) — no anti-amyloid data
+  race_ethnicity:     unknown (n=454, 7) вЂ” MIRIAD doesn't collect race
+  comorbidity:        unknown (n=454, 7) вЂ” not extracted from cohort
+  disease_stage:      unknown (n=454, 7) вЂ” not extracted
+  treatment_status:   unknown (n=454, 7) вЂ” no anti-amyloid data
 
 Max disparity: 1.542% at stratum 'age_band=80-89' (0% flag rate in this
-stratum vs 1.542% overall, with n=28 — small-sample point estimate noise).
+stratum vs 1.542% overall, with n=28 вЂ” small-sample point estimate noise).
 
 Any deviation from these per-stratum invariants indicates a regression in:
   (a) the demographic-extraction logic in adapter_miriad.py,
@@ -54,14 +54,22 @@ SEARCH_BASES = [
 
 
 # ============================================================
-# Locked invariants (v1.7.13 — captured from 2026-05-18 real run)
+# Locked invariants (v1.7.13 вЂ” captured from 2026-05-18 real run)
 # ============================================================
 
+# v1.19.0 re-lock per ERRATA E-2026-005 (v1.12.0 schema 1.4.0 endorsing_bodies extension on ad/niaaa_2018).
+# Fairness invariants are downstream of MIRIAD longitudinal audit_id; supersession traced via E-2026-005.
+# Old v1.7.13 audit_id preserved for cryptographic continuity:
+#   EXPECTED_AUDIT_ID_V1_7_13 = "947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0"
 EXPECTED_AUDIT_ID = (
-    "947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0"
+    "59ac763dfc4cd0098b33f13a2240171c888e5b4e99373d9b8f974d716647d96a"
+)
+# v1.19.0 re-lock per ERRATA E-2026-005. Old v1.7.13 v2 preserved.
+EXPECTED_AUDIT_ID_V2_V1_7_13 = (
+    "aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da"
 )
 EXPECTED_AUDIT_ID_V2 = (
-    "aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da"
+    "c34b37863dac549d2aec8298453b9bc1ef2b0a8f719384249786d55f6e10da08"
 )
 EXPECTED_N_TRANSITIONS = 454
 EXPECTED_N_FLAGGED = 7
@@ -150,7 +158,7 @@ def test_real_miriad_fairness_audit_locked_invariants():
     # First-tier: audit identity must match
     assert result.audit_id == EXPECTED_AUDIT_ID, (
         f"audit_id drift! expected {EXPECTED_AUDIT_ID}, got {result.audit_id}. "
-        f"Fairness invariants are downstream of audit_id — investigate the "
+        f"Fairness invariants are downstream of audit_id вЂ” investigate the "
         f"cTCS lock first via test_real_miriad_audit.py."
     )
     assert result.audit_id_v2 == EXPECTED_AUDIT_ID_V2
@@ -190,7 +198,7 @@ def test_real_miriad_fairness_audit_locked_invariants():
         )
 
     # Reverse direction: every actual stratum must be locked
-    # (catches NEW strata appearing — would also be a regression worth
+    # (catches NEW strata appearing вЂ” would also be a regression worth
     # explicit acknowledgement, not silent acceptance)
     for key in actual_strata:
         assert key in EXPECTED_STRATA, (
@@ -210,7 +218,7 @@ def test_real_miriad_fairness_flag_rates_match_locked_per_stratum():
     (not count) must match the locked invariant to within 1e-12.
 
     This catches numerical drift even if the integer counts happen to
-    coincide — defense in depth.
+    coincide вЂ” defense in depth.
     """
     files = _find_miriad_files()
     if files is None:

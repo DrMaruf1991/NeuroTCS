@@ -349,3 +349,91 @@ adapter-emitted trajectories, not from the input file's SHA-256.
 
 External reviewer who ran the v1.8 reviewer-package protocol and identified
 this in their FREE-RESPONSE diff section.
+
+---
+
+## E-2026-005 — Cohort audit_id supersession from v1.12.0 schema extension
+
+**Date**: 2026-05-28
+**Severity**: Process (not data, not science)
+**Status**: Resolved in v1.19.0
+**Related releases**: v1.7.13 (original lock), v1.12.0 (root-cause commit fbcfdfa), v1.19.0 (re-lock)
+
+### Summary
+
+The MIRIAD longitudinal, MIRIAD test-retest, MIRIAD fairness, and NACC
+audit_ids (both v1 and v2 variants) locked in v1.7.13 / v1.8.1 drifted when
+v1.12.0 (commit `fbcfdfa`) extended the Layer 1 rulepack schema to v1.4.0 by
+adding `endorsing_bodies` to `ad/niaaa_2018.yaml` (Finding A from external
+gap-check). The rulepack content SHA shifted from `1616F162...4B3F00` to
+`F8FCD405...60E95AC`, propagating deterministically into every audit_id
+that loads `ad/niaaa_2018`.
+
+This was a documented, intentional, FDA-style regulatory metadata extension,
+NOT a regression. The test constants for MIRIAD and NACC were not updated
+at v1.12.0, and the drift went undetected through v1.13.0 → v1.18.0 because
+the real-data locked-invariant tests skip when `NEUROTCS_MIRIAD_DIR` /
+`NEUROTCS_NACC_CSV` env vars are unset (CI environment).
+
+### Scientific invariants — unchanged
+
+All scientific assertions (cTCS, n_subjects, n_transitions, n_flagged)
+reproduce bit-exactly between v1.7.13/v1.8.1 and v1.19.0. This is verifiable
+because the tests assert these quantities BEFORE the audit_id check; the
+cTCS / n / flagged assertions did not fail.
+
+- **MIRIAD longitudinal**: cTCS=0.9854 [BCa 95% CI 0.9715-0.9937], n=69 subjects, 454 transitions, 7 flagged (1.54%)
+- **MIRIAD test-retest**: n=69 pairs, 0 flagged, cTCS=1.0000 (pipeline determinism)
+- **NACC**: cTCS=0.991502 [BCa 95% CI 0.990833-0.992153], n=56,529 trajectories, 158,423 transitions, 1,217 flagged (0.768%)
+
+### Supersession table (cryptographic continuity)
+
+| Cohort | Pre-v1.12.0 audit_id (v1.7.13 lock) | Post-v1.12.0 audit_id (v1.19.0 lock) |
+|---|---|---|
+| MIRIAD longitudinal (v1) | `947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0` | `59ac763dfc4cd0098b33f13a2240171c888e5b4e99373d9b8f974d716647d96a` |
+| MIRIAD longitudinal (v2) | `aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da` | `c34b37863dac549d2aec8298453b9bc1ef2b0a8f719384249786d55f6e10da08` |
+| MIRIAD test-retest (v1) | `804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85` | `94126769ef6c468e7290ff15aaedaa8ba8874a58848545a08208c5f769730454` |
+| MIRIAD test-retest (v2) | `dcf8b7de3ff9019e9cda703064039e3a71193566d1f5082ce96646188fd52fc4` | `2cd85d3b705fde826917dd72e3fec6997e5d3d25a06ae5c06ce6125c1805249e` |
+| MIRIAD fairness (v1) | `947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0` | `59ac763dfc4cd0098b33f13a2240171c888e5b4e99373d9b8f974d716647d96a` |
+| MIRIAD fairness (v2) | `aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da` | `c34b37863dac549d2aec8298453b9bc1ef2b0a8f719384249786d55f6e10da08` |
+| NACC (v1) | `def60e6836a5a9feecc666dc558c5b115973f73dd65dd42ef13969819318754c` | `f233935d7a1c2d72702adc7627671d8785313ab446607fa309bb2f5a48129187` |
+| NACC (v2) | `9c002cf653f8187c9c190293999b861e677f95ded8e1a4501fa47d928dac8648` | `8503a3107cc8a7f68490d33b51c07d8ef54be5fa6a835c700cbc0775055cc90c` |
+
+OASIS-3 (`fa448b8f...` / cTCS=0.9942) is NOT affected because its test was
+locked at v1.8.0 (post-v1.12.0 reasoning), and re-validated against
+`ad/niaaa_2018@1.3.0`.
+
+ADNI: real-data test status pending re-verification once
+`NEUROTCS_ADNI_DXSUM_RDA` environment variable is set on the
+verification host.
+
+### Old audit_ids preserved as `*_V1_7_13` / `*_V1_8_1` constants
+
+Per the precedent set by ERRATA E-2026-001 (OASIS-3 v1.5.0 re-lock, which
+preserved `EXPECTED_AUDIT_ID_V1_3_0` for traceability), each affected test
+file now carries both the old and new locked constants. This makes the
+cryptographic continuity chain machine-readable and grep-able.
+
+### Process improvement
+
+v1.19.0 introduces a documented requirement: real-data locked-invariant
+tests MUST pass on the developer's local machine before any release tag
+is pushed when MIRIAD/NACC env vars are set. The skip-when-env-unset
+behavior is preserved for CI, but a release-time gate is added to
+Deploy-NeuroTCS-v1.X.0.ps1 (gate 11+) checking real-data invariants
+when env vars are present. This prevents the same gap recurring.
+
+### Verification
+
+To verify this ERRATA on your own machine:
+
+```powershell
+$env:NEUROTCS_MIRIAD_DIR = "<path-to-MIRIAD>"
+$env:NEUROTCS_NACC_CSV = "<path-to-investigator_nacc73.csv>"
+pytest tests/audit_core/test_real_nacc_audit.py `
+       tests/audit_core/test_real_miriad_audit.py `
+       tests/audit_core/test_real_miriad_fairness_audit.py -v
+```
+
+Expected: 5 PASSED. The v1 audit_id, v2 audit_id, cTCS point estimate,
+BCa CI, n_subjects, n_transitions, and n_flagged all reproduce bit-exactly.
