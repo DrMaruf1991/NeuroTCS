@@ -6,7 +6,7 @@ Covers:
   - Citation enforcement (every transition requires PMID or DOI + section)
   - Fail-closed loader behavior
   - SHA-256 stable across runs
-  - All 8 rule packs load as PRODUCTION
+  - All discovered rule packs load as PRODUCTION
   - Behavioral admissibility for every rule pack
   - Transcription audit documents exist for every production rule pack
   - Pydantic strict-mode rejects unknown fields
@@ -42,12 +42,24 @@ from neurotcs.rulepack.schema import (
 PASS = "\033[32m✓\033[0m"
 FAIL = "\033[31m✗\033[0m"
 
-ALL_PACKS = [
-    "ad/niaaa_2018",
-    "ad/aa_2024",
-    "ad/aa_2024_trac",
-    "ad/at_biological",
-]
+# ALL_PACKS is DERIVED from the filesystem, not hard-coded. A hard-coded list
+# (or count) is a maintenance trap: adding a pack silently breaks these tests
+# until someone edits the literal. Deriving from rules/ means the suite tracks
+# reality automatically -- add a pack and it is covered with no edit here.
+# (Mirrors scripts/ci/verify_rule_packs.py, which enforces the same invariant
+# in CI: registry must equal filesystem.)
+from neurotcs.rulepack.loader import DEFAULT_RULES_DIR as _RULES_DIR
+
+
+def _discover_all_packs() -> list[str]:
+    names: list[str] = []
+    for _yaml in sorted(_RULES_DIR.rglob("*.yaml")):
+        rel = _yaml.relative_to(_RULES_DIR)
+        names.append(str(rel.with_suffix("")).replace("\\", "/"))
+    return names
+
+
+ALL_PACKS = _discover_all_packs()
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 TRANSCRIPTION_AUDIT_DIR = PROJECT_ROOT / "docs" / "transcription_audit"
@@ -244,11 +256,11 @@ def test_strict_mode_rejects_extras():
 
 
 # ============================================================
-# All 8 packs load and are PRODUCTION
+# All discovered packs load and are PRODUCTION
 # ============================================================
 
-def test_all_8_packs_load_as_production():
-    """v1.1: All 8 rule packs are production (no more skeletons)."""
+def test_all_discovered_packs_load_as_production():
+    """All discovered rule packs are production (no more skeletons)."""
     for name in ALL_PACKS:
         pack = load_rulepack(name)
         assert pack.is_production, f"{name} should be PRODUCTION"
@@ -258,7 +270,7 @@ def test_all_8_packs_load_as_production():
         assert len(pack.rulepack.admissible_transitions) >= 3, \
             f"{name} should have substantive transitions"
         pack.assert_usable_for_audit()  # must not raise
-    print(f"  {PASS} test_all_8_packs_load_as_production "
+    print(f"  {PASS} test_all_discovered_packs_load_as_production "
           f"({len(ALL_PACKS)} packs)")
 
 
@@ -861,7 +873,7 @@ def run_all():
         test_rulepack_requires_v1_1_authorship_fields,
         test_production_requires_transitions,
         test_strict_mode_rejects_extras,
-        test_all_8_packs_load_as_production,
+        test_all_discovered_packs_load_as_production,
         test_every_pack_has_transcribed_by_and_authority,
         test_every_transition_has_guideline_section,
         test_sha256_stable_across_loads,

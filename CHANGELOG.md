@@ -4,6 +4,42 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.1] -- 2026-05-28
+
+### CI/test hardening: eliminate hard-coded rule-pack counts (root-to-root)
+
+Patch release. No functional or audit-behavior change; no audit_id, flag_id,
+cTCS, or golden value is affected. Pure maintainability + robustness fix.
+
+v1.23.0 added the `ad/at_biological` pack, which required updating a hard-coded
+pack count in two places (the pytest roster and the CI verifier). One was
+missed and broke CI on a stale `expected 3 AD packs` literal. The world-class
+fix is not to update the number -- it is to remove the number entirely.
+
+### Changed
+
+- `scripts/ci/verify_rule_packs.py` rewritten to assert a **filesystem <->
+  registry consistency invariant** instead of a magic count: every `.yaml`
+  under `rules/` must load cleanly via the public `load_rulepack()`; the
+  registry set from `list_rulepacks()` must exactly equal the filesystem set
+  (no drift either way); no pack INVALID; every pack in the declared `ad/`
+  scope (docs/SCOPE.md); every pack usable for audit. This is strictly
+  stronger than a count check (it distinguishes a *correct* set of N packs
+  from a *wrong* set of N) and self-updates: adding a pack never requires
+  editing this script again.
+- `tests/rulepack/test_rulepack.py`: `ALL_PACKS` is now DERIVED from the
+  rules/ directory (single source of truth shared in spirit with the CI
+  verifier) rather than a hard-coded list. The stale
+  `test_all_8_packs_load_as_production` was renamed
+  `test_all_discovered_packs_load_as_production` (count-agnostic).
+
+### Verified
+
+- Self-update proof: adding a 5th pack file is automatically discovered,
+  loaded, scope-checked, and uniqueness-checked by both CI and the suite with
+  zero edits; removing it returns cleanly to 4.
+- 1318 passed, 8 skipped; ruff clean.
+
 ## [1.23.0] -- 2026-05-28
 
 ### Enforce the definition: fail-closed orchestrator, vocabulary gating, coverage manifest (ERRATA E-2026-010)

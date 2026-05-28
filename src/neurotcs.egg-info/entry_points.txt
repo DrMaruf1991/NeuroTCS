@@ -1,0 +1,2 @@
+[console_scripts]
+neurotcs-audit = neurotcs.audit_core.cli:main
