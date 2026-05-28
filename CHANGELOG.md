@@ -1,3 +1,21 @@
+## [1.26.0] -- 2026-05-28
+
+### Added: PDF report renderer + pre-push CI gate
+
+PDF renderer (`neurotcs.report.bundle_to_pdf`) -- a pure view over the signed
+bundle (reportlab, now a declared dependency), laying out the verdict, per-axis
+cTCS with 95% CI, severity counts, a flags table, and provenance. Wired into the
+CLI as `neurotcs audit ... --pdf`. Fails closed if reportlab is absent.
+
+Pre-push hook (`scripts/git-hooks/pre-push`) -- runs the EXACT CI gates locally
+(ruff + full pytest) and BLOCKS the push on any failure. The free, client-side
+equivalent of branch protection (which needs GitHub Pro on private repos):
+enable once per clone with `git config core.hooksPath scripts/git-hooks`. A red
+commit can no longer leave the machine.
+
+Tests: PDF renderer (2) + CLI --pdf (1). reportlab declared so CI installs and
+tests it (no "works on my machine").
+
 ## [1.25.0] -- 2026-05-28
 
 ### Added: `neurotcs` command-line interface + report renderers
