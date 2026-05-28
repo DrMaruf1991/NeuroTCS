@@ -57,7 +57,7 @@ from neurotcs.orchestration.orchestrator import OrchestratorResult
 
 # Envelope schema version. Bump when the bundle STRUCTURE or the canonicalization
 # rule changes, independently of the framework version.
-BUNDLE_FORMAT_VERSION = "1.1.0"
+BUNDLE_FORMAT_VERSION = "1.2.0"
 
 STATUS_CLEAN = "CLEAN"
 STATUS_FLAGS_PRESENT = "FLAGS_PRESENT"
@@ -149,6 +149,11 @@ def _axes_from(result: OrchestratorResult) -> list[dict[str, Any]]:
             "pack": s.get("pack"),
             "audit_id": layer.audit_id,
             "ctcs": s.get("ctcs"),
+            "ctcs_ci_95_low": s.get("ctcs_ci_95_low"),
+            "ctcs_ci_95_high": s.get("ctcs_ci_95_high"),
+            "ctcs_ci_method": s.get("ctcs_ci_method"),
+            "ctcs_huber": s.get("ctcs_huber"),
+            "bootstrap_B": s.get("bootstrap_B"),
             "n_transitions": s.get("n_transitions"),
             "n_flagged": s.get("n_flagged"),
             "vocabulary_coverage": s.get("vocabulary_coverage"),
@@ -387,8 +392,10 @@ def render_report(bundle: dict[str, Any], *, use_symbols: bool = True) -> str:
     out.append(f"\n{sec['verdict']} Verdict")
     out.append(f"   {smap.get(status, '')} Status: {status}")
     for ax in core.get("axes", []):
+        lo, hi = ax.get("ctcs_ci_95_low"), ax.get("ctcs_ci_95_high")
+        ci = f" [95% CI {lo}\u2013{hi}]" if lo is not None and hi is not None else ""
         out.append(
-            f"      \u2022 {ax['axis']}: cTCS {ax['ctcs']}  "
+            f"      \u2022 {ax['axis']}: cTCS {ax['ctcs']}{ci}  "
             f"(pack {ax['pack']}, audit_id {str(ax['audit_id'])[:12]}\u2026, "
             f"{ax['n_flagged']}/{ax['n_transitions']} flagged)"
         )

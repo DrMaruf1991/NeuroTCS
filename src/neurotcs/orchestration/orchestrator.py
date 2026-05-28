@@ -217,6 +217,11 @@ def run_full_audit(
             layers.append(LayerResult(
                 layer=layer, ran=True, audit_id=d["audit_id"],
                 summary={"pack": pack_name, "ctcs": d["metrics"]["ctcs"]["point"],
+                         "ctcs_ci_95_low": d["metrics"]["ctcs"].get("ci_95_low"),
+                         "ctcs_ci_95_high": d["metrics"]["ctcs"].get("ci_95_high"),
+                         "ctcs_ci_method": d["metrics"]["ctcs"].get("ci_method"),
+                         "ctcs_huber": d["metrics"]["ctcs"].get("huber"),
+                         "bootstrap_B": d["metrics"]["ctcs"].get("B"),
                          "n_transitions": d["cohort"]["n_transitions"],
                          "n_flagged": d["cohort"]["n_flagged"],
                          "vocabulary_coverage": vm.coverage_fraction,
