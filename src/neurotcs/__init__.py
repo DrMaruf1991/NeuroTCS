@@ -23,7 +23,7 @@ Public API (the most common imports):
     from neurotcs.silent_deployment import make_silent_deployment_evidence
 """
 
-__version__ = "1.23.1"
+__version__ = "1.23.3"
 __author__ = "Marufjon Salokhiddinov, MD PhD"
 __license__ = "Apache-2.0"
 
@@ -94,6 +94,15 @@ from neurotcs.fairness import (  # noqa: E402,F401
     cohort_fairness_audit,
     fairness_audit,
     robustness_audit,
+)
+from neurotcs.orchestration.bundle import (  # noqa: E402,F401
+    BUNDLE_FORMAT_VERSION,
+    BundleVerificationError,
+    build_bundle,
+    fingerprint_dataframe,
+    fingerprint_file,
+    render_report,
+    verify_bundle,
 )
 
 # v1.23.0: fail-closed orchestrator + vocabulary gating (enforce the definition)
@@ -213,4 +222,12 @@ __all__ = [
     "select_rulepack_or_refuse",
     "VocabularyMatch",
     "VocabularyMismatchError",
+    # v1.23.2: self-verifying result bundle
+    "build_bundle",
+    "verify_bundle",
+    "fingerprint_dataframe",
+    "fingerprint_file",
+    "render_report",
+    "BundleVerificationError",
+    "BUNDLE_FORMAT_VERSION",
 ]

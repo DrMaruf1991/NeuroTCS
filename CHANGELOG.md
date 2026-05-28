@@ -4,6 +4,107 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.3] -- 2026-05-28
+
+### Bundle format hardened to airtight reproducibility (supersedes unreleased 1.23.2)
+
+The 1.23.2 bundle format (never merged to main) had three latent ambiguities
+that a careful external review surfaced -- each one a path by which two correct
+implementations could produce different bundle_ids from the same audit, which
+is the single failure the format exists to prevent. All three are now closed.
+
+- **Declared canonicalization + numeric normalization.** The canonicalization
+  rule is now documented in the module as the contract: numpy scalars cast to
+  native; floats reduced to 12 significant digits (absorbs cross-platform /
+  cross-numpy last-ULP variance -- the real reproducibility risk); NaN/Inf ->
+  null; then json.dumps(sort_keys, compact, ensure_ascii=True, allow_nan=False),
+  UTF-8. The core is normalized ONCE so stored values == hashed values.
+- **Version fields inside the hash.** `bundle_format_version`,
+  `framework_version`, and the `canonicalization` tag now live IN the
+  deterministic_core (hashed), binding structure+engine to the id. verify_bundle
+  also rejects an envelope/core version disagreement. No cross-version
+  collisions.
+- **Pinned flag schema.** Every flag from any layer is projected onto a fixed
+  canonical envelope (tier, layer, subject_id, visit, field, observed_value,
+  rule_id, citation) plus a `details` sub-object for layer-specific data. Stable
+  top-level shape across engine versions; no information loss.
+- **`input_fingerprint` defined, not just named.** It is the SHA-256 of the
+  NORMALIZED post-parse input ("same logical input regardless of formatting"),
+  declared via `input_fingerprint_kind` and hashed into the core. A raw-file
+  fingerprint (`fingerprint_file`) can be supplied as `raw_input_sha256`, stored
+  in run_metadata OUTSIDE the hash ("same file").
+- **`refusal_detail`** added for INCOMPLETE_REFUSED: reason, layers_run, and
+  concrete remediation, so a refused run says what to fix.
+
+### Added: human-readable rendered report (presentation layer)
+
+`render_report(bundle, use_symbols=True)` renders a bundle with capitalized
+section headers and tasteful status/severity symbols. CRITICAL: symbols/emoji
+live ONLY in the rendered view; the signed JSON core stays pure ASCII so
+determinism holds across platforms (enforced by test). `use_symbols=False`
+gives an ASCII-only report.
+
+`BUNDLE_FORMAT_VERSION` -> 1.1.0 (canonicalization + flag schema changed).
+
+### Tests
+
+- `tests/orchestration/test_bundle.py` (22): adds flag-schema-pinned,
+  version-fields-in-hash, envelope/core version-disagreement, numeric
+  normalization across float noise, and rendered-view-has-no-emoji-in-JSON.
+- 1340 passed, 8 skipped; ruff clean (Python 3.10-compatible -- fixed an
+  f-string escape that was 3.12-only and would have failed the CI matrix).
+
+## [1.23.2] -- 2026-05-28
+
+### Self-verifying result bundle (the `pip install neurotcs` output format)
+
+Additive feature. No existing audit_id, flag_id, cTCS, or golden value changes;
+the bundle wraps existing orchestrator output, it does not alter the audit path.
+
+New module `neurotcs.orchestration.bundle` produces the signed, deterministic
+result format an end user gets when auditing a dataset. Public API:
+`build_bundle`, `verify_bundle`, `fingerprint_dataframe`,
+`BundleVerificationError`, `BUNDLE_FORMAT_VERSION`.
+
+The format corrects three category errors in the naive "verdict + flags + log"
+report:
+
+- **Status leads, not a score.** Headline is `CLEAN` / `FLAGS_PRESENT` /
+  `INCOMPLETE_REFUSED`. There is NO single collapsed cTCS -- scores are
+  reported per staging axis (clinical, biological), each with its own
+  audit_id; range/cross-sheet/contract layers contribute flags, not a score.
+- **The signature covers a deterministic core ONLY.** `bundle_id` =
+  SHA-256 over the deterministic core (status, per-axis scores, severity
+  counts, flags, coverage, input fingerprint). Timings, wall-clock, hostname
+  live in `run_metadata`, OUTSIDE the hash -- so the same input yields the
+  same bundle_id on any machine, any year. (The naive design hashed timings
+  and would have broken determinism.)
+- **A partial run is cryptographically distinguishable from a complete one.**
+  An `INCOMPLETE_REFUSED` bundle carries NO bundle_id; `verify_bundle` accepts
+  it as correctly unfinalized but rejects any forged id on it.
+
+Coverage is reported as explicit `columns_consumed` / `columns_ignored` lists,
+never a misleading fraction. Informational-tier flags are counted and labeled
+"not errors", never erased. The envelope carries its own `format_version`
+(1.0.0), independent of the framework version, for downstream parser dispatch.
+
+`verify_bundle` recomputes the bundle_id over the deterministic core and raises
+`BundleVerificationError` on any tampering, corruption, or unknown format --
+"self-verifying" is a function, not a label.
+
+NOTE (honest scope): the signed JSON bundle is the complete source-of-truth
+contract. Rendered views (PDF report, CSV-of-flags, SVG trajectory diagrams)
+and a `neurotcs audit` / `neurotcs verify` CLI are a separate layer generated
+FROM this JSON and are NOT in this release.
+
+### Tests
+
+- `tests/orchestration/test_bundle.py` (17): determinism, timings excluded
+  from hash, tamper detection (flag + score), unknown-format rejection,
+  INCOMPLETE_REFUSED has no id, forged-id rejection, CLEAN vs FLAGS_PRESENT
+  status, explicit-coverage-not-fraction, fingerprint determinism+sensitivity.
+- 1335 passed, 8 skipped; ruff clean.
+
 ## [1.23.1] -- 2026-05-28
 
 ### CI/test hardening: eliminate hard-coded rule-pack counts (root-to-root)
