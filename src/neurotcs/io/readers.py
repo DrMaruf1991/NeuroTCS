@@ -46,6 +46,14 @@ def read_tables(path: str | Path, *, allow_pdf: bool = False) -> dict[str, pd.Da
     if ext == ".tsv":
         return {p.stem: pd.read_csv(p, sep="\t")}
     if ext in (".xlsx", ".xls"):
+        try:
+            import openpyxl  # noqa: F401  (engine for pd.read_excel)
+        except ImportError as e:
+            raise UnsupportedFormatError(
+                "Reading Excel needs the 'openpyxl' package (a declared NeuroTCS "
+                "dependency). Install it with: pip install openpyxl -- or export "
+                "your data to CSV."
+            ) from e
         sheets = pd.read_excel(p, sheet_name=None)
         return {str(k): v for k, v in sheets.items()}
     if ext == ".parquet":

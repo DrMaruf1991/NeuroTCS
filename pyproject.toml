@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurotcs"
-version = "1.24.0"
+version = "1.24.1"
 description = "Citation-locked, fail-closed longitudinal medical AI audit framework (NeuroTCS / temporalmetric)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -35,6 +35,7 @@ dependencies = [
     "PyYAML>=6.0",
     "pandas>=2.0",
     "pyarrow>=14.0",
+    "openpyxl>=3.1",
     "jsonschema>=4.0",
     "pyreadr>=0.4.7",
     "numpy>=1.24",
