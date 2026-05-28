@@ -6,7 +6,7 @@ Pulled out of `.github/workflows/ci.yml` inline `python -c "..."` so the
 logic is testable locally and not subject to YAML/cmd quoting fragility.
 
 Asserts:
-  - exactly 3 rule packs (the AD-only v1.x scope)
+  - exactly 4 rule packs (the AD-only scope: niaaa_2018, aa_2024, aa_2024_trac, at_biological)
   - all of them in the `ad/` namespace
   - none are INVALID status
 
@@ -26,9 +26,9 @@ def main() -> int:
         print(f"FAIL: invalid packs detected: {invalid}", file=sys.stderr)
         return 1
 
-    if len(packs) != 3:
+    if len(packs) != 4:
         print(
-            f"FAIL: expected 3 AD packs (v1.x AD-only scope, see docs/SCOPE.md); "
+            f"FAIL: expected 4 AD packs (v1.x AD-only scope, see docs/SCOPE.md); "
             f"got {len(packs)}: {[p['name'] for p in packs]}",
             file=sys.stderr,
         )
