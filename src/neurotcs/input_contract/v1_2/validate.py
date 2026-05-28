@@ -349,7 +349,45 @@ def _step4_load_patients(path: Path, manifest: dict, predictions: pd.DataFrame,
         report.add_warning("ORPHAN_PATIENT_RECORD", f"{pat_path.name}",
                            f"{len(pat_only)} patients in patients table have no predictions")
 
+    # Demographic plausibility (data integrity): impossible age / negative
+    # education are data-entry errors, not clinical findings. Bounds:
+    #   age_at_baseline in [0, 122]  (122 = verified max human lifespan,
+    #     Jeanne Calment; Robine & Allard, Science 1998)
+    #   education_years in [0, 30]   (negative is impossible; >30 exceeds any
+    #     plausible formal-education count)
+    _check_demographic_plausibility(df, pat_path.name, report)
+
     return df
+
+
+def _check_demographic_plausibility(
+    df: pd.DataFrame, loc: str, report: ValidationReport
+) -> None:
+    """Flag biologically/administratively impossible demographic values.
+
+    Pure data-integrity check (cf. Robine & Allard, Science 1998, max verified
+    human lifespan 122y). Not a clinical-risk judgment.
+    """
+    if "age_at_baseline" in df.columns:
+        ages = pd.to_numeric(df["age_at_baseline"], errors="coerce")
+        bad_age = df[(ages < 0) | (ages > 122)]
+        if len(bad_age) > 0:
+            report.add_error(
+                "DEMOGRAPHIC_IMPLAUSIBLE", f"{loc}:age_at_baseline",
+                f"{len(bad_age)} patient(s) have age_at_baseline outside the "
+                f"possible human range [0, 122] (e.g. "
+                f"{bad_age['age_at_baseline'].tolist()[:3]})",
+            )
+    if "education_years" in df.columns:
+        edu = pd.to_numeric(df["education_years"], errors="coerce")
+        bad_edu = df[(edu < 0) | (edu > 30)]
+        if len(bad_edu) > 0:
+            report.add_error(
+                "DEMOGRAPHIC_IMPLAUSIBLE", f"{loc}:education_years",
+                f"{len(bad_edu)} patient(s) have education_years outside the "
+                f"possible range [0, 30] (e.g. "
+                f"{bad_edu['education_years'].tolist()[:3]})",
+            )
 
 
 def _step5_phi_scan(predictions: pd.DataFrame, patients: pd.DataFrame | None,
@@ -624,6 +662,19 @@ def _load_longform_biomarkers(path: Path, manifest: dict, predictions: pd.DataFr
         report.add_error("BIOMARKER_ORPHAN", f"{bio_path.name}",
                          f"{len(orphans)} biomarker (patient_id, visit_id) pairs "
                          f"have no matching predictions row")
+
+    # Referential integrity vs the predictions cohort: a biomarker row whose
+    # patient_id never appears in predictions is an orphan record (data-linkage
+    # error). This is the input-contract home for orphan detection.
+    pred_patients = set(predictions["patient_id"].astype(str).unique())
+    bio_patients = set(df["patient_id"].astype(str).unique())
+    orphan_patients = bio_patients - pred_patients
+    if orphan_patients:
+        report.add_error(
+            "BIOMARKER_PATIENT_ORPHAN", f"{bio_path.name}:patient_id",
+            f"{len(orphan_patients)} patient_id(s) in biomarkers have no record "
+            f"in the cohort (e.g. {sorted(orphan_patients)[:3]})",
+        )
 
     # value_type enum check
     bad_vt = df[~df["value_type"].isin(VALID_VALUE_TYPES)]

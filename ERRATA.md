@@ -690,3 +690,63 @@ Same as prior errata: surfaced by Dr. Salokhiddinov's "world-class, no partial
 fix" standard — the rangepack defect was found by refusing to take the external
 auditor's report at face value and verifying every claim against the code.
 
+## E-2026-009 -- Longitudinal trajectory + cross-sheet coherence capability gap, resolved with strict layer separation (v1.22.0)
+
+### Finding
+
+A blind benchmark (Longitudinal_AD_MCI_CN_v1, 23 planted errors) showed v1.21.0
+caught 13/23 when only the staging + per-visit range layers were run. The 10
+misses were genuine missing rules, but they were of two DIFFERENT natures:
+
+  Clinical coherence (citation-locked; belongs in NeuroTCS proper):
+    - cross-modal biomarker discordance (amyloid_status vs centiloid;
+      p-tau217 vs amyloid PET): 3
+    - per-patient longitudinal monotonicity (hippocampal regrowth; untreated
+      amyloid clearance): 2
+    - cognitive-stage inconsistency (MMSE/CDR vs predicted CN): 2
+
+  Data integrity (NOT clinical coherence; belongs in the input contract):
+    - demographic impossibility (age 142; negative education): 2
+    - orphan record (biomarker row for a subject absent from the cohort): 1
+
+### Resolution and the scope discipline behind it
+
+An initial v1.22.0 build caught all 23 by adding everything -- including a
+demographics range pack and an orphan "clinical invariant." On review this was
+judged a scope drift: NeuroTCS is a citation-locked auditor of staging coherence
+and biomarker plausibility; "age <= 122" and "every row needs a parent record"
+are general data-quality checks, which the framework's definition explicitly
+excludes from the clinical layer. A perfect score against a planted-error key is
+not the same as fidelity to that definition.
+
+The shipped v1.22.0 therefore partitions the fixes by nature:
+
+  - Engine: four declarative condition types (numeric_conflict,
+    trajectory_monotonicity with treatment-gating, categorical_implies_range_
+    rowwise, referential_integrity). trajectory_monotonicity is the first
+    per-patient trajectory-shape primitive.
+  - Clinical coherence pack (cross_sheet/ad_clinical_coherence): 6 citation-
+    locked COHERENCE invariants only.
+  - Range pack (plasma_biomarkers/nfl_consensus): NfL plausibility -- a
+    biomarker value, so in clinical_ranges scope. The demographics range pack
+    was REMOVED.
+  - Input contract v1.2 (data-integrity layer): DEMOGRAPHIC_IMPLAUSIBLE
+    (age/education) and BIOMARKER_PATIENT_ORPHAN. The referential_integrity
+    engine primitive remains available but is not used as a clinical invariant.
+
+### Verification
+
+End-to-end re-run: all 23 planted errors caught, each in the matching layer
+(staging 3, biomarker range 9, clinical coherence 6, input-contract integrity
+5). Full suite 1304 passed, ruff clean. Determinism preserved: identical
+flag_ids across repeated runs; every clinical flag carries a PMID/DOI.
+
+### Discipline note
+
+Layer separation is the moat. Layer 2 asks "is this value plausible?"; the
+cross-sheet pack asks "is this submission internally consistent across sheets
+and across a patient's own trajectory?"; the input contract asks "is this
+submission well-formed and referentially intact?". No per-patient diagnosis is
+made. Every clinical threshold is a coherence boundary set conservatively at the
+frank-contradiction point, keeping the false-positive rate near zero.
+

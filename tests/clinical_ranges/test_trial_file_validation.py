@@ -111,12 +111,14 @@ class TestPacksListAccurate:
              (tau_pet/tau_research_preview) -> 8/2/6.
     v1.16.0: +1 production (fdg_pet/fdg_consensus) -> 9/2/6.
     v1.17.0: +6 production + 2 preview (batch Tier 2 closure) -> 15/4/6.
+    v1.22.0: +1 production (NfL) -> 16/4/6. (Demographic plausibility
+    moved to the input-contract data-integrity layer.)
     """
 
-    def test_exactly_fifteen_production_packs(self):
+    def test_exactly_sixteen_production_packs(self):
         packs = list_rangepacks()
         production = [p for p in packs if p.get("status") == "production"]
-        assert len(production) == 15
+        assert len(production) == 16
         names = {p["name"] for p in production}
         assert names == {
             "ad/aria_safety",
@@ -135,6 +137,8 @@ class TestPacksListAccurate:
             "olfactory/upsit_consensus",
             "mri_volumetrics/microbleeds_boston_consensus",
             "csf_biomarkers/csf_tau_consensus",
+            # v1.22.0 (NfL plasma biomarker plausibility pack)
+            "plasma_biomarkers/nfl_consensus",
         }
 
     def test_four_research_preview_packs(self):

@@ -4,6 +4,78 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.0] -- 2026-05-28
+
+### Longitudinal trajectory analysis + clinical cross-sheet coherence, with strict layer separation (ERRATA E-2026-009)
+
+Closes the capability gaps surfaced by the blind-audit benchmark while keeping
+each check in the layer that matches its nature. End-to-end planted-error catch
+rate is 23/23 on the Longitudinal_AD_MCI_CN_v1 benchmark, partitioned as:
+staging coherence (3), biomarker range plausibility (9, incl. NfL), clinical
+cross-sheet coherence (6), and input-contract data integrity (5).
+
+Architectural principle enforced this release: **citation-locked clinical
+*coherence* rules live in the cross-sheet invariant pack; pure *data-integrity*
+checks live in the input contract.** A perfect score against a planted-error
+key is not the same as fidelity to NeuroTCS's one-sentence definition, so
+demographic plausibility and orphan-record detection were deliberately placed
+in the data-integrity layer rather than dressed as clinical invariants.
+
+### Added -- engine (declarative, no code execution; discriminated union 5 -> 9)
+
+- `numeric_conflict` -- two numeric fields whose joint values are biomarker-
+  discordant (elevated plasma p-tau217 WITH amyloid-negative PET, contradicting
+  the A->T2 ordering of Jack 2024 sec 4.3).
+- `trajectory_monotonicity` -- **per-patient longitudinal series analysis**:
+  sorts each patient's visits and flags non-physiological reversals
+  (hippocampal regrowth; untreated amyloid clearance), with optional
+  treatment-gating so legitimate anti-amyloid clearance is exempt. This is the
+  framework's first per-patient trajectory-shape primitive.
+- `categorical_implies_range_rowwise` -- per-row categorical->range concordance
+  within a sheet (amyloid_status='negative' but centiloid clearly positive).
+- `referential_integrity` -- general orphan-record primitive. Reusable engine
+  capability; used by the input-contract layer, NOT as a clinical invariant.
+
+### Added -- clinical coherence pack (citation-locked coherence ONLY)
+
+- **`cross_sheet/ad_clinical_coherence@1.0.0`** production invariant pack: 6
+  coherence invariants (cognitive-stage consistency, cross-modal biomarker
+  concordance, two longitudinal monotonicity rules). Anchored to Jack 2024,
+  Folstein 1975, Morris 1993, Klunk 2015, TRAC/La Joie 2025, Frisoni 2010.
+
+### Added -- range pack (biomarker physiological plausibility, in scope)
+
+- **`plasma_biomarkers/nfl_consensus@1.0.0`**: plasma NfL assay-plausibility
+  bounds (Khalil 2018/2020). Plasma NfL concentration is a biomarker value, so
+  this is squarely in clinical_ranges scope.
+
+### Added -- input contract (data-integrity layer, v1.2 validator)
+
+- `DEMOGRAPHIC_IMPLAUSIBLE` -- impossible age (outside [0,122], the verified
+  maximum human lifespan) / negative or out-of-range education. Added to
+  `_step4_load_patients`.
+- `BIOMARKER_PATIENT_ORPHAN` -- a biomarker row whose patient_id is absent from
+  the cohort. Added to the v1.2 biomarker loader, alongside the existing
+  `BIOMARKER_ORPHAN` (biomarker-vs-predictions) check.
+
+### Changed
+
+- Production rangepack roster 15 -> 16; total packs 25 -> 26. (Demographic
+  plausibility was NOT shipped as a range pack -- it is data integrity, not a
+  biomarker range -- so only the NfL pack was added.)
+- Cross-sheet invariant packs 3 -> 4; the clinical pack is coherence-only (6
+  invariants); the referential_integrity condition type stays in the engine as
+  a reusable primitive.
+
+### Tests
+
+- `tests/cross_sheet/test_clinical_coherence_v1_22_0.py` (7 tests: each
+  coherence condition type, treatment-gate exemption, determinism).
+- `tests/input_contract/test_v1_2_integrity.py` (5 tests: DEMOGRAPHIC_IMPLAUSIBLE
+  for E002/E003, BIOMARKER_PATIENT_ORPHAN for E022, plus clean-control negatives).
+- `tests/clinical_ranges/test_new_packs_v1_22_0.py` (2 tests: NfL pack).
+- Full suite 1304 passed, ruff clean.
+
 ## [1.21.0] -- 2026-05-28
 
 ### Structural fix: RangePack canonical_sha256 hashes scientific content only (ERRATA E-2026-008)

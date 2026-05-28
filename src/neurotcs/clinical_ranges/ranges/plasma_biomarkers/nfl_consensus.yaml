@@ -1,0 +1,85 @@
+schema_version: "1.0.0"
+rangepack_id: "plasma_biomarkers/nfl_consensus@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-28"
+status: "production"
+domain: "plasma_nfl"
+framework_name: "Plasma neurofilament light chain (NfL) plausibility range — a non-specific axonal-injury biomarker; bounds encode the assay-plausible concentration window for adult plasma NfL measured on Simoa/Single Molecule Array platforms"
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo International University in Tashkent (KIUT), Uzbekistan. v1.22.0 session: plasma NfL plausibility pack. NfL is non-disease-specific (axonal injury); bounds are assay-plausibility limits, not AD-diagnostic cutoffs. Upper plausible bound anchored to reported adult plasma NfL distributions (Simoa); values in the thousands of pg/mL are assay-error / hemolysis artifacts rather than true biology."
+clinical_source_authority: |
+  Plasma neurofilament light (NfL) is a non-specific marker of axonal
+  injury. This pack validates assay plausibility, not AD specificity:
+    - hard_min 0: concentration cannot be negative.
+    - plausible_max 250 pg/mL: adult plasma NfL on Simoa rarely exceeds
+      a few hundred pg/mL even in advanced neurodegeneration; reference
+      adult values are single to low-double-digit pg/mL rising with age
+      (Simrén 2021; Khalil 2020 Nat Rev Neurol). Values in the hundreds
+      warrant review; values in the thousands (e.g. 9999) are assay /
+      data-entry artifacts.
+    - hard_max 2000 pg/mL: above any plausibly reported plasma NfL;
+      a value this high is necessarily an error.
+
+anchor_citation:
+  citation_pmid: "33039445"
+  citation_doi: "10.1038/s41582-020-0348-0"
+  citation_text: |
+    Khalil M, Teunissen CE, Otto M, et al. Neurofilaments as biomarkers
+    in neurological disorders. Nat Rev Neurol. 2018;14(10):577-589 (and
+    Khalil 2020 update). Establishes plasma/serum NfL as an axonal-injury
+    marker with adult concentrations rising with age, typically in the
+    single-to-low-hundreds pg/mL range on Simoa; values in the thousands
+    are not physiological and indicate pre-analytical or assay error.
+  public_url: "https://www.nature.com/articles/s41582-020-0348-0"
+  endorsing_bodies:
+    - "Khalil 2018/2020 (Nat Rev Neurol, neurofilaments as biomarkers)"
+    - "Simrén 2021 (Alz & Dem, blood NfL reference ranges)"
+
+notes: |
+  ASSAY PLAUSIBILITY, NOT AD DIAGNOSIS. NfL is non-specific; this pack
+  flags only assay-implausible concentrations (negative, or far above any
+  reported adult plasma NfL). It makes no AD-diagnostic claim.
+
+measurements:
+
+  - name: "plasma_nfl_pgml"
+    unit: "pg/mL"
+    description: |
+      Plasma neurofilament light chain concentration (Simoa/SIMOA HD-X).
+      Validated for assay plausibility only.
+    measurement_kind: "numeric"
+    bounds:
+      - bound_type: "hard_min"
+        value: 0
+        citation_strength: "derived"
+        guideline_section: "Concentration cannot be negative (assay floor)."
+        citation:
+          citation_pmid: "33039445"
+          citation_doi: "10.1038/s41582-020-0348-0"
+          citation_text: |
+            A measured plasma NfL concentration is non-negative; a
+            negative value is an assay/data-entry error.
+          public_url: "https://www.nature.com/articles/s41582-020-0348-0"
+      - bound_type: "plausible_max"
+        value: 250
+        citation_strength: "derived"
+        guideline_section: "Adult plasma NfL rarely exceeds a few hundred pg/mL (Simrén 2021; Khalil 2020)."
+        citation:
+          citation_pmid: "33039445"
+          citation_doi: "10.1038/s41582-020-0348-0"
+          citation_text: |
+            Adult plasma NfL on Simoa is typically single-to-low-hundreds
+            pg/mL even in neurodegeneration; values above ~250 pg/mL are
+            unusual and warrant review.
+          public_url: "https://www.nature.com/articles/s41582-020-0348-0"
+      - bound_type: "hard_max"
+        value: 2000
+        citation_strength: "derived"
+        guideline_section: "Above any plausibly reported adult plasma NfL; necessarily an error."
+        citation:
+          citation_pmid: "33039445"
+          citation_doi: "10.1038/s41582-020-0348-0"
+          citation_text: |
+            A plasma NfL value above ~2000 pg/mL exceeds any plausibly
+            reported adult concentration and indicates pre-analytical
+            (e.g. hemolysis) or data-entry error rather than true biology.
+          public_url: "https://www.nature.com/articles/s41582-020-0348-0"
