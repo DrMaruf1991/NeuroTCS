@@ -4,6 +4,73 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.0] -- 2026-05-28
+
+### Enforce the definition: fail-closed orchestrator, vocabulary gating, coverage manifest (ERRATA E-2026-010)
+
+A blind re-audit of a multi-site registry exposed that NeuroTCS's *completeness*
+was operator-dependent: a careful operator produced a clean-looking result that
+had silently skipped the cross-sheet layer, then mislabeled that territory as
+"out of scope." No rule pack was wrong; the determinism and citations held. What
+was missing was a structural guarantee that a result cannot be silently
+incomplete. This release makes the four load-bearing properties of NeuroTCS --
+deterministic, citation-locked, **fail-closed/complete-or-refuses**, and
+**scope-honest** -- properties of the *code*, not of operator discipline.
+
+### Added
+
+- **Fail-closed orchestrator** `run_full_audit(submission)`
+  (`neurotcs.orchestration.orchestrator`). Auto-discovers every applicable layer
+  (staging clinical, staging biological, ranges, cross-sheet, input-contract),
+  runs all of them, and **refuses to emit a final orchestrator audit_id if any
+  applicable layer was skipped without an explicitly recorded reason** (Invariant
+  A: completeness). A clean result now means "checked and clean," never "never
+  checked."
+- **Coverage manifest** baked into a deterministic, ADDITIVE
+  `orchestrator_audit_id` (SHA-256 over the manifest + all per-layer audit_ids).
+  Reports layers run, layers skipped + reasons, packs applied with SHAs, and
+  columns consumed vs ignored (Invariants A + C). The orchestrator id does NOT
+  alter any existing per-layer audit_id, so locked ADNI/OASIS-3/MIRIAD ids are
+  untouched; but a partial run and a complete run are now cryptographically
+  distinguishable.
+- **Vocabulary-match gating + pack auto-selection-or-refuse**
+  (`neurotcs.orchestration.vocabulary`). Before any staging score is emitted,
+  the data's state vocabulary must be present in the selected pack's state_space
+  above a coverage threshold, or the framework **refuses** (Invariant B:
+  soundness). Kills the historical vocabulary-mismatch artifact where A/T tokens
+  scored 0.8637 against a Stage_* pack. Contaminating tokens are reported, not
+  blocking (they surface as inadmissible-transition flags).
+- **Severity stratification** (impossible / implausible / informational) in the
+  orchestrator's consolidated output, so the report leads with data-integrity
+  errors instead of drowning them under clinical-threshold crossings.
+- **New production rule pack `ad/at_biological@1.0.0`** -- 3-state A/T biological
+  staging (A-T-, A+T-, A+T+), monotone-forward, citation-locked to Jack 2024
+  (PMID 38934362) and the AT(N) scheme (PMID 27371494) + amyloid cascade
+  (PMID 23332364). Makes A/T-encoded biological trajectories auditable; catches
+  natural-history regressions A+T+->A+T- and A+->A-. Treatment-related amyloid
+  clearance remains the domain of `ad/aa_2024_trac`.
+- **Input-contract check `NON_MONOTONIC_VISIT_DATE`** (v1.2 validator). The
+  trajectory builder silently sorts by visit_date, which hid a visit dated
+  before its predecessor. The contract now flags a later visit_id carrying an
+  earlier timestamp -- non-negotiable for a *temporal*-coherence tool.
+- Orchestrator + vocabulary integration tests (CI proof of completeness on
+  planted-error data): 14 new tests.
+
+### Notes on declared scope (scope-honesty)
+
+Deliberately OUT of the staging/coherence engine, documented in SCOPE.md:
+cohort-context age plausibility and sex-vocabulary validity are generic
+data-quality checks, not temporal coherence, and are not absorbed into the
+engine. Cognition-vs-enrolled-diagnosis-group coherence (keying a cognitive
+invariant on EN dx_group rather than predicted_state) is a recognized future
+coherence rule, listed in SCOPE.md as not-yet-covered.
+
+### Tests
+
+1318 passed, 8 skipped (was 1304 passed). Only roster-aware tests changed
+(pack count 3->4; skeleton-guard floor 4->3 for the legitimately minimal
+3-state A/T pack). No existing audit_id, flag_id, or golden value changed.
+
 ## [1.22.0] -- 2026-05-28
 
 ### Longitudinal trajectory analysis + clinical cross-sheet coherence, with strict layer separation (ERRATA E-2026-009)

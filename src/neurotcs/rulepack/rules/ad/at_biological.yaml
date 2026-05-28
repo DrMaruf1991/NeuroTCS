@@ -1,0 +1,165 @@
+# NeuroTCS Rule Pack: Alzheimer's Disease — A/T Biological Staging (AA 2024)
+# Schema: 1.4.0 | Status: PRODUCTION | NeuroTCS v1 instantiation
+#
+# Clinical source authority: Revised criteria for diagnosis and staging of
+# Alzheimer's disease (Jack CR Jr et al., Alzheimer's & Dementia 2024;
+# PMID 38934362, DOI 10.1002/alz.13859). This pack encodes the AT(N)
+# *biomarker-category* axis (A = amyloid, T = tau) as the three-state
+# A/T trajectory vocabulary (A-T-, A+T-, A+T+) widely used to summarize the
+# biological cascade. Per the amyloid cascade, biological progression is
+# MONOTONE FORWARD: amyloid (A) becomes positive first, then tau (T). In
+# untreated natural history, established amyloid positivity does not
+# spontaneously revert (A+ -> A-), and a positive tau stage does not revert
+# to tau-negative (A+T+ -> A+T-). Such reversals indicate measurement error
+# or model instability and are flagged as inadmissible.
+#
+# Treatment caveat: anti-amyloid therapy CAN clear amyloid (A+ -> A-). That
+# treatment-conditional case is the domain of the separate ad/aa_2024_trac
+# pack (Treatment-Related Amyloid Clearance). This natural-history pack does
+# NOT encode treatment conditions; the orchestrator selects the TRAC pack when
+# treatment context is present.
+#
+# Schema 1.4.0: uses pack-level endorsing_bodies; does NOT use
+# required_conditions or attribution_type=clinical_inference.
+
+schema_version: "1.4.0"
+rulepack_id: "ad/at_biological@1.0.0"
+ruleset_version: "1.0.0"
+effective_date: "2026-05-28"
+status: "production"
+disease_domain: "alzheimers"
+framework_name: "AA 2024 A/T biological staging (A-T-, A+T-, A+T+ natural history)"
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo International University in Tashkent (KIUT), Uzbekistan"
+clinical_source_authority: >-
+  Revised criteria for diagnosis and staging of Alzheimer's disease
+  (Jack CR Jr et al., Alzheimer's & Dementia 2024; PMID 38934362,
+  DOI 10.1002/alz.13859) - Alzheimer's Association workgroup. Encodes the
+  AT(N) biomarker-category axis (Jack et al. 2016, Neurology 87:539-547,
+  PMID 27371494, the originating AT(N) scheme) as a three-state biological
+  trajectory. Biological monotonicity (amyloid precedes tau; established
+  positivity does not spontaneously revert in untreated natural history)
+  follows the amyloid-cascade model (Jack et al. 2013 Lancet Neurol
+  12:207-216, PMID 23332364).
+reviewers: []
+
+endorsing_bodies:
+  - "Alzheimer's Association (workgroup convener; alz.org)"
+  - "Mayo Clinic Department of Radiology (Clifford R. Jack Jr., lead author, PMID 38934362 and PMID 27371494)"
+  - "National Institute on Aging (NIA, NIH; AT(N) framework co-development)"
+  - "U.S. Food and Drug Administration (FDA; AT(N) biomarker categories inform amyloid/tau diagnostic device evaluation)"
+  - "Washington University in St. Louis Knight ADRC (AT(N) staging implemented by protocol; co-author affiliations)"
+  - "Amsterdam UMC Alzheimer Center (AT(N) staging implemented by protocol in the Amsterdam Dementia Cohort)"
+
+anchor_citation:
+  citation_pmid: "38934362"
+  citation_doi: "10.1002/alz.13859"
+  citation_text: >-
+    Jack CR Jr, Andrews JS, Beach TG, Buracchio T, Dunn B, Graf A, et al.
+    Revised criteria for diagnosis and staging of Alzheimer's disease:
+    Alzheimer's Association Workgroup. Alzheimer's & Dementia 2024.
+
+state_space:
+  - name: "A-T-"
+    description: "Amyloid-negative, tau-negative (no AD biological evidence)"
+    ordinal_rank: 0
+  - name: "A+T-"
+    description: "Amyloid-positive, tau-negative (Alzheimer's pathologic change)"
+    ordinal_rank: 1
+  - name: "A+T+"
+    description: "Amyloid-positive, tau-positive (Alzheimer's disease, biological)"
+    ordinal_rank: 2
+
+admissible_transitions:
+
+  - from_state: "A-T-"
+    to_state: "A+T-"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 / AT(N): amyloid positivity is the initiating biological
+        event of the AD continuum. A-T- -> A+T- is the expected first step.
+    guideline_section: "Jack 2024, biological staging; AT(N) Jack 2016 Table 1"
+    override_allowed: false
+    notes: "Amyloid becomes positive first (amyloid cascade)."
+
+  - from_state: "A+T-"
+    to_state: "A+T+"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 / amyloid cascade: tau positivity follows established
+        amyloid positivity. A+T- -> A+T+ is the expected progression.
+    guideline_section: "Jack 2024, biological staging; Jack 2013 cascade (PMID 23332364)"
+    override_allowed: false
+    notes: "Tau becomes positive after amyloid."
+
+  - from_state: "A-T-"
+    to_state: "A+T+"
+    min_delta_t_days: 365.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024: traversal from biomarker-negative to amyloid+tau-positive
+        spans a prolonged biological phase. A direct jump over a short
+        interval indicates measurement error or model instability.
+    guideline_section: "Jack 2024, biological staging trajectory"
+    override_allowed: true
+    notes: "Minimum 1-year interval rules out implausibly rapid dual conversion."
+
+inadmissible_transitions:
+
+  - from_state: "A+T-"
+    to_state: "A-T-"
+    reason: >-
+      Spontaneous reversion of established amyloid positivity (A+ -> A-) does
+      not occur in untreated natural history. Apparent A+T- -> A-T- reflects
+      measurement error or model instability. Treatment-related clearance is
+      handled by the ad/aa_2024_trac pack, not this natural-history pack.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024 / Jack 2013 amyloid cascade: amyloid positivity is not self-reverting."
+    guideline_section: "Jack 2013 Lancet Neurol cascade (PMID 23332364)"
+
+  - from_state: "A+T+"
+    to_state: "A+T-"
+    reason: >-
+      Reversion of established tau positivity (A+T+ -> A+T-) does not occur in
+      untreated natural history. Tau pathology, once established, does not
+      regress to tau-negative biological status. Indicates measurement error.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024: biological staging is monotone forward in untreated natural history."
+    guideline_section: "Jack 2024, biological staging"
+
+  - from_state: "A+T+"
+    to_state: "A-T-"
+    reason: >-
+      Full reversion from amyloid+tau-positive to biomarker-negative does not
+      occur in untreated natural history. Indicates measurement error or
+      model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: "Jack 2024 / Jack 2013 cascade: established AD biology does not self-revert."
+    guideline_section: "Jack 2013 Lancet Neurol cascade (PMID 23332364)"
+
+transition_priors: []
+
+notes: >-
+  This pack audits the A/T biological trajectory in UNTREATED natural history.
+  For amyloid clearance under anti-amyloid therapy, the orchestrator selects
+  ad/aa_2024_trac. Self-loops (e.g. A+T- -> A+T-) are admissible by the audit
+  kernel's self-loop convention (stable biological state between visits).
+
+override_allowed_default: false

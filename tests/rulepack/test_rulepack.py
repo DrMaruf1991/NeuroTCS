@@ -46,6 +46,7 @@ ALL_PACKS = [
     "ad/niaaa_2018",
     "ad/aa_2024",
     "ad/aa_2024_trac",
+    "ad/at_biological",
 ]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -251,7 +252,10 @@ def test_all_8_packs_load_as_production():
     for name in ALL_PACKS:
         pack = load_rulepack(name)
         assert pack.is_production, f"{name} should be PRODUCTION"
-        assert len(pack.rulepack.admissible_transitions) >= 4, \
+        # Skeleton guard: a non-skeleton multi-state pack has at least 3
+        # admissible transitions (e.g. the 3-state A/T monotone chain
+        # A-T-->A+T-, A+T-->A+T+, A-T-->A+T+). Larger packs have far more.
+        assert len(pack.rulepack.admissible_transitions) >= 3, \
             f"{name} should have substantive transitions"
         pack.assert_usable_for_audit()  # must not raise
     print(f"  {PASS} test_all_8_packs_load_as_production "
