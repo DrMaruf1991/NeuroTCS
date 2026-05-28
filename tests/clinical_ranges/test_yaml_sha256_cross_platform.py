@@ -41,7 +41,7 @@ from neurotcs.clinical_ranges.yaml_hash import (
 
 PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
     "ad/aria_safety":
-        "0f5c3275c5eaaaa7e45f3636cd3a29ec7ff193d03024f624ad93ec6638af4912",
+        "b6171fb90de1c193b209d791a2003cea9228af953f2526995652846b386c4514",
     "pet_amyloid/centiloid_consensus":
         "bfcc5f5d8ca773d9781bc99cd057f4888728b4870ae147103dfdc07f2bb92fc2",
     "genetics/apoe_consensus":

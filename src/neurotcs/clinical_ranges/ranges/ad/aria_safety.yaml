@@ -16,6 +16,14 @@ clinical_source_authority: |
   verbatim from the cited public sources and cross-verified across at least
   4 independent international authorities.
 
+  SCOPE NOTE: This is a clinical range-validation pack. It validates ARIA-E /
+  ARIA-H radiographic severity classes, dose-management and suspend thresholds,
+  the surveillance-MRI infusion schedule, and APOE-stratified risk against the
+  cited FDA labels and ASNR consensus. It is NOT part of the cTCS / pTCS
+  temporal-coherence transition engine, which operates on diagnostic-staging
+  rule packs (NIA-AA 2018, AA-2024). This pack encodes ARIA safety thresholds;
+  it does not score the temporal coherence of dosing decisions.
+
 anchor_citation:
   citation_pmid: "35953274"
   citation_doi: "10.3174/ajnr.A7586"

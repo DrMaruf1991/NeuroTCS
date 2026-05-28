@@ -742,20 +742,15 @@ evidence; others reflect last-known project status.
     dosing *decisions*. (This note exists to prevent both over-claiming ARIA
     decision-support and under-claiming that ARIA logic is absent.)
 
-19. **Rangepack `canonical_sha256` hashes full pack metadata.** Unlike the
-    rulepack `_canonical_serialize` (fixed in v1.20.0 / ERRATA E-2026-006 to
-    hash only the four scientific fields), `RangePack.canonical_sha256`
-    (schema.py) still serializes the entire model (`model_dump`), so metadata
-    fields (framework_name, descriptions, transcribed_by) feed the hash that
-    enters each `flag_id`. This is the same class of defect resolved for
-    rulepacks; editing a rangepack's prose currently drifts its flag_ids.
-    Scheduled for the same scientific-content partition + re-lock + two-
-    directional proof in a dedicated release. No silent drift risk in the
-    interim: rangepack `yaml_sha256` values are locked in
-    `tests/clinical_ranges/test_yaml_sha256_cross_platform.py`, so any
-    accidental content change fails CI loudly.
 
 ### Resolved (kept for audit trail)
+
+- **Rangepack `canonical_sha256` metadata defect — RESOLVED in v1.21.0.**
+  `RangePack.canonical_sha256` now hashes only scientific content
+  (`rangepack_id`, `anchor_citation`, `measurements`); descriptive header
+  metadata is excluded, so editing pack prose no longer drifts flag_ids. Same
+  defect class as the rulepack fix (E-2026-006); see ERRATA E-2026-008.
+  Two-directional partition proof + 25/25 distinct-hash uniqueness verified.
 
 - **Jack 2024 §3 staging transcription — RESOLVED in v1.7.13.** The full
   AA-2024 rule pack (`ad/aa_2024@2.0.0`, schema 1.3.0) encodes Table 7

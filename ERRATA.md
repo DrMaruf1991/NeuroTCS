@@ -616,3 +616,77 @@ drifts" but "never drifts silently, and never drifts for non-scientific reasons.
 Same as prior errata: the structural root cause was found by Dr. Salokhiddinov
 pushing for "world-class, no partial fix" — declining to accept the symptomatic
 re-lock and demanding the underlying defect be traced and fixed permanently.
+
+
+## E-2026-008 — Structural fix: RangePack canonical_sha256 hashes scientific content only (fixed in v1.21.0)
+
+### Root cause (same defect class as E-2026-006, in rangepacks)
+
+`RangePack.canonical_sha256` serialized the entire model via
+`model_dump(mode="json")`, so descriptive/lifecycle header metadata
+(framework_name, transcribed_by, clinical_source_authority, notes, status,
+domain, dates, versions) fed the hash that enters every `flag_id`. Editing a
+rangepack's prose therefore drifted its flag_ids — the identical defect E-2026-006
+fixed for rulepack audit_ids, surviving in the Layer-2 rangepack path. Discovered
+during the external-report reconciliation (datasheet Section F item 19) when
+adding a scope-clarity note to `ad/aria_safety` would have drifted its flag_ids.
+
+### Fix
+
+`canonical_sha256` now hashes only the SCIENTIFIC, citation-locked record via a
+module-level partition:
+
+    _RANGEPACK_SCIENTIFIC_FIELDS = ("rangepack_id", "anchor_citation", "measurements")
+
+All header metadata is excluded. `measurements` is kept in full — including each
+bound's `value`, `bound_type`, `citation`, and `guideline_section` — because the
+audit engine reads those and emits them into every flag, and the spec defines
+citation-locking as part of the regulated reproducible record (temporalmetric
+v1.7 spec L239 traceability; proposed FDA Special Control (ii) citation-locked
+YAML). When unsure whether a field is part of the scientific record, it is kept
+IN the fingerprint (fail-closed), never silently dropped.
+
+The keep-set differs from the rulepack keep-set (state_space,
+admissible_transitions, inadmissible_transitions, transition_priors) because
+rulepack citations are validated at load but never read by the scoring engine,
+whereas rangepack citations are per-bound and emitted into flags.
+
+### Two-directional proof (verified live)
+
+- Changing `framework_name` / `transcribed_by` / `notes` / `domain`:
+  canonical_sha256 UNCHANGED (aria_safety stayed `ed7890ca…` before and after
+  adding a full scope-note paragraph).
+- Changing a bound `value` or a bound `citation_pmid`: canonical_sha256 CHANGES.
+
+Encoded permanently in `tests/clinical_ranges/test_rangepack_canonical_partition.py`
+(4 tests: partition-covers-all-14-fields, metadata-no-drift, scientific-does-drift,
+helper-matches-production).
+
+### Blast radius
+
+Zero. No test froze a rangepack `canonical_sha256` or `flag_id` to a literal —
+all were property-tested (determinism, value-sensitivity, format, uniqueness), so
+no re-lock was required. Verified: all 25 production rangepacks still produce 25
+distinct hashes (no collisions; `rangepack_id` is in the keep-set). One
+`yaml_sha256` golden (aria_safety) was updated because the YAML file content
+genuinely changed when the scope note was added.
+
+### Honest scope
+
+`yaml_sha256` (full-file byte hash, cross-platform integrity check) intentionally
+still hashes the whole file — that is its distinct purpose. Only `canonical_sha256`
+(the scientific fingerprint feeding flag_id) was partitioned. The two hashes were
+already separate by design (test_yaml_sha256_cross_platform L14).
+
+### Methodology change (cumulative lesson 9)
+
+9. (E-2026-008) The scientific-content-only hashing principle applies to ALL pack
+   types. Every pack's canonical fingerprint must hash scientific content only,
+   with metadata reported as provenance but excluded, guarded by a two-directional
+   partition test. When a new pack type is added, this partition + proof test is
+   mandatory before it ships.
+
+Same as prior errata: surfaced by Dr. Salokhiddinov's "world-class, no partial
+fix" standard — the rangepack defect was found by refusing to take the external
+auditor's report at face value and verifying every claim against the code.
+

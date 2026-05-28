@@ -328,6 +328,15 @@ class MeasurementRange(BaseModel):
 # Range pack (top-level document)
 # ============================================================
 
+#: Fields that constitute the SCIENTIFIC, citation-locked audited record of a
+#: RangePack -- the only fields that feed canonical_sha256 (and thus flag_id).
+#: All other RangePack fields are descriptive/lifecycle header metadata that the
+#: audit engine never reads or emits; editing them must NOT drift flag_ids.
+#: Module-level (not a class attr) to avoid Pydantic private-attribute handling.
+#: See RangePack.canonical_sha256 docstring + ERRATA E-2026-007.
+_RANGEPACK_SCIENTIFIC_FIELDS = ("rangepack_id", "anchor_citation", "measurements")
+
+
 class RangePack(BaseModel):
     """A citation-locked clinical-range pack.
 
@@ -459,15 +468,33 @@ class RangePack(BaseModel):
     # ------------------------------------------------------------
 
     def canonical_sha256(self) -> str:
-        """Stable SHA-256 over the canonical JSON of this pack.
+        """Stable SHA-256 over the SCIENTIFIC content only.
 
-        The hash is used as the rangepack_sha component of flag_id, the
-        same way rulepack.canonical_sha256 enters audit_id. Two packs with
-        identical content produce identical hashes regardless of YAML
-        key ordering or whitespace.
+        Hashes the citation-locked audited record: pack identity
+        (``rangepack_id``), the ``anchor_citation``, and all
+        ``measurements`` (bounds, values, units, valid_values, and the
+        per-bound citations / guideline_sections that the audit engine reads
+        and emits into every flag). Descriptive header metadata
+        (framework_name, transcribed_by, clinical_source_authority, notes,
+        status, domain, effective_date, schema_version, pack_version,
+        deprecation fields) is EXCLUDED, so editing pack prose cannot drift
+        the flag_id reproducibility fingerprint.
+
+        Same principle as ``RulePack._canonical_serialize`` (ERRATA
+        E-2026-006). The keep-set differs from the rulepack one because
+        rangepack citations live per-bound and are emitted into flags, and
+        the spec defines citation-locking as part of the regulated,
+        reproducible record (temporalmetric v1.7 spec L239 traceability;
+        proposed FDA Special Control (ii) citation-locked YAML). When in
+        doubt a field is kept IN the fingerprint (fail-closed), never
+        silently dropped.
+
+        Two packs with identical scientific content produce identical
+        hashes regardless of YAML key ordering, whitespace, or header prose.
         """
-        payload = self.model_dump(mode="json")
-        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+        dump = self.model_dump(mode="json")
+        scientific = {k: dump[k] for k in _RANGEPACK_SCIENTIFIC_FIELDS if k in dump}
+        canonical = json.dumps(scientific, sort_keys=True, separators=(",", ":"), default=str)
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     # ------------------------------------------------------------

@@ -4,6 +4,38 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0] -- 2026-05-28
+
+### Structural fix: RangePack canonical_sha256 hashes scientific content only (ERRATA E-2026-008)
+
+Same defect class as E-2026-006, now closed for rangepacks. `RangePack.canonical_sha256`
+hashed the full model (`model_dump`), so header metadata fed every `flag_id`.
+
+### Changed
+
+- **`RangePack.canonical_sha256` now hashes scientific content only** via
+  `_RANGEPACK_SCIENTIFIC_FIELDS = (rangepack_id, anchor_citation, measurements)`.
+  Header metadata (framework_name, transcribed_by, clinical_source_authority,
+  notes, status, domain, dates, versions) excluded. Editing pack prose no longer
+  drifts flag_ids. Citations kept in (emitted into flags; spec citation-locking).
+
+### Added
+
+- **`tests/clinical_ranges/test_rangepack_canonical_partition.py`** — two-directional
+  proof (metadata no-drift / scientific does-drift / partition covers all 14 fields).
+- Scope-clarity note added to `ad/aria_safety` (now safe — metadata doesn't drift
+  the hash); corrects the external auditor's false "ARIA only in docs" claim.
+
+### Fixed
+
+- `aria_safety` `yaml_sha256` golden updated (file content changed by the scope note).
+
+### Honest scope
+
+Zero re-lock needed (no frozen rangepack hash literals existed). 25/25 packs still
+hash distinctly. `yaml_sha256` (full-file integrity) intentionally unchanged in
+purpose — only the scientific fingerprint `canonical_sha256` was partitioned.
+
 ## [1.20.0] -- 2026-05-28
 
 ### Structural fix: audit_id hashes scientific content only (ERRATA E-2026-006)
