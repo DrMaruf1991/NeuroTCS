@@ -13,7 +13,7 @@ NeuroTCS audits the temporal coherence of longitudinal medical AI predictions ag
 
 The framework is anchored on Dr. Marufjon Salokhiddinov's ASNR 2026 presentation (Austin, May 2026) and the temporalmetric v1.7 FINAL technical specification.
 
-## v1.8 hallmark result — four-cohort triangulation lock
+## Hallmark result — four-cohort triangulation lock
 
 Five locked audit invariants reproduce byte-exactly across N=5 cold reruns, numpy 2.0.2↔2.4.4, pyreadr 0.5.0↔0.5.6, on Linux and Windows. Max pairwise ΔcTCS = 0.009206 (ADNI vs MIRIAD), all 6 pairwise comparisons ≤ 0.01 world-class threshold.
 
@@ -119,7 +119,7 @@ ok, rule = pack.rulepack.is_admissible("CN", "AD", delta_t_days=200)
 print(ok)  # False — CN->AD requires >=365 days (Jack 2018)
 ```
 
-### Full audit pipeline (v1.8 canonical pattern)
+### Full audit pipeline (canonical pattern)
 
 ```python
 from neurotcs import audit, load_rulepack
