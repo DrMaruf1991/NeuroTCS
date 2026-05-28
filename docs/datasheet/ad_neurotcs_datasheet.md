@@ -659,58 +659,93 @@ audit_id triggers a regression investigation before release.
 
 ## F — Honest gaps acknowledged
 
-This section is the single source of truth for what is NOT yet covered.
+This section is the **single source of truth** for what is NOT yet covered.
+The README links here and does not maintain a parallel list, so the two can
+never drift (enforced by tests/docs/test_gap_disclosure_single_source.py).
 
-1. **Jack 2024 §3 Staging text transcription — RESOLVED in v1.7.13.**
-   The full AA-2024 rule pack (`ad/aa_2024@2.0.0`, schema 1.3.0,
-   SHA `1393ceb489d774c0...`) now encodes Table 7 integrated biological +
-   clinical staging in 17 states, with 28 admissible and 17 inadmissible
-   transitions. Source paper fetched in full from open-access PMC11350039
-   (CC BY-NC-ND 4.0 license).
-   - Source: Jack et al., *Alzheimer's & Dementia* 2024;20(8):5143-5169,
-     DOI [10.1002/alz.13859](https://doi.org/10.1002/alz.13859), PMID 38934362.
-   - Schema-version declaration policy (v1.7.9) honored: pack declares
-     1.3.0 because it uses `attribution_type: clinical_inference` for
-     the moderate-vs-high tau-PET cutpoint transitions (per §4.6 "area
-     of active research").
-   - Transcription-attestation policy: `transcribed_by` field names
-     Maruf as the attesting physician.
-   - Three external parameters documented in `docs/validation/aa_2024_audit_protocol.md`:
-     tau-PET moderate-vs-high cutpoint, neocortical meta-ROI definition,
-     and amyloid PET positivity threshold. Fail-closed if not supplied.
-   - Note: `transition_priors` is empty for v2.0.0 (Table 7 multi-axis
-     staging not yet covered by published longitudinal cohort rates).
-     cTCS audit fully functional; pTCS audit defers to NIA-AA 2018 pack
-     until multi-axis priors transcription work is completed.
+Status reflects last review. For a single-investigator project, any gap not
+affirmatively closed is treated as OPEN. Machine-verifiable gaps note their
+evidence; others reflect last-known project status.
 
-2. **ADNI and OASIS-3 fairness pending local joins.** The in-repo
-   reference adapters use placeholder demographics. Maruf's production
-   workflow already joins PTDEMOG (ADNI) and the OASIS-3 demographics
-   table; the runner pattern from v1.7.10 supports them once
-   `Trajectory.metadata` is populated with the canonical attribute names.
-   Once executed, ADNI and OASIS-3 fairness reports will be locked as
-   invariants paralleling the MIRIAD pattern.
+### Open gaps
 
-3. **No race_ethnicity in MIRIAD.** Single-site UCL DRC cohort; race
-   not collected. The fairness panel correctly reports
-   `race_ethnicity: unknown` for the entire cohort rather than
-   fabricating values.
+1. **pTCS unavailable under AA-2024 (by design).** `ad/aa_2024` ships with
+   empty `transition_priors` (Table 7 multi-axis staging not yet covered by
+   published longitudinal cohort rates). cTCS audit fully functional; pTCS
+   defers to the NIA-AA 2018 pack until multi-axis priors are transcribed.
 
-4. **No comorbidity / disease_stage / treatment_status extraction yet.**
-   These canonical FUTURE-AI attributes are recognized by the panel but
-   not yet populated by any adapter. They show `unknown` strata.
+2. **Single-rater attestation.** Rule-pack transcription is attested by one
+   board-certified physician (Salokhiddinov). Second-reader agreement
+   (ESNR κ ≥ 0.6) is pending.
 
-5. **No TPR / Equalized Odds reported.** cTCS is a rule-pack audit, not
-   a classifier. The classifier-level fairness metrics from FUTURE-AI
-   Fairness 3 do not apply to this context. The `tpr` field on
-   `StratumMetrics` returns `None` by design.
+3. **AA-2024 cross-cohort triangulation fails on real data.** Max pairwise
+   ΔcTCS = 0.0806 under `ad/aa_2024`, above the 0.01 threshold. NIA-AA 2018
+   remains the operative pack for the triangulation lock.
 
-6. **NeuroTCS is not yet a marketed medical device.** Sections D and E
-   above prepare for that future submission but no submission has been
-   made. ISO 14971 / IEC 62304 / EU AI Act conformity assessment
-   processes are referenced but not yet executed.
+4. **TRAC pack not validated on real data.** `ad/aa_2024_trac` is
+   schema-validated and citation-locked (La Joie 2025, PMID 41298245) but has
+   no real-data audit (no anti-Aβ-treated longitudinal cohort available).
 
----
+5. **macOS cross-platform reproducibility not yet observed.** CI matrix runs
+   {ubuntu-latest, windows-latest}; macOS is not in the matrix. Linux and
+   Windows reproducibility ARE observed-verified.
+
+6. **Analysis plan not pre-registered.** OSF preregistration is a project
+   action item; existing results are not covered by a prior registration.
+
+7. **No power analysis** for cohort sizes against Riley 2024 external-
+   validation precision targets.
+
+8. **No multiple-comparisons correction** beyond post-hoc Bonferroni.
+
+9. **0.01 ΔcTCS triangulation threshold is framework-internal**, not
+   externally validated.
+
+10. **Single-investigator project.** CURANIQ commercial-interest disclosure
+    appears in this datasheet; no independent governance body.
+
+11. **No external code review** of the framework has been performed.
+
+12. **cTCS/pTCS/uTCS terminology not yet bridged** to standard clinical-AI
+    evaluation concepts (calibration, discrimination).
+
+13. **ADNI and OASIS-3 fairness pending local demographic joins.** In-repo
+    reference adapters use placeholder demographics. The production workflow
+    joins PTDEMOG (ADNI) and the OASIS-3 demographics table; once
+    `Trajectory.metadata` is populated, ADNI/OASIS-3 fairness reports will be
+    locked as invariants paralleling MIRIAD.
+
+14. **No race_ethnicity in MIRIAD.** Single-site UCL DRC cohort; race not
+    collected. The fairness panel reports `race_ethnicity: unknown` for the
+    whole cohort rather than fabricating values.
+
+15. **No comorbidity / disease_stage / treatment_status strata.** These
+    canonical FUTURE-AI attributes are recognized by the panel but not yet
+    populated by any adapter; they show `unknown` strata.
+
+16. **No TPR / Equalized Odds reported (by design).** cTCS is a rule-pack
+    audit, not a classifier; FUTURE-AI Fairness-3 classifier metrics do not
+    apply. `StratumMetrics.tpr` returns `None` by design.
+
+17. **NeuroTCS is not yet a marketed medical device.** Sections D and E
+    prepare for a future submission; none has been made. ISO 14971 /
+    IEC 62304 / EU AI Act conformity assessments are referenced, not executed.
+
+### Resolved (kept for audit trail)
+
+- **Jack 2024 §3 staging transcription — RESOLVED in v1.7.13.** The full
+  AA-2024 rule pack (`ad/aa_2024@2.0.0`, schema 1.3.0) encodes Table 7
+  integrated biological + clinical staging: 17 states, 28 admissible / 17
+  inadmissible transitions. Source: Jack et al., *Alzheimer's & Dementia*
+  2024;20(8):5143-5169, DOI 10.1002/alz.13859, PMID 38934362 (open-access
+  PMC11350039). `transcribed_by` names the attesting physician. Note:
+  `transition_priors` empty for v2.0.0 — see open gap #1.
+
+- **Citation PMID debt — RESOLVED.** All production rule packs carry
+  `citation_pmid` (zero `pmid_pending` flags remain). The TRAC pack
+  (`ad/aa_2024_trac`) carries PMID 41298245 (La Joie 2025, DOI
+  10.1002/alz.70997). McDonald 2024 (MS) is out of scope — MS was extracted
+  to a future per-disease repository in v1.9.0 (see docs/SCOPE.md).
 
 ## G — NACC DUA acknowledgments (new in v1.8)
 

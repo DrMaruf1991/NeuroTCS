@@ -204,23 +204,17 @@ See [`CITATION.cff`](CITATION.cff) for GitHub's citation widget.
 
 ## Known limitations (honestly disclosed)
 
-NeuroTCS publicly documents gaps so reviewers can assess fitness for purpose. As of v1.20.0, **13 open gaps** carry forward (see [`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md) for the full list):
+NeuroTCS publicly documents what is NOT yet covered so reviewers can assess
+fitness for purpose. The complete, current gap disclosure — spanning
+methodological, validation, fairness, and regulatory-status gaps — is
+maintained as a single source of truth in
+[`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md)
+**Section F — Honest gaps acknowledged**.
 
-1. pTCS unavailable under AA-2024 (transition_priors empty by design)
-2. Single-rater attestation (ESNR κ ≥ 0.6 second-reader pending)
-3. AA-2024 cross-cohort triangulation FAILS on real data (max ΔcTCS = 0.0806); NIA-AA 2018 remains operative pack
-4. TRAC pack not validated on real data
-5. macOS cross-platform reproducibility not yet observed (Linux + Windows ARE observed-verified)
-6. Analysis plan not pre-registered (OSF preregistration is project action item)
-7. No power analysis for cohort sizes against Riley 2024 framework targets
-8. No multiple-comparisons correction beyond post-hoc Bonferroni
-9. 0.01 ΔcTCS triangulation threshold is framework-internal, not externally validated
-10. Single-investigator project; CURANIQ commercial-interest disclosure in datasheet
-11. No external code review of the framework
-12. cTCS/pTCS/uTCS terminology not yet bridged to standard clinical-AI evaluation concepts (calibration, discrimination)
-13. PMIDs pending for two recent papers (TRAC 2025, McDonald 2024) — see rulepack YAMLs
-
-These do not invalidate reproducibility evidence. They define the scope within which this reproducibility evidence is interpretable.
+To avoid drift, the README does not duplicate the list here; Section F is
+authoritative (enforced by `tests/docs/test_gap_disclosure_single_source.py`).
+These gaps do not invalidate the reproducibility evidence — they define the
+scope within which it is interpretable.
 
 ## License
 
