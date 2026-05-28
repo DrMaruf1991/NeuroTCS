@@ -27,9 +27,10 @@ for Aim 2 of the spec (Nature Medicine submission).
 from __future__ import annotations
 
 import os
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 from neurotcs import audit, load_rulepack
 from neurotcs.input_contract.v1_1.adapters.adapter_oasis3 import (

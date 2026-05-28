@@ -57,7 +57,7 @@ def generate_synthetic_trajectories(
     n_subjects: int = 200,
     seed: int = 42,
     n_implausible_seeded: int = 3,
-) -> "list[Trajectory]":
+) -> list[Trajectory]:
     """Generate synthetic longitudinal AD trajectories.
 
     Args:
