@@ -1,3 +1,34 @@
+## [1.25.0] -- 2026-05-28
+
+### Added: `neurotcs` command-line interface + report renderers
+
+A top-level `neurotcs` console command (entry point) wrapping the full pipeline,
+so non-Python users can audit a dataset file end to end. Coexists with the
+existing low-level `neurotcs-audit` (single-axis core audit); the new command is
+the high-level pipeline.
+
+Verbs:
+  * `describe <file> [--emit-mapping PATH]` -- inspect sheets/columns and scaffold
+    a mapping template (canonical columns pre-filled; the rest left as <FILL:...>
+    placeholders the auditor refuses to guess).
+  * `audit <file> --mapping map.json [-o OUT] [--csv] [--svg] [--quiet]` -- read
+    (CSV/TSV/Excel/Parquet/JSON), map (explicit, fail-closed), run all layers,
+    write a signed bundle + text report (+ optional flags CSV / summary SVG), and
+    print a concise stdout summary.
+  * `verify <bundle.json>` -- re-verify a signed bundle (tamper check).
+
+Exit codes (stable pipeline contract): 0 clean, 1 flags-present, 2 usage,
+3 incomplete/refused, 4 input/mapping error, 5 verify failed.
+
+New report renderers (pure views over the signed bundle, never hashed):
+  * `neurotcs.report.flags_to_csv(bundle)` -- one row per flag.
+  * `neurotcs.report.bundle_to_svg(bundle)` -- dependency-free summary SVG with
+    per-axis cTCS + 95% CI error bars.
+
+Tests: tests/cli/ (13) + tests/report/ (4), incl. every exit code and the
+fail-closed paths (missing/placeholder/wrong-column mapping, unknown format,
+tampered bundle).
+
 ## [1.24.1] -- 2026-05-28
 
 ### Fixed: declare openpyxl as a dependency (Excel reading)
