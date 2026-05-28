@@ -4,6 +4,38 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.24.0] -- 2026-05-28
+
+### Added: universal dataset readers (neurotcs.io) -- read any user's file
+
+New module `neurotcs.io` lets any user point NeuroTCS at a real-world dataset
+file and get it into the auditable submission, fail-closed:
+  * `read_tables(path, allow_pdf=False)` reads CSV / TSV / Excel (all sheets) /
+    Parquet / JSON robustly. Unknown extensions raise (never guessed).
+  * PDF is OFF by default and best-effort when enabled: it extracts tables with
+    pdfplumber and REFUSES free-text/scanned PDFs (PdfExtractionError) rather
+    than audit a guessed table -- silently auditing an inferred PDF table would
+    violate the fail-closed contract.
+  * `describe_tables(tables)` summarizes shape+columns to help build a mapping.
+  * `tables_to_submission(tables, mapping)` maps EXPLICITLY-declared columns to
+    the orchestrator submission; a missing sheet/column raises (no inference).
+  * Tests: tests/io/test_readers.py (13), incl. end-to-end read->map->audit->verify.
+
+### Fixed: per-axis confidence interval was dropped from the bundle
+
+The engine computes a BCa bootstrap 95% CI for cTCS, but the orchestrator's
+staging summary kept only the point estimate, so the bundle showed cTCS with NO
+CI -- contradicting the format design. Now ctcs_ci_95_low/high/method/huber and
+bootstrap_B flow orchestrator -> bundle -> report ("cTCS X [95% CI lo-hi]").
+`BUNDLE_FORMAT_VERSION` -> 1.2.0.
+
+### Fixed: deploy.ps1 GATE 4 ruff scope
+
+`ruff check .` -> `ruff check src/ tests/ scripts/` to match CI (the un-scoped
+form false-aborts on docs notebooks).
+
+1354 passed, 8 skipped; ruff clean.
+
 ## [1.23.3] -- 2026-05-28
 
 ### Bundle format hardened to airtight reproducibility (supersedes unreleased 1.23.2)

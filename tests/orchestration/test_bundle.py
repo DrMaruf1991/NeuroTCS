@@ -265,6 +265,18 @@ def test_coverage_uses_explicit_lists_not_a_fraction():
     assert not any("fraction" in k or "percent" in k for k in cov)
 
 
+def test_axes_carry_confidence_interval():
+    # Regression for the gap where the orchestrator dropped the CI: every
+    # staging axis must expose cTCS AND its 95% CI / method / B, not just point.
+    b = build_bundle(run_full_audit(_sub()))
+    for ax in b["neurotcs_bundle"]["deterministic_core"]["axes"]:
+        assert "ctcs" in ax
+        assert ax.get("ctcs_ci_95_low") is not None, "CI low missing from axis"
+        assert ax.get("ctcs_ci_95_high") is not None, "CI high missing from axis"
+        assert ax.get("ctcs_ci_method") is not None
+        assert ax.get("bootstrap_B") is not None
+
+
 def test_fingerprint_is_deterministic_and_sensitive():
     df1 = _clinical_df()
     df2 = _clinical_df()
