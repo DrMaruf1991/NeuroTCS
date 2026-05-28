@@ -437,3 +437,57 @@ pytest tests/audit_core/test_real_nacc_audit.py `
 
 Expected: 5 PASSED. The v1 audit_id, v2 audit_id, cTCS point estimate,
 BCa CI, n_subjects, n_transitions, and n_flagged all reproduce bit-exactly.
+
+
+### E-2026-005 CORRECTION (v1.19.1, 2026-05-28)
+
+**The v1.19.0 statement that "OASIS-3 is NOT affected" was WRONG.**
+
+Direct measurement in the v1.19.1 session proved OASIS-3 drifted by the
+exact same mechanism as MIRIAD and NACC: the v1.12.0 endorsing_bodies
+schema extension changed the canonical SHA of ad/niaaa_2018 (the rule pack
+SHA is an input to audit_id per audit_core/audit.py line 10:
+"audit_id: SHA-256 over (rule pack SHA, score vectors, B, seed)"), and
+OASIS-3 loads the same rule pack.
+
+The v1.19.0 claim was based on an UNVERIFIED assumption that OASIS-3 was
+locked post-v1.12.0. It was not. The error was compounded by a latent
+test defect (see below) that masked the drift.
+
+**Why the drift was invisible until v1.19.1:**
+The OASIS-3 locked-invariant test used a bare `return` (not `pytest.skip()`)
+when the data file was absent from its default search path. pytest counts a
+function that returns without asserting as PASSED. So whenever
+NEUROTCS_OASIS3_CDR was unset, the test reported GREEN while asserting
+nothing. The v1.18.0 deploy run and earlier CI showed OASIS-3 "passing"
+because the file was never found at the hardcoded search path, so the
+assertions never executed.
+
+**OASIS-3 supersession (added to the E-2026-005 table):**
+
+| Cohort | Pre-v1.12.0 (v1.8.0/v1.8.1 lock) | Post-v1.12.0 (v1.19.1 lock) |
+|---|---|---|
+| OASIS-3 (v1) | `766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90` | `77f1945358e6b1db8c462e69e0d7f7d8d9dc1aba6d67909eddae34273785a11d` |
+| OASIS-3 (v2) | `265d99ee07172a645d566491401632d295e1a782922866c7dda10334f46f19c5` | `b3e3f8f8c790509c86aaf719752f5fb364d2be717abbf03fb996bffb708c53e1` |
+
+**OASIS-3 scientific invariants — unchanged (bit-exact):**
+cTCS=0.994191 [BCa 95% CI 0.990264-0.996405], n_scored=1247,
+1377 trajectories, 7248 transitions, 30 flagged (0.414%).
+
+**Two fixes shipped in v1.19.1:**
+1. OASIS-3 audit_id v1 + v2 re-locked (old preserved as
+   EXPECTED_AUDIT_ID_V1_8_0 / EXPECTED_AUDIT_ID_V2_V1_8_1).
+2. The silent `return` replaced with `pytest.skip()` so absent data yields
+   an honest SKIP, never a false PASS. This was the more serious defect:
+   a locked-invariant test that reports green while testing nothing.
+
+**ADNI status:** still unverified (NEUROTCS_ADNI_DXSUM_RDA unset). By the
+same mechanism, ADNI almost certainly also drifted and will need the same
+re-lock once DXSUM.rda is available. Tracked as an open item.
+
+**Lesson for the project:** the v1.19.0 ERRATA made a claim about OASIS-3
+without measuring it. The correct discipline -- applied in v1.19.1 -- is to
+measure every cohort's live audit_id against the current rule pack before
+asserting which are or are not affected. All four available cohorts
+(MIRIAD x3, NACC, OASIS-3) are now measured and re-locked; only ADNI
+remains pending data.

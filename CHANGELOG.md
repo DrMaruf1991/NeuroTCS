@@ -4,6 +4,67 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.1] -- 2026-05-28
+
+### OASIS-3 re-lock + silent-pass fix (correction to v1.19.0 ERRATA E-2026-005)
+
+v1.19.0 ERRATA E-2026-005 claimed "OASIS-3 is NOT affected" by the v1.12.0
+endorsing_bodies schema drift. **That claim was wrong.** Direct measurement
+in this session proved OASIS-3 drifted by the identical mechanism (the rule
+pack canonical SHA is an audit_id input; OASIS-3 loads the same ad/niaaa_2018
+pack as MIRIAD/NACC). The drift was masked by a latent test defect.
+
+### Two defects fixed
+
+1. **OASIS-3 audit_id drift (re-locked).**
+   - v1: `766ffc5f...` -> `77f1945358e6b1db8c462e69e0d7f7d8d9dc1aba6d67909eddae34273785a11d`
+   - v2: `265d99ee...` -> `b3e3f8f8c790509c86aaf719752f5fb364d2be717abbf03fb996bffb708c53e1`
+   - Old values preserved as EXPECTED_AUDIT_ID_V1_8_0 / EXPECTED_AUDIT_ID_V2_V1_8_1.
+   - Scientific invariants unchanged: cTCS=0.994191 [BCa 0.990264-0.996405],
+     n_scored=1247, 7248 transitions, 30 flagged (0.414%).
+
+2. **Silent-pass test defect (the more serious one).**
+   The OASIS-3 locked-invariant test used a bare `return` instead of
+   `pytest.skip()` when data was absent. pytest counts a function returning
+   without asserting as PASSED -- so the test reported GREEN while asserting
+   nothing whenever NEUROTCS_OASIS3_CDR was unset. This is why the drift went
+   undetected: the test never actually ran its assertions in CI. Replaced with
+   `pytest.skip()`, matching the MIRIAD/NACC pattern. Verified: env-set -> PASS
+   (re-locked id matches), env-unset -> SKIP (honest, never false-pass).
+
+### ERRATA E-2026-005 corrected
+
+Appended a dated correction block to ERRATA.md documenting the wrong v1.19.0
+OASIS-3 claim, the measurement that disproved it, the silent-pass root cause,
+the OASIS-3 supersession table, and the lesson (measure every cohort before
+asserting which are affected). History preserved; correction appended, not
+rewritten.
+
+### Cohort drift status (complete except ADNI)
+
+| Cohort | Drifted at v1.12.0 | Re-locked | Test honest-skip |
+|---|---|---|---|
+| MIRIAD longitudinal | yes | v1.19.0 | yes (pytest.skip) |
+| MIRIAD test-retest | yes | v1.19.0 | yes |
+| MIRIAD fairness | yes | v1.19.0 | yes |
+| NACC | yes | v1.19.0 | yes |
+| OASIS-3 | yes | **v1.19.1** | **fixed in v1.19.1** |
+| ADNI | unverified (no DXSUM.rda) | pending | n/a |
+
+### Files changed
+
+- `tests/audit_core/test_real_oasis3_audit.py` -- v1+v2 audit_ids re-locked
+  (old preserved), silent `return` -> `pytest.skip()`, `import pytest` added
+- `ERRATA.md` -- E-2026-005 CORRECTION block appended
+- `pyproject.toml` + `src/neurotcs/__init__.py` -- 1.19.0 -> 1.19.1
+
+### Byte-exact invariants preserved
+
+- All Layer 2 / Layer 3 pack yaml_sha256 hashes unchanged from v1.19.0
+- MIRIAD + NACC re-locks from v1.19.0 unchanged
+- v1.18.0 architectural artifacts (input_contract v1_2, Layer 4 design,
+  manifest_data_consistency pack) unchanged
+
 ## [1.19.0] -- 2026-05-28
 
 ### Cohort audit_id re-lock per ERRATA E-2026-005

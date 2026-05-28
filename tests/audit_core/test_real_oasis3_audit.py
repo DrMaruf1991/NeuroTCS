@@ -27,6 +27,7 @@ for Aim 2 of the spec (Nature Medicine submission).
 from __future__ import annotations
 
 import os
+import pytest
 import sys
 from pathlib import Path
 
@@ -54,15 +55,24 @@ SEARCH_PATHS = [
 EXPECTED_AUDIT_ID_V1_3_0 = (  # pre-correction, kept for traceability
     "96d942e41e9f94a33718d9a107dedf443de728bdd16dcf36ade18ca1f3f4077a"
 )
-EXPECTED_AUDIT_ID = (
-    # v1.8.0 lock — rule pack v1.2.0 priors, canonical adapter, hash_ids=True.
-    # Byte-deterministic across N=5 cold reruns, numpy 2.0.x↔2.4.x, pyreadr 0.5.0↔0.5.6.
+# v1.19.1 re-lock per ERRATA E-2026-005: OASIS-3 ALSO drifted at v1.12.0
+# (endorsing_bodies schema extension shifted ad/niaaa_2018 canonical SHA).
+# v1.19.0 ERRATA wrongly claimed OASIS-3 unaffected; v1.19.1 corrects it.
+# Scientific invariants unchanged: cTCS=0.994191, n_scored=1247,
+# 7248 transitions, 30 flagged.
+EXPECTED_AUDIT_ID_V1_8_0 = (
     "766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90"
+)
+EXPECTED_AUDIT_ID = (
+    "77f1945358e6b1db8c462e69e0d7f7d8d9dc1aba6d67909eddae34273785a11d"
 )
 # v1.8.1: also lock audit_id_v2 (C6 collision-resistant variant). Captured in
 # v1.8 deep-audit response run; reproduces byte-exactly under v1.8.x.
-EXPECTED_AUDIT_ID_V2 = (
+EXPECTED_AUDIT_ID_V2_V1_8_1 = (
     "265d99ee07172a645d566491401632d295e1a782922866c7dda10334f46f19c5"
+)
+EXPECTED_AUDIT_ID_V2 = (
+    "b3e3f8f8c790509c86aaf719752f5fb364d2be717abbf03fb996bffb708c53e1"
 )
 EXPECTED_N_SUBJECTS_SCORED = 1247
 EXPECTED_N_TRANSITIONS = 7248
@@ -94,9 +104,13 @@ def _find_udsb4() -> Path | None:
 def test_real_oasis3_audit_locked_invariant():
     udsb4 = _find_udsb4()
     if udsb4 is None:
-        print("  \u23ed  test_real_oasis3_audit_locked_invariant "
-              "(skipped: OASIS-3 UDSb4 CSV not found)")
-        return
+        # v1.19.1 fix per ERRATA E-2026-005: was a bare `return`, which pytest
+        # counts as PASSED -- a locked-invariant test asserting nothing while
+        # reporting green. Now uses pytest.skip() like MIRIAD/NACC so absent
+        # data yields an honest SKIP, never a false PASS.
+        pytest.skip(
+            "OASIS-3 UDSb4 CSV not found. Set NEUROTCS_OASIS3_CDR to enable."
+        )
 
     trajectories, report = load_oasis3_trajectories(udsb4)
 
