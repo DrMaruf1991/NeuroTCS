@@ -25,12 +25,12 @@ from neurotcs.input_contract.v1_1.adapters.adapter_adni_canonical import (
 
 # v1.8.0 lock invariants
 LOCKED_AUDIT_ID = (
-    "9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16"
+    "7a973f7b57a91f7cf0af796fd9f69552e14b57aa91f4241fabd5262436588f08"
 )
 # v1.8.1: also lock audit_id_v2 (C6 collision-resistant variant). Captured in
 # v1.8 deep-audit response run; reproduces byte-exactly under v1.8.x.
 LOCKED_AUDIT_ID_V2 = (
-    "7d08a227b6fe80b53adc0291fe9cda26bf4f1056b1a04cb47fd2afc63d0a7334"
+    "dda642ff2e5c67b522f534d330d25eb59175eccc0f1c9d7e504b871dc03e0b9d"
 )
 LOCKED_CTCS = 0.994575  # rounds to 0.9946 (the published v1.7.13 invariant)
 LOCKED_N_TRAJECTORIES = 3762

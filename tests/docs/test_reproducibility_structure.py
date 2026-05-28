@@ -88,7 +88,7 @@ def test_repro_section_present(repro_text: str, section: str):
 # cryptographic identity of the AD rule packs. They MUST appear verbatim
 # in the reproducibility report so a collaborator can verify them.
 REPRO_REQUIRED_RULEPACK_SHAS = [
-    "f359148d1cbf6abed3d4f1d36de6b3bf315c10e8997d5e73beb1a0d7bdf9e374",  # niaaa_2018
+    "97811e3f1a145e47393aa2568065303c594ffa20cc81a514ced027a23a81336b",  # niaaa_2018
     "1393ceb489d774c059cc30f500335e29622880e347a8081854f1c461f05c47e2",  # aa_2024
     "b704a4d21efbe893dead9ea906940c5e61196f9db7f938df55b506cbee6be6e7",  # aa_2024_trac
 ]
@@ -109,10 +109,10 @@ def test_repro_rulepack_sha_present(repro_text: str, sha: str):
 
 
 REPRO_REQUIRED_AUDIT_IDS = [
-    "947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0",
-    "aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da",
-    "804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85",
-    "dcf8b7de3ff9019e9cda703064039e3a71193566d1f5082ce96646188fd52fc4",
+    "abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f",
+    "1aeb56ce5a88d9f74e7b6942ca4b3e2329fd918d96264b4df062744247cf1a80",
+    "4de7f7111aedea86636dae2f81a768a1013849e5949a21062e3bdbd99f499136",
+    "fa30cd364d9239a5fbc5774182a4d5093189605c10d5a1abe956653dd76afa1f",
 ]
 
 

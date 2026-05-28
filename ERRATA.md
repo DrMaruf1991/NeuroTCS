@@ -491,3 +491,128 @@ measure every cohort's live audit_id against the current rule pack before
 asserting which are or are not affected. All four available cohorts
 (MIRIAD x3, NACC, OASIS-3) are now measured and re-locked; only ADNI
 remains pending data.
+
+
+---
+
+## E-2026-006 — Structural fix: audit_id now hashes scientific content only (fixed in v1.20.0)
+
+**Discovered:** 2026-05-28
+**Fixed in:** v1.20.0
+**Affected versions:** v1.12.0 through v1.19.1 (audit_id values only)
+**Severity:** Reproducibility fingerprint only. **No scientific result changed** — cTCS, n, transitions, and flagged counts are byte-identical across all six cohorts before and after. Every cohort's audit_id changed once more, to a permanent metadata-independent value.
+
+### Root cause (the disease behind E-2026-005)
+
+E-2026-005 re-locked six cohort audit_ids after v1.12.0's `endorsing_bodies`
+schema extension shifted the `ad/niaaa_2018` canonical SHA. That treated the
+symptom. The underlying defect: `_canonical_serialize` (src/neurotcs/rulepack/loader.py)
+hashed `rp.model_dump(mode="json")` — the ENTIRE RulePack object, including 14
+metadata fields the scoring engine never reads (endorsing_bodies, effective_date,
+schema_version, ruleset_version, rulepack_id, reviewers, anchor_citation,
+framework_name, disease_domain, clinical_source_authority, transcribed_by,
+status, notes, override_allowed_default). Any change to those — adding an
+endorsement, refreshing a date, bumping a version — drifted every cohort
+audit_id, even though the audit computation was untouched.
+
+Proven by direct field diff (v1.11.0 pre-drift vs current): every scientific
+field (state_space, admissible_transitions, inadmissible_transitions,
+transition_priors) is byte-identical; only metadata differs.
+
+### The fix
+
+`_canonical_serialize` now hashes ONLY the four fields the scoring engine reads:
+`state_space`, `admissible_transitions`, `inadmissible_transitions`,
+`transition_priors`. Metadata is excluded from the audit_id by construction.
+The rule-pack canonical SHA changed:
+
+  aaac92fb901d13ea905e25d8dde5b31897cf425cb6600f6f87c72b63ed479081  (metadata-polluted, v1.12.0-v1.19.1)
+  -> 97811e3f1a145e47393aa2568065303c594ffa20cc81a514ced027a23a81336b  (scientific content only, v1.20.0+)
+
+From v1.20.0, metadata changes (endorsements, dates, versions, citations,
+reviewers) can NEVER again drift a cohort audit_id.
+
+### Two-directional proof (the executable guarantee)
+
+tests/rulepack/test_canonical_serialization_partition.py proves the partition
+in both directions:
+- Mutating any of the 14 metadata fields does NOT change the canonical SHA.
+- Mutating any of the 4 scientific fields DOES change it.
+- A helper-vs-production check confirms the proof exercises the real serializer.
+All four assertions pass. The if-and-only-if contract (same science <-> same
+audit_id) is now machine-verified.
+
+### Six-cohort supersession table (v1.19.x metadata-polluted -> v1.20.0 permanent)
+
+All scientific invariants UNCHANGED; only audit_id values move.
+
+NACC
+  v1: f233935d7a1c2d72702adc7627671d8785313ab446607fa309bb2f5a48129187
+   -> 58329c656e5ae14c8c6af496a6b526c2f93d317379ba3ffd145776e1cfcf07a9
+  v2: 8503a3107cc8a7f68490d33b51c07d8ef54be5fa6a835c700cbc0775055cc90c
+   -> 74aa4b64bcfc8004a10d1fe418ac72df98053e98ad8da68dfaa72a87ee2dc0ec
+
+OASIS-3
+  v1: 77f1945358e6b1db8c462e69e0d7f7d8d9dc1aba6d67909eddae34273785a11d
+   -> 92df5429ed8439f84a9a65d18b1c489a2b50107facc08e3e59538948c9ad6478
+  v2: b3e3f8f8c790509c86aaf719752f5fb364d2be717abbf03fb996bffb708c53e1
+   -> fed6c9b880fee9c4e832978dc5224ec90994b5995b9530f18a377fe4ee4f5eab
+
+ADNI (locked for the first time to a permanent value; no interim v1.19.2 lock)
+  v1: 9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16
+   -> 7a973f7b57a91f7cf0af796fd9f69552e14b57aa91f4241fabd5262436588f08
+  v2: 7d08a227b6fe80b53adc0291fe9cda26bf4f1056b1a04cb47fd2afc63d0a7334
+   -> dda642ff2e5c67b522f534d330d25eb59175eccc0f1c9d7e504b871dc03e0b9d
+
+MIRIAD longitudinal
+  v1: 59ac763dfc4cd0098b33f13a2240171c888e5b4e99373d9b8f974d716647d96a
+   -> abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f
+  v2: c34b37863dac549d2aec8298453b9bc1ef2b0a8f719384249786d55f6e10da08
+   -> 1aeb56ce5a88d9f74e7b6942ca4b3e2329fd918d96264b4df062744247cf1a80
+
+MIRIAD test-retest
+  v1: 94126769ef6c468e7290ff15aaedaa8ba8874a58848545a08208c5f769730454
+   -> 4de7f7111aedea86636dae2f81a768a1013849e5949a21062e3bdbd99f499136
+  v2: 2cd85d3b705fde826917dd72e3fec6997e5d3d25a06ae5c06ce6125c1805249e
+   -> fa30cd364d9239a5fbc5774182a4d5093189605c10d5a1abe956653dd76afa1f
+
+MIRIAD fairness (downstream of longitudinal; equals MIRIAD longitudinal)
+  v1: -> abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f
+  v2: -> 1aeb56ce5a88d9f74e7b6942ca4b3e2329fd918d96264b4df062744247cf1a80
+
+Scientific invariants (unchanged): NACC cTCS=0.991502, n=56529, 158423 trans,
+1217 flagged; OASIS-3 cTCS=0.994191, n_scored=1247, 7248 trans, 30 flagged;
+ADNI cTCS=0.994575, n_scored=2958, 12006 trans, 65 flagged; MIRIAD long
+cTCS=0.985369, n=69, 454 trans, 7 flagged; MIRIAD test-retest 69 pairs,
+0 flagged.
+
+### Detection-gap closure (why this hid for six versions)
+
+The drift survived v1.13-v1.19 because CI runs framework-only pytest with the
+real-cohort locked-invariant tests SKIPPED — they need NEUROTCS_* env vars CI
+never sets, so no locked fingerprint was ever checked in CI. v1.20.0 adds
+tests/audit_core/test_synthetic_ci_invariant.py: a deterministic synthetic
+cohort with a locked audit_id that runs on EVERY CI invocation, no env vars.
+Any future fingerprint drift — serializer, scoring kernel, or RNG-affecting
+dependency upgrade — now turns CI red on the next push.
+
+### Honest scope statement
+
+This fix makes audit_id permanently immune to METADATA drift. It does NOT claim
+immunity to all change: a genuine scientific rule change SHOULD drift the
+fingerprint (correct behavior), and engine/dependency drift remains possible but
+is now caught loudly by the synthetic sentinel. The guarantee is not "never
+drifts" but "never drifts silently, and never drifts for non-scientific reasons."
+
+### Methodology change (cumulative E-2026-001 through E-2026-006 lessons)
+
+7. (E-2026-006) The audit_id canonical serialization must hash scientific
+   content only; metadata is reported as provenance but excluded from the
+   fingerprint. Enforced by the two-directional partition test.
+8. (E-2026-006) Every release must run at least one locked-fingerprint test in
+   CI with no external-data dependency, so reproducibility drift is caught on
+   every push rather than only in local real-data runs.
+
+Same as prior errata: the structural root cause was found by Dr. Salokhiddinov
+pushing for "world-class, no partial fix" — declining to accept the symptomatic
+re-lock and demanding the underlying defect be traced and fixed permanently.

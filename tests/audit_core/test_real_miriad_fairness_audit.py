@@ -10,7 +10,7 @@ bit-exactly under v1.7.13 and all future releases.
 Real-data results (locked here, must reproduce bit-exactly):
   Cohort:  69 subjects, 454 transitions, 7 flagged (1.54%)
   cTCS:    0.9854 (BCa 95% CI: 0.9715-0.9937)
-  audit_id:    59ac763dfc4cd0098b33f13a2240171c888e5b4e99373d9b8f974d716647d96a
+  audit_id:    abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f
   audit_id_v2: aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da
 
 FUTURE-AI Panel B.4.4 stratification (Lekadir BMJ 2025;388:e081554):
@@ -62,14 +62,14 @@ SEARCH_BASES = [
 # Old v1.7.13 audit_id preserved for cryptographic continuity:
 #   EXPECTED_AUDIT_ID_V1_7_13 = "947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0"
 EXPECTED_AUDIT_ID = (
-    "59ac763dfc4cd0098b33f13a2240171c888e5b4e99373d9b8f974d716647d96a"
+    "abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f"
 )
 # v1.19.0 re-lock per ERRATA E-2026-005. Old v1.7.13 v2 preserved.
 EXPECTED_AUDIT_ID_V2_V1_7_13 = (
     "aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da"
 )
 EXPECTED_AUDIT_ID_V2 = (
-    "c34b37863dac549d2aec8298453b9bc1ef2b0a8f719384249786d55f6e10da08"
+    "1aeb56ce5a88d9f74e7b6942ca4b3e2329fd918d96264b4df062744247cf1a80"
 )
 EXPECTED_N_TRANSITIONS = 454
 EXPECTED_N_FLAGGED = 7

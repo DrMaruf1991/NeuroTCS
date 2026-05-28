@@ -4,6 +4,55 @@ All notable changes to NeuroTCS are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0] -- 2026-05-28
+
+### Structural fix: audit_id hashes scientific content only (ERRATA E-2026-006)
+
+Root cause behind the entire E-2026-005 re-lock saga: `_canonical_serialize`
+hashed the ENTIRE RulePack (`model_dump`), including 14 metadata fields the
+scoring engine never reads. v1.12.0's `endorsing_bodies` addition therefore
+drifted all six cohort audit_ids while the audit computation was byte-identical.
+Re-locking (v1.19.x) treated the symptom; v1.20.0 fixes the cause.
+
+### Changed
+
+- **`_canonical_serialize` now hashes scientific content only** -- the four
+  fields the scoring engine reads: `state_space`, `admissible_transitions`,
+  `inadmissible_transitions`, `transition_priors`. All metadata excluded.
+  Rule-pack canonical SHA: `aaac92fb...` -> `97811e3f...`.
+  From v1.20.0, metadata changes can never again drift a cohort audit_id.
+- **All six cohorts re-locked once** to permanent metadata-independent
+  fingerprints (full supersession table in ERRATA E-2026-006). ADNI locked for
+  the first time to a permanent value (no interim v1.19.2). Scientific
+  invariants unchanged across all cohorts.
+
+### Added
+
+- **`tests/rulepack/test_canonical_serialization_partition.py`** -- two-directional
+  proof: mutating any of 14 metadata fields does NOT change the SHA; mutating
+  any of 4 scientific fields DOES. Makes the if-and-only-if contract executable.
+- **`tests/audit_core/test_synthetic_ci_invariant.py`** -- always-on drift
+  sentinel. Deterministic synthetic cohort with a locked audit_id, runs on
+  EVERY CI invocation with no env vars. Closes the detection gap that let the
+  drift hide from v1.13 through v1.19 (CI skips real-cohort tests; no locked
+  fingerprint was ever checked in CI).
+
+### Fixed
+
+- `tests/scripts/test_run_ad_fairness_audit.py` rulepack-SHA assertion updated
+  to the v1.20.0 canonical SHA.
+- Repo-wide reconciliation: 34+ stale audit_id / rulepack-SHA references across
+  README, datasheet, reproducibility docs, reviewer-package prompts, examples,
+  and doc-structural tests updated to v1.20.0 permanent values. ERRATA and
+  CHANGELOG history intentionally preserved.
+
+### Honest scope
+
+Immune to METADATA drift permanently. A genuine scientific rule change still
+SHOULD drift the fingerprint (correct); engine/dependency drift is now caught
+loudly by the synthetic sentinel. The guarantee is "never drifts silently,
+never drifts for non-scientific reasons" -- not "never drifts."
+
 ## [1.19.1] -- 2026-05-28
 
 ### OASIS-3 re-lock + silent-pass fix (correction to v1.19.0 ERRATA E-2026-005)

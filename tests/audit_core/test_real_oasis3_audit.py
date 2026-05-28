@@ -65,7 +65,7 @@ EXPECTED_AUDIT_ID_V1_8_0 = (
     "766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90"
 )
 EXPECTED_AUDIT_ID = (
-    "77f1945358e6b1db8c462e69e0d7f7d8d9dc1aba6d67909eddae34273785a11d"
+    "92df5429ed8439f84a9a65d18b1c489a2b50107facc08e3e59538948c9ad6478"
 )
 # v1.8.1: also lock audit_id_v2 (C6 collision-resistant variant). Captured in
 # v1.8 deep-audit response run; reproduces byte-exactly under v1.8.x.
@@ -73,7 +73,7 @@ EXPECTED_AUDIT_ID_V2_V1_8_1 = (
     "265d99ee07172a645d566491401632d295e1a782922866c7dda10334f46f19c5"
 )
 EXPECTED_AUDIT_ID_V2 = (
-    "b3e3f8f8c790509c86aaf719752f5fb364d2be717abbf03fb996bffb708c53e1"
+    "fed6c9b880fee9c4e832978dc5224ec90994b5995b9530f18a377fe4ee4f5eab"
 )
 EXPECTED_N_SUBJECTS_SCORED = 1247
 EXPECTED_N_TRANSITIONS = 7248

@@ -112,7 +112,7 @@ These are tested in CI and must hold across all v1.7.x releases going forward:
 
 1. **`audit_id` and `audit_id_v2` are unchanged** when
    `return_per_transition=True` is passed. Per-transition data and demographic
-   metadata are additive only. The locked invariants `947ab24e...`
+   metadata are additive only. The locked invariants `abda26cb...`
    (MIRIAD longitudinal) and `80430399...` (MIRIAD test-retest) reproduce
    bit-exactly regardless of whether demographics are attached or fairness
    is requested.

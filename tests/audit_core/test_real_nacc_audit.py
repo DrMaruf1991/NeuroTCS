@@ -30,7 +30,7 @@ LOCKED_AUDIT_ID_V1_7_13 = (
     "def60e6836a5a9feecc666dc558c5b115973f73dd65dd42ef13969819318754c"
 )
 LOCKED_AUDIT_ID = (
-    "f233935d7a1c2d72702adc7627671d8785313ab446607fa309bb2f5a48129187"
+    "58329c656e5ae14c8c6af496a6b526c2f93d317379ba3ffd145776e1cfcf07a9"
 )
 # v1.8.1: also lock audit_id_v2 (C6 collision-resistant variant). Captured
 # in the v1.8 deep-audit response run; reproduces byte-exactly under v1.8.x.
@@ -39,7 +39,7 @@ LOCKED_AUDIT_ID_V2_V1_8_1 = (
     "9c002cf653f8187c9c190293999b861e677f95ded8e1a4501fa47d928dac8648"
 )
 LOCKED_AUDIT_ID_V2 = (
-    "8503a3107cc8a7f68490d33b51c07d8ef54be5fa6a835c700cbc0775055cc90c"
+    "74aa4b64bcfc8004a10d1fe418ac72df98053e98ad8da68dfaa72a87ee2dc0ec"
 )
 LOCKED_CTCS = 0.991502
 LOCKED_N_TRAJECTORIES_MIN = 50_000  # NACC is large; precise count varies with freeze

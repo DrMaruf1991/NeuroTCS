@@ -13,8 +13,8 @@ Pipeline:
 Expected output (v1.8 locked invariant; reproduces byte-exactly across reruns):
 
     cTCS:        0.994191  (BCA 95% CI: 0.9902..0.9964)
-    audit_id:    766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90
-    audit_id_v2: 265d99ee07172a645d566491401632d295e1a782922866c7dda10334f46f19c5
+    audit_id:    92df5429ed8439f84a9a65d18b1c489a2b50107facc08e3e59538948c9ad6478
+    audit_id_v2: fed6c9b880fee9c4e832978dc5224ec90994b5995b9530f18a377fe4ee4f5eab
     transitions: 7,248 (30 flagged, 0.41%)
     patients_scored: 1,377
 
@@ -68,7 +68,7 @@ def run(udsb4_path: str | Path) -> None:
     if hasattr(result, "audit_id_v2"):
         print(f"  audit_id_v2: {result.audit_id_v2}")
     print()
-    print("v1.8 locked invariant: cTCS=0.994191, audit_id=766ffc5f26eae47f...")
+    print("v1.8 locked invariant: cTCS=0.994191, audit_id=92df542926eae47f...")
     print("If your output matches the locked invariant, reproducibility confirmed.")
 
 

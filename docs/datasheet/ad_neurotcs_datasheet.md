@@ -42,13 +42,13 @@ version and obtain bit-identical hashes.
 
 | Cohort | n_subjects | n_transitions | n_flagged | cTCS (BCa 95% CI) | audit_id (SHA-256) | audit_id_v2 |
 |---|---|---|---|---|---|---|
-| OASIS-3 (external replication) | 1,377 | 7,248 | 30 (0.41%) | 0.9942 (0.9902–0.9964) | `766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90` | (locked locally) |
-| ADNI-2/3/4 (longitudinal, canonical R-format DXSUM) | 2,958 (scored) / 3,762 (total) | 12,006 | 65 (0.54%) | 0.9946 (0.9924–0.9961) | `9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16` | (locked locally) |
-| NACC UDS v73 (longitudinal, new in v1.8) | 39,361 (scored) / 56,529 (total) | 158,423 | 1,217 (0.77%) | 0.9915 | `def60e6836a5a9feecc666dc558c5b115973f73dd65dd42ef13969819318754c` | (locked locally) |
-| MIRIAD longitudinal (Aim 3 A) | 69 | 454 | 7 (1.54%) | 0.9854 (0.9715–0.9937) | `947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0` | `aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da` |
-| MIRIAD test-retest (Aim 3 B) | 69 (pairs) | 69 | 0 | 1.0000 | `804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85` | `dcf8b7de3ff9019e9cda703064039e3a71193566d1f5082ce96646188fd52fc4` |
+| OASIS-3 (external replication) | 1,377 | 7,248 | 30 (0.41%) | 0.9942 (0.9902–0.9964) | `92df5429ed8439f84a9a65d18b1c489a2b50107facc08e3e59538948c9ad6478` | (locked locally) |
+| ADNI-2/3/4 (longitudinal, canonical R-format DXSUM) | 2,958 (scored) / 3,762 (total) | 12,006 | 65 (0.54%) | 0.9946 (0.9924–0.9961) | `7a973f7b57a91f7cf0af796fd9f69552e14b57aa91f4241fabd5262436588f08` | (locked locally) |
+| NACC UDS v73 (longitudinal, new in v1.8) | 39,361 (scored) / 56,529 (total) | 158,423 | 1,217 (0.77%) | 0.9915 | `58329c656e5ae14c8c6af496a6b526c2f93d317379ba3ffd145776e1cfcf07a9` | (locked locally) |
+| MIRIAD longitudinal (Aim 3 A) | 69 | 454 | 7 (1.54%) | 0.9854 (0.9715–0.9937) | `abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f` | `1aeb56ce5a88d9f74e7b6942ca4b3e2329fd918d96264b4df062744247cf1a80` |
+| MIRIAD test-retest (Aim 3 B) | 69 (pairs) | 69 | 0 | 1.0000 | `4de7f7111aedea86636dae2f81a768a1013849e5949a21062e3bdbd99f499136` | `fa30cd364d9239a5fbc5774182a4d5093189605c10d5a1abe956653dd76afa1f` |
 
-**Rule pack SHA-256** (`ad/niaaa_2018@1.2.0`): `f359148d1cbf6abe...`
+**Rule pack SHA-256** (`ad/niaaa_2018@1.3.0`): `97811e3f1a145e47...`
 **Schema version**: 1.1.0 (per Step 2.1 schema-version declaration policy).
 **Seed**: 42. **Bootstrap B**: 10,000. **CI method**: BCa.
 

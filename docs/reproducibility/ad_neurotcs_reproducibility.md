@@ -27,7 +27,7 @@ Windows) because the loader canonicalises the YAML before hashing.
 
 | Rule pack | rulepack_id | schema_version | SHA-256 |
 |---|---|---|---|
-| `ad/niaaa_2018` | `ad/niaaa_2018@1.2.0` | 1.1.0 | `f359148d1cbf6abed3d4f1d36de6b3bf315c10e8997d5e73beb1a0d7bdf9e374` |
+| `ad/niaaa_2018` | `ad/niaaa_2018@1.3.0` | 1.4.0 | `97811e3f1a145e47393aa2568065303c594ffa20cc81a514ced027a23a81336b` |
 | `ad/aa_2024` | `ad/aa_2024@2.0.0` | 1.3.0 | `1393ceb489d774c059cc30f500335e29622880e347a8081854f1c461f05c47e2` |
 | `ad/aa_2024_trac` | `ad/aa_2024_trac@1.0.0` | 1.2.0 | `b704a4d21efbe893dead9ea906940c5e61196f9db7f938df55b506cbee6be6e7` |
 
@@ -42,8 +42,8 @@ different hash.
 |---|---|---|---|---|---|
 | ADNI-2/3/4 | 12,006 | 65 (0.54%) | 0.9946 | `d344ec1a...` (full hash in Section A of datasheet) | locked locally on maintainer's machine |
 | OASIS-3 | 7,248 | 30 (0.41%) | 0.9942 (0.9902–0.9964) | locked locally | locked locally |
-| MIRIAD longitudinal | 454 | 7 (1.54%) | 0.9854 (0.9715–0.9937) | `947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0` | `aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da` |
-| MIRIAD test-retest | 69 | 0 (0.00%) | 1.0000 | `804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85` | `dcf8b7de3ff9019e9cda703064039e3a71193566d1f5082ce96646188fd52fc4` |
+| MIRIAD longitudinal | 454 | 7 (1.54%) | 0.9854 (0.9715–0.9937) | `abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f` | `1aeb56ce5a88d9f74e7b6942ca4b3e2329fd918d96264b4df062744247cf1a80` |
+| MIRIAD test-retest | 69 | 0 (0.00%) | 1.0000 | `4de7f7111aedea86636dae2f81a768a1013849e5949a21062e3bdbd99f499136` | `fa30cd364d9239a5fbc5774182a4d5093189605c10d5a1abe956653dd76afa1f` |
 
 ### 1.3 — Test-suite identity
 
@@ -162,7 +162,7 @@ produced the locked invariants:
 python -c "from neurotcs import load_rulepack; \
     p = load_rulepack('ad/niaaa_2018'); \
     print(p.sha256)"
-# Expected: f359148d1cbf6abed3d4f1d36de6b3bf315c10e8997d5e73beb1a0d7bdf9e374
+# Expected: 97811e3f1a145e47393aa2568065303c594ffa20cc81a514ced027a23a81336b
 
 python -c "from neurotcs import load_rulepack; \
     p = load_rulepack('ad/aa_2024'); \
@@ -237,7 +237,7 @@ support)
 # Linux / macOS
 export NEUROTCS_MIRIAD_DIR=/path/to/miriad/csvs
 pytest tests/audit_core/test_real_miriad_audit.py -v
-# Expected: all assertions pass; audit_ids 947ab24e... and 80430399...
+# Expected: all assertions pass; audit_ids abda26cb... and 4de7f711...
 # reproduce exactly.
 ```
 

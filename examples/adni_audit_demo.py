@@ -15,8 +15,8 @@ Pipeline:
 Expected output (v1.8 locked invariant; reproduces byte-exactly across reruns):
 
     cTCS:        0.994575  (BCA 95% CI: 0.9924..0.9961)
-    audit_id:    9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16
-    audit_id_v2: 7d08a227b6fe80b53adc0291fe9cda26bf4f1056b1a04cb47fd2afc63d0a7334
+    audit_id:    7a973f7b57a91f7cf0af796fd9f69552e14b57aa91f4241fabd5262436588f08
+    audit_id_v2: dda642ff2e5c67b522f534d330d25eb59175eccc0f1c9d7e504b871dc03e0b9d
     transitions: 12,006 (65 flagged, 0.54%)
     patients_scored: 2,958 (of 3,762 total trajectories)
 
@@ -70,7 +70,7 @@ def run(dxsum_path: str | Path) -> None:
     if hasattr(result, "audit_id_v2"):
         print(f"  audit_id_v2: {result.audit_id_v2}")
     print()
-    print("v1.8 locked invariant: cTCS=0.994575, audit_id=9e708f2ebd610e8f...")
+    print("v1.8 locked invariant: cTCS=0.994575, audit_id=7a973f7bbd610e8f...")
     print("If your output matches the locked invariant, reproducibility confirmed.")
 
 

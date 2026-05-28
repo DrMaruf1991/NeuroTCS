@@ -2,7 +2,7 @@
 
 **Status**: REAL-DATA RUN COMPLETE (2026-05-18); invariants locked in v1.7.7.
 **Framework**: temporalmetric v1.7 FINAL §B.1 Aim 3.
-**Rule pack**: `ad/niaaa_2018@1.2.0` (same as Aim 1 ADNI, Aim 2 OASIS-3).
+**Rule pack**: `ad/niaaa_2018@1.3.0` (same as Aim 1 ADNI, Aim 2 OASIS-3).
 **Cohort**: MIRIAD (Malone et al. 2013 *NeuroImage* 70:33-36, PMID 23274184, DOI 10.1016/j.neuroimage.2012.12.044). 46 mild-to-moderate AD + 23 cognitively-normal controls (n=69 total), 708 T1 MRI scans, UCL Dementia Research Centre.
 
 ## Real-data findings (2026-05-18 run, NeuroTCS v1.7.6)
@@ -19,8 +19,8 @@
 | uTCS | 0.9854 | — |
 | ΔcTCS vs ADNI (0.9946) | **−0.0092** | — |
 | ΔcTCS vs OASIS-3 (0.9942) | **−0.0088** | — |
-| audit_id | `947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0` | ✓ |
-| audit_id_v2 | `aa178e836e8a3824951ba3de2ee7e22e9dc496960c9999be242770730141f4da` | ✓ |
+| audit_id | `abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f` | ✓ |
+| audit_id_v2 | `1aeb56ce5a88d9f74e7b6942ca4b3e2329fd918d96264b4df062744247cf1a80` | ✓ |
 
 **Interpretation**: The cTCS kernel — designed and validated on CDR-anchored ADNI/OASIS-3 — produces a generalisation cTCS of 0.9854 on MMSE-anchored MIRIAD, within 0.01 of the CDR-anchored cohorts. This is closer agreement than the conservative ±0.05 band set for the construct difference. The kernel's admissibility logic is robust across staging instruments.
 
@@ -35,8 +35,8 @@
 | Differing-state pairs | 0 | ✓ |
 | Flag rate | **0.000 %** | ✓ |
 | cTCS | 1.0000 (BCa 95 % CI: 1.0000–1.0000) | — |
-| audit_id | `804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85` | ✓ |
-| audit_id_v2 | `dcf8b7de3ff9019e9cda703064039e3a71193566d1f5082ce96646188fd52fc4` | ✓ |
+| audit_id | `4de7f7111aedea86636dae2f81a768a1013849e5949a21062e3bdbd99f499136` | ✓ |
+| audit_id_v2 | `fa30cd364d9239a5fbc5774182a4d5093189605c10d5a1abe956653dd76afa1f` | ✓ |
 
 **Why only 69 pairs of an expected ~207?** MIRIAD has back-to-back rescans at weeks 0, 6, and 38 (= 3 rescan visits × 69 subjects = 207 candidate pairs). However, per Malone 2013, MMSE is recorded at baseline + every 6 months only. The week-0 baseline rescan has same-visit MMSE; the week-6 and week-38 rescans do NOT have a clinical-assessment row with matching visit number. The adapter's per-visit Label-based join correctly excludes pairs without same-visit MMSE rather than fabricating values, leaving the **baseline rescan for each subject = 69 audit-ready pairs**.
 

@@ -64,7 +64,7 @@ The decision to scope-narrow to AD for v1.x was made on 2026-05-24 by Dr. Marufj
 
 - `src/neurotcs/audit_core/` — the audit pipeline is disease-agnostic. Untouched.
 - `src/neurotcs/input_contract/v1_1/adapters/adapter_{oasis3,nacc,adni_canonical,miriad}.py` — the four AD cohort adapters. Untouched.
-- The 5 locked audit_id values (OASIS-3 `766ffc5f...`, ADNI `9e708f2e...`, NACC `def60e68...`, MIRIAD `947ab24e...`, MIRIAD test-retest `80430399...`) — verified byte-exact under v1.9.0.
+- The 5 locked audit_id values (OASIS-3 `92df5429...`, ADNI `7a973f7b...`, NACC `58329c65...`, MIRIAD `abda26cb...`, MIRIAD test-retest `80430399...`) — verified byte-exact under v1.9.0.
 - Historical CHANGELOG and ERRATA entries that describe the non-AD work in v1.7.x and v1.8.x — these remain as historical record.
 
 ## When this scope expands

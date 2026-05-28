@@ -47,7 +47,7 @@ df = pd.read_csv("investigator_nacc73.csv", usecols=DEFAULT_USECOLS, low_memory=
 df.to_csv("investigator_nacc73_slim.csv", index=False)
 ```
 
-The canonical audit invariant for NACC (`def60e68...`) was derived against
+The canonical audit invariant for NACC (`58329c65...`) was derived against
 the slim file Maruf produced from the May 2026 freeze; the SHA-256
 `7a349eb84920d366` is preserved as a historical artifact in test
 docstrings but is not published as a reproducible target.
@@ -77,11 +77,11 @@ is corrupted, or the file is from a different source.
 
 | Cohort | cTCS | audit_id |
 |---|---:|---|
-| OASIS-3 | 0.994191 | `766ffc5f26eae47fb95eddd21e33bbecb798989304ed17584db15aa0d4740f90` |
-| ADNI | 0.994575 | `9e708f2ebd610e8ffe0abbc01d867ff34ff61fcd6aba14e2d6a293cd650e2b16` |
-| NACC | 0.991502 | `def60e6836a5a9feecc666dc558c5b115973f73dd65dd42ef13969819318754c` |
-| MIRIAD | 0.985369 | `947ab24ef83490e5ef74a0ef254f0553b512736259ab05b5ee917aa7fe3989e0` |
-| MIRIAD test-retest | 1.000000 | `804303993ff5c9134b5f4dfa8919fc6600d03a86081cedb02227ef5845784e85` |
+| OASIS-3 | 0.994191 | `92df5429ed8439f84a9a65d18b1c489a2b50107facc08e3e59538948c9ad6478` |
+| ADNI | 0.994575 | `7a973f7b57a91f7cf0af796fd9f69552e14b57aa91f4241fabd5262436588f08` |
+| NACC | 0.991502 | `58329c656e5ae14c8c6af496a6b526c2f93d317379ba3ffd145776e1cfcf07a9` |
+| MIRIAD | 0.985369 | `abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f` |
+| MIRIAD test-retest | 1.000000 | `4de7f7111aedea86636dae2f81a768a1013849e5949a21062e3bdbd99f499136` |
 
 Four-cohort triangulation: max ΔcTCS = 0.009206 (ADNI vs MIRIAD), all 6
 pairs ≤ 0.01 world-class threshold.

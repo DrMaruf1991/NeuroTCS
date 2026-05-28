@@ -67,7 +67,7 @@ def _simple_trajectories() -> list[Trajectory]:
 def test_audit_id_unchanged_with_return_per_transition_true():
     """The audit_id and audit_id_v2 must be identical regardless of whether
     return_per_transition is requested. This is the critical no-breakage
-    invariant — locked invariants like 947ab24e... must reproduce.
+    invariant — locked invariants like abda26cb... must reproduce.
     """
     pack = load_rulepack("ad/niaaa_2018")
     trajs = _simple_trajectories()

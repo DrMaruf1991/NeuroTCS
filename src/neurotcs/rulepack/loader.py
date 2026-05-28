@@ -58,10 +58,35 @@ class LoadedRulePack:
             )
 
 
+# Fields the scoring engine reads to compute the audit result. Derived
+# empirically (v1.20.0 field-access trace; see
+# docs/design/V1_20_0_audit_id_serialization.md). ONLY these enter the
+# canonical SHA -> audit_id, so provenance/metadata changes (endorsing_bodies,
+# effective_date, schema_version, ruleset_version, rulepack_id, reviewers,
+# anchor_citation, framework_name, disease_domain, clinical_source_authority,
+# transcribed_by, status, notes, override_allowed_default) NEVER drift the
+# scientific fingerprint. Per-transition override_allowed is nested inside the
+# transition lists and is therefore already covered. See ERRATA E-2026-006.
+_SCIENTIFIC_FIELDS = (
+    "state_space",
+    "admissible_transitions",
+    "inadmissible_transitions",
+    "transition_priors",
+)
+
+
 def _canonical_serialize(rp: RulePack) -> bytes:
-    """Canonical JSON for SHA hashing. Sorted keys, deterministic separators."""
+    """Canonical JSON over SCIENTIFIC content only -- the audit_id input.
+
+    Hashes exactly the rule-pack fields the scoring engine consumes. Metadata
+    is intentionally excluded so that adding endorsements, refreshing dates, or
+    bumping versions can never drift a cohort audit_id. Two-directional proof:
+    tests/rulepack/test_canonical_serialization_partition.py.
+    """
+    dump = rp.model_dump(mode="json")
+    scientific = {k: dump[k] for k in _SCIENTIFIC_FIELDS if k in dump}
     return json.dumps(
-        rp.model_dump(mode="json"),
+        scientific,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,

@@ -19,10 +19,10 @@ Five locked audit invariants reproduce byte-exactly across N=5 cold reruns, nump
 
 | Cohort | n_scored / n_total | Transitions | Flagged | cTCS | audit_id |
 |---|---:|---:|---:|---:|---|
-| OASIS-3 (Aim 2 external replication) | 1,377 | 7,248 | 30 (0.41%) | **0.994191** | `766ffc5f...` |
-| ADNI-2/3/4 (Aim 1, canonical R-format) | 2,958 / 3,762 | 12,006 | 65 (0.54%) | **0.994575** | `9e708f2e...` |
-| NACC UDS v73 (added v1.8) | 39,361 / 56,529 | 158,423 | 1,217 (0.77%) | **0.991502** | `def60e68...` |
-| MIRIAD longitudinal (Aim 3 A) | 69 | 454 | 7 (1.54%) | **0.985369** | `947ab24e...` |
+| OASIS-3 (Aim 2 external replication) | 1,377 | 7,248 | 30 (0.41%) | **0.994191** | `92df5429...` |
+| ADNI-2/3/4 (Aim 1, canonical R-format) | 2,958 / 3,762 | 12,006 | 65 (0.54%) | **0.994575** | `7a973f7b...` |
+| NACC UDS v73 (added v1.8) | 39,361 / 56,529 | 158,423 | 1,217 (0.77%) | **0.991502** | `58329c65...` |
+| MIRIAD longitudinal (Aim 3 A) | 69 | 454 | 7 (1.54%) | **0.985369** | `abda26cb...` |
 | MIRIAD test-retest (Aim 3 B) | 69 (pairs) | 69 | 0 (0.00%) | **1.000000** | `80430399...` |
 
 Each cohort also locks an `audit_id_v2` (C6 collision-resistant variant). See `tests/audit_core/test_real_*.py` for full locked-invariant constants, and [`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md) Section A for full audit_ids and methodology.
@@ -135,8 +135,8 @@ trajectories, report = load_adni_trajectories(
 result = audit(trajectories, pack, bootstrap_B=10_000, seed=42, ci_method="bca")
 
 print(f"cTCS:        {result.ctcs.ci.point:.6f}")   # 0.994575 (v1.8 locked)
-print(f"audit_id:    {result.audit_id}")            # 9e708f2e... (v1.8 locked)
-print(f"audit_id_v2: {result.audit_id_v2}")         # 7d08a227... (v1.8 locked)
+print(f"audit_id:    {result.audit_id}")            # 7a973f7b... (v1.8 locked)
+print(f"audit_id_v2: {result.audit_id_v2}")         # dda642ff... (v1.8 locked)
 result.to_json("report.json")
 ```
 
