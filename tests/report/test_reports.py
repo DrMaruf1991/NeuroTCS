@@ -53,3 +53,25 @@ def test_svg_shows_status_and_ctcs():
     svg = bundle_to_svg(_bundle_with_flags())
     assert "FLAGS_PRESENT" in svg
     assert "cTCS" in svg
+
+
+def test_pdf_is_written_and_valid(tmp_path):
+    from neurotcs.report import bundle_to_pdf
+    out = tmp_path / "r.pdf"
+    p = bundle_to_pdf(_bundle_with_flags(), out)
+    assert p == out and out.exists()
+    assert out.read_bytes()[:5] == b"%PDF-"  # real PDF header
+    assert out.stat().st_size > 500
+
+
+def test_pdf_clean_bundle(tmp_path):
+    from neurotcs.report import bundle_to_pdf
+    df = pd.DataFrame({
+        "subject_id": ["P1", "P1", "P1"], "visit": [0, 1, 2],
+        "visit_date": pd.to_datetime(["2020-01-01", "2021-01-01", "2022-01-01"]),
+        "state": ["CN", "MCI", "AD"],
+    })
+    b = build_bundle(run_full_audit({"clinical": df}))
+    out = tmp_path / "clean.pdf"
+    bundle_to_pdf(b, out)
+    assert out.read_bytes()[:5] == b"%PDF-"

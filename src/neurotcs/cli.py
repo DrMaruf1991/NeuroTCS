@@ -36,7 +36,7 @@ from neurotcs.io import (
     read_tables,
     tables_to_submission,
 )
-from neurotcs.report import bundle_to_svg, flags_to_csv
+from neurotcs.report import bundle_to_pdf, bundle_to_svg, flags_to_csv
 
 EXIT_CLEAN = 0
 EXIT_FLAGS = 1
@@ -186,6 +186,8 @@ def cmd_audit(args: argparse.Namespace) -> int:
         (outdir / f"{stem}.flags.csv").write_text(flags_to_csv(bundle), encoding="utf-8")
     if args.svg:
         (outdir / f"{stem}.summary.svg").write_text(bundle_to_svg(bundle), encoding="utf-8")
+    if args.pdf:
+        bundle_to_pdf(bundle, outdir / f"{stem}.report.pdf")
 
     core = bundle["neurotcs_bundle"]["deterministic_core"]
     status = core.get("status", "UNKNOWN")
@@ -218,6 +220,8 @@ def _print_summary(bundle: dict[str, Any], outdir: Path, stem: str,
         print(f"flags:    {outdir / (stem + '.flags.csv')}")
     if args.svg:
         print(f"svg:      {outdir / (stem + '.summary.svg')}")
+    if args.pdf:
+        print(f"pdf:      {outdir / (stem + '.report.pdf')}")
 
 
 # --------------------------------------------------------------------------- #
@@ -274,6 +278,7 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("-o", "--outdir", default="neurotcs_out", help="output directory")
     a.add_argument("--csv", action="store_true", help="also write flags CSV")
     a.add_argument("--svg", action="store_true", help="also write summary SVG")
+    a.add_argument("--pdf", action="store_true", help="also write PDF report")
     a.add_argument("--quiet", action="store_true", help="suppress the stdout summary")
     a.add_argument("--allow-pdf", action="store_true",
                    help="enable best-effort PDF table extraction")

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#
+# NeuroTCS pre-push hook -- runs the EXACT CI gates locally and BLOCKS the push
+# if any fail. This is the free, client-side equivalent of branch protection
+# (which needs GitHub Pro on private repos): a red commit cannot leave the
+# machine, so "merged a non-green PR" stops being possible.
+#
+# Enable once per clone:   git config core.hooksPath scripts/git-hooks
+# Bypass in an emergency:  git push --no-verify   (use sparingly; you own the risk)
+#
+set -euo pipefail
+
+echo "[pre-push] NeuroTCS gates (ruff + full pytest) -- matching CI ..."
+
+# 1) Lint exactly as both CI workflows do.
+echo "[pre-push] (1/2) ruff check src/ tests/ scripts/"
+python -m ruff check src/ tests/ scripts/
+
+# 2) Full test suite (auto-discovery), exactly as the 'CI' workflow does.
+#    Real-dataset cohort tests skip automatically when the data is absent.
+echo "[pre-push] (2/2) pytest (full auto-discovery)"
+python -m pytest -q
+
+echo "[pre-push] all gates passed -- pushing."

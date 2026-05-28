@@ -145,3 +145,15 @@ def test_verify_missing_file_exit4(tmp_path):
 def test_no_subcommand_errors():
     with pytest.raises(SystemExit):
         main([])
+
+
+def test_audit_pdf_flag(tmp_path):
+    f = tmp_path / "d.csv"
+    _csv(f, ["CN", "MCI", "AD", "CN"])
+    m = tmp_path / "map.json"
+    _mapping(m, "d")
+    main(["audit", str(f), "--mapping", str(m), "-o", str(tmp_path / "out"),
+          "--pdf", "--quiet"])
+    pdf = tmp_path / "out" / "d.report.pdf"
+    assert pdf.exists()
+    assert pdf.read_bytes()[:5] == b"%PDF-"
