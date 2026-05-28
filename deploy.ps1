@@ -158,7 +158,7 @@ Write-Ok "rule-pack registry consistent with filesystem"
 
 # ---------------------------------------------------------------------------
 Write-Step "GATE 4: ruff lint (blocking, matches CI)"
-python -m ruff check src/ tests/ scripts/
+python -m ruff check .
 if ($LASTEXITCODE -ne 0) { Abort "ruff found violations (CI would fail)" }
 Write-Ok "ruff clean"
 
