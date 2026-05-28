@@ -38,12 +38,16 @@ from typing import Any, Literal
 from neurotcs.cross_sheet.loader import LoadedInvariantPack
 from neurotcs.cross_sheet.schema import (
     CategoricalImpliesRangeCondition,
+    CategoricalImpliesRangeRowwiseCondition,
     CategoricalImpliesTrajectoryPatternCondition,
     CategoricalNotInKnownSetCondition,
     ConditionalRangeCase,
     CrossSheetInvariant,
     FieldPresenceConsistencyCondition,
     InvariantPackStatus,
+    NumericConflictCondition,
+    ReferentialIntegrityCondition,
+    TrajectoryMonotonicityCondition,
     ValueRangeConditionalCondition,
 )
 
@@ -252,6 +256,14 @@ def _evaluate_invariant(
         flags.extend(_evaluate_trajectory_pattern(invariant, cond, submission, lp))
     elif isinstance(cond, CategoricalNotInKnownSetCondition):
         flags.extend(_evaluate_categorical_not_in_known_set(invariant, cond, submission, lp))
+    elif isinstance(cond, NumericConflictCondition):
+        flags.extend(_evaluate_numeric_conflict(invariant, cond, submission, lp))
+    elif isinstance(cond, TrajectoryMonotonicityCondition):
+        flags.extend(_evaluate_trajectory_monotonicity(invariant, cond, submission, lp))
+    elif isinstance(cond, CategoricalImpliesRangeRowwiseCondition):
+        flags.extend(_evaluate_categorical_implies_range_rowwise(invariant, cond, submission, lp))
+    elif isinstance(cond, ReferentialIntegrityCondition):
+        flags.extend(_evaluate_referential_integrity(invariant, cond, submission, lp))
     else:
         raise NotImplementedError(
             f"Unknown condition type for invariant {invariant.name!r}: "
@@ -1069,6 +1081,357 @@ def _evaluate_categorical_implies_range(
             )
             flags.append(flag)
 
+    return flags
+
+
+def _cmp(value: float, threshold: float, direction: str) -> bool:
+    """Return True if `value <direction> threshold`."""
+    if direction == "ge":
+        return value >= threshold
+    if direction == "gt":
+        return value > threshold
+    if direction == "le":
+        return value <= threshold
+    if direction == "lt":
+        return value < threshold
+    raise ValueError(f"unknown direction {direction!r}")
+
+
+def _evaluate_numeric_conflict(
+    invariant: CrossSheetInvariant,
+    cond: NumericConflictCondition,
+    submission: dict[str, Any],
+    lp: LoadedInvariantPack,
+) -> list[CrossSheetFlag]:
+    """Evaluate a numeric_conflict condition.
+
+    For each row joined across source/target sheets on invariant.join_keys,
+    if BOTH the source and target numeric conditions trip, the pair is
+    biomarker-discordant and a flag is emitted.
+    """
+    flags: list[CrossSheetFlag] = []
+
+    source_rows = _iter_rows(submission.get(cond.source_sheet))
+    target_rows = _iter_rows(submission.get(cond.target_sheet))
+    if not source_rows or not target_rows:
+        return flags
+
+    join_keys = invariant.join_keys or ["patient_id"]
+
+    # Index target rows by join-key tuple for alignment.
+    def _key(row: dict[str, Any]) -> tuple:
+        return tuple(str(row.get(k)) for k in join_keys)
+
+    target_index: dict[tuple, list[dict[str, Any]]] = {}
+    for trow in target_rows:
+        target_index.setdefault(_key(trow), []).append(trow)
+
+    for srow in source_rows:
+        s_raw = srow.get(cond.source_field)
+        if s_raw is None:
+            continue
+        try:
+            s_val = float(s_raw)
+        except (TypeError, ValueError):
+            continue
+        if not _cmp(s_val, cond.source_threshold, cond.source_direction):
+            continue  # source side not tripped
+
+        for trow in target_index.get(_key(srow), []):
+            t_raw = trow.get(cond.target_field)
+            if t_raw is None:
+                continue
+            try:
+                t_val = float(t_raw)
+            except (TypeError, ValueError):
+                continue
+            if not _cmp(t_val, cond.target_threshold, cond.target_direction):
+                continue  # target side not tripped -> no conflict
+
+            join_key_values = {k: srow.get(k) for k in join_keys if k in srow}
+            flags.append(
+                _make_numeric_conflict_flag(
+                    invariant=invariant, lp=lp,
+                    source_val=s_val, target_val=t_val,
+                    join_key_values=join_key_values, cond=cond,
+                )
+            )
+    return flags
+
+
+def _evaluate_trajectory_monotonicity(
+    invariant: CrossSheetInvariant,
+    cond: TrajectoryMonotonicityCondition,
+    submission: dict[str, Any],
+    lp: LoadedInvariantPack,
+) -> list[CrossSheetFlag]:
+    """Evaluate a trajectory_monotonicity condition.
+
+    Groups the series sheet by patient_key, sorts by order_field, and
+    checks the value_field series for the required monotonic direction
+    within tolerance. Treatment-gated steps are exempt.
+    """
+    flags: list[CrossSheetFlag] = []
+    rows = _iter_rows(submission.get(cond.series_sheet))
+    if not rows:
+        return flags
+
+    # group by patient
+    by_patient: dict[Any, list[dict[str, Any]]] = {}
+    for r in rows:
+        pid = r.get(cond.patient_key)
+        if pid is None:
+            continue
+        by_patient.setdefault(pid, []).append(r)
+
+    for pid, prows in by_patient.items():
+        # need order + value present
+        usable = []
+        for r in prows:
+            o = r.get(cond.order_field)
+            v = r.get(cond.value_field)
+            if o is None or v is None:
+                continue
+            try:
+                vv = float(v)
+            except (TypeError, ValueError):
+                continue
+            usable.append((o, vv, r))
+        if len(usable) < cond.min_visits:
+            continue
+        # sort by order_field (works for ints and ISO date strings)
+        try:
+            usable.sort(key=lambda t: t[0])
+        except TypeError:
+            usable.sort(key=lambda t: str(t[0]))
+
+        for i in range(1, len(usable)):
+            (_o_prev, v_prev, _r_prev) = usable[i - 1]
+            (o_cur, v_cur, r_cur) = usable[i]
+            delta = v_cur - v_prev
+            violated = False
+            if cond.direction == "non_increasing" and delta > cond.tolerance:
+                violated = True
+            elif cond.direction == "non_decreasing" and -delta > cond.tolerance:
+                violated = True
+            if not violated:
+                continue
+            # treatment gate: exempt if treatment truthy at the current visit
+            if cond.treatment_gate_field is not None:
+                gate = r_cur.get(cond.treatment_gate_field)
+                if _is_truthy(gate):
+                    continue
+            join_key_values = {cond.patient_key: pid, cond.order_field: o_cur}
+            flags.append(
+                _make_monotonicity_flag(
+                    invariant=invariant, lp=lp,
+                    v_prev=v_prev, v_cur=v_cur, delta=delta,
+                    join_key_values=join_key_values, cond=cond,
+                )
+            )
+    return flags
+
+
+def _is_truthy(val: Any) -> bool:
+    if val is None:
+        return False
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, (int, float)):
+        return val != 0
+    s = str(val).strip().lower()
+    return s not in ("", "0", "false", "none", "nan", "no")
+
+
+def _make_numeric_conflict_flag(
+    invariant: CrossSheetInvariant,
+    lp: LoadedInvariantPack,
+    source_val: float,
+    target_val: float,
+    join_key_values: dict[str, Any],
+    cond: NumericConflictCondition,
+) -> CrossSheetFlag:
+    payload = {
+        "yaml_sha256": lp.yaml_sha256,
+        "invariant_name": invariant.name,
+        "kind": "numeric_conflict_violation",
+        "source_field": cond.source_field,
+        "source_val": float(source_val),
+        "target_field": cond.target_field,
+        "target_val": float(target_val),
+        "join_key_values": _stringify_for_hash(join_key_values),
+        "contract_version": "1.2.0",
+    }
+    return CrossSheetFlag(
+        flag_id=_derive_flag_id(payload),
+        pack_id=lp.invariantpack.invariantpack_id,
+        invariant_name=invariant.name,
+        severity=invariant.flag_severity,
+        join_key_values=dict(join_key_values),
+        observed_value=source_val,
+        declared_tool=None,
+        flag_reason=(
+            f"biomarker discordance: {cond.source_field}={source_val} "
+            f"({cond.source_direction} {cond.source_threshold}) WITH "
+            f"{cond.target_field}={target_val} "
+            f"({cond.target_direction} {cond.target_threshold})"
+        ),
+        citation_pmid=invariant.citation.citation_pmid,
+        citation_doi=invariant.citation.citation_doi,
+        citation_public_url=invariant.citation.public_url,
+    )
+
+
+def _make_monotonicity_flag(
+    invariant: CrossSheetInvariant,
+    lp: LoadedInvariantPack,
+    v_prev: float,
+    v_cur: float,
+    delta: float,
+    join_key_values: dict[str, Any],
+    cond: TrajectoryMonotonicityCondition,
+) -> CrossSheetFlag:
+    payload = {
+        "yaml_sha256": lp.yaml_sha256,
+        "invariant_name": invariant.name,
+        "kind": "trajectory_monotonicity_violation",
+        "value_field": cond.value_field,
+        "direction": cond.direction,
+        "v_prev": float(v_prev),
+        "v_cur": float(v_cur),
+        "delta": float(delta),
+        "join_key_values": _stringify_for_hash(join_key_values),
+        "contract_version": "1.2.0",
+    }
+    return CrossSheetFlag(
+        flag_id=_derive_flag_id(payload),
+        pack_id=lp.invariantpack.invariantpack_id,
+        invariant_name=invariant.name,
+        severity=invariant.flag_severity,
+        join_key_values=dict(join_key_values),
+        observed_value=v_cur,
+        flag_reason=(
+            f"{cond.value_field} violated {cond.direction}: "
+            f"{v_prev} -> {v_cur} (delta {delta:+.4g}, tol {cond.tolerance})"
+        ),
+        citation_pmid=invariant.citation.citation_pmid,
+        citation_doi=invariant.citation.citation_doi,
+        citation_public_url=invariant.citation.public_url,
+    )
+
+
+def _evaluate_categorical_implies_range_rowwise(
+    invariant: CrossSheetInvariant,
+    cond: CategoricalImpliesRangeRowwiseCondition,
+    submission: dict[str, Any],
+    lp: LoadedInvariantPack,
+) -> list[CrossSheetFlag]:
+    """Per-row categorical->range concordance within one sheet (E014).
+
+    For each row: if row[source_field] == source_value, then
+    row[target_field] must be within target_range, else flag the row.
+    """
+    flags: list[CrossSheetFlag] = []
+    for row in _iter_rows(submission.get(cond.sheet)):
+        cat = row.get(cond.source_field)
+        if cat is None or str(cat) != cond.source_value:
+            continue  # trigger not met for this row
+        obs = row.get(cond.target_field)
+        if obs is None:
+            continue
+        try:
+            obs_num = float(obs)
+        except (TypeError, ValueError):
+            continue
+        if obs_num < cond.target_range.lo or obs_num > cond.target_range.hi:
+            join_key_values = {k: row.get(k) for k in (invariant.join_keys or ["patient_id"]) if k in row}
+            payload = {
+                "yaml_sha256": lp.yaml_sha256,
+                "invariant_name": invariant.name,
+                "kind": "categorical_implies_range_rowwise_violation",
+                "source_field": cond.source_field,
+                "source_value": cond.source_value,
+                "target_field": cond.target_field,
+                "observed": float(obs_num),
+                "lo": float(cond.target_range.lo),
+                "hi": float(cond.target_range.hi),
+                "join_key_values": _stringify_for_hash(join_key_values),
+                "contract_version": "1.2.0",
+            }
+            flags.append(CrossSheetFlag(
+                flag_id=_derive_flag_id(payload),
+                pack_id=lp.invariantpack.invariantpack_id,
+                invariant_name=invariant.name,
+                severity=invariant.flag_severity,
+                join_key_values=dict(join_key_values),
+                observed_value=obs_num,
+                expected_range_lo=cond.target_range.lo,
+                expected_range_hi=cond.target_range.hi,
+                declared_tool=str(cat),
+                flag_reason=(
+                    f"{cond.source_field}={cond.source_value!r} requires "
+                    f"{cond.target_field} in [{cond.target_range.lo}, {cond.target_range.hi}], "
+                    f"observed {obs_num}"
+                ),
+                citation_pmid=invariant.citation.citation_pmid,
+                citation_doi=invariant.citation.citation_doi,
+                citation_public_url=invariant.citation.public_url,
+            ))
+    return flags
+
+
+def _evaluate_referential_integrity(
+    invariant: CrossSheetInvariant,
+    cond: ReferentialIntegrityCondition,
+    submission: dict[str, Any],
+    lp: LoadedInvariantPack,
+) -> list[CrossSheetFlag]:
+    """Flag child rows whose child_field value is absent from the parent
+    sheet's parent_field values (orphan records, E022)."""
+    flags: list[CrossSheetFlag] = []
+    parent_rows = _iter_rows(submission.get(cond.parent_sheet))
+    child_rows = _iter_rows(submission.get(cond.child_sheet))
+    if not child_rows:
+        return flags
+    parent_ids = {
+        str(r.get(cond.parent_field))
+        for r in parent_rows
+        if r.get(cond.parent_field) is not None
+    }
+    seen_orphans: set[str] = set()
+    for row in child_rows:
+        cid = row.get(cond.child_field)
+        if cid is None:
+            continue
+        cid_s = str(cid)
+        if cid_s in parent_ids or cid_s in seen_orphans:
+            continue
+        seen_orphans.add(cid_s)
+        payload = {
+            "yaml_sha256": lp.yaml_sha256,
+            "invariant_name": invariant.name,
+            "kind": "referential_integrity_violation",
+            "child_sheet": cond.child_sheet,
+            "child_field": cond.child_field,
+            "orphan_value": cid_s,
+            "parent_sheet": cond.parent_sheet,
+            "parent_field": cond.parent_field,
+            "contract_version": "1.2.0",
+        }
+        flags.append(CrossSheetFlag(
+            flag_id=_derive_flag_id(payload),
+            pack_id=lp.invariantpack.invariantpack_id,
+            invariant_name=invariant.name,
+            severity=invariant.flag_severity,
+            join_key_values={cond.child_field: cid_s},
+            flag_reason=(
+                f"orphan record: {cond.child_sheet}.{cond.child_field}="
+                f"{cid_s!r} has no matching {cond.parent_sheet}.{cond.parent_field}"
+            ),
+            citation_pmid=invariant.citation.citation_pmid,
+            citation_doi=invariant.citation.citation_doi,
+            citation_public_url=invariant.citation.public_url,
+        ))
     return flags
 
 

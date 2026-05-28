@@ -361,13 +361,151 @@ class CategoricalNotInKnownSetCondition(BaseModel):
         return self
 
 
-# Discriminated union for the 5 condition types
+# --- Condition type 6: numeric_conflict --------------------------------
+
+class NumericConflictCondition(BaseModel):
+    """Two numeric fields whose joint values are biomarker-discordant.
+
+    Semantics: for each row (joined across sheets on join_keys), if
+    `source_field` is on the source_value side of `source_threshold`
+    (source_direction) AND `target_field` is on the target_value side of
+    `target_threshold` (target_direction), the pair is internally
+    contradictory and a flag is emitted.
+
+    Example (E020): plasma p-tau217 >= 0.40 (elevated) WITH amyloid PET
+    centiloid < 20 (negative) is a biologically discordant pair --
+    elevated tau with negative amyloid contradicts the A->T2 ordering of
+    the AD continuum (Jack 2024 sec 4.3). Declarative, no code execution.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    type: Literal["numeric_conflict"] = "numeric_conflict"
+    source_sheet: Literal["manifest", "predictions", "patients", "biomarkers", "attribution"] = Field(
+        ..., description="Sheet carrying the first numeric field.")
+    source_field: str = Field(..., min_length=1)
+    source_threshold: float = Field(..., description="Threshold for the source field.")
+    source_direction: Literal["ge", "gt", "le", "lt"] = Field(
+        ..., description="Source trips when source_field <dir> source_threshold.")
+    target_sheet: Literal["manifest", "predictions", "patients", "biomarkers", "attribution"] = Field(
+        ..., description="Sheet carrying the second numeric field.")
+    target_field: str = Field(..., min_length=1)
+    target_threshold: float = Field(..., description="Threshold for the target field.")
+    target_direction: Literal["ge", "gt", "le", "lt"] = Field(
+        ..., description="Target trips when target_field <dir> target_threshold.")
+    target_unit: str | None = Field(default=None)
+
+
+# --- Condition type 7: trajectory_monotonicity ------------------------
+
+class TrajectoryMonotonicityCondition(BaseModel):
+    """A per-patient longitudinal numeric series that must be monotone.
+
+    Semantics: rows are grouped by `patient_key`, sorted by `order_field`,
+    and the `value_field` series is checked for monotonicity in
+    `direction`:
+      - "non_increasing": no later value may exceed an earlier value by
+        more than `tolerance` (e.g. hippocampal volume must not grow --
+        atrophy does not reverse; E009).
+      - "non_decreasing": no later value may fall below an earlier value
+        by more than `tolerance` (e.g. amyloid burden does not
+        spontaneously clear in untreated natural history; E016).
+
+    If `treatment_gate_field` is set, a step that would otherwise violate
+    monotonicity is EXEMPT when the treatment flag is truthy at the visit
+    where the change occurs -- so legitimate treatment effects (anti-
+    amyloid clearance) are not flagged, but spontaneous changes are.
+
+    This is the longitudinal-trajectory analysis primitive: it evaluates
+    the shape of a single patient's biomarker path over time, which the
+    per-visit range packs structurally cannot do.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    type: Literal["trajectory_monotonicity"] = "trajectory_monotonicity"
+    series_sheet: Literal["predictions", "biomarkers"] = Field(
+        ..., description="Sheet carrying the longitudinal series.")
+    patient_key: str = Field(
+        default="patient_id", min_length=1,
+        description="Field grouping rows into per-patient series.")
+    order_field: str = Field(
+        ..., min_length=1,
+        description="Field used to sort visits within a patient (date or visit index).")
+    value_field: str = Field(
+        ..., min_length=1, description="Numeric field whose trajectory is checked.")
+    direction: Literal["non_increasing", "non_decreasing"] = Field(
+        ..., description="Required monotonic direction of the series.")
+    tolerance: float = Field(
+        default=0.0, ge=0.0,
+        description="Allowed wobble (measurement noise) before a step counts as a violation.")
+    treatment_gate_field: str | None = Field(
+        default=None,
+        description="If set, a violating step is exempt when this flag is truthy at the visit.")
+    min_visits: int = Field(
+        default=2, ge=2,
+        description="Minimum visits required to evaluate monotonicity.")
+
+
+# --- Condition type 8: categorical_implies_range_rowwise ---------------
+
+class CategoricalImpliesRangeRowwiseCondition(BaseModel):
+    """Per-row categorical->range concordance within a single sheet.
+
+    Semantics: for EACH row of `sheet`, if row[source_field] == source_value
+    then row[target_field] must be within target_range; otherwise the row is
+    flagged. Unlike CategoricalImpliesRangeCondition (a whole-submission
+    manifest trigger), this evaluates row-locally, so it can express
+    per-visit cross-modal concordance such as "if amyloid_status=='negative'
+    then this visit's centiloid must be in the negative range" (E014).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    type: Literal["categorical_implies_range_rowwise"] = "categorical_implies_range_rowwise"
+    sheet: Literal["manifest", "predictions", "patients", "biomarkers", "attribution"] = Field(
+        ..., description="Sheet whose rows carry both the categorical and numeric fields.")
+    source_field: str = Field(..., min_length=1)
+    source_value: str = Field(..., min_length=1)
+    target_field: str = Field(..., min_length=1)
+    target_range: NumericRange
+    target_unit: str | None = Field(default=None)
+
+
+# --- Condition type 9: referential_integrity --------------------------
+
+class ReferentialIntegrityCondition(BaseModel):
+    """Every `child_field` value in `child_sheet` must exist among the
+    `parent_field` values in `parent_sheet`.
+
+    Catches orphan records: a row in the child sheet referencing an entity
+    (e.g. a patient_id) that has no record in the parent sheet (E022 -- a
+    biomarker row for a subject absent from the patients/demographics
+    sheet). Declarative; no code execution.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    type: Literal["referential_integrity"] = "referential_integrity"
+    child_sheet: Literal["manifest", "predictions", "patients", "biomarkers", "attribution"] = Field(
+        ..., description="Sheet whose rows reference a parent entity.")
+    child_field: str = Field(..., min_length=1)
+    parent_sheet: Literal["manifest", "predictions", "patients", "biomarkers", "attribution"] = Field(
+        ..., description="Sheet that must contain the referenced entity.")
+    parent_field: str = Field(..., min_length=1)
+
+
+# Discriminated union for the 9 condition types
 ConditionSpec = (
     CategoricalImpliesRangeCondition
     | FieldPresenceConsistencyCondition
     | ValueRangeConditionalCondition
     | CategoricalImpliesTrajectoryPatternCondition
     | CategoricalNotInKnownSetCondition
+    | NumericConflictCondition
+    | TrajectoryMonotonicityCondition
+    | CategoricalImpliesRangeRowwiseCondition
+    | ReferentialIntegrityCondition
 )
 
 

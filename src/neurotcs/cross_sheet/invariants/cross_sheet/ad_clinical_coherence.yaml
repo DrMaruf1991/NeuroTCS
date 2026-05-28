@@ -1,0 +1,352 @@
+schema_version: "1.0.0"
+invariantpack_id: "cross_sheet/ad_clinical_coherence@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-05-28"
+status: "production"
+domain: "ad_clinical_coherence"
+framework_name: "Cross-sheet clinical coherence for AD longitudinal trajectories: cognitive-stage consistency, biomarker cross-modal concordance, and per-patient biomarker monotonicity"
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo International University in Tashkent (KIUT), Uzbekistan. v1.22.0 session: first clinical cross-sheet invariant pack, exercising the two new declarative condition types (numeric_conflict, trajectory_monotonicity) plus value_range_conditional and categorical_implies_range against AD-continuum coherence. Each invariant is anchored to a primary source (Jack 2024 revised criteria, Folstein 1975 MMSE, Morris 1993 CDR) and encodes an internal-consistency check, NOT a per-value plausibility check (which lives in Layer 2 range packs)."
+clinical_source_authority: |
+  This pack encodes Layer 3 cross-sheet COHERENCE invariants for the
+  Alzheimer's-disease continuum. Each invariant asks: "is this submission
+  internally consistent across sheets / across a patient's own visits?"
+  -- not "is this single value plausible?" (the latter is Layer 2).
+
+  The invariants:
+
+  1. cognitive_state_cdr_consistency (value_range_conditional)
+     A visit predicted as clinically normal (CN) must carry a CDR global
+     score consistent with non-dementia. CDR global 0 = normal,
+     0.5 = very mild / MCI-range, >=1 = dementia (Morris 1993). A CN
+     prediction with CDR global >= 1.0 (frank dementia) is internally
+     contradictory.
+
+  2. cognitive_state_mmse_consistency (value_range_conditional)
+     A visit predicted CN must carry an MMSE in the non-demented range.
+     MMSE < 24 indicates probable dementia (Folstein 1975, multi-cohort
+     cumulative). A CN visit with MMSE < 24 is internally contradictory.
+     (Encoded conservatively: the CN range is MMSE >= 24; a severe score
+     such as 12 on a CN visit trips the lower bound.)
+
+  3. amyloid_status_centiloid_concordance (categorical_implies_range)
+     If amyloid_status == 'negative', the centiloid value must be in the
+     amyloid-negative range. Klunk 2015 / AMYPAD 2024: CL < ~20 excludes,
+     CL > ~30 includes Abeta pathology at the individual level. A
+     declared-negative status with centiloid clearly positive (e.g. 88)
+     is a cross-modal contradiction.
+
+  4. ptau217_amyloid_concordance (numeric_conflict)
+     Elevated plasma p-tau217 WITH amyloid-negative PET is biomarker-
+     discordant: per the A->T2 ordering of the AD continuum (Jack 2024
+     sec 4.3, "abnormal amyloid PET (A) precedes tau PET (T2)"),
+     amyloid abnormality precedes tau. Markedly elevated p-tau217 with a
+     clearly amyloid-negative PET is internally contradictory and flags
+     for review.
+
+  5. hippocampal_volume_non_increasing (trajectory_monotonicity)
+     Hippocampal atrophy in the AD continuum is progressive and does not
+     reverse (Jack 2024; Frisoni 2010 neuroimaging hallmarks). A
+     per-patient hippocampal-volume series that increases materially
+     over follow-up is biologically implausible (segmentation error or
+     data error).
+
+  6. amyloid_centiloid_non_decreasing_untreated (trajectory_monotonicity,
+     treatment-gated)
+     In untreated natural history, amyloid burden accumulates and does
+     not spontaneously clear (Jack 2024; the TRAC framework documents
+     clearance ONLY under anti-amyloid therapy). A centiloid series that
+     drops materially WITHOUT a recorded treatment flag at that visit is
+     implausible. The treatment_gate_field exempts legitimate on-
+     treatment clearance.
+
+anchor_citation:
+  citation_pmid: "38934362"
+  citation_doi: "10.1002/alz.13859"
+  citation_text: |
+    Jack CR Jr, Andrews JS, Beach TG, et al. Revised criteria for
+    diagnosis and staging of Alzheimer's disease: Alzheimer's
+    Association Workgroup. Alzheimer's Dement. 2024;20(8):5143-5169.
+    Section 4.3 establishes the unidirectional biomarker ordering of the
+    AD continuum (A -> T2 -> N -> C): "abnormal amyloid PET (A) precedes
+    tau PET (T2), which, in turn, leads to neurodegeneration (N) and
+    clinical symptoms (C)." This ordering anchors the cross-modal
+    concordance and monotonicity invariants in this pack.
+  public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859"
+  endorsing_bodies:
+    - "Alzheimer's Association 2024 Workgroup (Jack et al., Alz & Dem 2024)"
+    - "Folstein MF, Folstein SE, McHugh PR 1975 (MMSE, J Psychiatr Res)"
+    - "Morris JC 1993 (CDR, Neurology)"
+    - "Klunk WE et al. 2015 (Centiloid scale, Alz & Dem)"
+
+notes: |
+  CITATION-LOCKED COHERENCE, NOT PLAUSIBILITY. Every threshold here is a
+  consistency boundary anchored to a primary source, never a value-quality
+  bound (those are Layer 2). Thresholds are deliberately conservative
+  (set at the frank-contradiction boundary) so that the false-positive
+  rate stays near zero: only internally contradictory submissions flag.
+
+  Condition-type coverage in this pack:
+    - value_range_conditional      : invariants 1, 2
+    - categorical_implies_range    : invariant 3
+    - numeric_conflict             : invariant 4   (new in v1.22.0)
+    - trajectory_monotonicity      : invariants 5, 6 (new in v1.22.0)
+
+  Layer separation preserved: this pack makes NO per-patient diagnosis.
+  It flags internal contradictions for human review (fail-open advisory
+  on info-severity invariants; error severity reserved for biologically
+  impossible contradictions).
+
+invariants:
+
+  - name: "cn_state_requires_non_dementia_cdr"
+    description: |
+      A visit predicted as CN (cognitively normal) must carry a CDR
+      global score in the non-dementia range (0 to 0.5). CDR global >= 1.0
+      denotes frank dementia (Morris 1993) and is internally inconsistent
+      with a CN prediction at the same visit.
+    sheets_required:
+      - role: "predictions"
+        required: true
+      - role: "biomarkers"
+        required: true
+    join_keys:
+      - "patient_id"
+      - "visit_id"
+    condition:
+      type: "value_range_conditional"
+      source_sheet: "predictions"
+      source_field: "predicted_state"
+      cases:
+        - source_value: "CN"
+          target_sheet: "biomarkers"
+          target_field: "cdr_global"
+          target_range:
+            lo: 0.0
+            hi: 0.5
+    flag_severity: "error"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      Morris JC. The Clinical Dementia Rating (CDR): current version and
+      scoring rules. Neurology 1993;43(11):2412-2414. CDR global 0=normal,
+      0.5=questionable/very mild, 1=mild dementia, 2=moderate, 3=severe.
+    citation:
+      citation_pmid: "8232972"
+      citation_doi: "10.1212/wnl.43.11.2412-a"
+      citation_text: |
+        Morris JC. The Clinical Dementia Rating (CDR). Neurology
+        1993;43(11):2412-2414. A CN classification is incompatible with a
+        CDR global of 1.0 or higher (mild dementia or worse).
+      public_url: "https://www.neurology.org/doi/10.1212/WNL.43.11.2412-a"
+      endorsing_bodies:
+        - "Morris 1993 (CDR scoring rules, Neurology)"
+
+  - name: "cn_state_requires_non_demented_mmse"
+    description: |
+      A visit predicted as CN must carry an MMSE in the non-demented
+      range. MMSE < 24 indicates probable dementia (Folstein 1975,
+      multi-cohort cumulative). A CN visit with MMSE < 24 is internally
+      contradictory.
+    sheets_required:
+      - role: "predictions"
+        required: true
+      - role: "biomarkers"
+        required: true
+    join_keys:
+      - "patient_id"
+      - "visit_id"
+    condition:
+      type: "value_range_conditional"
+      source_sheet: "predictions"
+      source_field: "predicted_state"
+      cases:
+        - source_value: "CN"
+          target_sheet: "biomarkers"
+          target_field: "mmse_total"
+          target_range:
+            lo: 24.0
+            hi: 30.0
+    flag_severity: "error"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      Folstein MF, Folstein SE, McHugh PR. "Mini-mental state." J Psychiatr
+      Res 1975;12(3):189-198. MMSE < 24 (out of 30) indicates probable
+      dementia; incompatible with a CN classification.
+    citation:
+      citation_pmid: "1202204"
+      citation_doi: "10.1016/0022-3956(75)90026-6"
+      citation_text: |
+        Folstein 1975 MMSE. Score range 0-30; < 24 indicates probable
+        cognitive impairment/dementia. A CN-predicted visit with MMSE < 24
+        is internally inconsistent.
+      public_url: "https://pubmed.ncbi.nlm.nih.gov/1202204/"
+      endorsing_bodies:
+        - "Folstein 1975 (MMSE, J Psychiatr Res)"
+
+  - name: "amyloid_negative_status_requires_negative_centiloid"
+    description: |
+      If amyloid_status == 'negative', the centiloid value must be in the
+      amyloid-negative range. Per Klunk 2015 / AMYPAD 2024, CL < ~20
+      excludes Abeta pathology at the individual level. A declared-negative
+      status with a clearly positive centiloid (>= 30) is a cross-modal
+      contradiction between the categorical read and the quantitative value.
+    sheets_required:
+      - role: "biomarkers"
+        required: true
+    join_keys:
+      - "patient_id"
+      - "visit_id"
+    condition:
+      type: "categorical_implies_range_rowwise"
+      sheet: "biomarkers"
+      source_field: "amyloid_status"
+      source_value: "negative"
+      target_field: "amyloid_centiloid"
+      target_range:
+        lo: -50.0
+        hi: 30.0
+      target_unit: "CL"
+    flag_severity: "error"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      Klunk WE et al. The Centiloid Project. Alzheimer's Dement
+      2015;11(1):1-15; AMYPAD 2024 (Collij et al.): CL < 10 excludes,
+      CL > 30 includes Abeta pathology. amyloid_status='negative' with
+      CL > 30 is internally contradictory.
+    citation:
+      citation_pmid: "25443857"
+      citation_doi: "10.1016/j.jalz.2014.07.003"
+      citation_text: |
+        Klunk 2015 Centiloid scale anchors 0 CL = young amyloid-negative
+        mean, 100 CL = typical AD. A 'negative' categorical read paired
+        with CL >> 30 contradicts the quantitative scale.
+      public_url: "https://pubmed.ncbi.nlm.nih.gov/25443857/"
+      endorsing_bodies:
+        - "Klunk 2015 (Centiloid Project, Alz & Dem)"
+        - "AMYPAD consortium 2024 (Collij et al.)"
+
+  - name: "elevated_ptau217_with_negative_amyloid_pet_discordance"
+    description: |
+      Markedly elevated plasma p-tau217 WITH an amyloid-negative PET
+      (low centiloid) is biomarker-discordant. Per Jack 2024 sec 4.3, the
+      AD continuum is ordered A -> T2: amyloid abnormality precedes tau.
+      p-tau217 >= 0.40 pg/mL (clearly elevated) together with centiloid
+      < 20 (amyloid-negative) is an internal contradiction warranting
+      review.
+    sheets_required:
+      - role: "biomarkers"
+        required: true
+    join_keys:
+      - "patient_id"
+      - "visit_id"
+    condition:
+      type: "numeric_conflict"
+      source_sheet: "biomarkers"
+      source_field: "plasma_ptau217_pgml"
+      source_threshold: 0.40
+      source_direction: "ge"
+      target_sheet: "biomarkers"
+      target_field: "amyloid_centiloid"
+      target_threshold: 20.0
+      target_direction: "lt"
+      target_unit: "CL"
+    flag_severity: "warning"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      Jack CR Jr et al. 2024 sec 4.3 (A->T2->N->C ordering). Elevated
+      plasma p-tau217 (a tau-pathway marker) with amyloid-negative PET
+      contradicts the amyloid-precedes-tau ordering of the continuum.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: |
+        Jack 2024 revised criteria sec 4.3: amyloid PET (A) precedes tau
+        (T2). Elevated tau-pathway biomarker with negative amyloid is a
+        cross-modal discordance for review.
+      public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859"
+      endorsing_bodies:
+        - "Alzheimer's Association 2024 Workgroup (Jack et al.)"
+
+  - name: "hippocampal_volume_must_not_increase_over_follow_up"
+    description: |
+      Hippocampal atrophy in the AD continuum is progressive and does not
+      reverse. A per-patient hippocampal-volume series (sorted by visit)
+      that increases by more than a measurement-noise tolerance over
+      follow-up is biologically implausible (segmentation/data error).
+      Tolerance 0.2 cm3 accommodates scan-rescan variability.
+    sheets_required:
+      - role: "biomarkers"
+        required: true
+    join_keys:
+      - "patient_id"
+    condition:
+      type: "trajectory_monotonicity"
+      series_sheet: "biomarkers"
+      patient_key: "patient_id"
+      order_field: "visit_id"
+      value_field: "hippocampus_total_cm3"
+      direction: "non_increasing"
+      tolerance: 0.2
+      min_visits: 2
+    flag_severity: "warning"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      Jack CR Jr et al. 2024 (N = neurodegeneration is progressive);
+      Frisoni GB et al. 2010 (Nat Rev Neurol) hippocampal atrophy as the
+      AD neuroimaging hallmark. Atrophy does not biologically reverse.
+    citation:
+      citation_pmid: "20139996"
+      citation_doi: "10.1038/nrneurol.2009.215"
+      citation_text: |
+        Frisoni GB, Fox NC, Jack CR Jr, Scheltens P, Thompson PM. The
+        clinical use of structural MRI in Alzheimer disease. Nat Rev
+        Neurol 2010;6(2):67-77. Hippocampal atrophy is progressive and
+        monotone in the AD continuum; volume increase over follow-up is
+        not biologically plausible.
+      public_url: "https://pubmed.ncbi.nlm.nih.gov/20139996/"
+      endorsing_bodies:
+        - "Frisoni 2010 (Nat Rev Neurol, structural MRI in AD)"
+        - "Alzheimer's Association 2024 Workgroup (Jack et al.)"
+
+  - name: "amyloid_centiloid_must_not_spontaneously_clear_untreated"
+    description: |
+      In untreated natural history, amyloid burden accumulates and does
+      not spontaneously clear. A per-patient centiloid series that drops
+      by more than tolerance WITHOUT a recorded treatment flag at the
+      visit is implausible. The treatment_gate_field exempts legitimate
+      on-treatment (anti-amyloid) clearance (TRAC framework). Tolerance
+      15 CL accommodates measurement variability.
+    sheets_required:
+      - role: "biomarkers"
+        required: true
+    join_keys:
+      - "patient_id"
+    condition:
+      type: "trajectory_monotonicity"
+      series_sheet: "biomarkers"
+      patient_key: "patient_id"
+      order_field: "visit_id"
+      value_field: "amyloid_centiloid"
+      direction: "non_decreasing"
+      tolerance: 15.0
+      treatment_gate_field: "treatment_flags"
+      min_visits: 2
+    flag_severity: "warning"
+    citation_strength: "international_consensus"
+    guideline_section: |
+      Jack CR Jr et al. 2024 (amyloid accrues over the continuum); TRAC
+      framework (Treatment-Related Amyloid Clearance) documents centiloid
+      reduction ONLY under anti-amyloid therapy. Untreated spontaneous
+      clearance is implausible.
+    citation:
+      citation_pmid: "41298245"
+      citation_doi: "10.1002/alz.70997"
+      citation_text: |
+        TRAC framework: amyloid clearance (centiloid reduction) is a
+        treatment effect of anti-amyloid therapy. In the absence of a
+        recorded treatment, a marked centiloid decrease over follow-up is
+        biologically implausible.
+      public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.70997"
+      endorsing_bodies:
+        - "TRAC framework (La Joie et al. 2025, Alz & Dem)"
+        - "Alzheimer's Association 2024 Workgroup (Jack et al.)"
+

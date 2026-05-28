@@ -166,12 +166,15 @@ class TestRosterCounts:
     production per world-class evidence honesty discipline):
       + csf_biomarkers/csf_ptau231_research_preview (CSF + plasma p-tau231)
       + genetics/trem2_research_preview (TREM2 R47H + R62H)
-    Net: (15 prod, 4 preview, 6 deprecated, 25 total)."""
+    Net: (16 prod, 4 preview, 6 deprecated, 26 total).
+    v1.22.0: +1 production (plasma_biomarkers/nfl_consensus) -> 16 prod / 26
+    total. (Demographic plausibility moved to the input-contract layer, where
+    data-integrity checks belong; it is not a clinical range pack.)"""
 
     def test_fifteen_production_packs(self) -> None:
         packs = list_rangepacks()
         prod = [p for p in packs if p.get("status") == "production"]
-        assert len(prod) == 15
+        assert len(prod) == 16
 
     def test_four_research_preview_packs(self) -> None:
         """v1.15.0: research_preview pack count grows from 1 to 2 with
@@ -202,9 +205,10 @@ class TestRosterCounts:
     def test_total_pack_count(self) -> None:
         """v1.16.0 adds 1 pack (fdg_pet/fdg_consensus production -> 17 total).
         v1.17.0 adds 8 packs (6 production + 2 research_preview).
-        Net: 25 total packs (15 prod + 4 preview + 6 deprecated)."""
+        Net: 26 total packs (16 prod + 4 preview + 6 deprecated).
+        v1.22.0: +1 production pack (NfL)."""
         packs = list_rangepacks()
-        assert len(packs) == 25  # 15 prod + 4 preview + 6 deprecated
+        assert len(packs) == 26  # 16 prod + 4 preview + 6 deprecated
 
 
 class TestDeprecationSchemaValidator:
