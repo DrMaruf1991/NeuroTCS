@@ -5,8 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.9.0](https://img.shields.io/badge/version-1.9.0-success.svg)](CHANGELOG.md)
-[![Tests 404/404](https://img.shields.io/badge/tests-404%2F404-success.svg)](tests/)
+[![Version 1.20.0](https://img.shields.io/badge/version-1.20.0-success.svg)](CHANGELOG.md)
+[![Tests 1276](https://img.shields.io/badge/tests-1276%20passed-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7_FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
@@ -23,7 +23,7 @@ Five locked audit invariants reproduce byte-exactly across N=5 cold reruns, nump
 | ADNI-2/3/4 (Aim 1, canonical R-format) | 2,958 / 3,762 | 12,006 | 65 (0.54%) | **0.994575** | `7a973f7b...` |
 | NACC UDS v73 (added v1.8) | 39,361 / 56,529 | 158,423 | 1,217 (0.77%) | **0.991502** | `58329c65...` |
 | MIRIAD longitudinal (Aim 3 A) | 69 | 454 | 7 (1.54%) | **0.985369** | `abda26cb...` |
-| MIRIAD test-retest (Aim 3 B) | 69 (pairs) | 69 | 0 (0.00%) | **1.000000** | `80430399...` |
+| MIRIAD test-retest (Aim 3 B) | 69 (pairs) | 69 | 0 (0.00%) | **1.000000** | `4de7f711...` |
 
 Each cohort also locks an `audit_id_v2` (C6 collision-resistant variant). See `tests/audit_core/test_real_*.py` for full locked-invariant constants, and [`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md) Section A for full audit_ids and methodology.
 
@@ -90,7 +90,7 @@ git clone https://github.com/DrMaruf1991/NeuroTCS.git
 cd NeuroTCS
 pip install -e .
 
-# Framework-only tests (no cohort data required) — expect 397 passed, 0 failed
+# Framework-only tests (no cohort data required) — expect 1268 passed, 0 failed
 python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_adni_audit.py \
     --ignore=tests/audit_core/test_real_oasis3_audit.py \
@@ -99,7 +99,7 @@ python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_miriad_fairness_audit.py \
     --ignore=tests/audit_core/test_four_cohort_triangulation.py
 
-# Full suite with cohort data (set env vars first; expect 404 passed)
+# Full suite with cohort data (set env vars first; expect 1276 passed)
 export NEUROTCS_OASIS3_CDR=/path/to/OASIS3_UDSb4_cdr.csv
 export NEUROTCS_ADNI_DXSUM_RDA=/path/to/ADNIMERGE2/data/DXSUM.rda
 export NEUROTCS_NACC_CSV=/path/to/investigator_nacc73_slim.csv
@@ -107,7 +107,7 @@ export NEUROTCS_MIRIAD_DIR=/path/to/MIRIAD_directory
 python -m pytest tests/ -q
 ```
 
-The test count is environment-dependent: **409** without cohort env vars (cohort tests skip), **416** with all four env vars pointing at valid files. Both outcomes are correct behavior.
+The test count is environment-dependent: **1268 passed / 21 skipped** without cohort env vars (cohort tests skip), **1276 passed / 13 skipped** with all four env vars pointing at valid files. Both outcomes are correct behavior.
 
 ### Rule pack only
 
@@ -134,9 +134,9 @@ trajectories, report = load_adni_trajectories(
 )
 result = audit(trajectories, pack, bootstrap_B=10_000, seed=42, ci_method="bca")
 
-print(f"cTCS:        {result.ctcs.ci.point:.6f}")   # 0.994575 (v1.8 locked)
-print(f"audit_id:    {result.audit_id}")            # 7a973f7b... (v1.8 locked)
-print(f"audit_id_v2: {result.audit_id_v2}")         # dda642ff... (v1.8 locked)
+print(f"cTCS:        {result.ctcs.ci.point:.6f}")   # 0.994575 (v1.20.0 locked)
+print(f"audit_id:    {result.audit_id}")            # 7a973f7b... (v1.20.0 locked)
+print(f"audit_id_v2: {result.audit_id_v2}")         # dda642ff... (v1.20.0 locked)
 result.to_json("report.json")
 ```
 
@@ -193,7 +193,7 @@ The canonical spec is [`docs/spec/temporalmetric_v1.7_FINAL.md`](docs/spec/tempo
 @software{salokhiddinov2026neurotcs,
   author    = {Salokhiddinov, Marufjon},
   title     = {NeuroTCS: Citation-locked, fail-closed longitudinal medical AI audit framework},
-  version   = {1.9.0},
+  version   = {1.20.0},
   year      = {2026},
   url       = {https://github.com/DrMaruf1991/NeuroTCS},
   note      = {temporalmetric v1.7 FINAL specification, 3 AD production rule packs, four-cohort triangulation lock; v1.9.0+ AD-only scope}
@@ -204,7 +204,7 @@ See [`CITATION.cff`](CITATION.cff) for GitHub's citation widget.
 
 ## Known limitations (honestly disclosed)
 
-NeuroTCS publicly documents gaps so reviewers can assess fitness for purpose. As of v1.9.0, **13 open gaps** carry forward (see [`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md) for the full list):
+NeuroTCS publicly documents gaps so reviewers can assess fitness for purpose. As of v1.20.0, **13 open gaps** carry forward (see [`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md) for the full list):
 
 1. pTCS unavailable under AA-2024 (transition_priors empty by design)
 2. Single-rater attestation (ESNR κ ≥ 0.6 second-reader pending)
@@ -220,7 +220,7 @@ NeuroTCS publicly documents gaps so reviewers can assess fitness for purpose. As
 12. cTCS/pTCS/uTCS terminology not yet bridged to standard clinical-AI evaluation concepts (calibration, discrimination)
 13. PMIDs pending for two recent papers (TRAC 2025, McDonald 2024) — see rulepack YAMLs
 
-These do not invalidate reproducibility evidence. They define the scope within which v1.8 evidence is interpretable.
+These do not invalidate reproducibility evidence. They define the scope within which this reproducibility evidence is interpretable.
 
 ## License
 
