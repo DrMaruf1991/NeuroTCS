@@ -1,3 +1,11 @@
+## [1.24.1] -- 2026-05-28
+
+### Fixed: declare openpyxl as a dependency (Excel reading)
+
+v1.24.0 shipped neurotcs.io with Excel support but did not declare openpyxl,
+which pandas needs to read .xlsx. On a clean install (and CI) read_tables(*.xlsx)
+raised ImportError. Fix: add openpyxl>=3.1 to [project.dependencies] plus a
+fail-closed UnsupportedFormatError if it is ever absent.
 # Changelog
 
 All notable changes to NeuroTCS are documented here.
