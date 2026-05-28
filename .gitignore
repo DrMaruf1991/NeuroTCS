@@ -1,0 +1,79 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Test / coverage artifacts
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# mypy / ruff
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# Local data / PHI — NEVER commit clinical data
+adni_work/
+*.rda
+*.csv
+*.xlsx
+*.parquet
+*.jsonl
+data/
+private/
+
+# But keep example/test fixtures
+!tests/fixtures/*.csv
+!tests/fixtures/*.yaml
