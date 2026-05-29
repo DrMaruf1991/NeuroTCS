@@ -1,3 +1,65 @@
+## [1.33.1] -- 2026-05-29 -- metadata-hygiene release
+
+### Fixed -- staleness sweep prompted by external audit
+
+No new functionality, no behavior change, no test regressions. This release
+addresses a metadata-staleness problem the external audit flagged plus three
+additional staleness footprints my own deeper sweep caught.
+
+Version-metadata consistency:
+- `pyproject.toml` version 1.26.0 → 1.33.1 (was unchanged across v1.27 → v1.33;
+  package metadata had not tracked the seven tagged releases).
+- `src/neurotcs/__init__.py` `__version__` 1.26.0 → 1.33.1 (this is the value
+  exposed via `neurotcs.__version__` to downstream code; the audit missed this
+  one).
+- README `Version 1.20.0` badge → 1.33.1.
+- README `Tests 1276` badge → 1437 (verified by fresh framework-only run).
+- README inline test-count references (lines 93, 107, 110) refreshed to the
+  current v1.33.1 numbers; the with-cohort scenario is honestly described as
+  cohort-version-dependent rather than asserting a fixed pass count.
+
+Deprecation-trail completeness (extended `deprecation_reason` on 3 packs to
+reflect newer successor packs added since the original v1.10 deprecation):
+- `genetics/apoe_valid_genotypes.yaml`: deprecation_reason now also points
+  `psen1_mutation` / `psen2_mutation` to `genetics/monogenic_ad_consensus@1.0.0`
+  (v1.30.0) and points `prs_alzheimer_decile` / `prs_alzheimer` to
+  `genetics/ad_prs_research_preview@0.1.0` (v1.31.0). `wgs_qc_status` /
+  `wgs_coverage_x` correctly noted as having no successor (sequencing QC is
+  out of NeuroTCS scope).
+- `csf_biomarkers/aa_2024.yaml`: deprecation_reason now also points fields
+  to their v1.30.0 / v1.31.0 successor packs (csf_ptau217_consensus,
+  csf_ptau231/nfl/gfap_research_preview, csf_synaptic_research_preview).
+- `plasma_biomarkers/aa_2024.yaml`: deprecation_reason now also points fields
+  to their v1.30.0–v1.32.0 successor packs (plasma_ptau231, plasma_ptau205,
+  plasma_gfap research_preview packs; FDA Elecsys K252163 reference in
+  plasma_amyloid_consensus@1.1.0). `plasma_total_tau` correctly noted as
+  intentionally not promoted (lower scientific priority than p-tau isoforms).
+
+### Audit-findings the patch does NOT address (each deferred for its own reason)
+
+- ECog / RAVLT / CVLT neuropsychological scales: never in v1.26 coverage
+  analysis scope. Valid future increment; needs verified anchor (Farias 2008
+  for ECog; Rey/Schmidt for RAVLT).
+- PSEN2 / APP trajectory invariants: companion to PSEN1
+  (monogenic_ad_trajectory_consistency, v1.31.0). Same anchor (ACMG/Bateman);
+  small, deserves own focused increment with empirical test coverage.
+- Longitudinal monotonicity invariants for the new biomarker classes (OCT,
+  DTI, ASL, plasma GFAP, plasma p-tau205): listed in v1.33.0 CHANGELOG as
+  next-roadmap; deferred.
+- Cerebrovascular co-pathology grades + Braak α-synuclein 0–VI staging:
+  explicitly deferred in copathology_consensus.yaml notes pending in-session
+  citation verification (research discipline, not omission). Unchanged.
+- Plasma total tau: audit itself agrees leaving it is reasonable. Unchanged.
+
+### What the audit got wrong
+
+The audit claimed the 5 deprecated packs lacked superseded notes; the schema
+actually requires at least one of `deprecated_in_favor_of` or
+`deprecation_reason`, and all 5 had one of those from earlier versions. The
+real issue (which the audit framed unclearly) was that the v1.10-era notes
+referenced only v1.10-era successors and did not mention the newer v1.30+
+successor packs. This release fixes the actual issue.
+
 ## [1.33.0] -- 2026-05-29
 
 ### Added: DTI per-tract + SV2A UCB-J PET + sleep macro-architecture

@@ -5,8 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.20.0](https://img.shields.io/badge/version-1.20.0-success.svg)](CHANGELOG.md)
-[![Tests 1276](https://img.shields.io/badge/tests-1276%20passed-success.svg)](tests/)
+[![Version 1.33.1](https://img.shields.io/badge/version-1.33.1-success.svg)](CHANGELOG.md)
+[![Tests 1437](https://img.shields.io/badge/tests-1437%20passed-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7_FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
@@ -90,7 +90,7 @@ git clone https://github.com/DrMaruf1991/NeuroTCS.git
 cd NeuroTCS
 pip install -e .
 
-# Framework-only tests (no cohort data required) — expect 1268 passed, 0 failed
+# Framework-only tests (no cohort data required) — expect 1437 passed, 13 skipped (v1.33.1)
 python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_adni_audit.py \
     --ignore=tests/audit_core/test_real_oasis3_audit.py \
@@ -99,7 +99,7 @@ python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_miriad_fairness_audit.py \
     --ignore=tests/audit_core/test_four_cohort_triangulation.py
 
-# Full suite with cohort data (set env vars first; expect 1276 passed)
+# Full suite with cohort data (set env vars first; expect 1437+cohort tests passed, cohort-version-dependent)
 export NEUROTCS_OASIS3_CDR=/path/to/OASIS3_UDSb4_cdr.csv
 export NEUROTCS_ADNI_DXSUM_RDA=/path/to/ADNIMERGE2/data/DXSUM.rda
 export NEUROTCS_NACC_CSV=/path/to/investigator_nacc73_slim.csv
@@ -107,7 +107,7 @@ export NEUROTCS_MIRIAD_DIR=/path/to/MIRIAD_directory
 python -m pytest tests/ -q
 ```
 
-The test count is environment-dependent: **1268 passed / 21 skipped** without cohort env vars (cohort tests skip), **1276 passed / 13 skipped** with all four env vars pointing at valid files. Both outcomes are correct behavior.
+The test count is environment-dependent: **1437 passed / 13 skipped** without cohort env vars (cohort tests skip; current as of v1.33.1). With all four cohort env vars pointing at valid files, the cohort tests additionally execute and pass; the exact pass count is cohort-version-dependent. Both outcomes are correct behavior.
 
 ### Rule pack only
 
