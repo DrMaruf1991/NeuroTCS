@@ -78,8 +78,15 @@ def cmd_describe(args: argparse.Namespace) -> int:
         out = Path(args.emit_mapping)
         out.write_text(json.dumps(mapping, indent=2), encoding="utf-8")
         print(f"\nwrote mapping template -> {out}")
-        print("Edit the '<FILL:...>' placeholders, then: "
-              f"neurotcs audit {args.file} --mapping {out}")
+        cleaned = _clean_mapping(mapping)
+        if _has_placeholder(cleaned):
+            print("Some fields could not be auto-detected. Edit the '<FILL:...>' "
+                  f"placeholders, then: neurotcs audit {args.file} --mapping {out}")
+        else:
+            print("Mapping is complete (everything auto-detected). Run: "
+                  f"neurotcs audit {args.file} --mapping {out}")
+            print("Or skip the mapping entirely: "
+                  f"neurotcs audit {args.file} -o audit_out")
     return EXIT_CLEAN
 
 
@@ -446,21 +453,55 @@ def cmd_audit(args: argparse.Namespace) -> int:
     if tables is None:
         return EXIT_INPUT
 
-    try:
-        mapping = json.loads(Path(args.mapping).read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        _err(f"mapping file not found: {args.mapping}. Generate one with: "
-             f"neurotcs describe {args.file} --emit-mapping mapping.json")
-        return EXIT_INPUT
-    except json.JSONDecodeError as e:
-        _err(f"mapping file is not valid JSON: {e}")
-        return EXIT_INPUT
+    # v1.39.2: zero-config path. If --mapping is omitted, auto-scaffold one
+    # in-memory from the recognized sheet/column conventions. This is the
+    # Layer-1 "strong conventions, zero mapping" path the input contract
+    # promises -- a low-knowledge user runs `neurotcs audit file.xlsx -o out`
+    # and a conventional file just works. It NEVER silently guesses: it only
+    # auto-runs when detection is COMPLETE (no <FILL:> placeholders), it PRINTS
+    # exactly what it auto-detected, and it falls back to the explicit-mapping
+    # workflow the moment anything is ambiguous.
+    if args.mapping is None:
+        scaffold = _scaffold_mapping(describe_tables(tables))
+        mapping = _clean_mapping(scaffold)
+        if _has_placeholder(mapping) or not any(
+            k in mapping for k in ("clinical", "biological")
+        ):
+            _err(
+                "could not auto-detect a complete mapping for this file. "
+                f"Run:  neurotcs describe {args.file} --emit-mapping mapping.json  "
+                "then edit the '<FILL:...>' placeholders and re-run with "
+                "--mapping mapping.json. (See INPUT_CONTRACT.md for the recognized "
+                "sheet and column names.)"
+            )
+            return EXIT_INPUT
+        if not args.quiet:
+            print("# auto-detected mapping (no --mapping given):")
+            for axis in ("clinical", "biological"):
+                if axis in mapping:
+                    sp = mapping[axis]
+                    vd = sp.get("visit_date") or "(derived from visit order)"
+                    print(f"  {axis}: sheet '{sp['sheet']}' "
+                          f"subject_id={sp['subject_id']} visit={sp['visit']} "
+                          f"visit_date={vd} state={sp['state']}")
+            print("  (to override, generate and edit a mapping with "
+                  "`neurotcs describe ... --emit-mapping mapping.json`)")
+    else:
+        try:
+            mapping = json.loads(Path(args.mapping).read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            _err(f"mapping file not found: {args.mapping}. Generate one with: "
+                 f"neurotcs describe {args.file} --emit-mapping mapping.json")
+            return EXIT_INPUT
+        except json.JSONDecodeError as e:
+            _err(f"mapping file is not valid JSON: {e}")
+            return EXIT_INPUT
 
-    mapping = _clean_mapping(mapping)
-    if _has_placeholder(mapping):
-        _err("mapping still contains <FILL:...> placeholders -- edit them before "
-             "auditing (the auditor will not guess column names).")
-        return EXIT_INPUT
+        mapping = _clean_mapping(mapping)
+        if _has_placeholder(mapping):
+            _err("mapping still contains <FILL:...> placeholders -- edit them before "
+                 "auditing (the auditor will not guess column names).")
+            return EXIT_INPUT
 
     submission_warnings: list[str] = []
     try:
@@ -636,7 +677,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     a = sub.add_parser("audit", help="audit a dataset and emit a signed bundle")
     a.add_argument("file")
-    a.add_argument("--mapping", required=True, help="mapping JSON (see 'describe --emit-mapping')")
+    a.add_argument("--mapping", default=None,
+                   help="mapping JSON (see 'describe --emit-mapping'). OMIT to "
+                        "auto-detect a mapping for conventional files (zero-config).")
     a.add_argument("-o", "--outdir", default="neurotcs_out", help="output directory")
     a.add_argument("--csv", action="store_true", help="also write flags CSV")
     a.add_argument("--svg", action="store_true", help="also write summary SVG")

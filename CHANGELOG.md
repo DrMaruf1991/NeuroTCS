@@ -1,3 +1,12 @@
+## [1.39.2] -- 2026-05-29 -- zero-config audit for low-knowledge users (no --mapping)
+
+`neurotcs audit <file> -o <out>` now works with NO --mapping: it auto-scaffolds
+a mapping in-memory from the recognized conventions, prints exactly what it
+detected, and runs. If detection is incomplete it refuses with guidance pointing
+at `describe --emit-mapping` -- never a silent guess. --mapping is now optional.
+The describe completion message no longer says "edit placeholders" when there are
+none. Independent-user path is now two commands: `audit file -o out` then
+`verify out`. Full suite: 1620 passed.
 ## [1.39.1] -- 2026-05-29 -- verify accepts the audit output directory (blind-test fix)
 
 ### The bug a blind end-to-end test exposed

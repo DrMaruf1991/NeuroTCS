@@ -228,3 +228,36 @@ def test_verify_empty_directory_reports_clearly(tmp_path, capsys):
     assert rc != 0
     err = capsys.readouterr().err
     assert "no" in err.lower() and "bundle" in err.lower()
+
+
+# ---------- v1.39.2: zero-config audit (no --mapping) for the low-knowledge user ----------
+def test_audit_without_mapping_auto_detects_and_runs(tmp_path):
+    """The independent-user path: `neurotcs audit file -o out` with NO --mapping.
+    A conventional file must audit end-to-end with zero configuration."""
+    f = tmp_path / "data.xlsx"
+    pytest.importorskip("openpyxl")
+    with pd.ExcelWriter(f, engine="openpyxl") as xw:
+        pd.DataFrame({"Sheet": ["AUDIT_CLINICAL"], "Rows": [3],
+                      "Description": ["clin"]}).to_excel(xw, sheet_name="Index", index=False)
+        pd.DataFrame({"subject_id": ["S1"] * 3, "visit": [0, 1, 2],
+                      "visit_date": pd.date_range("2020-01-01", periods=3, freq="365D").astype(str),
+                      "clinical_state": ["CN", "MCI", "AD"]}).to_excel(xw, sheet_name="AUDIT_CLINICAL", index=False)
+    outdir = tmp_path / "out"
+    rc = main(["audit", str(f), "-o", str(outdir), "--quiet"])  # NO --mapping
+    assert rc == 0  # clean monotone -> exit 0
+    assert (outdir / "data.bundle.json").exists()
+    # and verify the directory
+    assert main(["verify", str(outdir)]) == 0
+
+
+def test_audit_without_mapping_refuses_when_not_confident(tmp_path, capsys):
+    """If auto-detection can't produce a complete mapping, the zero-config path
+    must REFUSE with guidance -- never silently guess."""
+    f = tmp_path / "weird.csv"
+    # columns with no recognizable subject_id or state -> cannot auto-detect
+    pd.DataFrame({"foo": [1, 2], "bar": [3, 4]}).to_csv(f, index=False)
+    rc = main(["audit", str(f), "-o", str(tmp_path / "out"), "--quiet"])
+    assert rc != 0
+    err = capsys.readouterr().err
+    assert "could not auto-detect" in err.lower()
+    assert "describe" in err.lower()  # points user at the explicit-mapping path

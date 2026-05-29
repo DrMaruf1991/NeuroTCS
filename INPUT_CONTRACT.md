@@ -1,7 +1,7 @@
 # NeuroTCS Input Contract
 
 *Auto-generated from the framework's recognition tables in `neurotcs/cli.py`
-(v1.39.1). This file is the published contract: if your data follows it,
+(v1.39.2). This file is the published contract: if your data follows it,
 `neurotcs describe → audit → verify` runs with zero configuration.*
 
 NeuroTCS is an **auditor**. It does not measure, segment, or compute biomarker
