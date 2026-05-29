@@ -1,0 +1,90 @@
+schema_version: 1.0.0
+rangepack_id: genetics/ad_prs_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: genetics
+framework_name: 'AD polygenic risk score (PRS) - genome-wide risk aggregation excluding APOE. The Bellenguez
+  2022 EADB GWAS (Nat Genet 2022;54:412-436) provides the canonical weight set. Encoded as research_preview:
+  PRS deciles are study-specific (population, ancestry, training set, exclusion of APOE), so a single
+  cross-study consensus cutoff does NOT exist. The decile (1-10) range is definitional; the z-score envelope
+  is analytical plausibility.'
+transcribed_by: 'Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Bellenguez C et al. New insights into the
+  genetic etiology of Alzheimer''s disease and related dementias. Nat Genet 2022;54:412-436 (DOI 10.1038/s41588-022-01024-z):
+  largest AD GWAS, 75 risk loci, basis for current AD PRS. Closes the orphaned-PRS gap flagged by the
+  v1.26 coverage analysis.'
+clinical_source_authority: 'NeuroTCS audits PRS values an external pipeline computed. RESEARCH PREVIEW:
+  hard_min 1, hard_max 10 for the decile (definitional); hard_min -6, hard_max 6 for the z-score (analytical
+  plausibility, ~6 SD covers the full population distribution). NOT a diagnostic cutoff. Per-individual
+  risk interpretation requires the study''s specific decile distribution and is out of NeuroTCS scope.
+  Promotion to production blocked on cross-study cutoff existence, NOT on endorser count.'
+anchor_citation:
+  citation_text: Bellenguez C, Kucukali F, Jansen IE, et al. New insights into the genetic etiology of
+    Alzheimer's disease and related dementias. Nat Genet 2022;54(4):412-436. DOI 10.1038/s41588-022-01024-z.
+    The largest AD GWAS (n>1M), identifies 75 risk loci, basis for current AD polygenic risk scores.
+  public_url: https://doi.org/10.1038/s41588-022-01024-z
+  endorsing_bodies:
+  - European Alzheimer & Dementia Biobank (EADB) GWAS Consortium
+  - International Genomics of Alzheimer's Project (IGAP)
+  - Alzheimer Disease Genetics Consortium (ADGC)
+  citation_doi: 10.1038/s41588-022-01024-z
+measurements:
+- name: prs_alzheimer_decile
+  unit: decile
+  measurement_kind: numeric
+  description: Population decile of an AD polygenic risk score (1-10, definitional). Excludes APOE by
+    convention. Risk gradient is study-specific.
+  bounds:
+  - bound_type: hard_min
+    value: 1.0
+    citation_strength: derived
+    guideline_section: Decile range definition (lowest decile = 1)
+    citation:
+      citation_text: Deciles partition a continuous score into 10 equal-frequency bins, indexed 1-10.
+      public_url: https://doi.org/10.1038/s41588-022-01024-z
+      endorsing_bodies:
+      - EADB GWAS Consortium
+      - IGAP
+      citation_doi: 10.1038/s41588-022-01024-z
+  - bound_type: hard_max
+    value: 10.0
+    citation_strength: derived
+    guideline_section: Decile range definition (highest decile = 10)
+    citation:
+      citation_text: Deciles are 1-10 by definition.
+      public_url: https://doi.org/10.1038/s41588-022-01024-z
+      endorsing_bodies:
+      - EADB GWAS Consortium
+      - IGAP
+      citation_doi: 10.1038/s41588-022-01024-z
+- name: prs_alzheimer_zscore
+  unit: z-score
+  measurement_kind: numeric
+  description: AD PRS standardized to the reference population mean (excludes APOE). Plausibility envelope
+    spans ~6 SD.
+  bounds:
+  - bound_type: hard_min
+    value: -6.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (>6 SD below mean is implausible)
+    citation:
+      citation_text: AD PRS z-scores follow ~N(0,1) by construction in the reference panel; |z|>6 is essentially
+        impossible across the EADB/IGAP cohorts.
+      public_url: https://doi.org/10.1038/s41588-022-01024-z
+      endorsing_bodies:
+      - EADB GWAS Consortium
+      - IGAP
+      citation_doi: 10.1038/s41588-022-01024-z
+  - bound_type: hard_max
+    value: 6.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (>6 SD above mean is implausible)
+    citation:
+      citation_text: Mirror of the lower bound.
+      public_url: https://doi.org/10.1038/s41588-022-01024-z
+      endorsing_bodies:
+      - EADB GWAS Consortium
+      - IGAP
+      citation_doi: 10.1038/s41588-022-01024-z
+notes: Decile 1-10 is definitional; z-score envelope is analytical. Risk interpretation per-decile is
+  study-specific; NeuroTCS only validates the value falls inside the defined/plausible range.

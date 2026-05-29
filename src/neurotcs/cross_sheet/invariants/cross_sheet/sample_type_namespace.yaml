@@ -1,0 +1,81 @@
+schema_version: 1.0.0
+invariantpack_id: cross_sheet/sample_type_namespace@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: sample_type_namespace
+framework_name: 'Cross-sheet sample-type namespace coherence: when a biofluid analyte (e.g. Abeta42) is
+  reported, the value must fall in the range of the declared sample_type (CSF vs plasma). Closes the sample-type
+  namespace gap from the v1.26 coverage analysis - a CSF measurement accidentally in the plasma range
+  (or vice versa) is a critical data-entry error class.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. CSF Abeta42 typical 200-3000 pg/mL; plasma
+  Abeta42 typical 5-30 pg/mL (~50-100x lower) per AA-2024 biomarker framework (Jack et al. 2024, Alz &
+  Dem) and FDA-cleared Lumipulse CSF + plasma Abeta42 assays.
+clinical_source_authority: 'This pack encodes a Layer 3 sample-type CONSISTENCY check: when sample_type==''CSF'',
+  Abeta42 must be in the CSF range; when sample_type==''plasma'', Abeta42 must be in the plasma range.
+  The pack does NOT encode a diagnostic cutoff; it audits whether the value''s magnitude is consistent
+  with the declared biofluid namespace. RESEARCH PREVIEW: the cross-fluid magnitude ratio is well-established
+  (~50-100x) but a quantitative cross-fluid consensus threshold is not formally codified by an international
+  body.'
+anchor_citation:
+  citation_pmid: '38934362'
+  citation_doi: 10.1002/alz.13859
+  citation_text: 'Jack CR Jr et al. Revised criteria for diagnosis and staging of Alzheimer''s disease:
+    Alzheimer''s Association Workgroup. Alz & Dem 2024;20(8):5143-5169 (PMID 38934362). The AA-2024 biomarker
+    framework encodes CSF and plasma as distinct namespaces with characteristic concentration ranges;
+    Lumipulse FDA-cleared CSF Abeta42 (K212622) operates at hundreds-to-thousands pg/mL while Lumipulse
+    plasma Abeta42/40 (May 2025 clearance) operates at single-digit to tens pg/mL.'
+  public_url: https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859
+  endorsing_bodies:
+  - Alzheimer's Association 2024 Workgroup (Jack 2024)
+  - FDA (Lumipulse CSF K212622)
+  - FDA (Lumipulse plasma May 2025)
+invariants:
+- name: abeta42_value_consistent_with_sample_type
+  description: Reported Abeta42 must fall in the range of the declared sample_type. CSF Abeta42 spans
+    ~200-3000 pg/mL; plasma Abeta42 spans ~5-30 pg/mL. A CSF value in the plasma range, or vice versa,
+    indicates a critical data-entry error (wrong sheet, wrong analyte mapped).
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  - visit_id
+  condition:
+    type: value_range_conditional
+    source_sheet: biomarkers
+    source_field: sample_type
+    cases:
+    - source_value: CSF
+      target_sheet: biomarkers
+      target_field: abeta42_pgml
+      target_range:
+        lo: 200.0
+        hi: 3000.0
+    - source_value: plasma
+      target_sheet: biomarkers
+      target_field: abeta42_pgml
+      target_range:
+        lo: 5.0
+        hi: 30.0
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: CSF vs plasma Abeta42 magnitudes per AA-2024 biomarker framework and FDA-cleared
+    Lumipulse CSF + plasma Abeta42 assays. Wide cross-fluid ratio (~50-100x); namespace swap is a definitive
+    coding error.
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: 'CSF Abeta42 (Lumipulse K212622): typical adult range ~200-3000 pg/mL. Plasma Abeta42
+      (Lumipulse May 2025 clearance): typical adult range ~5-30 pg/mL. The two namespaces differ by ~50-100x;
+      a CSF value in the plasma range or vice versa is biologically impossible.'
+    public_url: https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859
+    endorsing_bodies:
+    - Alzheimer's Association 2024 Workgroup (Jack 2024)
+    - FDA (Lumipulse CSF K212622)
+    - FDA (Lumipulse plasma May 2025)
+    - BioFINDER
+    - ADNI
+notes: 'RESEARCH PREVIEW: magnitudes are well-established but no single international consensus publication
+  codifies a quantitative cross-fluid threshold. flag_severity=''warning'' (advisory). Promotion to production
+  after dedicated cross-fluid magnitude verification pass.'

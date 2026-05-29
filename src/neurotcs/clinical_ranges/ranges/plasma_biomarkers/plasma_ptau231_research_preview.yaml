@@ -1,0 +1,69 @@
+schema_version: 1.0.0
+rangepack_id: plasma_biomarkers/plasma_ptau231_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: plasma_biomarkers
+framework_name: 'Plasma p-tau231 - AA-2024 ATX(N) tau marker, AD continuum early indicator (rises before
+  amyloid PET positivity per Ashton 2021 / Milà-Alomà 2022). Architectural SPLIT in v1.31.0: plasma p-tau231
+  now has its own pack (previously co-located with csf_ptau231_research_preview, an awkward namespace
+  per the v1.26 coverage analysis). RESEARCH PREVIEW: plausibility envelope, NOT a cutoff; no >=2-body
+  international consensus diagnostic threshold as of 2026.'
+transcribed_by: 'Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Plausibility envelope grounded in Simoa plasma
+  p-tau231 cohort distributions: controls ~14 pg/mL (CKD comparison 13.9 [10.5-16.3]); elevated in symptomatic
+  AD; ~7-9x dynamic range across the AD continuum. Ashton NJ et al. Acta Neuropathol 2021;141:709-724
+  establishes plasma p-tau231 as a preclinical AD biomarker.'
+clinical_source_authority: 'NeuroTCS audits a plasma p-tau231 value an assay produced. RESEARCH PREVIEW:
+  hard_min 0 (concentration cannot be negative); hard_max 200 pg/mL (generous analytical ceiling well
+  above reported cohort distributions; observed values typically single-digit to tens of pg/mL). NOT a
+  diagnostic cutoff. audit_clinical_ranges() refuses research_preview packs for production audit.'
+anchor_citation:
+  citation_text: Milà-Alomà M, Ashton NJ, Shekari M, et al. Plasma p-tau231 and p-tau217 as state markers
+    of amyloid-beta pathology in preclinical Alzheimer's disease. Nat Med 2022;28:1797-1801. PMID 35158308.
+    Plasma p-tau231 rises early in the AD continuum, prior to amyloid PET positivity. Used here to ground
+    an analytical plausibility envelope, not a cutoff.
+  public_url: https://pubmed.ncbi.nlm.nih.gov/35158308/
+  endorsing_bodies:
+  - BioFINDER
+  - TRIAD
+  - ADNI
+  - Ashton 2021 Acta Neuropathol (plasma p-tau231 preclinical AD)
+  citation_pmid: '35158308'
+measurements:
+- name: plasma_ptau231_pgml
+  unit: pg/mL
+  description: 'Plasma phosphorylated-tau 231 (Simoa or equivalent). Research-grade: no consensus diagnostic
+    cutoff as of 2026. Rises EARLY in the AD continuum (before amyloid PET +).'
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: Plasma p-tau231 is a concentration; cannot be negative. Simoa cohort distributions
+        (BioFINDER, TRIAD, ADNI) start at single-digit pg/mL in controls.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/35158308/
+      endorsing_bodies:
+      - BioFINDER
+      - TRIAD
+      - ADNI
+      citation_pmid: '35158308'
+  - bound_type: hard_max
+    value: 200.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling (research_preview; not a cutoff)
+    citation:
+      citation_text: Reported plasma p-tau231 cohort distributions span single-digit to tens of pg/mL
+        in controls and AD across BioFINDER/TRIAD/ADNI (Milà-Alomà 2022, Ashton 2021). A 200 pg/mL ceiling
+        is a generous analytical plausibility bound flagging only impossible values - NOT a diagnostic
+        cutoff.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/35158308/
+      endorsing_bodies:
+      - BioFINDER
+      - TRIAD
+      - ADNI
+      - Ashton 2021 Acta Neuropathol
+      citation_pmid: '35158308'
+notes: 'Architectural split in v1.31.0: plasma p-tau231 is now in its own plasma_biomarkers pack; the
+  previous csf_biomarkers/csf_ptau231_research_preview now contains only CSF measurements.'

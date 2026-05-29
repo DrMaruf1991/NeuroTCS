@@ -1,3 +1,66 @@
+## [1.31.0] -- 2026-05-29
+
+### Added: architectural split + AD-PRS + CSF synaptic panel + three Layer-3 invariants
+
+This batch closes the highest-value items from the v1.26 coverage analysis that
+can be fully grounded with verified PMIDs/DOIs in one increment. Remaining
+biomarker plausibility packs (OCT/OCTA, next-gen tau PET, plasma p-tau205, DTI,
+ASL, SV2A, sleep) follow the identical template -- each deferred until its own
+concentration-range / reference citation is verified, never fabricated.
+
+Range packs (research_preview):
+- `plasma_biomarkers/plasma_ptau231_research_preview` -- architectural split:
+  plasma p-tau231 now has its own pack (previously co-located with the CSF
+  pack, an awkward namespace the v1.26 analysis flagged). Plausibility envelope
+  0-200 pg/mL grounded in Simoa cohort distributions (Milà-Alomà et al. Nat Med
+  2022, PMID 35158308). NOT a diagnostic cutoff.
+- `genetics/ad_prs_research_preview` -- AD polygenic risk score (closes the
+  orphaned-PRS gap). `prs_alzheimer_decile` 1-10 (definitional) and
+  `prs_alzheimer_zscore` -6 to +6 (analytical). Anchored on the Bellenguez 2022
+  EADB GWAS (Nat Genet 54:412-436, DOI 10.1038/s41588-022-01024-z), the
+  canonical AD PRS weight set. Decile cutoffs are study-specific; no
+  cross-study consensus threshold exists.
+- `csf_biomarkers/csf_synaptic_research_preview` -- CSF synaptic/microglial
+  panel: SNAP-25, neurogranin, GAP-43, YKL-40 (ng/mL), sTREM2. AA-2024 ATX(N)
+  S/X candidates. Plausibility envelopes grounded in Ma et al. 2020 CABLE
+  (Mol Neurodegener 15:25, DOI 10.1186/s13024-020-00374-8), Heslegrave 2016,
+  Wellington 2015, Brinkmalm 2014.
+
+Range pack edit (architectural split):
+- `csf_biomarkers/csf_ptau231_research_preview` -- removed `plasma_ptau231_pgml`
+  measurement (now lives in the new plasma pack). The CSF pack retains
+  `csf_ptau231_pgml` only.
+
+Layer-3 cross-sheet invariant packs (research_preview, advisory):
+- `cross_sheet/sample_type_namespace` -- CSF vs plasma Aβ42 namespace coherence
+  (value_range_conditional). Closes the "sample-type namespace cross-check"
+  gap. Anchored on Jack 2024 AA-2024 + FDA Lumipulse CSF/plasma assays.
+  Warning severity.
+- `cross_sheet/extended_clinical_coherence` -- two new internal-consistency
+  checks complementing the production `ad_clinical_coherence` pack:
+  (1) CN state requires CDR-SB <= 4 (Morris 1993 PMID 8232972 -- closes the
+  "no CDR-SB threshold check" gap), (2) elevated CSF p-tau217 with negative
+  tau-PET discordance (Jack 2024 A->T2 ordering -- closes the
+  "no tau-PET<->CSF-p-tau217 discordance check" gap). Conservative thresholds,
+  warning severity, advisory.
+- `cross_sheet/monogenic_ad_trajectory_consistency` -- PSEN1 pathogenic
+  carrier expected ADAD trajectory pattern (categorical_implies_trajectory_
+  pattern, elevated_risk_marker, population baseline 0.99). Companion to the
+  v1.30.0 monogenic_ad_consensus production range pack and the existing APOE4
+  trajectory invariant. info severity, advisory only.
+
+Census: 21 production / 11 research_preview / 6 deprecated / 38 total range
+packs; +3 cross-sheet invariant packs. Tests: +23.
+
+### Still staged (each needs its own verified anchor)
+
+Research_preview plausibility packs to add next: retinal OCT/OCTA (RNFL,
+GC-IPL, FAZ); next-gen tau PET (MK-6240, florzolotau, PI-2620 SUVR); plasma
+p-tau205; DTI per-tract FA/MD; ASL CBF; SV2A UCB-J SUVR; sleep/actigraphy.
+Each follows the established research_preview plausibility-envelope template;
+each needs a verified concentration-range or SUVR-range reference citation
+before encoding (no fabricated ceilings).
+
 ## [1.30.0] -- 2026-05-29
 
 ### Changed: production evidence model -- endorser floor 5 -> 2 (owner-approved)

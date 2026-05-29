@@ -1,0 +1,107 @@
+schema_version: 1.0.0
+invariantpack_id: cross_sheet/extended_clinical_coherence@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: extended_clinical_coherence
+framework_name: 'Layer 3 EXTENSIONS to ad_clinical_coherence: CDR Sum-of-Boxes (CDR-SB) threshold for
+  CN; and tau-PET <-> CSF p-tau217 discordance. Closes two gaps from the v1.26 coverage analysis (no CDR-SB
+  check; no tau-PET <-> CSF p-tau217 discordance check). Conservative thresholds, research_preview, warning
+  severity.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. CDR-SB scoring per Morris 1993; tau-PET <->
+  CSF p-tau217 discordance per Jack 2024 AA-2024 (A->T2 ordering, sec 4.3). Conservative thresholds chosen
+  well inside published distributions to minimize false positives.
+clinical_source_authority: 'These extend the existing ad_clinical_coherence pack (production) with two
+  additional internal-consistency checks the v1.26 coverage analysis flagged as missing. RESEARCH PREVIEW:
+  CSF p-tau217 diagnostic cutoffs are assay/cohort-specific (no consensus threshold; per csf_ptau217_consensus
+  pack notes), so the tau-PET discordance threshold is conservative and advisory.'
+anchor_citation:
+  citation_pmid: '38934362'
+  citation_doi: 10.1002/alz.13859
+  citation_text: 'Jack CR Jr et al. AA-2024 Revised criteria. Alz & Dem 2024 (PMID 38934362). Section
+    4.3 establishes A -> T2 -> N -> C ordering: amyloid abnormality precedes tau. CDR-SB ranges per Morris
+    JC. Neurology 1993;43:2412-2414 (PMID 8232972). CDR-SB 0 = normal; >0.5 indicates questionable impairment
+    or worse.'
+  public_url: https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859
+  endorsing_bodies:
+  - Alzheimer's Association 2024 Workgroup (Jack 2024)
+  - Morris 1993 (CDR-SB scoring)
+invariants:
+- name: cn_state_requires_non_demented_cdr_sb
+  description: A visit predicted as CN must carry a CDR-SB consistent with normal cognition. CDR-SB 0-0.5
+    is normal (Morris 1993); >=4.5 indicates mild dementia or worse. A CN visit with CDR-SB >= 4.5 is
+    internally contradictory. Conservative threshold (research_preview).
+  sheets_required:
+  - role: predictions
+    required: true
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  - visit_id
+  condition:
+    type: value_range_conditional
+    source_sheet: predictions
+    source_field: predicted_state
+    cases:
+    - source_value: CN
+      target_sheet: biomarkers
+      target_field: cdr_sb_sum_boxes
+      target_range:
+        lo: 0.0
+        hi: 4.0
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Morris 1993 CDR-SB: 0=normal, 0.5=questionable impairment, 4.5-9=mild dementia.
+    CN classification with CDR-SB >= 4.5 is internally contradictory.'
+  citation:
+    citation_pmid: '8232972'
+    citation_doi: 10.1212/wnl.43.11.2412-a
+    citation_text: 'Morris JC. The Clinical Dementia Rating (CDR): scoring rules. Neurology 1993;43:2412-2414
+      (PMID 8232972). The sum-of-boxes (CDR-SB) ranges 0-18; >=4.5 indicates mild dementia or worse.'
+    public_url: https://www.neurology.org/doi/10.1212/WNL.43.11.2412-a
+    endorsing_bodies:
+    - Morris 1993 (CDR-SB scoring, Neurology)
+    - O'Bryant 2008 (CDR-SB cutoffs)
+- name: elevated_csf_ptau217_with_negative_tau_pet_discordance
+  description: 'Markedly elevated CSF p-tau217 WITH a tau-PET-negative read is biomarker-discordant (Jack
+    2024 AA-2024 A->T2 ordering; T1 fluid tau abnormality typically precedes T2 imaging tau). Conservative
+    thresholds: CSF p-tau217 >= 250 pg/mL (clearly elevated on Simoa across cohorts) with tau_pet_neocortical_uptake_ratio_flortaucipir
+    < 1.20 (clearly below the typical tau-PET-positive range). research_preview, advisory.'
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  - visit_id
+  condition:
+    type: numeric_conflict
+    source_sheet: biomarkers
+    source_field: csf_ptau217_pgml
+    source_threshold: 250.0
+    source_direction: ge
+    target_sheet: biomarkers
+    target_field: tau_pet_neocortical_uptake_ratio_flortaucipir
+    target_threshold: 1.2
+    target_direction: lt
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'AA-2024 (Jack 2024) sec 4.3: amyloid (A) precedes tau (T2). Markedly elevated CSF
+    p-tau217 (T1) with negative tau-PET (T2) is unusual; conservative thresholds from multi-cohort Simoa
+    and flortaucipir distributions.'
+  citation:
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+    citation_text: Jack 2024 AA-2024 sec 4.3 establishes A -> T2 ordering. CSF p-tau217 Simoa typical
+      elevated range from cohort distributions; flortaucipir SUVR >= 1.3 is typical tau-PET-positive threshold
+      across cohorts.
+    public_url: https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859
+    endorsing_bodies:
+    - AA-2024 Workgroup (Jack 2024)
+    - BioFINDER
+    - ADNI
+    - Janelidze (CSF p-tau217 Simoa)
+notes: RESEARCH PREVIEW. Two new internal-consistency checks complementing ad_clinical_coherence. Conservative
+  thresholds; warning severity; advisory only. Promotion to production gated on CSF p-tau217 diagnostic-cutoff
+  consensus emerging - which is itself blocked on cross-assay harmonization (per csf_ptau217_consensus
+  pack documentation).

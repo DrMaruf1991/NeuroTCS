@@ -160,7 +160,7 @@ class TestPacksListAccurate:
         downgrades."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
-        assert len(preview) == 8
+        assert len(preview) == 11
         names = {p["name"] for p in preview}
         assert names == {
             "mri_volumetrics/freesurfer_extended",
@@ -171,6 +171,10 @@ class TestPacksListAccurate:
             "plasma_biomarkers/plasma_gfap_research_preview",  # NEW v1.29.0
             "csf_biomarkers/csf_gfap_research_preview",  # NEW v1.30.0
             "csf_biomarkers/csf_nfl_research_preview",  # NEW v1.30.0
+            # v1.31.0
+            "plasma_biomarkers/plasma_ptau231_research_preview",
+            "genetics/ad_prs_research_preview",
+            "csf_biomarkers/csf_synaptic_research_preview",
         }
 
     def test_six_deprecated_packs(self):

@@ -1,0 +1,176 @@
+schema_version: 1.0.0
+rangepack_id: csf_biomarkers/csf_synaptic_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: csf_biomarkers
+framework_name: 'CSF synaptic and microglial panel: SNAP-25, neurogranin, GAP-43, YKL-40, sTREM2. AA-2024
+  ATX(N) candidates (S-marker / X-marker). Closes the synaptic-panel P2 gap from the v1.26 coverage analysis.
+  RESEARCH PREVIEW: cohort distributions known but no consensus cutoffs.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Plausibility envelopes grounded in Ma 2020
+  CABLE study CSF sTREM2 (Mol Neurodegener 2020;15:25, DOI 10.1186/s13024-020-00374-8), Heslegrave 2016
+  (Mol Neurodegener 2016;11:3), Wellington 2015 (Neurology) on CSF neurogranin/YKL-40, and Brinkmalm 2014
+  on CSF SNAP-25. CSF sTREM2 typically thousands of pg/mL; CSF YKL-40 typically hundreds of ng/mL; CSF
+  SNAP-25/neurogranin/GAP-43 typically tens-hundreds of pg/mL.
+clinical_source_authority: NeuroTCS audits CSF synaptic-marker values produced by ELISA/mass-spec assays.
+  RESEARCH PREVIEW plausibility envelopes; NOT diagnostic cutoffs. No internationally agreed quantitative
+  cutoffs as of 2026 (FNIH consortium characterization ongoing). audit_clinical_ranges() refuses these
+  for production.
+anchor_citation:
+  citation_text: 'Ma LZ, Tan L, Bi YL, et al. Dynamic changes of CSF sTREM2 in preclinical Alzheimer''s
+    disease: the CABLE study. Mol Neurodegener 2020;15:25. DOI 10.1186/s13024-020-00374-8. CSF sTREM2
+    trajectory across NIA-AA preclinical stages (CABLE n=659).'
+  public_url: https://doi.org/10.1186/s13024-020-00374-8
+  endorsing_bodies:
+  - CABLE cohort (China)
+  - ADNI
+  - BioFINDER
+  - Heslegrave 2016 Mol Neurodegener (sTREM2)
+  - Wellington 2015 Neurology (Ng, YKL-40)
+  citation_doi: 10.1186/s13024-020-00374-8
+measurements:
+- name: csf_snap25_pgml
+  unit: pg/mL
+  measurement_kind: numeric
+  description: CSF SNAP-25 (synaptic vesicle protein). Research-grade synaptic biomarker.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: Concentration cannot be negative; CSF SNAP-25 typically tens to low-hundreds of pg/mL.
+      public_url: https://doi.org/10.1186/s13024-020-00374-8
+      endorsing_bodies:
+      - Brinkmalm 2014 (SNAP-25 mass-spec)
+      - ADNI
+      - BioFINDER
+      citation_doi: 10.1186/s13024-020-00374-8
+  - bound_type: hard_max
+    value: 10000.0
+    citation_strength: derived
+    guideline_section: Generous analytical ceiling above reported AD distributions
+    citation:
+      citation_text: Reported CSF SNAP-25 distributions are well below 10000 pg/mL; this ceiling flags
+        only impossible/contaminated values.
+      public_url: https://doi.org/10.1186/s13024-020-00374-8
+      endorsing_bodies:
+      - Brinkmalm 2014
+      - ADNI
+      - BioFINDER
+      citation_doi: 10.1186/s13024-020-00374-8
+- name: csf_neurogranin_pgml
+  unit: pg/mL
+  measurement_kind: numeric
+  description: CSF neurogranin (postsynaptic protein). Increased in AD (Wellington 2015).
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: CSF neurogranin is a concentration; typically tens to low-hundreds pg/mL.
+      public_url: https://doi.org/10.1186/s13024-020-00374-8
+      endorsing_bodies:
+      - Wellington 2015 Neurology
+      - ADNI
+      - BioFINDER
+      citation_doi: 10.1186/s13024-020-00374-8
+  - bound_type: hard_max
+    value: 5000.0
+    citation_strength: derived
+    guideline_section: Generous analytical ceiling
+    citation:
+      citation_text: Reported CSF Ng distributions are well below 5000 pg/mL.
+      public_url: https://doi.org/10.1186/s13024-020-00374-8
+      endorsing_bodies:
+      - Wellington 2015 Neurology
+      - ADNI
+      citation_doi: 10.1186/s13024-020-00374-8
+- name: csf_gap43_pgml
+  unit: pg/mL
+  measurement_kind: numeric
+  description: CSF growth-associated protein 43 (presynaptic axonal growth marker).
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: CSF GAP-43 typically hundreds to low-thousands pg/mL across cohorts.
+      public_url: https://doi.org/10.1186/s13024-020-00374-8
+      endorsing_bodies:
+      - ADNI
+      - BioFINDER
+      - Sandelius 2019 Neurology
+      citation_doi: 10.1186/s13024-020-00374-8
+  - bound_type: hard_max
+    value: 50000.0
+    citation_strength: derived
+    guideline_section: Generous analytical ceiling
+    citation:
+      citation_text: Reported CSF GAP-43 distributions are well below 50000 pg/mL.
+      public_url: https://doi.org/10.1186/s13024-020-00374-8
+      endorsing_bodies:
+      - ADNI
+      - BioFINDER
+      citation_doi: 10.1186/s13024-020-00374-8
+- name: csf_ykl40_ngml
+  unit: ng/mL
+  measurement_kind: numeric
+  description: 'CSF YKL-40 / CHI3L1 (neuroinflammation marker). Note units: ng/mL.'
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: CSF YKL-40 typically tens to hundreds of ng/mL in adults; increased in AD.
+      public_url: https://doi.org/10.1186/s13024-020-00374-8
+      endorsing_bodies:
+      - Wellington 2015 Neurology
+      - ADNI
+      - BioFINDER
+      citation_doi: 10.1186/s13024-020-00374-8
+  - bound_type: hard_max
+    value: 2000.0
+    citation_strength: derived
+    guideline_section: Generous analytical ceiling (ng/mL)
+    citation:
+      citation_text: Reported CSF YKL-40 across cohorts rarely exceeds a few hundred ng/mL.
+      public_url: https://doi.org/10.1186/s13024-020-00374-8
+      endorsing_bodies:
+      - Wellington 2015 Neurology
+      - ADNI
+      citation_doi: 10.1186/s13024-020-00374-8
+- name: csf_strem2_pgml
+  unit: pg/mL
+  measurement_kind: numeric
+  description: CSF soluble TREM2 (microglial activity marker). AA-2024 ATX(N) X candidate.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: CSF sTREM2 typically low-thousands pg/mL in adults; Ma 2020 CABLE study trajectories
+        across NIA-AA preclinical stages.
+      public_url: https://doi.org/10.1186/s13024-020-00374-8
+      endorsing_bodies:
+      - CABLE cohort
+      - Heslegrave 2016
+      - ADNI
+      citation_doi: 10.1186/s13024-020-00374-8
+  - bound_type: hard_max
+    value: 50000.0
+    citation_strength: derived
+    guideline_section: Generous analytical ceiling
+    citation:
+      citation_text: Reported CSF sTREM2 distributions across cohorts well below 50000 pg/mL.
+      public_url: https://doi.org/10.1186/s13024-020-00374-8
+      endorsing_bodies:
+      - CABLE cohort
+      - ADNI
+      citation_doi: 10.1186/s13024-020-00374-8
+notes: RESEARCH PREVIEW plausibility envelopes; no consensus diagnostic cutoffs. Promotion blocked on
+  cutoff existence, not endorser count. Closes the synaptic-panel gap from the v1.26 coverage analysis.

@@ -1,0 +1,77 @@
+schema_version: 1.0.0
+invariantpack_id: cross_sheet/monogenic_ad_trajectory_consistency@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: monogenic_ad_trajectory_consistency
+framework_name: 'Cross-sheet trajectory pattern consistency for monogenic AD (PSEN1 / PSEN2 / APP pathogenic
+  carriers): expected autosomal-dominant AD trajectory (near-100%% penetrance, early symptomatic onset
+  typically by age 60). Companion to genotype_phenotype_consistency (APOE4). Closes the PSEN1/PSEN2 trajectory
+  invariant gap from the v1.26 coverage analysis.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. ACMG/AMP 2015 (Richards, Genet Med PMID 25741868)
+  defines pathogenic variant classification. PSEN1/PSEN2/APP pathogenic variants cause autosomal-dominant
+  AD with near-complete penetrance and characteristic early onset (DIAN; Bateman 2012 NEJM 367:795-804).
+  info severity, advisory only - mirrors the v1.11.0a3 discipline for trajectory-pattern invariants.
+clinical_source_authority: This pack encodes a Layer 3 invariant linking the new monogenic_ad_consensus
+  genetic status (v1.30.0) to observed longitudinal trajectory phenotype. RESEARCH PREVIEW with flag_severity='info'
+  (advisory only). Mirrors the existing genotype_phenotype_consistency APOE4 invariant.
+anchor_citation:
+  citation_pmid: '25741868'
+  citation_doi: 10.1038/gim.2015.30
+  citation_text: Richards S, Aziz N, Bale S, et al. ACMG/AMP Standards and guidelines for the interpretation
+    of sequence variants. Genet Med 2015;17(5):405-424 (PMID 25741868). Pathogenic PSEN1/PSEN2/APP variants
+    are the established cause of autosomal-dominant AD (ADAD) per DIAN (Bateman RJ et al. NEJM 2012;367:795-804).
+    ADAD carriers show near-100%% penetrance with characteristic early-onset MCI/AD trajectory (PSEN1
+    mean ~46 yr; PSEN2/APP somewhat later).
+  public_url: https://doi.org/10.1038/gim.2015.30
+  endorsing_bodies:
+  - ACMG
+  - AMP
+  - ClinGen
+  - DIAN (Bateman 2012 NEJM)
+invariants:
+- name: psen1_pathogenic_expected_ad_dementia_trajectory
+  description: If the patients sheet declares psen1_mutation_status == 'pathogenic', the predictions sheet
+    should show MCI/AD onset by typical PSEN1 age window (mean ~46 yr per DIAN). A PSEN1 pathogenic carrier
+    observed cognitively normal at age 60+ with 10+ years of follow-up is a pattern deviation from the
+    population-baseline near-100%% penetrance. info severity - the flag does NOT assert the patient is
+    wrong; it requests reviewer attention (possible incomplete-penetrance variant, data-entry error, or
+    genuine resilience).
+  sheets_required:
+  - role: patients
+    required: true
+  - role: predictions
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: categorical_implies_trajectory_pattern
+    source_sheet: patients
+    source_field: psen1_mutation_status
+    source_value: pathogenic
+    trajectory_sheet: predictions
+    pattern:
+      kind: elevated_risk_marker
+      population_baseline_rate: 0.99
+      flag_threshold: none_observed_by_age_60_with_10y_followup
+  flag_severity: info
+  citation_strength: international_consensus
+  guideline_section: 'ACMG/AMP Richards 2015 + DIAN Bateman 2012: PSEN1 pathogenic carriers show near-100%%
+    penetrance with characteristic age of onset (mean ~46 yr, range typically 35-55 yr). A PSEN1 pathogenic
+    carrier still CN at age 60 with substantial follow-up is exceptional and warrants human review.'
+  citation:
+    citation_pmid: '22784036'
+    citation_doi: 10.1056/NEJMoa1202753
+    citation_text: 'Bateman RJ, Xiong C, Benzinger TLS, et al. Clinical and biomarker changes in dominantly
+      inherited Alzheimer''s disease. N Engl J Med 2012;367(9):795-804. PMID 22784036. The DIAN natural-history
+      cohort of ADAD (PSEN1, PSEN2, APP) carriers establishes the characteristic biomarker and clinical
+      trajectory: amyloid abnormality ~25 yr before expected symptom onset, MCI/AD by mean parental age
+      of onset. PSEN1 pathogenic carriers show near-100%% penetrance.'
+    public_url: https://www.nejm.org/doi/full/10.1056/NEJMoa1202753
+    endorsing_bodies:
+    - DIAN consortium (Bateman 2012 NEJM)
+    - ACMG/AMP (Richards 2015 variant classification)
+    - Alzheimer's Association
+notes: RESEARCH PREVIEW. info severity - advisory only. Companion to the v1.30.0 monogenic_ad_consensus
+  production range pack and to the existing genotype_phenotype_consistency (APOE4) pack. Future iterations
+  may add PSEN2/APP invariants once cohort calibration data is available.
