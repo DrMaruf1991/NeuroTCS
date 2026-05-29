@@ -160,7 +160,7 @@ class TestPacksListAccurate:
         downgrades."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
-        assert len(preview) == 15
+        assert len(preview) == 18
         names = {p["name"] for p in preview}
         assert names == {
             "mri_volumetrics/freesurfer_extended",
@@ -180,6 +180,10 @@ class TestPacksListAccurate:
             "tau_pet/next_gen_tau_research_preview",
             "plasma_biomarkers/plasma_ptau205_research_preview",
             "perfusion/asl_cbf_research_preview",
+            # v1.33.0 - closes all remaining v1.26 coverage analysis biomarker gaps
+            "dti/microstructure_research_preview",
+            "synaptic_pet/sv2a_research_preview",
+            "sleep/macro_architecture_research_preview",
         }
 
     def test_six_deprecated_packs(self):

@@ -191,7 +191,7 @@ class TestRosterCounts:
         poor)."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
-        assert len(preview) == 15
+        assert len(preview) == 18
         names = {p["name"] for p in preview}
         assert names == {
             "mri_volumetrics/freesurfer_extended",
@@ -211,6 +211,10 @@ class TestRosterCounts:
             "tau_pet/next_gen_tau_research_preview",
             "plasma_biomarkers/plasma_ptau205_research_preview",
             "perfusion/asl_cbf_research_preview",
+            # v1.33.0 - closes all remaining v1.26 coverage analysis biomarker gaps
+            "dti/microstructure_research_preview",
+            "synaptic_pet/sv2a_research_preview",
+            "sleep/macro_architecture_research_preview",
         }
 
     def test_six_deprecated_packs(self) -> None:
@@ -230,7 +234,7 @@ class TestRosterCounts:
         v1.28.0: +3 production packs (neuropathology ADNC + co-pathology +
         FAQ/GDS) -> 30 total (19 prod + 5 preview + 6 deprecated)."""
         packs = list_rangepacks()
-        assert len(packs) == 42  # 21 prod + 15 preview + 6 deprecated
+        assert len(packs) == 45  # 21 prod + 18 preview + 6 deprecated
 
 
 class TestDeprecationSchemaValidator:

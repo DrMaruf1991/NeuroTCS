@@ -1,0 +1,142 @@
+schema_version: 1.0.0
+rangepack_id: sleep/macro_architecture_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: sleep
+framework_name: Sleep macro-architecture parameters - actigraphy and polysomnography research-grade biomarkers.
+  NREM slow-wave sleep duration, REM duration, apnea-hypopnea index (AHI), sleep efficiency. NREM SWS
+  reduction is associated with hippocampal-dependent memory deficits and AD pathology (Mander 2013 Nat
+  Neurosci). AHI per AASM scoring. RESEARCH PREVIEW envelopes.
+transcribed_by: 'Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Mander BA, Rao V, Lu B et al. ''Prefrontal
+  atrophy, disrupted NREM slow waves and impaired hippocampal-dependent memory in aging.'' Nat Neurosci
+  2013;16(3):357-364 (DOI 10.1038/nn.3324). NREM SWS in older adults typically 30-90 min/night (reduced
+  from young adult 60-120 min). REM ~60-120 min. AASM scoring manual: AHI < 5 normal, 5-15 mild, 15-30
+  moderate, >=30 severe OSA.'
+clinical_source_authority: NeuroTCS audits sleep macro-architecture values an actigraphy/PSG pipeline
+  produced. RESEARCH PREVIEW envelopes; AASM-derived AHI severity categories are descriptive, not diagnostic
+  cutoffs. audit_clinical_ranges() refuses for production audit. Promotion blocked on cohort-stratified
+  consensus cutoffs.
+anchor_citation:
+  citation_text: Mander BA, Rao V, Lu B, et al. Prefrontal atrophy, disrupted NREM slow waves and impaired
+    hippocampal-dependent memory in aging. Nat Neurosci 2013;16(3):357-364. DOI 10.1038/nn.3324. Established
+    link between NREM slow-wave activity reduction, medial prefrontal gray-matter atrophy, and impaired
+    memory consolidation in older adults.
+  public_url: https://doi.org/10.1038/nn.3324
+  endorsing_bodies:
+  - UC Berkeley Sleep and Neuroimaging Lab
+  - Walker lab
+  - Yaffe 2011 JAMA (OSA-dementia)
+  citation_doi: 10.1038/nn.3324
+measurements:
+- name: nrem_sws_duration_minutes
+  unit: min
+  measurement_kind: numeric
+  description: NREM N3 (slow-wave sleep) duration in minutes per night. Young adults 60-120 min; older
+    adults 30-90 min; reduced further in AD.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (duration non-negativity)
+    citation:
+      citation_text: Duration cannot be negative.
+      public_url: https://doi.org/10.1038/nn.3324
+      endorsing_bodies:
+      - AASM Scoring Manual
+      - Mander 2013 Nat Neurosci
+      citation_doi: 10.1038/nn.3324
+  - bound_type: hard_max
+    value: 500.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling (single night)
+    citation:
+      citation_text: A single night's NREM SWS cannot exceed 500 min (>8 hr) in any reported cohort.
+      public_url: https://doi.org/10.1038/nn.3324
+      endorsing_bodies:
+      - AASM Scoring Manual
+      - Mander 2013 Nat Neurosci
+      citation_doi: 10.1038/nn.3324
+- name: rem_sleep_duration_minutes
+  unit: min
+  measurement_kind: numeric
+  description: REM sleep duration in minutes per night. Typical adult 60-120 min (~20-25%% of TST).
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: Duration cannot be negative.
+      public_url: https://doi.org/10.1038/nn.3324
+      endorsing_bodies:
+      - AASM Scoring Manual
+      citation_doi: 10.1038/nn.3324
+  - bound_type: hard_max
+    value: 500.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling
+    citation:
+      citation_text: REM duration > 500 min/night is implausible.
+      public_url: https://doi.org/10.1038/nn.3324
+      endorsing_bodies:
+      - AASM Scoring Manual
+      citation_doi: 10.1038/nn.3324
+- name: ahi_events_per_hour
+  unit: events/hour
+  measurement_kind: numeric
+  description: Apnea-Hypopnea Index per AASM scoring. < 5 normal; 5-15 mild OSA; 15-30 moderate; >= 30
+    severe.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: Event rate cannot be negative.
+      public_url: https://doi.org/10.1038/nn.3324
+      endorsing_bodies:
+      - AASM Scoring Manual
+      - Yaffe 2011 JAMA
+      citation_doi: 10.1038/nn.3324
+  - bound_type: hard_max
+    value: 200.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling (extreme severe OSA)
+    citation:
+      citation_text: AHI > 200/hour is essentially impossible (limit ~100-120 in clinical extremes); 200
+        ceiling flags only data errors.
+      public_url: https://doi.org/10.1038/nn.3324
+      endorsing_bodies:
+      - AASM Scoring Manual
+      - Yaffe 2011 JAMA
+      citation_doi: 10.1038/nn.3324
+- name: sleep_efficiency_percent
+  unit: '%'
+  measurement_kind: numeric
+  description: Sleep efficiency = (TST / TIB) x 100. Healthy adult typically > 85%%; reduced in older
+    adults and AD.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Definitional lower bound
+    citation:
+      citation_text: Sleep efficiency is a percentage; >= 0.
+      public_url: https://doi.org/10.1038/nn.3324
+      endorsing_bodies:
+      - AASM Scoring Manual
+      citation_doi: 10.1038/nn.3324
+  - bound_type: hard_max
+    value: 100.0
+    citation_strength: derived
+    guideline_section: Definitional upper bound
+    citation:
+      citation_text: Sleep efficiency is a percentage; <= 100.
+      public_url: https://doi.org/10.1038/nn.3324
+      endorsing_bodies:
+      - AASM Scoring Manual
+      citation_doi: 10.1038/nn.3324
+notes: RESEARCH PREVIEW. New domain 'sleep'. Plausibility envelopes only; AHI severity categories descriptive
+  (AASM). Closes the sleep P2 gap from the v1.26 coverage analysis. All MIRIAD coverage items from v1.26
+  analysis now have research_preview packs.

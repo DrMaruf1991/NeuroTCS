@@ -1,3 +1,47 @@
+## [1.33.0] -- 2026-05-29
+
+### Added: DTI per-tract + SV2A UCB-J PET + sleep macro-architecture
+
+Final batch closing the v1.26 coverage-analysis biomarker gaps. All remaining
+items are now encoded as research_preview plausibility packs with verified
+PMID/DOI anchors; no fabricated ceilings.
+
+Range packs (research_preview):
+- `dti/microstructure_research_preview` -- new domain. Per-tract FA and MD for
+  AD-relevant white-matter tracts (uncinate fasciculus, cingulum bundle,
+  fornix). Six measurements. FA bounded 0-1 definitionally; MD bounded by
+  free-water diffusion at body temperature (~3 x 10^-3 mm^2/s). Anchor:
+  Acosta-Cabronero et al. PLoS ONE 2012;7(11):e49072 (DOI
+  10.1371/journal.pone.0049072 -- multi-metric DTI biomarker characterization
+  across the AD continuum, n=43).
+- `synaptic_pet/sv2a_research_preview` -- new domain. SV2A PET with [11C]UCB-J
+  in hippocampus, neocortical meta-ROI, and entorhinal cortex. DVR plausibility
+  0-10 (cerebellar reference). Anchor: Chen MK, Mecca AP, Naganawa M et al.
+  JAMA Neurol 2018;75(10):1215-1224 (DOI 10.1001/jamaneurol.2018.1836 --
+  first-in-human SV2A PET study in AD), with Mecca AP et al. Alz Dem 2020;16:
+  974-982 (DOI 10.1002/alz.12097) replication.
+- `sleep/macro_architecture_research_preview` -- new domain. NREM SWS
+  duration, REM duration, AHI (events/hour, AASM scoring), sleep efficiency.
+  Anchor: Mander BA, Rao V, Lu B et al. Nat Neurosci 2013;16(3):357-364
+  (DOI 10.1038/nn.3324 -- prefrontal atrophy + disrupted NREM slow waves +
+  impaired hippocampal-dependent memory in aging).
+
+Census: 21 production / 18 research_preview / 6 deprecated / 45 total range
+packs. Three new domains (`dti`, `synaptic_pet`, `sleep`). Tests: +15.
+
+### Coverage analysis milestone
+
+With v1.33.0, ALL biomarker plausibility packs identified by the v1.26
+coverage analysis are now encoded as research_preview, each with verified
+PMID/DOI anchors. The remaining roadmap items shift to:
+- Cohort-stratified normative ranges (per-age, per-scanner) for promotion of
+  imaging packs (OCT, DTI, ASL, SV2A) from research_preview to production.
+- Cross-assay harmonization for plasma biomarkers (p-tau205, p-tau231).
+- Additional Layer-3 cross-sheet invariants (e.g., longitudinal monotonicity
+  on the new biomarker classes, age-trajectory consistency).
+- Synthetic + real-cohort calibration of false-positive rates for the
+  trajectory-pattern invariants (genotype_phenotype and monogenic_ad_trajectory).
+
 ## [1.32.0] -- 2026-05-29
 
 ### Added: 4 fully-grounded research_preview plausibility packs

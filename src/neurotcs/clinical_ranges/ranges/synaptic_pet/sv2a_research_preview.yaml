@@ -1,0 +1,115 @@
+schema_version: 1.0.0
+rangepack_id: synaptic_pet/sv2a_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: synaptic_pet
+framework_name: 'Synaptic vesicle glycoprotein 2A (SV2A) PET with [11C]UCB-J - synaptic-density biomarker.
+  Synapse loss is the major structural correlate of cognitive impairment in AD. UCB-J DVR/SUVR is reduced
+  in medial temporal and neocortical regions in early AD (Chen 2018 JAMA Neurol; Mecca 2020 Alz Dem).
+  RESEARCH PREVIEW: research-grade; no consensus diagnostic cutoff.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Chen MK, Mecca AP, Naganawa M et al. JAMA
+  Neurol 2018;75(10):1215-1224 (DOI 10.1001/jamaneurol.2018.1836) - first comprehensive SV2A PET study
+  in AD. Mecca AP et al. Alz Dem 2020;16:974-982 (DOI 10.1002/alz.12097) - widespread synaptic loss replication.
+  Cerebellar reference region; DVR typical 1.0-2.0; SUVR typical 1.0-2.5.
+clinical_source_authority: 'NeuroTCS audits SV2A PET DVR/SUVR values a PET pipeline produced. RESEARCH
+  PREVIEW: DVR/SUVR envelope 0-10 (analytical; physical ratios). NOT diagnostic cutoffs. Reference region
+  (cerebellum) and ROI conventions vary; values not directly cross-study interchangeable. audit_clinical_ranges()
+  refuses for production audit.'
+anchor_citation:
+  citation_text: Chen MK, Mecca AP, Naganawa M, et al. Assessing Synaptic Density in Alzheimer Disease
+    With Synaptic Vesicle Glycoprotein 2A Positron Emission Tomographic Imaging. JAMA Neurol 2018;75(10):1215-1224.
+    DOI 10.1001/jamaneurol.2018.1836. First-in-human SV2A PET study in AD; cerebellum reference region;
+    DVR reductions in hippocampus and neocortical regions.
+  public_url: https://doi.org/10.1001/jamaneurol.2018.1836
+  endorsing_bodies:
+  - Yale PET Center
+  - UCB Pharma
+  - NIH/NIA
+  - Mecca 2020 Alz Dem replication
+  citation_doi: 10.1001/jamaneurol.2018.1836
+measurements:
+- name: ucbj_dvr_hippocampus
+  unit: DVR
+  measurement_kind: numeric
+  description: '[11C]UCB-J distribution volume ratio in hippocampus (cerebellar reference). Healthy adult
+    ~1.5-2.0; AD reduced ~30-40%% (Chen 2018, Mecca 2020).'
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (DVR non-negativity)
+    citation:
+      citation_text: DVR is a ratio of tissue tracer distribution volume to reference; non-negative.
+      public_url: https://doi.org/10.1001/jamaneurol.2018.1836
+      endorsing_bodies:
+      - Yale PET Center
+      - UCB Pharma
+      citation_doi: 10.1001/jamaneurol.2018.1836
+  - bound_type: hard_max
+    value: 10.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling
+    citation:
+      citation_text: Reported UCB-J DVR in healthy adults ~1.5-2.0; > 10 is implausible outside quantification
+        artifact.
+      public_url: https://doi.org/10.1001/jamaneurol.2018.1836
+      endorsing_bodies:
+      - Yale PET Center
+      - Mecca 2020 Alz Dem
+      citation_doi: 10.1001/jamaneurol.2018.1836
+- name: ucbj_dvr_neocortical_meta
+  unit: DVR
+  measurement_kind: numeric
+  description: '[11C]UCB-J DVR averaged across a neocortical meta-ROI (temporal, parietal, frontal). Healthy
+    adult ~1.5-2.5; AD reduced.'
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (DVR non-negativity)
+    citation:
+      citation_text: DVR is non-negative.
+      public_url: https://doi.org/10.1001/jamaneurol.2018.1836
+      endorsing_bodies:
+      - Yale PET Center
+      citation_doi: 10.1001/jamaneurol.2018.1836
+  - bound_type: hard_max
+    value: 10.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling
+    citation:
+      citation_text: Neocortical UCB-J DVR ~1.5-2.5; > 10 is implausible.
+      public_url: https://doi.org/10.1001/jamaneurol.2018.1836
+      endorsing_bodies:
+      - Yale PET Center
+      - Mecca 2020 Alz Dem
+      citation_doi: 10.1001/jamaneurol.2018.1836
+- name: ucbj_dvr_entorhinal_cortex
+  unit: DVR
+  measurement_kind: numeric
+  description: '[11C]UCB-J DVR in entorhinal cortex (earliest-affected MTL region per Braak staging).
+    Healthy adult ~1.5-2.0; AD strongly reduced.'
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (DVR non-negativity)
+    citation:
+      citation_text: DVR is non-negative.
+      public_url: https://doi.org/10.1001/jamaneurol.2018.1836
+      endorsing_bodies:
+      - Yale PET Center
+      citation_doi: 10.1001/jamaneurol.2018.1836
+  - bound_type: hard_max
+    value: 10.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling
+    citation:
+      citation_text: Entorhinal UCB-J DVR ~1.5-2.0; > 10 is implausible.
+      public_url: https://doi.org/10.1001/jamaneurol.2018.1836
+      endorsing_bodies:
+      - Yale PET Center
+      citation_doi: 10.1001/jamaneurol.2018.1836
+notes: RESEARCH PREVIEW. New domain 'synaptic_pet'. Promotion blocked on cross-cohort/site harmonization.
+  Closes the SV2A PET P2 gap from the v1.26 coverage analysis.

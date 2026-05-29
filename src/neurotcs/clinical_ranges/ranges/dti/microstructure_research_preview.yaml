@@ -1,0 +1,188 @@
+schema_version: 1.0.0
+rangepack_id: dti/microstructure_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: dti
+framework_name: 'Diffusion tensor imaging (DTI) per-tract microstructure - white matter integrity biomarker.
+  Fractional anisotropy (FA, dimensionless 0-1) and mean diffusivity (MD, x 10^-3 mm^2/s) in AD-relevant
+  tracts: uncinate fasciculus, cingulum bundle, fornix. Decreased FA and increased MD characterize AD
+  white-matter degeneration (Acosta-Cabronero 2012). RESEARCH PREVIEW: no consensus diagnostic cutoff.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Acosta-Cabronero 2012 PLoS ONE 7:e49072 -
+  'Diffusion Tensor Metrics as Biomarkers in Alzheimer's Disease'. Healthy adult white-matter tract FA
+  typically 0.4-0.7; MD typically 0.6-0.9 x 10^-3 mm^2/s. FA is definitionally bounded 0-1; MD bounded
+  above by free-water diffusion (~3 x 10^-3 mm^2/s at body temperature).
+clinical_source_authority: 'NeuroTCS audits per-tract DTI metrics a tractography pipeline produced. RESEARCH
+  PREVIEW envelopes: FA 0-1 (definitional); MD 0-3 x 10^-3 mm^2/s (analytical, free-water ceiling). NOT
+  diagnostic cutoffs. Tract-specific normative ranges depend on cohort, scanner, b-value, and tractography
+  algorithm. audit_clinical_ranges() refuses for production audit.'
+anchor_citation:
+  citation_text: Acosta-Cabronero J, Alley S, Williams GB, Pengas G, Nestor PJ. Diffusion Tensor Metrics
+    as Biomarkers in Alzheimer's Disease. PLoS ONE 2012;7(11):e49072. DOI 10.1371/journal.pone.0049072.
+    Multi-metric DTI biomarker characterization across the AD continuum (n=43 probable AD); cingulum,
+    fornix, uncinate fasciculus among earliest-affected tracts.
+  public_url: https://doi.org/10.1371/journal.pone.0049072
+  endorsing_bodies:
+  - University of Cambridge
+  - UK Medical Research Council
+  - Alzheimer's Research UK
+  - ADNI
+  citation_doi: 10.1371/journal.pone.0049072
+measurements:
+- name: fa_uncinate_fasciculus
+  unit: dimensionless
+  measurement_kind: numeric
+  description: Fractional anisotropy of the uncinate fasciculus (avg across hemispheres). FA is definitionally
+    bounded 0-1. Healthy adult ~0.45-0.55; AD reduced.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Definitional FA lower bound
+    citation:
+      citation_text: FA is a normalized anisotropy ratio bounded 0-1 by definition.
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996 DTI formalism
+      citation_doi: 10.1371/journal.pone.0049072
+  - bound_type: hard_max
+    value: 1.0
+    citation_strength: derived
+    guideline_section: Definitional FA upper bound
+    citation:
+      citation_text: FA is a normalized anisotropy ratio bounded 0-1 by definition.
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996 DTI formalism
+      citation_doi: 10.1371/journal.pone.0049072
+- name: md_uncinate_fasciculus
+  unit: 10^-3 mm^2/s
+  measurement_kind: numeric
+  description: Mean diffusivity of the uncinate fasciculus. Healthy adult ~0.7-0.9 x 10^-3 mm^2/s; AD
+    increased.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (MD non-negativity)
+    citation:
+      citation_text: Mean diffusivity is a non-negative scalar.
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996
+      citation_doi: 10.1371/journal.pone.0049072
+  - bound_type: hard_max
+    value: 3.0
+    citation_strength: derived
+    guideline_section: Free-water diffusion ceiling at body temperature
+    citation:
+      citation_text: Free-water diffusion at 37 C is ~3 x 10^-3 mm^2/s; tissue MD cannot exceed this physically.
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996
+      - Pierpaoli 1996
+      citation_doi: 10.1371/journal.pone.0049072
+- name: fa_cingulum_bundle
+  unit: dimensionless
+  measurement_kind: numeric
+  description: FA of the cingulum bundle. Healthy adult ~0.45-0.6; AD reduced.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Definitional FA lower bound
+    citation:
+      citation_text: FA is a normalized anisotropy ratio bounded 0-1 by definition (Basser & Pierpaoli 1996).
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996
+      citation_doi: 10.1371/journal.pone.0049072
+  - bound_type: hard_max
+    value: 1.0
+    citation_strength: derived
+    guideline_section: Definitional FA upper bound
+    citation:
+      citation_text: FA is a normalized anisotropy ratio bounded 0-1 by definition (Basser & Pierpaoli 1996).
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996
+      citation_doi: 10.1371/journal.pone.0049072
+- name: md_cingulum_bundle
+  unit: 10^-3 mm^2/s
+  measurement_kind: numeric
+  description: MD of the cingulum bundle. Healthy adult ~0.7-0.9 x 10^-3 mm^2/s; AD increased.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (MD non-negativity)
+    citation:
+      citation_text: Mean diffusivity is a non-negative scalar (Basser & Pierpaoli 1996 DTI formalism).
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996
+      citation_doi: 10.1371/journal.pone.0049072
+  - bound_type: hard_max
+    value: 3.0
+    citation_strength: derived
+    guideline_section: Free-water diffusion ceiling at body temperature
+    citation:
+      citation_text: Free-water diffusion ~3 x 10^-3 mm^2/s at 37 C.
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996
+      citation_doi: 10.1371/journal.pone.0049072
+- name: fa_fornix
+  unit: dimensionless
+  measurement_kind: numeric
+  description: FA of the fornix (limbic tract critical for episodic memory). Healthy adult ~0.3-0.5; AD
+    strongly reduced.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Definitional FA lower bound
+    citation:
+      citation_text: FA is a normalized anisotropy ratio bounded 0-1 by definition (Basser & Pierpaoli 1996).
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996
+      citation_doi: 10.1371/journal.pone.0049072
+  - bound_type: hard_max
+    value: 1.0
+    citation_strength: derived
+    guideline_section: Definitional FA upper bound
+    citation:
+      citation_text: FA is a normalized anisotropy ratio bounded 0-1 by definition (Basser & Pierpaoli 1996).
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996
+      citation_doi: 10.1371/journal.pone.0049072
+- name: md_fornix
+  unit: 10^-3 mm^2/s
+  measurement_kind: numeric
+  description: MD of the fornix. Healthy adult ~1.0-1.4 x 10^-3 mm^2/s (higher than other tracts due to
+    partial-volume CSF effects); AD increased further.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (MD non-negativity)
+    citation:
+      citation_text: Mean diffusivity is a non-negative scalar (Basser & Pierpaoli 1996 DTI formalism).
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996
+      citation_doi: 10.1371/journal.pone.0049072
+  - bound_type: hard_max
+    value: 3.0
+    citation_strength: derived
+    guideline_section: Free-water diffusion ceiling at body temperature
+    citation:
+      citation_text: Free-water diffusion ~3 x 10^-3 mm^2/s at 37 C.
+      public_url: https://doi.org/10.1371/journal.pone.0049072
+      endorsing_bodies:
+      - Basser & Pierpaoli 1996
+      citation_doi: 10.1371/journal.pone.0049072
+notes: RESEARCH PREVIEW. New domain 'dti'. Per-tract definitional and analytical plausibility envelopes;
+  not cohort/scanner-specific cutoffs. Closes the DTI P2 gap from the v1.26 analysis.
