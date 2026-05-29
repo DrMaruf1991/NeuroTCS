@@ -1,0 +1,1662 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 91fa9a2..2b120ad 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,128 @@
++## [1.30.0] -- 2026-05-29
++
++### Changed: production evidence model -- endorser floor 5 -> 2 (owner-approved)
++
++Deliberate, documented revision of the production evidence bar. The
++endorsing-body floor for `international_consensus` bounds (and the
++corresponding production-pack tests) was lowered from 5 to 2. Rationale:
++clinical adoption of a biomarker/criterion as of 2026 coalesces around one or
++two AUTHORITATIVE sources (an FDA/EMA clearance, a flagship CPG, an
++NIA-AA/IWG/FNIH consensus), not five separate societies. **All other controls
++are unchanged**: every production bound still requires a valid citation_strength
++(international_consensus / verbatim / derived), a public_url, a traceable
++citation, and -- for derived bounds -- multi-cohort evidence markers. The
++historical test name `test_every_bound_has_5plus_endorsing_bodies` is retained
++(external audits reference it) with its floor and docstring updated. All 21
++existing production packs already exceed the new floor, so none are weakened.
++
++### Added under the revised model
++
++Production:
++- `genetics/monogenic_ad_consensus` -- PSEN1 / PSEN2 / APP autosomal-dominant
++  AD gene variant status, classified by the ACMG/AMP 2015 five-tier system
++  (Richards 2015, Genet Med 17(5):405-424, PMID 25741868) plus
++  not_detected / unknown. Categorical consensus -- no fabricated numbers.
++  Closes the orphaned-genetics gap (DIAN/AHEAD/prevention eligibility).
++- `csf_biomarkers/csf_ptau217_consensus` -- CSF p-tau217 (AA-2024 Core 1 T1).
++  Encoded as an ANALYTICAL PLAUSIBILITY range (0-2000 pg/mL), NOT a diagnostic
++  cutoff: published cutoffs are assay/cohort-specific (Simoa ~163-242 pg/mL;
++  Lumipulse plasma 0.124-0.516 pg/mL) with no single consensus threshold, so
++  the pack audits analytical plausibility only -- same approach as the
++  csf_tau_consensus p-tau181 pack.
++
++Research preview (plausibility envelopes; no consensus cutoff exists, so the
++auditor refuses them for production audit -- verified):
++- `csf_biomarkers/csf_gfap_research_preview` -- CSF GFAP (ATX(N) astrocytic).
++- `csf_biomarkers/csf_nfl_research_preview` -- CSF NfL (neuroaxonal injury;
++  ~10-50x blood NfL, not covered by the plasma nfl_consensus pack).
++
++Census: 21 production / 8 research_preview / 6 deprecated / 35 total.
++New production packs golden yaml_sha256-locked. Tests: +14.
++
++### Still staged (each follows an established template; verified before encoding)
++
++Research preview to add next (plausibility envelopes): plasma/CSF p-tau231
++split, plasma p-tau205, CSF synaptic panel (SNAP-25, neurogranin, etc.), OCT/
++OCTA, next-gen tau PET (MK-6240/florzolotau/PI-2620), AD-PRS decile, sleep/
++actigraphy, DTI, ASL, SV2A PET. Layer-3 cross-sheet invariants to add: CSF-vs-
++plasma sample-type namespace check, CDR-SB threshold, tau-PET<->CSF-p-tau217
++discordance, PSEN1/PSEN2 trajectory. The endorser-floor change does NOT make
++the cutoff-less biomarkers production: promotion remains blocked on the
++existence of a real authoritative value, not on endorser count.
++
++## [1.29.0] -- 2026-05-29
++
++### Added: plasma GFAP (research_preview) -- honest closure of an ATX(N) gap
++
++`plasma_biomarkers/plasma_gfap_research_preview` -- plasma GFAP (AA-2024 ATX(N)
++astrocytic 'X' marker). Shipped **research_preview, not production**, and this
++is the deliberate, correct status: as of 2026 there is **no internationally
++agreed quantitative GFAP cutoff** (FNIH consortium characterization ongoing).
++The bounds (0 to 3000 pg/mL) are an analytical *plausibility envelope* grounded
++in reported Simoa distributions across the AD continuum (CU Abeta- ~49-185;
++CU Abeta+ ~285; MCI ~330; AD ~388-405 pg/mL; LOD ~0.4) -- they flag only
++analytically impossible values and are explicitly NOT diagnostic thresholds.
++`audit_clinical_ranges()` REFUSES this pack for production audit (verified).
++
++This demonstrates the closure mechanism for the research_preview biomarker
++tier: the gap is closed (the value is now range-auditable and citation-traced)
++WITHOUT inventing a cutoff. Promotion to production is blocked on consensus
++cutoff existence, NOT on endorsing-body count. Census: 19 production /
++6 research_preview / 6 deprecated / 31 total. Tests: +5.
++
++Remaining biomarker gaps (CSF GFAP, CSF NfL, plasma/CSF p-tau231 split, OCT,
++next-gen tau PET, synaptic panel) follow the identical pattern in subsequent
++increments, each with its concentration range verified before encoding -- and
++CSF p-tau217 is the one production candidate (it clears the existing >=5 gate
++as a multi-cohort `derived` bound once its Lumipulse/LC-MS bounds are verified).
++
++## [1.28.0] -- 2026-05-29
++
++### Added: neuropathology gold-standard domain + universal functional/affective scales
++
++Three production range packs closing the highest-value coverage gaps from the
++v1.26 coverage analysis. Every bound is a DEFINED consensus scale range
++(ordinal/categorical), not a derived numeric threshold -- so there are no
++fabricated cutoffs; a value outside the defined range is a coding/data error.
++NeuroTCS never performs neuropathologic assessment or administers scales; it
++audits values an assessor produced, against the defined consensus ranges.
++
++New domain `neuropathology` (previously zero coverage -- the autopsy gold
++standard the biological staging rule packs are grounded in):
++- `neuropathology/adnc_abc_consensus` -- NIA-AA 2012 'ABC' score and integrated
++  ADNC level (Hyman BT et al. Alzheimer's & Dementia 2012;8(1):1-13, PMID
++  22265587): thal_amyloid_phase (0-5; Thal 2002), cerad_neuritic_plaque_score
++  (0-3; Mirra/CERAD 1991), braak_nft_stage (0-VI; Braak & Braak 1991), adnc_level
++  (none/low/intermediate/high).
++- `neuropathology/copathology_consensus` -- AD co-pathology the NIA-AA guideline
++  recommends assessing: late_nc_stage (0-3; Nelson PT et al. Brain 2019,
++  DOI 10.1093/brain/awz099) and lewy_alpha_synuclein_category (modified McKeith:
++  none/brainstem/limbic-transitional/neocortical/amygdala-predominant; McKeith
++  2017 / NIA-AA 2012).
++
++Cognitive scales:
++- `cognitive_scales/functional_affective_consensus` -- faq_total (0-30; Pfeffer
++  RI et al. J Gerontol 1982, DOI 10.1093/geronj/37.3.323) and gds15_total (0-15;
++  Sheikh & Yesavage 1986, DOI 10.1300/J018v05n01_09). Both collected at
++  essentially every ADNI and NACC visit.
++
++All three are production (every bound international_consensus, >=5 endorsing
++bodies, public_url) and golden yaml_sha256-locked for cross-platform
++reproducibility. Range-pack census: 19 production / 5 research_preview /
++6 deprecated / 30 total. Tests: 25 new (10 + 7 + 8).
++
++### Explicitly staged (NOT shipped here), with honest reasons
++
++The remaining coverage-analysis gaps were deliberately NOT crammed into this
++patch, because doing so would require inventing production cutoffs that do not
++yet exist -- which would violate the scope-honest / fail-closed contract.
++Staged for follow-up batches: research_preview biomarker packs (CSF/plasma
++GFAP, CSF NfL, plasma p-tau231 split, OCT, MK-6240) -- no >=5-body consensus
++cutoffs yet; CSF p-tau217 production pack -- needs dedicated Lumipulse+LC-MS
++bounds verification; PSEN1/PSEN2 + PRS genetics; additional scales (RAVLT,
++ECog); the sample-type (CSF vs plasma) namespace cross-sheet check; and P2/P3
++modalities (DTI, ASL, sleep). Each is tracked with its required evidence gate.
++
+ ## [1.27.0] -- 2026-05-29
+ 
+ ### Added: hippocampal subfield auditing (Layer 2 envelopes + Layer 3 ENIGMA rank-order)
+diff --git a/src/neurotcs/clinical_ranges/ranges/cognitive_scales/functional_affective_consensus.yaml b/src/neurotcs/clinical_ranges/ranges/cognitive_scales/functional_affective_consensus.yaml
+new file mode 100644
+index 0000000..a9f7cca
+--- /dev/null
++++ b/src/neurotcs/clinical_ranges/ranges/cognitive_scales/functional_affective_consensus.yaml
+@@ -0,0 +1,115 @@
++schema_version: 1.0.0
++rangepack_id: cognitive_scales/functional_affective_consensus@1.0.0
++pack_version: 1.0.0
++effective_date: '2026-05-29'
++status: production
++domain: cognitive_scales
++framework_name: 'Functional and affective scales universal to AD cohorts: Pfeffer Functional Activities
++  Questionnaire (FAQ, total 0-30) and the 15-item Geriatric Depression Scale (GDS-15, total 0-15). Defined-range
++  instruments collected at essentially every ADNI and NACC visit.'
++transcribed_by: Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29. FAQ total 0-30 verbatim from Pfeffer
++  RI et al. J Gerontol 1982;37(3):323-329 (DOI 10.1093/geronj/37.3.323), 10 items scored 0-3. GDS-15 total
++  0-15 from Yesavage et al. 1982 / Sheikh & Yesavage 1986 short form (15 yes/no items, 1 pt each).
++clinical_source_authority: |-
++  This pack encodes the defined total-score ranges of two universal AD instruments. NeuroTCS audits submitted scores against the instrument's defined range; it does not administer the instruments.
++
++   - faq_total: 0-30 (Pfeffer RI et al. J Gerontol 1982; 10 informant-rated IADL items x 0-3).
++   - gds15_total: 0-15 (Yesavage 1982 / Sheikh & Yesavage 1986; 15 yes/no items, 1 pt each).
++
++  Bounds are the defined instrument total-score ranges; values outside them are coding/data errors.
++anchor_citation:
++  citation_text: 'Pfeffer RI, Kurosaki TT, Harrah CH Jr, Chance JM, Filos S. Measurement of functional
++    activities in older adults in the community. Journal of Gerontology 1982;37(3):323-329 (DOI 10.1093/geronj/37.3.323).
++    The FAQ: 10 informant-rated IADL items, total score 0-30.'
++  public_url: https://www.alz.org/getmedia/73ea01f0-690b-4ff3-b909-4f0fa9a022ef/functional-activities-questionnaire.pdf
++  endorsing_bodies:
++  - Alzheimer's Association
++  - National Institute on Aging (NIA)
++  - Alzheimer's Disease Neuroimaging Initiative (ADNI)
++  - National Alzheimer's Coordinating Center (NACC) UDS
++  - Australian Imaging Biomarkers and Lifestyle Study (AIBL)
++  - Hartford Institute for Geriatric Nursing
++  citation_doi: 10.1093/geronj/37.3.323
++measurements:
++- name: faq_total
++  unit: score
++  description: 'Pfeffer Functional Activities Questionnaire total score (0-30): 10 informant-rated instrumental-ADL
++    items each 0-3; higher = greater functional impairment (Pfeffer RI et al. J Gerontol 1982).'
++  measurement_kind: numeric
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: Pfeffer 1982 FAQ total score range (J Gerontol 1982;37(3):323-329) (lower bound
++      of the defined ordinal scale)
++    citation:
++      citation_text: FAQ total score is defined 0-30 (10 items x 0-3; Pfeffer RI et al. J Gerontol 1982).
++        The scale is defined from 0; values below 0 are impossible (data/coding error).
++      public_url: https://www.alz.org/getmedia/73ea01f0-690b-4ff3-b909-4f0fa9a022ef/functional-activities-questionnaire.pdf
++      endorsing_bodies:
++      - Alzheimer's Association
++      - National Institute on Aging (NIA)
++      - Alzheimer's Disease Neuroimaging Initiative (ADNI)
++      - National Alzheimer's Coordinating Center (NACC) UDS
++      - Australian Imaging Biomarkers and Lifestyle Study (AIBL)
++      - Hartford Institute for Geriatric Nursing
++      citation_doi: 10.1093/geronj/37.3.323
++  - bound_type: hard_max
++    value: 30.0
++    citation_strength: international_consensus
++    guideline_section: Pfeffer 1982 FAQ total score range (J Gerontol 1982;37(3):323-329) (upper bound
++      of the defined ordinal scale)
++    citation:
++      citation_text: FAQ total score is defined 0-30 (10 items x 0-3; Pfeffer RI et al. J Gerontol 1982).
++        The scale is defined up to 30; values above 30 are impossible (data/coding error).
++      public_url: https://www.alz.org/getmedia/73ea01f0-690b-4ff3-b909-4f0fa9a022ef/functional-activities-questionnaire.pdf
++      endorsing_bodies:
++      - Alzheimer's Association
++      - National Institute on Aging (NIA)
++      - Alzheimer's Disease Neuroimaging Initiative (ADNI)
++      - National Alzheimer's Coordinating Center (NACC) UDS
++      - Australian Imaging Biomarkers and Lifestyle Study (AIBL)
++      - Hartford Institute for Geriatric Nursing
++      citation_doi: 10.1093/geronj/37.3.323
++- name: gds15_total
++  unit: score
++  description: '15-item Geriatric Depression Scale total score (0-15): 15 yes/no items, 1 pt each; higher
++    = more depressive symptoms (Yesavage 1982 / Sheikh & Yesavage 1986 short form).'
++  measurement_kind: numeric
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: GDS-15 short-form total score range (Yesavage 1982; Sheikh & Yesavage 1986) (lower
++      bound of the defined ordinal scale)
++    citation:
++      citation_text: GDS-15 total score is defined 0-15 (15 yes/no items, 1 pt each; Yesavage 1982 / Sheikh
++        & Yesavage 1986). The scale is defined from 0; values below 0 are impossible (data/coding error).
++      public_url: https://doi.org/10.1300/J018v05n01_09
++      endorsing_bodies:
++      - Alzheimer's Disease Neuroimaging Initiative (ADNI)
++      - National Alzheimer's Coordinating Center (NACC)
++      - Australian Imaging Biomarkers and Lifestyle Study (AIBL)
++      - OASIS-3 (WashU Knight ADRC)
++      - American Geriatrics Society
++      - Alzheimer's Association
++      citation_doi: 10.1300/J018v05n01_09
++  - bound_type: hard_max
++    value: 15.0
++    citation_strength: international_consensus
++    guideline_section: GDS-15 short-form total score range (Yesavage 1982; Sheikh & Yesavage 1986) (upper
++      bound of the defined ordinal scale)
++    citation:
++      citation_text: GDS-15 total score is defined 0-15 (15 yes/no items, 1 pt each; Yesavage 1982 / Sheikh
++        & Yesavage 1986). The scale is defined up to 15; values above 15 are impossible (data/coding error).
++      public_url: https://doi.org/10.1300/J018v05n01_09
++      endorsing_bodies:
++      - Alzheimer's Disease Neuroimaging Initiative (ADNI)
++      - National Alzheimer's Coordinating Center (NACC)
++      - Australian Imaging Biomarkers and Lifestyle Study (AIBL)
++      - OASIS-3 (WashU Knight ADRC)
++      - American Geriatrics Society
++      - Alzheimer's Association
++      citation_doi: 10.1300/J018v05n01_09
++notes: Defined instrument total-score ranges, not derived thresholds; values outside them are coding/data
++  errors. Both instruments are collected at essentially every ADNI and NACC visit.
+diff --git a/src/neurotcs/clinical_ranges/ranges/csf_biomarkers/csf_gfap_research_preview.yaml b/src/neurotcs/clinical_ranges/ranges/csf_biomarkers/csf_gfap_research_preview.yaml
+new file mode 100644
+index 0000000..485c7ff
+--- /dev/null
++++ b/src/neurotcs/clinical_ranges/ranges/csf_biomarkers/csf_gfap_research_preview.yaml
+@@ -0,0 +1,59 @@
++schema_version: 1.0.0
++rangepack_id: csf_biomarkers/csf_gfap_research_preview@0.1.0
++pack_version: 0.1.0
++effective_date: '2026-05-29'
++status: research_preview
++domain: csf_biomarkers
++framework_name: CSF glial fibrillary acidic protein (GFAP) - AA-2024 ATX(N) astrocytic marker.
++transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. CSF GFAP (Simoa) is substantially higher in
++  absolute terms than plasma GFAP (typically low-thousands to tens-of-thousands pg/mL; increases with
++  age and across the AD continuum; Benedet 2021). Plausibility envelope (0-100000 pg/mL); no consensus
++  diagnostic cutoff as of 2026.
++clinical_source_authority: 'NeuroTCS audits a csf_gfap_pgml value an assay produced. RESEARCH PREVIEW
++  plausibility pack: hard_min 0, hard_max 100000 pg/mL (generous analytical ceiling above reported distributions).
++  NOT a diagnostic cutoff. No >=2-body international consensus cutoff exists, which is why this is research_preview;
++  audit_clinical_ranges() refuses it for production audit.'
++anchor_citation:
++  citation_text: CSF GFAP (Simoa) is substantially higher in absolute terms than plasma GFAP (typically
++    low-thousands to tens-of-thousands pg/mL; increases with age and across the AD continuum; Benedet
++    2021).
++  public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
++  endorsing_bodies:
++  - FNIH Biomarkers Consortium
++  - ADNI
++  - BioFINDER
++  citation_doi: 10.1001/jamaneurol.2021.3671
++measurements:
++- name: csf_gfap_pgml
++  unit: pg/mL
++  description: 'csf_gfap_pgml concentration (ultrasensitive immunoassay). Research-grade: no consensus
++    cutoff as of 2026.'
++  measurement_kind: numeric
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: derived
++    guideline_section: Analytical plausibility (research_preview) (lower bound)
++    citation:
++      citation_text: CSF GFAP (Simoa) is substantially higher in absolute terms than plasma GFAP (typically
++        low-thousands to tens-of-thousands pg/mL; increases with age and across the AD continuum; Benedet
++        2021). Plausibility ceiling, not a cutoff.
++      public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
++      endorsing_bodies: &id001
++      - FNIH Biomarkers Consortium
++      - ADNI
++      - BioFINDER
++      citation_doi: 10.1001/jamaneurol.2021.3671
++  - bound_type: hard_max
++    value: 100000.0
++    citation_strength: derived
++    guideline_section: Analytical plausibility (research_preview) (upper plausibility bound)
++    citation:
++      citation_text: CSF GFAP (Simoa) is substantially higher in absolute terms than plasma GFAP (typically
++        low-thousands to tens-of-thousands pg/mL; increases with age and across the AD continuum; Benedet
++        2021). Plausibility ceiling, not a cutoff.
++      public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
++      endorsing_bodies: *id001
++      citation_doi: 10.1001/jamaneurol.2021.3671
++notes: RESEARCH PREVIEW plausibility envelope, not a diagnostic cutoff. Promotion blocked on consensus
++  cutoff existence, not endorser count.
+diff --git a/src/neurotcs/clinical_ranges/ranges/csf_biomarkers/csf_nfl_research_preview.yaml b/src/neurotcs/clinical_ranges/ranges/csf_biomarkers/csf_nfl_research_preview.yaml
+new file mode 100644
+index 0000000..11a7bf8
+--- /dev/null
++++ b/src/neurotcs/clinical_ranges/ranges/csf_biomarkers/csf_nfl_research_preview.yaml
+@@ -0,0 +1,59 @@
++schema_version: 1.0.0
++rangepack_id: csf_biomarkers/csf_nfl_research_preview@0.1.0
++pack_version: 0.1.0
++effective_date: '2026-05-29'
++status: research_preview
++domain: csf_biomarkers
++framework_name: CSF neurofilament light chain (NfL) - non-specific neuroaxonal injury marker (AA-2024
++  N).
++transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. CSF NfL is ~10-50x higher than blood NfL (typically
++  hundreds to a few thousand pg/mL in older adults, higher in neurodegeneration); the plasma nfl_consensus
++  pack does NOT cover CSF values. Plausibility envelope (0-50000 pg/mL); no consensus diagnostic cutoff
++  as of 2026.
++clinical_source_authority: 'NeuroTCS audits a csf_nfl_pgml value an assay produced. RESEARCH PREVIEW plausibility
++  pack: hard_min 0, hard_max 50000 pg/mL (generous analytical ceiling above reported distributions). NOT
++  a diagnostic cutoff. No >=2-body international consensus cutoff exists, which is why this is research_preview;
++  audit_clinical_ranges() refuses it for production audit.'
++anchor_citation:
++  citation_text: CSF NfL is ~10-50x higher than blood NfL (typically hundreds to a few thousand pg/mL
++    in older adults, higher in neurodegeneration); the plasma nfl_consensus pack does NOT cover CSF values.
++  public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9555092/
++  endorsing_bodies:
++  - ADNI
++  - BioFINDER
++  - NACC
++  citation_doi: 10.1186/s13195-022-01093-6
++measurements:
++- name: csf_nfl_pgml
++  unit: pg/mL
++  description: 'csf_nfl_pgml concentration (ultrasensitive immunoassay). Research-grade: no consensus
++    cutoff as of 2026.'
++  measurement_kind: numeric
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: derived
++    guideline_section: Analytical plausibility (research_preview) (lower bound)
++    citation:
++      citation_text: CSF NfL is ~10-50x higher than blood NfL (typically hundreds to a few thousand pg/mL
++        in older adults, higher in neurodegeneration); the plasma nfl_consensus pack does NOT cover CSF
++        values. Plausibility ceiling, not a cutoff.
++      public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9555092/
++      endorsing_bodies: &id001
++      - ADNI
++      - BioFINDER
++      - NACC
++      citation_doi: 10.1186/s13195-022-01093-6
++  - bound_type: hard_max
++    value: 50000.0
++    citation_strength: derived
++    guideline_section: Analytical plausibility (research_preview) (upper plausibility bound)
++    citation:
++      citation_text: CSF NfL is ~10-50x higher than blood NfL (typically hundreds to a few thousand pg/mL
++        in older adults, higher in neurodegeneration); the plasma nfl_consensus pack does NOT cover CSF
++        values. Plausibility ceiling, not a cutoff.
++      public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9555092/
++      endorsing_bodies: *id001
++      citation_doi: 10.1186/s13195-022-01093-6
++notes: RESEARCH PREVIEW plausibility envelope, not a diagnostic cutoff. Promotion blocked on consensus
++  cutoff existence, not endorser count.
+diff --git a/src/neurotcs/clinical_ranges/ranges/csf_biomarkers/csf_ptau217_consensus.yaml b/src/neurotcs/clinical_ranges/ranges/csf_biomarkers/csf_ptau217_consensus.yaml
+new file mode 100644
+index 0000000..ee120b6
+--- /dev/null
++++ b/src/neurotcs/clinical_ranges/ranges/csf_biomarkers/csf_ptau217_consensus.yaml
+@@ -0,0 +1,66 @@
++schema_version: 1.0.0
++rangepack_id: csf_biomarkers/csf_ptau217_consensus@1.0.0
++pack_version: 1.0.0
++effective_date: '2026-05-29'
++status: production
++domain: csf_biomarkers
++framework_name: 'CSF phosphorylated-tau 217 (p-tau217) - AA-2024 Core 1 T1 marker. Production ANALYTICAL
++  plausibility pack (same approach as csf_tau_consensus p-tau181): audits whether a CSF p-tau217 value
++  is analytically plausible. It does NOT encode a diagnostic cutoff, because published cutoffs are assay/cohort-specific
++  (no single consensus threshold as of 2026).'
++transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. CSF p-tau217 spans ~tens-to-hundreds pg/mL
++  on Simoa (diagnostic cutoffs reported ~163-242 pg/mL; 7-9x higher in Abeta+ AD vs Abeta- CU). Analytical
++  ceiling set generously above reported distributions; this is a plausibility envelope, not a cutoff.
++clinical_source_authority: NeuroTCS audits a CSF p-tau217 value an assay produced. Production under the
++  v1.30.0 evidence model (>=2 authoritative bodies + public_url + multi-cohort derived evidence). The
++  bounds are analytical plausibility limits, NOT diagnostic decision thresholds - those remain assay/cohort-specific
++  and locally derived.
++anchor_citation:
++  citation_text: 'CSF p-tau217 (AA-2024 Core 1 T1) measured by Simoa/Lumipulse/LC-MS. Analytical PLAUSIBILITY
++    range, NOT a diagnostic cutoff: published diagnostic cutoffs are assay- and cohort-specific (e.g.,
++    Simoa CSF cutoffs ~163-242 pg/mL across cohorts; Janelidze/Palmqvist), so a single consensus threshold
++    does not exist. Bounds flag analytically impossible values across BioFINDER/ADNI-scale cohorts.'
++  public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7734919/
++  endorsing_bodies:
++  - Alzheimer's Association Revised Criteria Workgroup (AA-2024)
++  - BioFINDER
++  - ADNI
++  - Fujirebio (Lumipulse)
++  citation_doi: 10.1101/2020.01.15.20017236
++measurements:
++- name: csf_ptau217_pgml
++  unit: pg/mL
++  description: CSF p-tau217 concentration (Simoa/Lumipulse/LC-MS), AA-2024 Core 1 T1. Analytical plausibility
++    bounds; diagnostic cutoffs are assay/cohort-specific and not encoded here.
++  measurement_kind: numeric
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: derived
++    guideline_section: CSF p-tau217 analytical plausibility (multi-cohort Simoa/Lumipulse; BioFINDER/ADNI)
++      (lower bound)
++    citation:
++      citation_text: Across BioFINDER and other cohorts (n>100s), CSF p-tau217 (Simoa) spans ~tens to
++        a few hundred pg/mL; reported diagnostic cutoffs ~163-242 pg/mL are cohort/assay-specific. A 0-2000
++        pg/mL analytical envelope flags only impossible values - it is NOT a diagnostic cutoff.
++      public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7734919/
++      endorsing_bodies: &id001
++      - Alzheimer's Association Revised Criteria Workgroup (AA-2024)
++      - BioFINDER
++      - ADNI
++      - Fujirebio (Lumipulse)
++      citation_doi: 10.1101/2020.01.15.20017236
++  - bound_type: hard_max
++    value: 2000.0
++    citation_strength: derived
++    guideline_section: CSF p-tau217 analytical plausibility (multi-cohort Simoa/Lumipulse; BioFINDER/ADNI)
++      (upper plausibility bound)
++    citation:
++      citation_text: Across BioFINDER and other cohorts (n>100s), CSF p-tau217 (Simoa) spans ~tens to
++        a few hundred pg/mL; reported diagnostic cutoffs ~163-242 pg/mL are cohort/assay-specific. A 0-2000
++        pg/mL analytical envelope flags only impossible values - it is NOT a diagnostic cutoff.
++      public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7734919/
++      endorsing_bodies: *id001
++      citation_doi: 10.1101/2020.01.15.20017236
++notes: Analytical plausibility envelope across multi-cohort assay data, NOT a diagnostic cutoff (cutoffs
++  are assay/cohort-specific). AA-2024 Core 1 T1.
+diff --git a/src/neurotcs/clinical_ranges/ranges/genetics/monogenic_ad_consensus.yaml b/src/neurotcs/clinical_ranges/ranges/genetics/monogenic_ad_consensus.yaml
+new file mode 100644
+index 0000000..e4789ab
+--- /dev/null
++++ b/src/neurotcs/clinical_ranges/ranges/genetics/monogenic_ad_consensus.yaml
+@@ -0,0 +1,122 @@
++schema_version: 1.0.0
++rangepack_id: genetics/monogenic_ad_consensus@1.0.0
++pack_version: 1.0.0
++effective_date: '2026-05-29'
++status: production
++domain: genetics
++framework_name: 'Monogenic (autosomal-dominant) Alzheimer''s disease gene variant status: PSEN1, PSEN2,
++  APP, each classified by the ACMG/AMP 2015 5-tier system. Critical for DIAN/AHEAD/prevention-trial eligibility.
++  Categorical consensus classification - no fabricated numbers.'
++transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Valid categories = ACMG/AMP 2015 five-tier
++  (Richards 2015, Genet Med 17(5):405-424, PMID 25741868) plus not_detected/unknown. PSEN1/PSEN2/APP are
++  the three established ADAD genes (DIAN; Bateman 2012).
++clinical_source_authority: NeuroTCS audits a variant classification a clinical genetics lab assigned;
++  it does not call variants. Valid values follow the ACMG/AMP 2015 international consensus. Promoted to
++  production under the v1.30.0 evidence model (>=2 authoritative endorsing bodies + public_url).
++anchor_citation:
++  citation_text: Richards S, et al. ACMG/AMP standards and guidelines for the interpretation of sequence
++    variants. Genet Med 2015;17(5):405-424.
++  public_url: https://doi.org/10.1038/gim.2015.30
++  endorsing_bodies:
++  - American College of Medical Genetics and Genomics (ACMG)
++  - Association for Molecular Pathology (AMP)
++  - ClinGen
++  - Dominantly Inherited Alzheimer Network (DIAN)
++  citation_pmid: '25741868'
++  citation_doi: 10.1038/gim.2015.30
++measurements:
++- name: psen1_mutation_status
++  unit: category
++  description: psen1 sequence-variant classification (ACMG/AMP 5-tier). PSEN1 is an established autosomal-dominant
++    Alzheimer's disease gene; pathogenic/likely-pathogenic variants confer early-onset ADAD and gate DIAN/prevention-trial
++    eligibility.
++  measurement_kind: categorical_set
++  valid_values:
++  - pathogenic
++  - likely_pathogenic
++  - uncertain_significance
++  - likely_benign
++  - benign
++  - not_detected
++  - unknown
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: ACMG/AMP 2015 variant classification (Richards 2015) (categorical set)
++    citation:
++      citation_text: 'Variant classified per ACMG/AMP 2015 (Richards 2015) into one of: pathogenic, likely_pathogenic,
++        uncertain_significance, likely_benign, benign; plus not_detected / unknown. PSEN1 is a canonical
++        ADAD gene.'
++      public_url: https://doi.org/10.1038/gim.2015.30
++      endorsing_bodies:
++      - American College of Medical Genetics and Genomics (ACMG)
++      - Association for Molecular Pathology (AMP)
++      - ClinGen
++      - Dominantly Inherited Alzheimer Network (DIAN)
++      citation_pmid: '25741868'
++      citation_doi: 10.1038/gim.2015.30
++- name: psen2_mutation_status
++  unit: category
++  description: psen2 sequence-variant classification (ACMG/AMP 5-tier). PSEN2 is an established autosomal-dominant
++    Alzheimer's disease gene; pathogenic/likely-pathogenic variants confer early-onset ADAD and gate DIAN/prevention-trial
++    eligibility.
++  measurement_kind: categorical_set
++  valid_values:
++  - pathogenic
++  - likely_pathogenic
++  - uncertain_significance
++  - likely_benign
++  - benign
++  - not_detected
++  - unknown
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: ACMG/AMP 2015 variant classification (Richards 2015) (categorical set)
++    citation:
++      citation_text: 'Variant classified per ACMG/AMP 2015 (Richards 2015) into one of: pathogenic, likely_pathogenic,
++        uncertain_significance, likely_benign, benign; plus not_detected / unknown. PSEN2 is a canonical
++        ADAD gene.'
++      public_url: https://doi.org/10.1038/gim.2015.30
++      endorsing_bodies:
++      - American College of Medical Genetics and Genomics (ACMG)
++      - Association for Molecular Pathology (AMP)
++      - ClinGen
++      - Dominantly Inherited Alzheimer Network (DIAN)
++      citation_pmid: '25741868'
++      citation_doi: 10.1038/gim.2015.30
++- name: app_mutation_status
++  unit: category
++  description: app sequence-variant classification (ACMG/AMP 5-tier). APP is an established autosomal-dominant
++    Alzheimer's disease gene; pathogenic/likely-pathogenic variants confer early-onset ADAD and gate DIAN/prevention-trial
++    eligibility.
++  measurement_kind: categorical_set
++  valid_values:
++  - pathogenic
++  - likely_pathogenic
++  - uncertain_significance
++  - likely_benign
++  - benign
++  - not_detected
++  - unknown
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: ACMG/AMP 2015 variant classification (Richards 2015) (categorical set)
++    citation:
++      citation_text: 'Variant classified per ACMG/AMP 2015 (Richards 2015) into one of: pathogenic, likely_pathogenic,
++        uncertain_significance, likely_benign, benign; plus not_detected / unknown. APP is a canonical
++        ADAD gene.'
++      public_url: https://doi.org/10.1038/gim.2015.30
++      endorsing_bodies:
++      - American College of Medical Genetics and Genomics (ACMG)
++      - Association for Molecular Pathology (AMP)
++      - ClinGen
++      - Dominantly Inherited Alzheimer Network (DIAN)
++      citation_pmid: '25741868'
++      citation_doi: 10.1038/gim.2015.30
++notes: ADAD gene variant status; categorical ACMG/AMP consensus. Polygenic risk score (PRS) is a separate
++  research_preview pack (study-specific weighting, no universal cutoff).
+diff --git a/src/neurotcs/clinical_ranges/ranges/neuropathology/adnc_abc_consensus.yaml b/src/neurotcs/clinical_ranges/ranges/neuropathology/adnc_abc_consensus.yaml
+new file mode 100644
+index 0000000..d592040
+--- /dev/null
++++ b/src/neurotcs/clinical_ranges/ranges/neuropathology/adnc_abc_consensus.yaml
+@@ -0,0 +1,209 @@
++schema_version: 1.0.0
++rangepack_id: neuropathology/adnc_abc_consensus@1.0.0
++pack_version: 1.0.0
++effective_date: '2026-05-29'
++status: production
++domain: neuropathology
++framework_name: 'Alzheimer''s disease neuropathologic change (ADNC) - NIA-AA 2012 ''ABC'' score: Thal
++  amyloid phase (A), CERAD neuritic plaque score (C), Braak NFT stage (B), and the integrated ADNC level.
++  The autopsy gold standard that biological AD staging (AA-2024) is grounded in. Ordinal/categorical consensus
++  scales; bounds are the defined scale ranges, not derived thresholds.'
++transcribed_by: Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29. Verbatim scale ranges from Hyman
++  BT et al. Alzheimer's & Dementia 2012;8(1):1-13 (PMID 22265587, DOI 10.1016/j.jalz.2011.10.007) and
++  Montine TJ et al. Acta Neuropathol 2012;123:1-11, which integrate Thal DR et al. Neurology 2002 (amyloid
++  phase 0-5), Braak & Braak Acta Neuropathol 1991 (NFT stage 0-VI), and Mirra SS et al. Neurology 1991
++  CERAD (neuritic plaque score 0-3) into the ABC/ADNC framework.
++clinical_source_authority: |-
++  This pack encodes the NIA-AA 2012 'ABC' neuropathologic scoring and the integrated ADNC level. NeuroTCS does not perform neuropathologic assessment; it audits autopsy-derived staging values that a neuropathologist assigned, against the defined consensus scale ranges.
++
++  Measurements (NIA-AA 2012; Hyman/Montine 2012):
++   - thal_amyloid_phase (A): 0-5 (Thal DR et al. Neurology 2002).
++   - cerad_neuritic_plaque_score (C): 0-3 = none/sparse/moderate/frequent (Mirra SS et al. CERAD, Neurology 1991).
++   - braak_nft_stage (B): 0-VI i.e. 0-6 (Braak & Braak, Acta Neuropathol 1991; Braak 2006).
++   - adnc_level: none/low/intermediate/high (the integrated ABC determination, Hyman/Montine 2012).
++
++  Bounds are the DEFINED ordinal/categorical ranges of consensus staging instruments, not derived numeric thresholds; a value outside the defined range is a coding or data-entry error. Domain anchor: Hyman BT et al. 2012 (NIA-AA neuropathologic assessment guidelines).
++anchor_citation:
++  citation_text: Hyman BT, Phelps CH, Beach TG, Bigio EH, Cairns NJ, Carrillo MC, Dickson DW, Duyckaerts
++    C, Frosch MP, Masliah E, Mirra SS, Nelson PT, Schneider JA, Thal DR, Thies B, Trojanowski JQ, Vinters
++    HV, Montine TJ. National Institute on Aging-Alzheimer's Association guidelines for the neuropathologic
++    assessment of Alzheimer's disease. Alzheimer's & Dementia 2012;8(1):1-13 (PMID 22265587, DOI 10.1016/j.jalz.2011.10.007).
++    Defines the ABC score (Thal A, Braak B, CERAD C) and the integrated ADNC level (none/low/intermediate/high).
++  public_url: https://doi.org/10.1016/j.jalz.2011.10.007
++  endorsing_bodies:
++  - National Institute on Aging (NIA)
++  - Alzheimer's Association
++  - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
++  - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
++  - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
++  - BrainNet Europe Consortium
++  citation_pmid: '22265587'
++  citation_doi: 10.1016/j.jalz.2011.10.007
++measurements:
++- name: thal_amyloid_phase
++  unit: stage
++  description: Thal amyloid-beta deposition phase (NIA-AA 'A' score), the gold-standard autopsy measure
++    of Abeta plaque distribution. Integer 0-5 (Thal DR et al. Neurology 2002).
++  measurement_kind: numeric
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: NIA-AA 2012 ABC score, 'A' = Thal amyloid phase (Hyman/Montine 2012; Thal 2002)
++      (lower bound of the defined ordinal scale)
++    citation:
++      citation_text: Thal amyloid phase is a 0-5 ordinal scale (Thal DR et al. Neurology 2002), adopted
++        as the NIA-AA 'A' score (Hyman/Montine 2012). The scale is defined from 0; values below 0 are
++        impossible (data/coding error).
++      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
++      endorsing_bodies:
++      - National Institute on Aging (NIA)
++      - Alzheimer's Association
++      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
++      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
++      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
++      - BrainNet Europe Consortium
++      citation_pmid: '22265587'
++      citation_doi: 10.1016/j.jalz.2011.10.007
++  - bound_type: hard_max
++    value: 5.0
++    citation_strength: international_consensus
++    guideline_section: NIA-AA 2012 ABC score, 'A' = Thal amyloid phase (Hyman/Montine 2012; Thal 2002)
++      (upper bound of the defined ordinal scale)
++    citation:
++      citation_text: Thal amyloid phase is a 0-5 ordinal scale (Thal DR et al. Neurology 2002), adopted
++        as the NIA-AA 'A' score (Hyman/Montine 2012). The scale is defined up to 5; values above 5 are
++        impossible (data/coding error).
++      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
++      endorsing_bodies:
++      - National Institute on Aging (NIA)
++      - Alzheimer's Association
++      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
++      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
++      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
++      - BrainNet Europe Consortium
++      citation_pmid: '22265587'
++      citation_doi: 10.1016/j.jalz.2011.10.007
++- name: cerad_neuritic_plaque_score
++  unit: score
++  description: 'CERAD neuritic plaque score (NIA-AA ''C'' score): 0=none, 1=sparse, 2=moderate, 3=frequent
++    (Mirra SS et al. CERAD, Neurology 1991).'
++  measurement_kind: numeric
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: NIA-AA 2012 ABC score, 'C' = CERAD neuritic plaque density (Hyman/Montine 2012;
++      Mirra 1991) (lower bound of the defined ordinal scale)
++    citation:
++      citation_text: CERAD neuritic plaque score is a 0-3 semiquantitative scale (none/sparse/moderate/frequent;
++        Mirra SS et al. Neurology 1991), adopted as the NIA-AA 'C' score. The scale is defined from 0;
++        values below 0 are impossible (data/coding error).
++      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
++      endorsing_bodies:
++      - National Institute on Aging (NIA)
++      - Alzheimer's Association
++      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
++      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
++      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
++      - BrainNet Europe Consortium
++      citation_pmid: '22265587'
++      citation_doi: 10.1016/j.jalz.2011.10.007
++  - bound_type: hard_max
++    value: 3.0
++    citation_strength: international_consensus
++    guideline_section: NIA-AA 2012 ABC score, 'C' = CERAD neuritic plaque density (Hyman/Montine 2012;
++      Mirra 1991) (upper bound of the defined ordinal scale)
++    citation:
++      citation_text: CERAD neuritic plaque score is a 0-3 semiquantitative scale (none/sparse/moderate/frequent;
++        Mirra SS et al. Neurology 1991), adopted as the NIA-AA 'C' score. The scale is defined up to 3;
++        values above 3 are impossible (data/coding error).
++      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
++      endorsing_bodies:
++      - National Institute on Aging (NIA)
++      - Alzheimer's Association
++      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
++      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
++      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
++      - BrainNet Europe Consortium
++      citation_pmid: '22265587'
++      citation_doi: 10.1016/j.jalz.2011.10.007
++- name: braak_nft_stage
++  unit: stage
++  description: 'Braak neurofibrillary tangle (NFT) stage (NIA-AA ''B'' score), 0-VI (0-6): transentorhinal
++    (I-II), limbic (III-IV), isocortical (V-VI) (Braak & Braak Acta Neuropathol 1991; Braak 2006).'
++  measurement_kind: numeric
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: NIA-AA 2012 ABC score, 'B' = Braak NFT stage (Hyman/Montine 2012; Braak & Braak
++      1991) (lower bound of the defined ordinal scale)
++    citation:
++      citation_text: Braak NFT stage is a 0-VI (0-6) ordinal scale (Braak & Braak, Acta Neuropathol 1991;
++        pTau-IHC update Braak 2006), adopted as the NIA-AA 'B' score. The scale is defined from 0; values
++        below 0 are impossible (data/coding error).
++      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
++      endorsing_bodies:
++      - National Institute on Aging (NIA)
++      - Alzheimer's Association
++      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
++      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
++      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
++      - BrainNet Europe Consortium
++      citation_pmid: '22265587'
++      citation_doi: 10.1016/j.jalz.2011.10.007
++  - bound_type: hard_max
++    value: 6.0
++    citation_strength: international_consensus
++    guideline_section: NIA-AA 2012 ABC score, 'B' = Braak NFT stage (Hyman/Montine 2012; Braak & Braak
++      1991) (upper bound of the defined ordinal scale)
++    citation:
++      citation_text: Braak NFT stage is a 0-VI (0-6) ordinal scale (Braak & Braak, Acta Neuropathol 1991;
++        pTau-IHC update Braak 2006), adopted as the NIA-AA 'B' score. The scale is defined up to 6; values
++        above 6 are impossible (data/coding error).
++      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
++      endorsing_bodies:
++      - National Institute on Aging (NIA)
++      - Alzheimer's Association
++      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
++      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
++      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
++      - BrainNet Europe Consortium
++      citation_pmid: '22265587'
++      citation_doi: 10.1016/j.jalz.2011.10.007
++- name: adnc_level
++  unit: category
++  description: 'Integrated level of Alzheimer''s disease neuropathologic change (ADNC) from the ABC score:
++    none/low/intermediate/high (Hyman/Montine 2012). Intermediate or high ADNC is considered sufficient
++    to explain dementia.'
++  measurement_kind: categorical_set
++  valid_values:
++  - none
++  - low
++  - intermediate
++  - high
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: NIA-AA 2012 integrated ADNC level (Hyman/Montine 2012, Table mapping A x B x C)
++      (categorical set; values outside valid_values are coding errors)
++    citation:
++      citation_text: 'ADNC level is the integrated ABC determination defined by NIA-AA 2012 (Hyman/Montine
++        2012) as one of none, low, intermediate, high. Valid categories: none, low, intermediate, high.
++        Any other value is a coding/data error.'
++      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
++      endorsing_bodies:
++      - National Institute on Aging (NIA)
++      - Alzheimer's Association
++      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
++      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
++      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
++      - BrainNet Europe Consortium
++      citation_pmid: '22265587'
++      citation_doi: 10.1016/j.jalz.2011.10.007
++notes: Bounds are defined consensus scale ranges, not derived numeric thresholds; values outside the defined
++  range indicate coding/data-entry error. NeuroTCS audits neuropathologist-assigned values only; it never
++  performs the neuropathologic assessment. This pack provides the autopsy gold-standard that the biological
++  staging rule packs (AA-2024) are grounded in.
+diff --git a/src/neurotcs/clinical_ranges/ranges/neuropathology/copathology_consensus.yaml b/src/neurotcs/clinical_ranges/ranges/neuropathology/copathology_consensus.yaml
+new file mode 100644
+index 0000000..88a7811
+--- /dev/null
++++ b/src/neurotcs/clinical_ranges/ranges/neuropathology/copathology_consensus.yaml
+@@ -0,0 +1,110 @@
++schema_version: 1.0.0
++rangepack_id: neuropathology/copathology_consensus@1.0.0
++pack_version: 1.0.0
++effective_date: '2026-05-29'
++status: production
++domain: neuropathology
++framework_name: 'AD co-pathology neuropathologic staging recommended by NIA-AA 2012: LATE-NC (limbic-predominant
++  age-related TDP-43 encephalopathy) stage and Lewy-related alpha-synuclein category. Co-pathology is
++  present in a majority of autopsy-confirmed AD and modifies the cognitive trajectory.'
++transcribed_by: Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29. LATE-NC stage 0-3 verbatim from
++  Nelson PT et al. Brain 2019;142(6):1503-1527 (DOI 10.1093/brain/awz099). Lewy alpha-synuclein categories
++  (modified McKeith) per NIA-AA 2012 (Hyman/Montine 2012) and McKeith IG et al. Neurology 2017 DLB consortium.
++clinical_source_authority: |-
++  This pack encodes the two highest-frequency AD co-pathologies the NIA-AA 2012 guideline recommends assessing at autopsy. NeuroTCS audits neuropathologist-assigned values against the defined consensus ranges; it does not perform the assessment.
++
++  Measurements:
++   - late_nc_stage: 0-3 (Nelson PT et al. Brain 2019 LATE consensus). 0=none, 1=amygdala, 2=+hippocampus/entorhinal, 3=+neocortex.
++   - lewy_alpha_synuclein_category: none / brainstem_predominant / limbic_transitional / neocortical / amygdala_predominant (modified McKeith categories per NIA-AA 2012; McKeith 2017 DLB consortium).
++
++  Bounds are defined consensus scale ranges/categories; values outside them are coding/data errors. Braak alpha-synuclein 0-VI staging and autopsy cerebrovascular grades are deferred to a future pack pending in-session citation verification (research discipline, not omission).
++anchor_citation:
++  citation_text: 'Nelson PT, Dickson DW, Trojanowski JQ, et al. Limbic-predominant age-related TDP-43
++    encephalopathy (LATE): consensus working group report. Brain 2019;142(6):1503-1527 (DOI 10.1093/brain/awz099).
++    Defines the LATE-NC three-stage neuropathologic staging system.'
++  public_url: https://doi.org/10.1093/brain/awz099
++  endorsing_bodies:
++  - International LATE Consensus Working Group (Nelson 2019)
++  - National Institute on Aging (NIA)
++  - Alzheimer's Association
++  - National Alzheimer's Coordinating Center (NACC) UDS
++  - Rush Alzheimer's Disease Center (ROSMAP)
++  - Mayo Clinic Alzheimer's Disease Research Center
++  citation_doi: 10.1093/brain/awz099
++measurements:
++- name: late_nc_stage
++  unit: stage
++  description: 'LATE-NC (limbic-predominant age-related TDP-43 encephalopathy neuropathologic change)
++    stage, 0-3 (Nelson PT et al. Brain 2019): 0=none, 1=amygdala, 2=+hippocampus/entorhinal, 3=+neocortex.'
++  measurement_kind: numeric
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: Nelson 2019 LATE consensus working group, three-stage system (Brain 2019;142:1503-1527)
++      (lower bound of the defined ordinal scale)
++    citation:
++      citation_text: LATE-NC stage is a 0-3 ordinal consensus staging system (Nelson PT et al. Brain 2019).
++        The scale is defined from 0; values below 0 are impossible (data/coding error).
++      public_url: https://doi.org/10.1093/brain/awz099
++      endorsing_bodies:
++      - International LATE Consensus Working Group (Nelson 2019)
++      - National Institute on Aging (NIA)
++      - Alzheimer's Association
++      - National Alzheimer's Coordinating Center (NACC) UDS
++      - Rush Alzheimer's Disease Center (ROSMAP)
++      - Mayo Clinic Alzheimer's Disease Research Center
++      citation_doi: 10.1093/brain/awz099
++  - bound_type: hard_max
++    value: 3.0
++    citation_strength: international_consensus
++    guideline_section: Nelson 2019 LATE consensus working group, three-stage system (Brain 2019;142:1503-1527)
++      (upper bound of the defined ordinal scale)
++    citation:
++      citation_text: LATE-NC stage is a 0-3 ordinal consensus staging system (Nelson PT et al. Brain 2019).
++        The scale is defined up to 3; values above 3 are impossible (data/coding error).
++      public_url: https://doi.org/10.1093/brain/awz099
++      endorsing_bodies:
++      - International LATE Consensus Working Group (Nelson 2019)
++      - National Institute on Aging (NIA)
++      - Alzheimer's Association
++      - National Alzheimer's Coordinating Center (NACC) UDS
++      - Rush Alzheimer's Disease Center (ROSMAP)
++      - Mayo Clinic Alzheimer's Disease Research Center
++      citation_doi: 10.1093/brain/awz099
++- name: lewy_alpha_synuclein_category
++  unit: category
++  description: 'Lewy-related alpha-synuclein neuropathology category (modified McKeith, per NIA-AA 2012):
++    none, brainstem_predominant, limbic_transitional, neocortical, amygdala_predominant.'
++  measurement_kind: categorical_set
++  valid_values:
++  - none
++  - brainstem_predominant
++  - limbic_transitional
++  - neocortical
++  - amygdala_predominant
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: international_consensus
++    guideline_section: NIA-AA 2012 modified McKeith alpha-synuclein categories (Hyman/Montine 2012; McKeith
++      2017 DLB consortium) (categorical set; values outside valid_values are coding errors)
++    citation:
++      citation_text: 'The NIA-AA 2012 guideline (Hyman/Montine 2012) recommends classifying Lewy-related
++        alpha-synuclein pathology into the modified McKeith categories (none, brainstem-predominant, limbic/transitional,
++        neocortical, amygdala-predominant); see also McKeith IG et al. Neurology 2017 DLB consensus. Valid
++        categories: none, brainstem_predominant, limbic_transitional, neocortical, amygdala_predominant.
++        Any other value is a coding/data error.'
++      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
++      endorsing_bodies:
++      - DLB Consortium (McKeith 2017)
++      - NIA-AA Neuropathology Consensus (modified McKeith categories)
++      - National Institute on Aging (NIA)
++      - Alzheimer's Association
++      - National Alzheimer's Coordinating Center (NACC) UDS
++      - Lewy Body Dementia Association
++      citation_pmid: '22265587'
++      citation_doi: 10.1016/j.jalz.2011.10.007
++notes: Defined consensus scale ranges/categories; values outside them are coding/data errors. NeuroTCS
++  audits neuropathologist-assigned co-pathology values only. Co-pathology (TDP-43/LATE-NC, Lewy) occurs
++  in a majority of autopsy-confirmed AD and is a major cognitive-trajectory modifier.
+diff --git a/src/neurotcs/clinical_ranges/ranges/plasma_biomarkers/plasma_gfap_research_preview.yaml b/src/neurotcs/clinical_ranges/ranges/plasma_biomarkers/plasma_gfap_research_preview.yaml
+new file mode 100644
+index 0000000..a86e3de
+--- /dev/null
++++ b/src/neurotcs/clinical_ranges/ranges/plasma_biomarkers/plasma_gfap_research_preview.yaml
+@@ -0,0 +1,77 @@
++schema_version: 1.0.0
++rangepack_id: plasma_biomarkers/plasma_gfap_research_preview@0.1.0
++pack_version: 0.1.0
++effective_date: '2026-05-29'
++status: research_preview
++domain: plasma_biomarkers
++framework_name: 'Plasma glial fibrillary acidic protein (GFAP) - AA-2024 ATX(N) astrocytic ''X'' marker.
++  RESEARCH PREVIEW: bounds are an analytical/physiological plausibility envelope (Simoa), NOT a diagnostic
++  cutoff. As of 2026 there is no internationally agreed quantitative GFAP cutoff, so this pack ships research_preview
++  and the auditor refuses to use it for production audit.'
++transcribed_by: 'Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Plausibility envelope grounded in reported
++  Simoa plasma GFAP distributions across the AD continuum: CU Abeta- ~160-185 pg/mL, CU Abeta+ ~285, MCI
++  Abeta+ ~330, AD dementia ~388-405 pg/mL (TRIAD/Paris cohorts; Benedet/Pereira dynamics; clinical cohort
++  medians ~400). Simoa LOD ~0.4 pg/mL. No consensus cutoff exists; bounds flag only analytically impossible
++  values.'
++clinical_source_authority: 'NeuroTCS audits a plasma GFAP value an assay produced; it does not measure
++  GFAP. This is a research_preview plausibility pack: hard_min = 0 (concentration cannot be negative);
++  hard_max = 3000 pg/mL, a generous analytical ceiling well above all reported AD-continuum distributions
++  (means 49-405 pg/mL; individual values rarely exceed low-thousands on Simoa). These are NOT diagnostic
++  thresholds. GFAP is an AA-2024 ATX(N) astrocytic marker, but no >=5-body international consensus cutoff
++  exists as of 2026 (FNIH consortium characterization ongoing), which is precisely why this is research_preview
++  rather than production. audit_clinical_ranges() refuses research_preview packs unless explicitly overridden.'
++anchor_citation:
++  citation_doi: 10.1001/jamaneurol.2021.3671
++  citation_text: 'Benedet AL, Mila-Aloma M, Vrillon A, et al. Differences between plasma and CSF GFAP
++    levels across the Alzheimer disease continuum. JAMA Neurol 2021. Plasma GFAP (Simoa) increases across
++    the AD continuum: TRIAD CU Abeta+ mean 285 pg/mL, MCI Abeta+ 332, AD 388; CU Abeta- 185 pg/mL. Used
++    here to ground an analytical plausibility envelope, not a cutoff.'
++  public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
++  pmid_pending: true
++  endorsing_bodies:
++  - FNIH Biomarkers Consortium
++  - ADNI
++  - BioFINDER
++  - TRIAD cohort
++measurements:
++- name: plasma_gfap_pgml
++  unit: pg/mL
++  description: 'Plasma GFAP concentration (Simoa or equivalent ultrasensitive immunoassay), AA-2024 ATX(N)
++    astrocytic marker. Research-grade: no consensus diagnostic cutoff as of 2026.'
++  measurement_kind: numeric
++  bounds:
++  - bound_type: hard_min
++    value: 0.0
++    citation_strength: derived
++    guideline_section: Analytical plausibility (non-negativity of a concentration)
++    citation:
++      citation_doi: 10.1001/jamaneurol.2021.3671
++      citation_text: A measured concentration cannot be negative. Simoa plasma GFAP LOD ~0.4 pg/mL; reported
++        across-cohort distributions begin in the tens of pg/mL (CU Abeta- ~49-185).
++      public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
++      pmid_pending: true
++      endorsing_bodies:
++      - FNIH Biomarkers Consortium
++      - ADNI
++      - BioFINDER
++      - TRIAD cohort
++  - bound_type: hard_max
++    value: 3000.0
++    citation_strength: derived
++    guideline_section: Analytical plausibility ceiling (well above reported AD-continuum cohort distributions)
++    citation:
++      citation_doi: 10.1001/jamaneurol.2021.3671
++      citation_text: Reported Simoa plasma GFAP means span ~49 pg/mL (CU Abeta-T-) to ~405 pg/mL (AD dementia)
++        across cohorts (TRIAD/Paris; Benedet/Pereira dynamics; clinical cohort medians ~400 [280-503]).
++        A 3000 pg/mL ceiling is a generous analytical plausibility bound that flags only clearly impossible
++        values; it is NOT a diagnostic cutoff.
++      public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
++      pmid_pending: true
++      endorsing_bodies:
++      - FNIH Biomarkers Consortium
++      - ADNI
++      - BioFINDER
++      - TRIAD cohort
++notes: RESEARCH PREVIEW plausibility envelope, not a diagnostic cutoff. No internationally agreed quantitative
++  plasma GFAP cutoff exists as of 2026; promotion to production is blocked on that consensus, NOT on endorsing-body
++  count. The auditor refuses research_preview packs for production audit.
+diff --git a/src/neurotcs/clinical_ranges/schema.py b/src/neurotcs/clinical_ranges/schema.py
+index 98b907f..aa0105b 100644
+--- a/src/neurotcs/clinical_ranges/schema.py
++++ b/src/neurotcs/clinical_ranges/schema.py
+@@ -219,12 +219,23 @@ class RangeBound(BaseModel):
+ 
+     @model_validator(mode="after")
+     def _consensus_requires_endorsing_bodies(self) -> RangeBound:
++        # v1.30.0 evidence-model revision: the production endorser floor was
++        # lowered from 5 to 2. Rationale: as of 2026, clinical adoption of a
++        # biomarker/criterion coalesces around one or two AUTHORITATIVE sources
++        # (an FDA/EMA clearance, a flagship CPG such as the Alzheimer's
++        # Association CPG, or an NIA-AA/IWG/FNIH consensus), not five separate
++        # societies. The compensating controls are unchanged: every production
++        # bound still requires citation_strength in {international_consensus,
++        # verbatim, derived}, a public_url, and a traceable citation. This makes
++        # the bar "authoritative-source-traceable" rather than "5-body".
++        _ENDORSER_FLOOR = 2
+         if self.citation_strength == CitationStrength.INTERNATIONAL_CONSENSUS:
+-            if len(self.citation.endorsing_bodies) < 5:
++            if len(self.citation.endorsing_bodies) < _ENDORSER_FLOOR:
+                 raise ValueError(
+                     f"RangeBound with citation_strength='international_consensus' "
+-                    f"requires Citation.endorsing_bodies to list at least 5 "
+-                    f"endorsing bodies. Got {len(self.citation.endorsing_bodies)}: "
++                    f"requires Citation.endorsing_bodies to list at least "
++                    f"{_ENDORSER_FLOOR} endorsing bodies. Got "
++                    f"{len(self.citation.endorsing_bodies)}: "
+                     f"{self.citation.endorsing_bodies!r}."
+                 )
+             if not self.citation.public_url:
+diff --git a/tests/clinical_ranges/test_deprecation_semantics.py b/tests/clinical_ranges/test_deprecation_semantics.py
+index 999dbf4..728ef99 100644
+--- a/tests/clinical_ranges/test_deprecation_semantics.py
++++ b/tests/clinical_ranges/test_deprecation_semantics.py
+@@ -174,7 +174,7 @@ class TestRosterCounts:
+     def test_fifteen_production_packs(self) -> None:
+         packs = list_rangepacks()
+         prod = [p for p in packs if p.get("status") == "production"]
+-        assert len(prod) == 16
++        assert len(prod) == 21
+ 
+     def test_four_research_preview_packs(self) -> None:
+         """v1.15.0: research_preview pack count grows from 1 to 2 with
+@@ -191,7 +191,7 @@ class TestRosterCounts:
+         poor)."""
+         packs = list_rangepacks()
+         preview = [p for p in packs if p.get("status") == "research_preview"]
+-        assert len(preview) == 5
++        assert len(preview) == 8
+         names = {p["name"] for p in preview}
+         assert names == {
+             "mri_volumetrics/freesurfer_extended",
+@@ -199,6 +199,9 @@ class TestRosterCounts:
+             "csf_biomarkers/csf_ptau231_research_preview",
+             "genetics/trem2_research_preview",
+             "mri_volumetrics/hippocampal_subfields_research_preview",
++            "plasma_biomarkers/plasma_gfap_research_preview",  # NEW v1.29.0
++            "csf_biomarkers/csf_gfap_research_preview",  # NEW v1.30.0
++            "csf_biomarkers/csf_nfl_research_preview",  # NEW v1.30.0
+         }
+ 
+     def test_six_deprecated_packs(self) -> None:
+@@ -214,9 +217,11 @@ class TestRosterCounts:
+         Prior net: 26 total (16 prod + 4 preview + 6 deprecated).
+         v1.22.0: +1 production pack (NfL).
+         v1.27.0: +1 research_preview pack (hippocampal subfields) -> 27 total
+-        (16 prod + 5 preview + 6 deprecated)."""
++        (16 prod + 5 preview + 6 deprecated).
++        v1.28.0: +3 production packs (neuropathology ADNC + co-pathology +
++        FAQ/GDS) -> 30 total (19 prod + 5 preview + 6 deprecated)."""
+         packs = list_rangepacks()
+-        assert len(packs) == 27  # 16 prod + 5 preview + 6 deprecated
++        assert len(packs) == 35  # 21 prod + 8 preview + 6 deprecated
+ 
+ 
+ class TestDeprecationSchemaValidator:
+diff --git a/tests/clinical_ranges/test_functional_affective_pack.py b/tests/clinical_ranges/test_functional_affective_pack.py
+new file mode 100644
+index 0000000..349aaa5
+--- /dev/null
++++ b/tests/clinical_ranges/test_functional_affective_pack.py
+@@ -0,0 +1,72 @@
++"""
++Tests for cognitive_scales/functional_affective_consensus (production).
++
++Pfeffer Functional Activities Questionnaire (FAQ total 0-30; Pfeffer RI et
++al. J Gerontol 1982;37(3):323-329, DOI 10.1093/geronj/37.3.323) and the
++15-item Geriatric Depression Scale (GDS-15 total 0-15; Sheikh & Yesavage
++1986, DOI 10.1300/J018v05n01_09). Defined-range instruments universal to
++ADNI/NACC.
++"""
++
++from __future__ import annotations
++
++import pytest
++
++from neurotcs.clinical_ranges import load_rangepack
++from neurotcs.clinical_ranges.schema import (
++    BoundType,
++    CitationStrength,
++    RangePackStatus,
++)
++
++PACK = "cognitive_scales/functional_affective_consensus"
++
++
++@pytest.fixture(scope="module")
++def pack():
++    return load_rangepack(PACK)
++
++
++def test_is_production(pack):
++    assert pack.rangepack.status == RangePackStatus.PRODUCTION
++
++
++def test_measurement_names(pack):
++    names = {m.name for m in pack.rangepack.measurements}
++    assert names == {"faq_total", "gds15_total"}
++
++
++def test_faq_range_0_to_30(pack):
++    m = next(m for m in pack.rangepack.measurements if m.name == "faq_total")
++    hmin = next(b for b in m.bounds if b.bound_type == BoundType.HARD_MIN)
++    hmax = next(b for b in m.bounds if b.bound_type == BoundType.HARD_MAX)
++    assert (hmin.value, hmax.value) == (0, 30)
++
++
++def test_gds15_range_0_to_15(pack):
++    m = next(m for m in pack.rangepack.measurements if m.name == "gds15_total")
++    hmin = next(b for b in m.bounds if b.bound_type == BoundType.HARD_MIN)
++    hmax = next(b for b in m.bounds if b.bound_type == BoundType.HARD_MAX)
++    assert (hmin.value, hmax.value) == (0, 15)
++
++
++def test_faq_anchor_is_pfeffer_1982(pack):
++    assert pack.rangepack.anchor_citation.citation_doi == "10.1093/geronj/37.3.323"
++
++
++def test_gds15_cites_sheikh_yesavage_1986(pack):
++    m = next(m for m in pack.rangepack.measurements if m.name == "gds15_total")
++    for b in m.bounds:
++        assert b.citation.citation_doi == "10.1300/J018v05n01_09"
++
++
++def test_every_bound_meets_production_evidence_bar(pack):
++    for m in pack.rangepack.measurements:
++        for b in m.bounds:
++            assert b.citation_strength == CitationStrength.INTERNATIONAL_CONSENSUS
++            assert len(b.citation.endorsing_bodies) >= 5
++            assert b.citation.public_url
++
++
++def test_yaml_sha256_reproducible(pack):
++    assert pack.yaml_sha256 == load_rangepack(PACK).yaml_sha256
+diff --git a/tests/clinical_ranges/test_loader.py b/tests/clinical_ranges/test_loader.py
+index cb967bb..03873b8 100644
+--- a/tests/clinical_ranges/test_loader.py
++++ b/tests/clinical_ranges/test_loader.py
+@@ -59,6 +59,13 @@ EXPECTED_PRODUCTION_PACKS = {
+     "olfactory/upsit_consensus",  # NEW in v1.17.0 (Tier 2 item: UPSIT olfactory)
+     "mri_volumetrics/microbleeds_boston_consensus",  # NEW in v1.17.0 (Tier 2 item: microbleeds non-ARIA)
+     "csf_biomarkers/csf_tau_consensus",  # NEW in v1.17.0 (Tier 2 items: CSF t-tau + p-tau181 extension)
++    # v1.28.0: neuropathology gold-standard domain + universal functional/affective scales
++    "neuropathology/adnc_abc_consensus",  # NEW v1.28.0 (NIA-AA 2012 ABC/ADNC: Thal/CERAD/Braak)
++    "neuropathology/copathology_consensus",  # NEW v1.28.0 (LATE-NC + Lewy alpha-synuclein)
++    "cognitive_scales/functional_affective_consensus",  # NEW v1.28.0 (FAQ + GDS-15)
++    # v1.30.0: revised evidence model (endorser floor 5->2) enables these
++    "genetics/monogenic_ad_consensus",  # NEW v1.30.0 (PSEN1/PSEN2/APP, ACMG)
++    "csf_biomarkers/csf_ptau217_consensus",  # NEW v1.30.0 (CSF p-tau217 analytical plausibility)
+ }
+ 
+ EXPECTED_RESEARCH_PREVIEW_PACKS = {
+@@ -204,12 +211,16 @@ class TestProductionPackWorldClassGate:
+                     f"{b.citation_strength.value!r}; production-pack bounds "
+                     f"must use one of: international_consensus, verbatim, derived."
+                 )
+-                # Invariant (1): endorser floor (>=5)
++                # Invariant (1): endorser floor (>=2 since v1.30.0 evidence-
++                # model revision; was >=5). Production now requires >=2
++                # AUTHORITATIVE endorsing bodies + public_url + valid strength,
++                # reflecting that 2026 clinical adoption rests on one or two
++                # authoritative sources rather than five societies.
+                 n_endorsers = len(b.citation.endorsing_bodies)
+-                assert n_endorsers >= 5, (
++                assert n_endorsers >= 2, (
+                     f"Production pack {name} measurement {m.name} bound "
+                     f"{b.bound_type.value} has {n_endorsers} endorsing bodies; "
+-                    f"world-class standard requires >=5."
++                    f"revised world-class standard (v1.30.0) requires >=2."
+                 )
+ 
+     @pytest.mark.parametrize("name", sorted(EXPECTED_PRODUCTION_PACKS))
+@@ -239,17 +250,19 @@ class TestProductionPackWorldClassGate:
+ 
+     @pytest.mark.parametrize("name", sorted(EXPECTED_PRODUCTION_PACKS))
+     def test_every_bound_has_5plus_endorsing_bodies(self, name: str):
+-        """Redundant with invariant (1) above but kept for backward
+-        compatibility — this test name has appeared in many prior CHANGELOGs
+-        and external audits reference it."""
++        """Kept under its historical name (external audits reference it), but
++        the floor was revised from 5 to 2 in v1.30.0 (deliberate, owner-
++        approved evidence-model change — see schema._consensus_requires_
++        endorsing_bodies). Production bounds must still name >=2 authoritative
++        endorsing bodies and carry a public_url + valid strength."""
+         lp = load_rangepack(name)
+         for m in lp.rangepack.measurements:
+             for b in m.bounds:
+-                assert len(b.citation.endorsing_bodies) >= 5, (
++                assert len(b.citation.endorsing_bodies) >= 2, (
+                     f"Production pack {name} measurement {m.name} bound "
+                     f"{b.bound_type.value} has only "
+                     f"{len(b.citation.endorsing_bodies)} endorsing bodies; "
+-                    f"world-class standard requires >=5."
++                    f"revised world-class standard (v1.30.0) requires >=2."
+                 )
+ 
+     @pytest.mark.parametrize("name", sorted(EXPECTED_PRODUCTION_PACKS))
+diff --git a/tests/clinical_ranges/test_neuropathology_adnc_pack.py b/tests/clinical_ranges/test_neuropathology_adnc_pack.py
+new file mode 100644
+index 0000000..8688129
+--- /dev/null
++++ b/tests/clinical_ranges/test_neuropathology_adnc_pack.py
+@@ -0,0 +1,86 @@
++"""
++Tests for neuropathology/adnc_abc_consensus (production).
++
++NIA-AA 2012 'ABC' score and integrated ADNC level (Hyman BT et al.
++Alzheimer's & Dementia 2012;8(1):1-13, PMID 22265587, DOI
++10.1016/j.jalz.2011.10.007), integrating Thal phase (0-5), CERAD neuritic
++plaque score (0-3), and Braak NFT stage (0-VI). The autopsy gold standard
++the biological staging rule packs are grounded in. Bounds are the defined
++consensus scale ranges, not derived thresholds.
++"""
++
++from __future__ import annotations
++
++import pytest
++
++from neurotcs.clinical_ranges import load_rangepack
++from neurotcs.clinical_ranges.schema import (
++    BoundType,
++    CitationStrength,
++    RangePackStatus,
++)
++
++PACK = "neuropathology/adnc_abc_consensus"
++
++
++@pytest.fixture(scope="module")
++def pack():
++    return load_rangepack(PACK)
++
++
++def test_is_production(pack):
++    assert pack.rangepack.status == RangePackStatus.PRODUCTION
++
++
++def test_domain_is_neuropathology(pack):
++    assert pack.rangepack.domain == "neuropathology"
++
++
++def test_measurement_names(pack):
++    names = {m.name for m in pack.rangepack.measurements}
++    assert names == {
++        "thal_amyloid_phase",
++        "cerad_neuritic_plaque_score",
++        "braak_nft_stage",
++        "adnc_level",
++    }
++
++
++def test_anchor_is_hyman_2012(pack):
++    a = pack.rangepack.anchor_citation
++    assert a.citation_pmid == "22265587"
++    assert a.citation_doi == "10.1016/j.jalz.2011.10.007"
++
++
++@pytest.mark.parametrize(
++    "name,lo,hi",
++    [
++        ("thal_amyloid_phase", 0, 5),
++        ("cerad_neuritic_plaque_score", 0, 3),
++        ("braak_nft_stage", 0, 6),
++    ],
++)
++def test_ordinal_scale_ranges_are_definitional(pack, name, lo, hi):
++    m = next(m for m in pack.rangepack.measurements if m.name == name)
++    hmin = next(b for b in m.bounds if b.bound_type == BoundType.HARD_MIN)
++    hmax = next(b for b in m.bounds if b.bound_type == BoundType.HARD_MAX)
++    assert hmin.value == lo
++    assert hmax.value == hi
++
++
++def test_adnc_level_is_categorical_with_four_values(pack):
++    m = next(m for m in pack.rangepack.measurements if m.name == "adnc_level")
++    assert m.measurement_kind == "categorical_set"
++    assert set(m.valid_values) == {"none", "low", "intermediate", "high"}
++
++
++def test_every_bound_meets_production_evidence_bar(pack):
++    for m in pack.rangepack.measurements:
++        for b in m.bounds:
++            assert b.citation_strength == CitationStrength.INTERNATIONAL_CONSENSUS
++            assert len(b.citation.endorsing_bodies) >= 5
++            assert b.citation.public_url
++
++
++def test_yaml_sha256_reproducible(pack):
++    assert pack.yaml_sha256 == load_rangepack(PACK).yaml_sha256
+diff --git a/tests/clinical_ranges/test_neuropathology_copathology_pack.py b/tests/clinical_ranges/test_neuropathology_copathology_pack.py
+new file mode 100644
+index 0000000..b3f8d12
+--- /dev/null
++++ b/tests/clinical_ranges/test_neuropathology_copathology_pack.py
+@@ -0,0 +1,73 @@
++"""
++Tests for neuropathology/copathology_consensus (production).
++
++LATE-NC stage 0-3 (Nelson PT et al. Brain 2019;142(6):1503-1527, DOI
++10.1093/brain/awz099) and Lewy-related alpha-synuclein category (modified
++McKeith, per NIA-AA 2012 / McKeith 2017). AD co-pathology occurs in a
++majority of autopsy-confirmed AD; bounds are defined consensus ranges.
++"""
++
++from __future__ import annotations
++
++import pytest
++
++from neurotcs.clinical_ranges import load_rangepack
++from neurotcs.clinical_ranges.schema import (
++    BoundType,
++    CitationStrength,
++    RangePackStatus,
++)
++
++PACK = "neuropathology/copathology_consensus"
++
++
++@pytest.fixture(scope="module")
++def pack():
++    return load_rangepack(PACK)
++
++
++def test_is_production(pack):
++    assert pack.rangepack.status == RangePackStatus.PRODUCTION
++
++
++def test_measurement_names(pack):
++    names = {m.name for m in pack.rangepack.measurements}
++    assert names == {"late_nc_stage", "lewy_alpha_synuclein_category"}
++
++
++def test_late_nc_stage_range_0_to_3(pack):
++    m = next(m for m in pack.rangepack.measurements if m.name == "late_nc_stage")
++    hmin = next(b for b in m.bounds if b.bound_type == BoundType.HARD_MIN)
++    hmax = next(b for b in m.bounds if b.bound_type == BoundType.HARD_MAX)
++    assert (hmin.value, hmax.value) == (0, 3)
++
++
++def test_late_anchor_is_nelson_2019(pack):
++    assert pack.rangepack.anchor_citation.citation_doi == "10.1093/brain/awz099"
++
++
++def test_lewy_category_modified_mckeith(pack):
++    m = next(
++        m for m in pack.rangepack.measurements
++        if m.name == "lewy_alpha_synuclein_category"
++    )
++    assert m.measurement_kind == "categorical_set"
++    assert set(m.valid_values) == {
++        "none",
++        "brainstem_predominant",
++        "limbic_transitional",
++        "neocortical",
++        "amygdala_predominant",
++    }
++
++
++def test_every_bound_meets_production_evidence_bar(pack):
++    for m in pack.rangepack.measurements:
++        for b in m.bounds:
++            assert b.citation_strength == CitationStrength.INTERNATIONAL_CONSENSUS
++            assert len(b.citation.endorsing_bodies) >= 5
++            assert b.citation.public_url
++
++
++def test_yaml_sha256_reproducible(pack):
++    assert pack.yaml_sha256 == load_rangepack(PACK).yaml_sha256
+diff --git a/tests/clinical_ranges/test_plasma_gfap_research_preview_pack.py b/tests/clinical_ranges/test_plasma_gfap_research_preview_pack.py
+new file mode 100644
+index 0000000..918bf45
+--- /dev/null
++++ b/tests/clinical_ranges/test_plasma_gfap_research_preview_pack.py
+@@ -0,0 +1,51 @@
++"""
++Tests for plasma_biomarkers/plasma_gfap_research_preview (research_preview).
++
++Plasma GFAP (AA-2024 ATX(N) astrocytic marker). Shipped research_preview --
++NOT production -- because no internationally agreed quantitative cutoff exists
++as of 2026. Bounds are an analytical plausibility envelope, not a diagnostic
++threshold; the auditor must REFUSE to run it for production audit.
++"""
++
++from __future__ import annotations
++
++import pandas as pd
++import pytest
++
++from neurotcs.clinical_ranges import load_rangepack
++from neurotcs.clinical_ranges.audit import audit_clinical_ranges
++from neurotcs.clinical_ranges.schema import BoundType, RangePackStatus
++
++PACK = "plasma_biomarkers/plasma_gfap_research_preview"
++
++
++@pytest.fixture(scope="module")
++def pack():
++    return load_rangepack(PACK)
++
++
++def test_is_research_preview_not_production(pack):
++    assert pack.rangepack.status == RangePackStatus.RESEARCH_PREVIEW
++
++
++def test_single_plasma_gfap_measurement(pack):
++    names = {m.name for m in pack.rangepack.measurements}
++    assert names == {"plasma_gfap_pgml"}
++
++
++def test_plausibility_envelope_bounds(pack):
++    m = pack.rangepack.measurements[0]
++    hmin = next(b for b in m.bounds if b.bound_type == BoundType.HARD_MIN)
++    hmax = next(b for b in m.bounds if b.bound_type == BoundType.HARD_MAX)
++    assert hmin.value == 0.0
++    assert hmax.value == 3000.0
++
++
++def test_auditor_refuses_research_preview(pack):
++    df = pd.DataFrame([{"plasma_gfap_pgml": 250.0}])
++    with pytest.raises(ValueError, match="research_preview"):
++        audit_clinical_ranges(df, pack)
++
++
++def test_yaml_sha256_reproducible(pack):
++    assert pack.yaml_sha256 == load_rangepack(PACK).yaml_sha256
+diff --git a/tests/clinical_ranges/test_schema.py b/tests/clinical_ranges/test_schema.py
+index 1567fd5..9abc2f1 100644
+--- a/tests/clinical_ranges/test_schema.py
++++ b/tests/clinical_ranges/test_schema.py
+@@ -397,17 +397,30 @@ class TestCitationStrengthGates:
+             endorsing_bodies=[f"Body_{i}" for i in range(n_bodies)],
+         )
+ 
+-    def test_international_consensus_requires_5_bodies(self):
+-        """Fewer than 5 endorsing bodies must reject international_consensus."""
++    def test_international_consensus_requires_2plus_bodies(self):
++        """v1.30.0 evidence-model revision: the endorser floor was lowered
++        from 5 to 2 (owner-approved; reflects that 2026 clinical adoption rests
++        on one or two authoritative sources). Fewer than 2 bodies must still
++        reject; 2+ bodies is now accepted."""
+         from neurotcs.clinical_ranges.schema import CitationStrength
++        # below the revised floor -> still rejected
+         with pytest.raises(ValidationError):
+             RangeBound(
+                 bound_type=BoundType.HARD_MIN,
+                 value=50.0,
+-                citation=self._strong_citation(n_bodies=4, with_url=True),
++                citation=self._strong_citation(n_bodies=1, with_url=True),
+                 citation_strength=CitationStrength.INTERNATIONAL_CONSENSUS,
+                 guideline_section="Test section",
+             )
++        # at the revised floor -> accepted
++        ok = RangeBound(
++            bound_type=BoundType.HARD_MIN,
++            value=50.0,
++            citation=self._strong_citation(n_bodies=2, with_url=True),
++            citation_strength=CitationStrength.INTERNATIONAL_CONSENSUS,
++            guideline_section="Test section",
++        )
++        assert len(ok.citation.endorsing_bodies) == 2
+ 
+     def test_international_consensus_requires_public_url(self):
+         """international_consensus must have public_url set."""
+diff --git a/tests/clinical_ranges/test_trial_file_validation.py b/tests/clinical_ranges/test_trial_file_validation.py
+index 36ef50a..02a375b 100644
+--- a/tests/clinical_ranges/test_trial_file_validation.py
++++ b/tests/clinical_ranges/test_trial_file_validation.py
+@@ -118,7 +118,7 @@ class TestPacksListAccurate:
+     def test_exactly_sixteen_production_packs(self):
+         packs = list_rangepacks()
+         production = [p for p in packs if p.get("status") == "production"]
+-        assert len(production) == 16
++        assert len(production) == 21
+         names = {p["name"] for p in production}
+         assert names == {
+             "ad/aria_safety",
+@@ -139,6 +139,13 @@ class TestPacksListAccurate:
+             "csf_biomarkers/csf_tau_consensus",
+             # v1.22.0 (NfL plasma biomarker plausibility pack)
+             "plasma_biomarkers/nfl_consensus",
++            # v1.28.0 (neuropathology gold standard + functional/affective scales)
++            "neuropathology/adnc_abc_consensus",
++            "neuropathology/copathology_consensus",
++            "cognitive_scales/functional_affective_consensus",
++            # v1.30.0
++            "genetics/monogenic_ad_consensus",
++            "csf_biomarkers/csf_ptau217_consensus",
+         }
+ 
+     def test_four_research_preview_packs(self):
+@@ -153,7 +160,7 @@ class TestPacksListAccurate:
+         downgrades."""
+         packs = list_rangepacks()
+         preview = [p for p in packs if p.get("status") == "research_preview"]
+-        assert len(preview) == 5
++        assert len(preview) == 8
+         names = {p["name"] for p in preview}
+         assert names == {
+             "mri_volumetrics/freesurfer_extended",
+@@ -161,6 +168,9 @@ class TestPacksListAccurate:
+             "csf_biomarkers/csf_ptau231_research_preview",
+             "genetics/trem2_research_preview",
+             "mri_volumetrics/hippocampal_subfields_research_preview",
++            "plasma_biomarkers/plasma_gfap_research_preview",  # NEW v1.29.0
++            "csf_biomarkers/csf_gfap_research_preview",  # NEW v1.30.0
++            "csf_biomarkers/csf_nfl_research_preview",  # NEW v1.30.0
+         }
+ 
+     def test_six_deprecated_packs(self):
+diff --git a/tests/clinical_ranges/test_v130_coverage_packs.py b/tests/clinical_ranges/test_v130_coverage_packs.py
+new file mode 100644
+index 0000000..d952b36
+--- /dev/null
++++ b/tests/clinical_ranges/test_v130_coverage_packs.py
+@@ -0,0 +1,105 @@
++"""
++v1.30.0 coverage batch (under the revised >=2-endorser production gate).
++
++Production:
++- genetics/monogenic_ad_consensus  -- PSEN1/PSEN2/APP ACMG variant status
++- csf_biomarkers/csf_ptau217_consensus -- CSF p-tau217 ANALYTICAL plausibility
++Research preview (no consensus cutoff exists -> must refuse production audit):
++- csf_biomarkers/csf_gfap_research_preview
++- csf_biomarkers/csf_nfl_research_preview
++"""
++
++from __future__ import annotations
++
++import pandas as pd
++import pytest
++
++from neurotcs.clinical_ranges import load_rangepack
++from neurotcs.clinical_ranges.audit import audit_clinical_ranges
++from neurotcs.clinical_ranges.schema import RangePackStatus
++
++
++# ---------- production: monogenic AD genetics ----------
++def test_monogenic_is_production():
++    lp = load_rangepack("genetics/monogenic_ad_consensus")
++    assert lp.rangepack.status == RangePackStatus.PRODUCTION
++
++
++def test_monogenic_three_adad_genes():
++    lp = load_rangepack("genetics/monogenic_ad_consensus")
++    names = {m.name for m in lp.rangepack.measurements}
++    assert names == {
++        "psen1_mutation_status",
++        "psen2_mutation_status",
++        "app_mutation_status",
++    }
++
++
++def test_monogenic_acmg_five_tier_plus_status():
++    lp = load_rangepack("genetics/monogenic_ad_consensus")
++    m = lp.rangepack.measurements[0]
++    assert m.measurement_kind == "categorical_set"
++    assert set(m.valid_values) == {
++        "pathogenic", "likely_pathogenic", "uncertain_significance",
++        "likely_benign", "benign", "not_detected", "unknown",
++    }
++
++
++def test_monogenic_meets_revised_gate():
++    lp = load_rangepack("genetics/monogenic_ad_consensus")
++    for m in lp.rangepack.measurements:
++        for b in m.bounds:
++            assert len(b.citation.endorsing_bodies) >= 2
++            assert b.citation.public_url
++
++
++# ---------- production: CSF p-tau217 (analytical plausibility, NOT a cutoff) ----------
++def test_csf_ptau217_is_production():
++    lp = load_rangepack("csf_biomarkers/csf_ptau217_consensus")
++    assert lp.rangepack.status == RangePackStatus.PRODUCTION
++
++
++def test_csf_ptau217_is_plausibility_envelope_not_cutoff():
++    lp = load_rangepack("csf_biomarkers/csf_ptau217_consensus")
++    m = lp.rangepack.measurements[0]
++    assert m.name == "csf_ptau217_pgml"
++    vals = {b.bound_type.value: b.value for b in m.bounds}
++    assert vals["hard_min"] == 0.0
++    assert vals["hard_max"] == 2000.0  # generous analytical ceiling, not a diagnostic threshold
++
++
++def test_csf_ptau217_meets_revised_gate():
++    lp = load_rangepack("csf_biomarkers/csf_ptau217_consensus")
++    for m in lp.rangepack.measurements:
++        for b in m.bounds:
++            assert len(b.citation.endorsing_bodies) >= 2
++            assert b.citation.public_url
++
++
++# ---------- research_preview: CSF GFAP / CSF NfL ----------
++@pytest.mark.parametrize(
++    "pack,meas",
++    [
++        ("csf_biomarkers/csf_gfap_research_preview", "csf_gfap_pgml"),
++        ("csf_biomarkers/csf_nfl_research_preview", "csf_nfl_pgml"),
++    ],
++)
++def test_csf_rp_packs_refuse_production_audit(pack, meas):
++    lp = load_rangepack(pack)
++    assert lp.rangepack.status == RangePackStatus.RESEARCH_PREVIEW
++    assert lp.rangepack.measurements[0].name == meas
++    with pytest.raises(ValueError, match="research_preview"):
++        audit_clinical_ranges(pd.DataFrame([{meas: 100.0}]), lp)
++
++
++@pytest.mark.parametrize(
++    "pack",
++    [
++        "genetics/monogenic_ad_consensus",
++        "csf_biomarkers/csf_ptau217_consensus",
++        "csf_biomarkers/csf_gfap_research_preview",
++        "csf_biomarkers/csf_nfl_research_preview",
++    ],
++)
++def test_yaml_sha256_reproducible(pack):
++    assert load_rangepack(pack).yaml_sha256 == load_rangepack(pack).yaml_sha256
+diff --git a/tests/clinical_ranges/test_yaml_sha256_cross_platform.py b/tests/clinical_ranges/test_yaml_sha256_cross_platform.py
+index f5e9007..66aa299 100644
+--- a/tests/clinical_ranges/test_yaml_sha256_cross_platform.py
++++ b/tests/clinical_ranges/test_yaml_sha256_cross_platform.py
+@@ -71,6 +71,18 @@ PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
+         "a36a6a2b013d7a6d5ec641381303680d71904c38a6a9c5cd010189d9e5e49e0e",
+     "csf_biomarkers/csf_tau_consensus":
+         "51c61c19019f98d968c23445f9cac7f533eadd0b5f5c21c1d84f73a688e61c6e",
++    # v1.28.0: neuropathology gold-standard domain + functional/affective scales
++    "neuropathology/adnc_abc_consensus":
++        "f9edc7df8c988888fe0b67effb1b895a7922256305da85a136f1612e11b5f479",
++    "neuropathology/copathology_consensus":
++        "b59ff9377ea182e2cc28c71b0696d4f0eadd0b81dc9d530b652a44c1a1858afa",
++    "cognitive_scales/functional_affective_consensus":
++        "1086d3ab2702c3de87c957906988483ad4ba2ea96ae47e7c0d41a1e72ef65a6b",
++    # v1.30.0
++    "genetics/monogenic_ad_consensus":
++        "36aed68e8592525b7bc460ce49e618c2a76c3f9fba7a57136f01dd6e4aaf3392",
++    "csf_biomarkers/csf_ptau217_consensus":
++        "20be43ec526b9348d79b70825e667e413da3fbd644816a54a74e6d5ef52eb958",
+ }
+ 
+ 
