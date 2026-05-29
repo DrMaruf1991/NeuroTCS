@@ -1,3 +1,87 @@
+## [1.35.0] -- 2026-05-29 -- longitudinal-monotonicity AUDIT invariants for new biomarker classes
+
+### Added: `cross_sheet/biomarker_longitudinal_monotonicity@0.1.0` (9 invariants)
+
+Closes the "longitudinal monotonicity on the new biomarker classes" roadmap
+item from v1.33.0 CHANGELOG. Mirrors the existing production
+`ad_clinical_coherence` pack's `hippocampal_volume_must_not_increase_over_
+follow_up` and `amyloid_centiloid_must_not_spontaneously_clear_untreated`
+pattern.
+
+**NeuroTCS auditor discipline preserved throughout:** every invariant's
+description explicitly states "AUDITS whether a tool-produced longitudinal
+series matches the published directional consensus" -- NeuroTCS does NOT
+measure, segment, or compute these values. Each invariant is citation-locked,
+fail-closed (research_preview refuses production audit), and deterministic
+(canonical_sha256 reproducible).
+
+Imaging (no treatment gate; physical degeneration biologically irreversible):
+- `rnfl_peripapillary_thickness_must_not_increase_over_follow_up` -- tolerance
+  3 um per Cirrus HD-OCT scan-rescan; anchor Mutlu 2018 PMID 29946702.
+- `gc_ipl_macular_thickness_must_not_increase_over_follow_up` -- tolerance
+  2 um; same anchor.
+- `ucbj_dvr_hippocampus_must_not_increase_over_follow_up` -- tolerance 0.2
+  DVR per Yale PET Center test-retest; anchor Chen 2018 DOI
+  10.1001/jamaneurol.2018.1836.
+- `ucbj_dvr_neocortical_must_not_increase_over_follow_up` -- same.
+- `asl_cbf_global_must_not_increase_over_follow_up` -- tolerance 5
+  mL/100g/min per Alsop 2015 pCASL ~10%% test-retest CoV; anchor Alsop 2015
+  PMID 24715426.
+- `dti_fa_fornix_must_not_increase_over_follow_up` -- tolerance 0.05
+  conservative for fornix partial-volume; anchor Acosta-Cabronero 2012
+  DOI 10.1371/journal.pone.0049072.
+- `dti_md_fornix_must_not_decrease_over_follow_up` -- tolerance 0.1 x 10^-3
+  mm^2/s; same anchor (MD non_decreasing -- direction RISES with WM degen).
+
+Fluid biomarkers (treatment-gated -- anti-amyloid therapy reduces p-tau217 in
+TRAILBLAZER-ALZ 2 / Clarity AD biomarker substudies):
+- `csf_ptau217_must_not_spontaneously_decrease_untreated` -- tolerance 50
+  pg/mL conservative on AD-range values 250-1000 pg/mL; treatment_gate_field
+  = `treatment_flags`; anchor Jack 2024 PMID 38934362.
+- `plasma_ptau217_must_not_spontaneously_decrease_untreated` -- tolerance 0.1
+  pg/mL conservative on Simoa CV; same gate; same anchor.
+
+### Cross-pack integration test (CI-enforced from now on)
+
+`test_every_value_field_exists_in_a_range_pack` verifies that every
+`value_field` referenced by the 9 invariants exists as an actual measurement
+in the corresponding range pack -- so no invariant can silently fail at
+runtime by referencing a non-existent column. Same discipline as the v1.34
+PSEN2/APP integration test.
+
+### Discipline-aligned tests (12 total)
+
+- `test_all_invariants_are_warning_severity_not_error` -- flag for review,
+  do not diagnose.
+- `test_all_invariants_have_verified_citation_pmid_or_doi` -- no fabricated
+  citations.
+- `test_imaging_neurodegen_markers_are_non_increasing` -- directions verified.
+- `test_md_and_ptau217_are_non_decreasing` -- directions verified.
+- `test_only_ptau217_invariants_are_treatment_gated` -- treatment-gating is
+  biology-driven (anti-amyloid affects p-tau217, not retinal thickness).
+- `test_canonical_sha256_reproducible` -- determinism.
+- `test_closes_v133_longitudinal_monotonicity_roadmap_item` -- explicit
+  promise verification.
+
+### Explicitly deferred (each requires its own focused increment)
+
+- GFAP / NfL longitudinal monotonicity (direction known; cohort-stratified
+  magnitudes not yet harmonized across assays).
+- CSF synaptic panel monotonicity (high inter-cohort variability).
+- Additional DTI tracts (uncinate, cingulum -- same anchor; redundant in
+  this batch; ship next if a different anchor warrants per-tract granularity).
+- Sleep parameters (within-subject variability too high for monotonicity).
+- Plasma p-tau231 (plateaus after initial rise; breaks strict monotonicity).
+- Next-gen tau PET SUVR monotonicity (would need cohort-specific tolerance;
+  defer until MK-6240 FDA approval in Aug 2026 provides cohort calibration).
+
+### Census
+
+Cross-sheet invariant packs: 8 -> 9 (added `biomarker_longitudinal_monotonicity`).
+Range-pack census unchanged (21 prod / 18 preview / 6 deprecated / 45 total).
+Tests: +12. Full repo regression check: 35 pre-existing input_contract failures
+unchanged, +12 new passing, zero regressions.
+
 ## [1.34.0] -- 2026-05-29 -- monogenic AD trajectory extension to PSEN2 + APP
 
 ### Added

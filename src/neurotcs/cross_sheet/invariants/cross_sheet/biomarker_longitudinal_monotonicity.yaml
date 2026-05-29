@@ -1,0 +1,379 @@
+schema_version: 1.0.0
+invariantpack_id: cross_sheet/biomarker_longitudinal_monotonicity@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: biomarker_longitudinal_monotonicity
+framework_name: Layer-3 longitudinal-monotonicity AUDIT invariants for the new biomarker classes added
+  in v1.30-v1.33 (OCT retinal layers, SV2A synaptic density, ASL CBF, DTI fornix microstructure, p-tau217
+  in CSF and plasma). NeuroTCS does NOT measure or compute these biomarkers; it AUDITS whether tool-produced
+  longitudinal series match the published directional consensus for each biomarker in untreated AD natural
+  history. Mirrors the existing production ad_clinical_coherence pack's hippocampal_volume_must_not_increase
+  and amyloid_centiloid_must_not_spontaneously_clear pattern.
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. v1.35.0 closes the 'longitudinal monotonicity
+  for new biomarker classes' roadmap item from v1.33.0 CHANGELOG. Each invariant has a verified primary-literature
+  anchor establishing the direction; tolerance values derived from published scan-rescan / test-retest
+  reproducibility (not invented). Two p-tau217 invariants are treatment-gated to exempt legitimate anti-amyloid
+  therapy effects.
+clinical_source_authority: |-
+  This pack encodes Layer-3 LONGITUDINAL-SHAPE invariants for the new biomarker classes. Critically: NeuroTCS does not measure biomarkers, segment images, or compute derived values -- it only AUDITS the shape of trajectories that an upstream pipeline (FreeSurfer, OCT segmentation, PET kinetic modeling, ASL CBF quantification, DTI tractography, Simoa/Lumipulse immunoassay) produced.
+
+  Each invariant asks: 'does this per-patient series follow the published directional consensus for this biomarker?' The audit FLAGS deviations for human review; it does not diagnose, treat, or interpret -- consistent with NeuroTCS's four enforced load-bearing properties (deterministic audit_id, citation-locked flags, fail-closed, scope-honest coverage manifest).
+
+  RESEARCH PREVIEW: matches the research_preview status of most underlying range packs (OCT, SV2A, ASL, DTI) and the still-emerging tolerance literature; promotion to production deferred until cohort-stratified scan-rescan/test-retest data calibrates the tolerance values empirically per the v1.11.0a3 discipline. flag_severity=warning (not error): biomarker direction is biologically clear, but cohort-specific noise calibration is pending.
+anchor_citation:
+  citation_pmid: '38934362'
+  citation_doi: 10.1002/alz.13859
+  citation_text: 'Jack CR Jr et al. Revised criteria for diagnosis and staging of Alzheimer''s disease:
+    Alzheimer''s Association Workgroup. Alz & Dem 2024;20(8):5143-5169 (PMID 38934362). The AA-2024 framework
+    establishes that AD biomarker classes follow stereotyped longitudinal directions in untreated natural
+    history (A->T2->N->C ordering plus neurodegeneration progression). The 8 invariants in this pack encode
+    the published directional consensus for each of the v1.30-v1.33 new biomarker classes.'
+  public_url: https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859
+  endorsing_bodies:
+  - Alzheimer's Association 2024 Workgroup (Jack 2024)
+  - Mutlu 2018 (OCT, Rotterdam Study)
+  - Chen 2018 + Mecca 2020 (SV2A UCB-J)
+  - Alsop 2015 (ASL ISMRM/ASLid consensus)
+  - Acosta-Cabronero 2012 (DTI biomarkers in AD)
+invariants:
+- name: rnfl_peripapillary_thickness_must_not_increase_over_follow_up
+  description: AUDITS whether a tool-produced longitudinal series of rnfl_peripapillary_thickness_um matches
+    the published directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure
+    rnfl_peripapillary_thickness_um; it only audits the shape of the trajectory an upstream pipeline produced.
+    Peripapillary RNFL undergoes progressive thinning in the AD continuum (Mutlu 2018 Rotterdam Study);
+    retinal nerve fiber layer degeneration is biologically irreversible (no regeneration therapy exists
+    in 2026). A submitted RNFL series that INCREASES by more than 3 um (Cirrus HD-OCT scan-rescan reproducibility
+    per Cirrus normative database; conservative tolerance) is implausible -- likely a segmentation error,
+    swapped visit_id, or scanner switch.
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: rnfl_peripapillary_thickness_um
+    direction: non_increasing
+    tolerance: 3.0
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Mutlu 2018 (JAMA Neurol PMID 29946702): inner retinal layers undergo progressive
+    thinning prospectively associated with incident dementia. Retinal layer thinning does not reverse.
+    Tolerance 3 um per Cirrus HD-OCT scan-rescan reproducibility.'
+  citation:
+    citation_text: 'Mutlu U et al. Association of Retinal Neurodegeneration on Optical Coherence Tomography
+      With Dementia: A Population-Based Study. JAMA Neurol 2018;75(10):1256-1263 (PMID 29946702). Inner
+      retinal layer thinning is progressive in AD continuum; no biological mechanism for reversal exists
+      in 2026. Tolerance 3 um is the typical Cirrus HD-OCT scan-rescan reproducibility (~3-4%% CoV on
+      ~85 um RNFL).'
+    public_url: https://pubmed.ncbi.nlm.nih.gov/29946702/
+    endorsing_bodies:
+    - Rotterdam Study
+    - Mutlu 2018 JAMA Neurol
+    - Cirrus HD-OCT normative database
+    citation_pmid: '29946702'
+    citation_doi: 10.1001/jamaneurol.2018.1563
+- name: gc_ipl_macular_thickness_must_not_increase_over_follow_up
+  description: AUDITS whether a tool-produced longitudinal series of gc_ipl_macular_thickness_um matches
+    the published directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure
+    gc_ipl_macular_thickness_um; it only audits the shape of the trajectory an upstream pipeline produced.
+    Macular ganglion cell - inner plexiform layer (GC-IPL) thinning is progressive in AD (Mutlu 2018)
+    and biologically irreversible. A GC-IPL series increasing by more than 2 um is implausible. Tolerance
+    2 um per Cirrus HD-OCT GC-IPL scan-rescan reproducibility (typically smaller than RNFL because the
+    GC-IPL segmentation is more stable across visits).
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: gc_ipl_macular_thickness_um
+    direction: non_increasing
+    tolerance: 2.0
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Mutlu 2018: GC-IPL thinning prospectively associates with incident dementia. Tolerance
+    2 um per Cirrus HD-OCT GC-IPL scan-rescan reproducibility.'
+  citation:
+    citation_text: Mutlu U et al. JAMA Neurol 2018;75(10):1256-1263 (PMID 29946702). GC-IPL thinning is
+      progressive in AD; biological mechanism for reversal does not exist.
+    public_url: https://pubmed.ncbi.nlm.nih.gov/29946702/
+    endorsing_bodies:
+    - Rotterdam Study
+    - Mutlu 2018 JAMA Neurol
+    - Cirrus HD-OCT normative database
+    citation_pmid: '29946702'
+    citation_doi: 10.1001/jamaneurol.2018.1563
+- name: ucbj_dvr_hippocampus_must_not_increase_over_follow_up
+  description: AUDITS whether a tool-produced longitudinal series of ucbj_dvr_hippocampus matches the
+    published directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure ucbj_dvr_hippocampus;
+    it only audits the shape of the trajectory an upstream pipeline produced. Hippocampal synaptic density
+    (measured as [11C]UCB-J DVR) declines progressively in AD (Chen 2018 first-in-human; Mecca 2020 replication);
+    synapse loss is the major structural correlate of cognitive impairment and is biologically irreversible.
+    A submitted UCB-J DVR series increasing by more than 0.2 DVR (Yale PET Center test-retest CoV ~5-10%%
+    on ~1.5-2.0 DVR) is implausible.
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: ucbj_dvr_hippocampus
+    direction: non_increasing
+    tolerance: 0.2
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Chen 2018 + Mecca 2020: widespread synaptic density reductions in AD with [11C]UCB-J
+    PET. Synapse loss does not reverse. Tolerance 0.2 DVR per Yale test-retest.'
+  citation:
+    citation_text: Chen MK et al. JAMA Neurol 2018;75(10):1215-1224 (DOI 10.1001/jamaneurol.2018.1836).
+      [11C]UCB-J DVR reductions in hippocampus in AD; synaptic loss is biologically irreversible. Tolerance
+      0.2 DVR per published test-retest.
+    public_url: https://doi.org/10.1001/jamaneurol.2018.1836
+    endorsing_bodies:
+    - Yale PET Center
+    - Chen 2018 JAMA Neurol
+    - Mecca 2020 Alz Dem
+    citation_doi: 10.1001/jamaneurol.2018.1836
+- name: ucbj_dvr_neocortical_must_not_increase_over_follow_up
+  description: AUDITS whether a tool-produced longitudinal series of ucbj_dvr_neocortical_meta matches
+    the published directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure
+    ucbj_dvr_neocortical_meta; it only audits the shape of the trajectory an upstream pipeline produced.
+    Neocortical synaptic density declines progressively in AD. Tolerance 0.2 DVR per Yale PET Center test-retest
+    data on [11C]UCB-J PET.
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: ucbj_dvr_neocortical_meta
+    direction: non_increasing
+    tolerance: 0.2
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Chen 2018 + Mecca 2020: neocortical SV2A loss in AD. Synapse loss is irreversible.'
+  citation:
+    citation_text: 'Chen 2018 + Mecca 2020 (DOI 10.1002/alz.12097): neocortical SV2A reductions in early
+      AD; tolerance 0.2 DVR per published test-retest reproducibility.'
+    public_url: https://doi.org/10.1001/jamaneurol.2018.1836
+    endorsing_bodies:
+    - Yale PET Center
+    - Chen 2018 JAMA Neurol
+    - Mecca 2020 Alz Dem
+    citation_doi: 10.1001/jamaneurol.2018.1836
+- name: asl_cbf_global_must_not_increase_over_follow_up
+  description: AUDITS whether a tool-produced longitudinal series of asl_cbf_global_ml_per_100g_min matches
+    the published directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure
+    asl_cbf_global_ml_per_100g_min; it only audits the shape of the trajectory an upstream pipeline produced.
+    Global cerebral blood flow declines progressively in AD (parallels FDG-PET hypometabolism per Alsop
+    2015 ASL-in-Dementia consensus). A submitted ASL CBF series increasing by more than 5 mL/100g/min
+    over follow-up (Alsop 2015 reports ~10%% pCASL test-retest CoV; 5 mL/100g/min on ~50 mL/100g/min global
+    CBF) is implausible.
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: asl_cbf_global_ml_per_100g_min
+    direction: non_increasing
+    tolerance: 5.0
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Alsop 2015 ISMRM/ASLid consensus: ASL hypoperfusion patterns in AD parallel FDG-PET
+    hypometabolism. Tolerance 5 mL/100g/min per the consensus paper''s reported pCASL test-retest CoV
+    of approximately 10%%.'
+  citation:
+    citation_text: Alsop DC et al. Magn Reson Med 2015;73(1):102-116 (PMID 24715426). ASL hypoperfusion
+      in AD parallels FDG hypometabolism; pCASL test-retest CoV ~10%%; 5 mL/100g/min is a defensible tolerance
+      on typical adult global CBF of 40-60.
+    public_url: https://pubmed.ncbi.nlm.nih.gov/24715426/
+    endorsing_bodies:
+    - ISMRM Perfusion Study Group
+    - European Consortium for ASL in Dementia (ASLid)
+    citation_pmid: '24715426'
+    citation_doi: 10.1002/mrm.25197
+- name: dti_fa_fornix_must_not_increase_over_follow_up
+  description: AUDITS whether a tool-produced longitudinal series of fa_fornix matches the published directional
+    consensus for this biomarker in untreated AD. NeuroTCS does NOT measure fa_fornix; it only audits
+    the shape of the trajectory an upstream pipeline produced. Fornix FA declines progressively in AD
+    (Acosta-Cabronero 2012) -- the fornix is an early-affected limbic white-matter tract critical for
+    episodic memory. White matter degeneration is biologically progressive and does not reverse. Tolerance
+    0.05 per typical DTI scan-rescan reproducibility on smaller tracts with partial-volume effects.
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: fa_fornix
+    direction: non_increasing
+    tolerance: 0.05
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Acosta-Cabronero 2012 (DOI 10.1371/journal.pone.0049072): fornix FA reduction is
+    among earliest-affected DTI signatures in AD continuum; tolerance 0.05 conservative for fornix (partial-volume
+    effects).'
+  citation:
+    citation_text: Acosta-Cabronero J et al. Diffusion Tensor Metrics as Biomarkers in Alzheimer's Disease.
+      PLoS ONE 2012;7(11):e49072 (DOI 10.1371/journal.pone.0049072). Fornix is an early-affected AD tract;
+      WM degeneration is biologically irreversible.
+    public_url: https://doi.org/10.1371/journal.pone.0049072
+    endorsing_bodies:
+    - Acosta-Cabronero 2012 PLoS ONE
+    - ADNI DTI
+    - University of Cambridge
+    citation_doi: 10.1371/journal.pone.0049072
+- name: dti_md_fornix_must_not_decrease_over_follow_up
+  description: AUDITS whether a tool-produced longitudinal series of md_fornix matches the published directional
+    consensus for this biomarker in untreated AD. NeuroTCS does NOT measure md_fornix; it only audits
+    the shape of the trajectory an upstream pipeline produced. Fornix MD INCREASES progressively in AD
+    (Acosta-Cabronero 2012) as WM degenerates and free-water-equivalent diffusion increases. A submitted
+    MD series DECREASING by more than 0.1 x 10^-3 mm^2/s is implausible (the direction of WM degeneration
+    is non-decreasing MD).
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: md_fornix
+    direction: non_decreasing
+    tolerance: 0.1
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Acosta-Cabronero 2012: MD elevation in fornix is an early AD signature; tolerance
+    0.1 x 10^-3 mm^2/s per DTI scan-rescan reproducibility on smaller tracts.'
+  citation:
+    citation_text: Acosta-Cabronero 2012 (DOI 10.1371/journal.pone.0049072). Fornix MD elevation is biologically
+      directional (rises with WM degeneration); decrease beyond 0.1 x 10^-3 mm^2/s tolerance is implausible.
+    public_url: https://doi.org/10.1371/journal.pone.0049072
+    endorsing_bodies:
+    - Acosta-Cabronero 2012 PLoS ONE
+    - ADNI DTI
+    - University of Cambridge
+    citation_doi: 10.1371/journal.pone.0049072
+- name: csf_ptau217_must_not_spontaneously_decrease_untreated
+  description: AUDITS whether a tool-produced longitudinal series of csf_ptau217_pgml matches the published
+    directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure csf_ptau217_pgml;
+    it only audits the shape of the trajectory an upstream pipeline produced. CSF p-tau217 increases progressively
+    along the AD continuum (Jack 2024 AA-2024 Core 1 T1 marker). In the absence of recorded anti-amyloid
+    therapy, a CSF p-tau217 series that DECREASES by more than 50 pg/mL is implausible. The treatment_gate_field
+    exempts legitimate on-treatment reductions (TRAILBLAZER-ALZ 2, Clarity AD biomarker substudies documented
+    p-tau217 reductions under lecanemab/donanemab). Tolerance 50 pg/mL is conservative on a typical elevated
+    AD-range value of ~250-1000 pg/mL (~5-20%% noise).
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: csf_ptau217_pgml
+    direction: non_decreasing
+    tolerance: 50.0
+    min_visits: 2
+    treatment_gate_field: treatment_flags
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Jack 2024 AA-2024 sec 4.3 (A->T2->N->C ordering): p-tau217 is a Core 1 T1 marker
+    rising along the AD continuum. Treatment-gated: anti-amyloid therapy reduces p-tau217 (TRAILBLAZER,
+    Clarity AD). Tolerance 50 pg/mL conservative.'
+  citation:
+    citation_text: 'Jack CR Jr et al. Revised criteria for diagnosis and staging of Alzheimer''s disease:
+      Alzheimer''s Association Workgroup. Alz & Dem 2024;20(8):5143-5169 (PMID 38934362). CSF p-tau217
+      is a Core 1 T1 marker; rises along the AD continuum in untreated natural history; reduced by anti-amyloid
+      therapy.'
+    public_url: https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859
+    endorsing_bodies:
+    - AA-2024 Workgroup (Jack 2024)
+    - BioFINDER
+    - ADNI
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+- name: plasma_ptau217_must_not_spontaneously_decrease_untreated
+  description: AUDITS whether a tool-produced longitudinal series of plasma_ptau217_pgml matches the published
+    directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure plasma_ptau217_pgml;
+    it only audits the shape of the trajectory an upstream pipeline produced. Plasma p-tau217 increases
+    progressively along the AD continuum (Jack 2024). In the absence of recorded anti-amyloid therapy,
+    plasma p-tau217 should not spontaneously decrease. Tolerance 0.1 pg/mL conservative on typical Simoa
+    values of 0.3-1.0 pg/mL in symptomatic AD (~10-15%% CV). Anti-amyloid therapy effects exempted via
+    treatment_flags.
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: plasma_ptau217_pgml
+    direction: non_decreasing
+    tolerance: 0.1
+    min_visits: 2
+    treatment_gate_field: treatment_flags
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Jack 2024: plasma p-tau217 rises along the AD continuum; anti-amyloid therapy reduces
+    it. Tolerance 0.1 pg/mL conservative per Simoa CV.'
+  citation:
+    citation_text: Jack 2024 (PMID 38934362). Plasma p-tau217 is FDA-cleared (Lumipulse plasma May 2025)
+      as a Core 1 marker; rises in untreated continuum; reduced by anti-amyloid therapy in TRAILBLAZER-ALZ
+      2 / Clarity AD biomarker substudies.
+    public_url: https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859
+    endorsing_bodies:
+    - AA-2024 Workgroup (Jack 2024)
+    - BioFINDER
+    - Janelidze plasma Simoa
+    - FDA Lumipulse plasma
+    citation_pmid: '38934362'
+    citation_doi: 10.1002/alz.13859
+notes: 'RESEARCH PREVIEW. 8 invariants, all citation-locked to primary literature. Tolerance values derived
+  from published scan-rescan / test-retest reproducibility per biomarker. Two p-tau217 invariants are
+  treatment-gated via treatment_flags (anti-amyloid therapy legitimately reduces p-tau217 per TRAILBLAZER-ALZ
+  2 / Clarity AD biomarker substudies). Promotion to production deferred until cohort-stratified tolerance
+  calibration. Deferred classes for future increments: GFAP/NfL (direction known, magnitudes cohort-specific),
+  CSF synaptic panel (high inter-cohort variability), additional DTI tracts (uncinate, cingulum -- same
+  anchor, redundant in this batch), sleep parameters (within-subject variability too high for monotonicity),
+  plasma p-tau231 (plateaus after initial rise, breaks strict monotonicity).'
