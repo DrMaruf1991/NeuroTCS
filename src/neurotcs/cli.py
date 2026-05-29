@@ -408,6 +408,18 @@ def _scaffold_mapping(desc: dict[str, Any]) -> dict[str, Any]:
         "(no editing required; pass --allow-no-dates to acknowledge explicitly).",
         "TOC / Index sheets and sheets with no recognizable staging fields are "
         "intentionally excluded from auto-routing.",
+        # v1.40.3 (E-2026-013): document the autowire-in-explicit-mapping
+        # behavior so users know they DON'T need to author 'ranges' entries for
+        # safe ordinal biomarkers. The audit path auto-wires safe ordinal packs
+        # (MMSE/MoCA/CDR-SB/ADAS/NPI-Q/Braak/...) from any un-staged sheet that
+        # has subject_id + visit columns, with the SAME fail-closed default for
+        # assay-calibrated biomarkers (CSF/plasma/centiloid/volumetrics/FDG).
+        "v1.40.3: 'ranges' may be left empty -- the audit path auto-wires safe "
+        "ordinal packs from un-staged measurement sheets. Assay-calibrated "
+        "biomarkers (CSF/plasma p-tau, NfL, centiloid, volumetry, FDG) are "
+        "REFUSED by default (a column name cannot certify the assay); pass "
+        "--confirm-assays to assert the data matches the matched pack's "
+        "assay/scale, or add explicit 'ranges' entries to override per-column.",
     ]
     if measurement_suggestions:
         notes.append(
@@ -512,7 +524,7 @@ def cmd_audit(args: argparse.Namespace) -> int:
         from neurotcs.io.autowire import autowire_ranges
         wired_sheets = _sheets_referenced_by_mapping(mapping)
         rspecs, extra_tables, decisions, _refusals, _wired_src = autowire_ranges(
-            tables, wired_sheets)
+            tables, wired_sheets, confirm_assays=getattr(args, "confirm_assays", False))
         range_refusals.extend(_refusals)
         _autowired_source_sheets.update(_wired_src)
         if rspecs:
@@ -539,6 +551,32 @@ def cmd_audit(args: argparse.Namespace) -> int:
             _err("mapping still contains <FILL:...> placeholders -- edit them before "
                  "auditing (the auditor will not guess column names).")
             return EXIT_INPUT
+
+        # v1.40.3 (E-2026-013): explicit-mapping path ALSO auto-wires un-staged
+        # sheets, just like the zero-config path. Before this fix, a user who
+        # ran `describe --emit-mapping` got `ranges: []` and had to hand-author
+        # the range specs from documentation; the assay packs (CSF/plasma/
+        # centiloid/volumetrics/FDG) were unreachable for everyone except
+        # operators who already knew the long-format spec. Now: any range spec
+        # the user has hand-authored takes precedence (their explicit choices
+        # are respected), and the autowire fills in the rest from un-staged
+        # measurement sheets with the SAME fail-closed default + --confirm-assays
+        # opt-in. This is the auditor's "make it universal in experience, never
+        # in scope" lever applied to the explicit-mapping path.
+        from neurotcs.io.autowire import autowire_ranges
+        wired_sheets = _sheets_referenced_by_mapping(mapping)
+        rspecs, extra_tables, decisions, _refusals, _wired_src = autowire_ranges(
+            tables, wired_sheets, confirm_assays=getattr(args, "confirm_assays", False))
+        range_refusals.extend(_refusals)
+        _autowired_source_sheets.update(_wired_src)
+        if rspecs:
+            tables.update(extra_tables)
+            mapping.setdefault("ranges", []).extend(rspecs)
+            if not args.quiet:
+                print("# auto-wired range packs (values audited; "
+                      "each decision shown):")
+                for d in decisions:
+                    print(f"  {d}")
 
     submission_warnings: list[str] = []
     try:
@@ -776,6 +814,14 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--dry-run", action="store_true",
                    help="resolve the mapping and report what WOULD be audited, then "
                         "exit without producing a bundle (verify routing first)")
+    a.add_argument("--confirm-assays", action="store_true",
+                   help="assert that assay/scale-calibrated biomarker columns "
+                        "(CSF/plasma p-tau, NfL, centiloid, volumetry, FDG, ...) "
+                        "were measured on the assay/scale the matched production "
+                        "pack encodes, so the zero-config auditor wires them too. "
+                        "Off by default (fail-closed): without this flag those "
+                        "columns are refused, since a column name cannot certify "
+                        "the assay. The assertion is recorded in the bundle.")
     a.set_defaults(func=cmd_audit)
 
     v = sub.add_parser("verify", help="re-verify a signed bundle")

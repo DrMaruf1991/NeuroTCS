@@ -1,6 +1,6 @@
 schema_version: "1.0.0"
-rangepack_id: "csf_biomarkers/csf_amyloid_consensus@1.0.0"
-pack_version: "1.0.0"
+rangepack_id: "csf_biomarkers/csf_amyloid_consensus@1.1.0"
+pack_version: "1.1.0"
 effective_date: "2026-05-25"
 status: "production"
 domain: "ad_csf_amyloid"
@@ -103,45 +103,29 @@ measurements:
             - "NIA-AA Research Framework 2018"
             - "Roche Diagnostics (Elecsys)"
             - "ADNI Biomarker Core"
-      - bound_type: "plausible_max"
-        value: 0.058
-        citation_strength: "international_consensus"
-        guideline_section: "Lumipulse FDA 510(k) K212622 'positive' cutoff (≤0.058)"
-        citation:
-          citation_pmid: "35908251"
-          citation_doi: "10.1002/alz.12756"
-          citation_text: |
-            FDA 510(k) K212622 cleared Lumipulse G β-Amyloid Ratio
-            (1-42/1-40) "positive" cutoff verbatim: "≤0.058 positive,
-            ≤0.072 likely positive." Cross-validated at the Wake Forest
-            ADRC (PMC12784159) showing 84.6% positive percent agreement,
-            91.8% negative percent agreement, 88.5% overall percent
-            agreement with PET-amyloid visual reads. Cutoffs were
-            developed using 235 Amsterdam Dementia Cohort participants
-            and cross-validated in 274 cognitively impaired ADNI
-            participants per the FDA Breakthrough Device application.
-          public_url: "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K212622.pdf"
-          endorsing_bodies:
-            - "FDA (510(k) K212622)"
-            - "Fujirebio Diagnostics"
-            - "Amsterdam Dementia Cohort (validation cohort, n=235)"
-            - "ADNI (cross-validation cohort, n=274)"
-            - "Wake Forest ADRC (PMC12784159 real-world validation)"
-            - "Alzheimer's Association (Hansson 2022 AUR)"
-            - "NIA-AA Research Framework 2018"
+      # NOTE (E-2026-011, range-pack threshold review): the Lumipulse
+      # "positive" (<=0.058) and "likely positive" (<=0.072) values are
+      # DIAGNOSTIC decision cutoffs, not biological-plausibility bounds. A
+      # healthy amyloid-NEGATIVE subject has a ratio ABOVE these cutoffs, so
+      # encoding 0.072 as hard_max flagged every amyloid-negative subject as
+      # "impossible" (~34% of a real cohort). Diagnostic cutoffs belong to the
+      # cross-sheet amyloid-status concordance layer, NOT to a range
+      # plausibility pack. This pack now encodes only the mathematical bound.
       - bound_type: "hard_max"
-        value: 0.072
+        value: 1.0
         citation_strength: "international_consensus"
-        guideline_section: "Lumipulse FDA 510(k) K212622 'likely positive' upper cutoff"
+        guideline_section: "Lumipulse G β-Amyloid Ratio FDA 510(k) K212622 (mathematical [0,1] bound)"
         citation:
           citation_pmid: "35908251"
           citation_doi: "10.1002/alz.12756"
           citation_text: |
-            FDA 510(k) K212622 verbatim: "≤0.072 likely positive."
-            Values above 0.072 are considered amyloid-negative on the
-            Lumipulse platform. Wake Forest validation: 96.2% positive
-            percent agreement and 73.8% negative percent agreement
-            for the "likely positive" threshold.
+            CSF Aβ1-42/Aβ1-40 ratio values are bounded [0, 1] by
+            mathematical definition (FDA 510(k) K212622, Lumipulse G
+            β-Amyloid Ratio). This pack encodes the biological-plausibility
+            envelope only; the assay's diagnostic decision cutoffs
+            (≤0.058 positive, ≤0.072 likely positive) are not plausibility
+            bounds and are evaluated as amyloid-status concordance in the
+            cross-sheet layer, not as range violations here.
           public_url: "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K212622.pdf"
           endorsing_bodies:
             - "FDA (510(k) K212622)"

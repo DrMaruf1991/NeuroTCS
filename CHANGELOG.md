@@ -1,3 +1,117 @@
+## [1.40.3] -- 2026-05-29 -- E-2026-013: explicit-mapping path auto-wires un-staged measurement sheets
+
+### Fixed (the "all users reach the range packs" lever applied to --mapping)
+
+The explicit-mapping path (`neurotcs audit file.xlsx --mapping mapping.json`)
+used to consume `mapping["ranges"]` literally and nothing else. Since
+`describe --emit-mapping` emits `ranges: []`, the only way a user could audit
+biomarker values via the explicit-mapping workflow was to hand-author long-form
+range specs from documentation. Result: an entire class of users
+(non-expert + explicit-mapping workflow) got staging-only audits with a silent
+`ranges: []`. This is the auditor's "two-tier path" anti-pattern.
+
+The fix: the explicit-mapping branch now ALSO calls `autowire_ranges` on
+un-staged sheets, with the same fail-closed default for assay-calibrated
+biomarkers and the same `--confirm-assays` opt-in as the zero-config path.
+Hand-authored `ranges` entries are still respected (their wired sheets are
+treated as already-wired, so autowire skips them); the autowire only fills in
+sheets the user has NOT explicitly mapped. This brings the explicit-mapping
+path to feature parity with zero-config without sacrificing user control.
+
+### Net effect on the blind test (Complex_AD_Dataset_v3)
+Explicit-mapping path with `ranges: []` + `--confirm-assays`:
+- Before v1.40.3: 8 impossible (staging only; ranges silently skipped)
+- After  v1.40.3: 44 impossible / 0 implausible / 1237 informational
+- Identical to zero-config `audit --confirm-assays` (parity confirmed end-to-end)
+
+### What this is NOT (deliberately, per charter)
+This does NOT promote any research_preview pack to production. It does NOT
+fabricate the A/T/N biological staging pack (Jack 2024) -- that requires
+verbatim citation transcription that has not been done and would be a
+charter-violating hallucination if I encoded bounds on a guess. The
+`staging_biological` layer continues to skip with `vocabulary_mismatch` until
+the A/T/N pack is built from primary sources.
+
+### Tests
+3 new tests in `tests/cli/test_v140_range_autowire.py` covering the v1.40.3
+behavior: `test_explicit_mapping_autowires_unstaged_sheets`,
+`test_explicit_mapping_refuses_assay_columns_failclosed`,
+`test_explicit_mapping_with_confirm_assays_audits_assay_packs`. 1636 tests pass.
+
+## [1.40.2] -- 2026-05-29 -- E-2026-012: autowire unit-plumbing fix + --confirm-assays opt-in
+
+### Fixed (autowire unit plumbing -- a third over-firing defect)
+
+3. **Auto-wire emitted the NORMALIZED unit, tripping a spurious unit_mismatch on
+   every assay row.** `io/autowire._production_inventory` stored the normalized
+   unit (e.g. `pgml`) and the melt wrote it into the synthetic long table, but
+   the range auditor (`clinical_ranges/audit.py`) compares the submitted unit to
+   `measurement.unit` by EXACT string equality (`pg/mL`). Result: every wired
+   assay row was flagged `unit_mismatch` (5331 spurious flags on the v3 blind
+   test under assay wiring). The inventory now stores the pack's RAW unit and
+   emits it verbatim; normalization is applied ONLY at the column-suffix
+   compatibility check. Safe ordinal packs (units `score`/`stage`) are
+   normalization-invariant, so their behavior is unchanged. Spurious
+   unit_mismatch flags: 5331 -> 0.
+
+### Added (the "reach the assay packs" lever, fail-closed + opt-in)
+
+* **`neurotcs audit --confirm-assays`.** By default the zero-config auditor
+  REFUSES assay/scale-calibrated biomarkers (CSF/plasma p-tau, NfL, centiloid,
+  volumetry, FDG): a column name cannot certify the assay, and wiring on a guess
+  produces false flags. `--confirm-assays` is the operator's explicit assertion
+  that the data was measured on the assay/scale the matched production pack
+  encodes; only then are those columns wired/melted/audited, with the assertion
+  recorded in the decision log. A unit-suffix mismatch is STILL refused under
+  `--confirm-assays` (a hard incompatibility, not an assay question). Default
+  remains fail-closed; nothing changes unless the operator opts in.
+
+### Net effect on the blind test (zero-config + --confirm-assays)
+Impossible-tier catches: 14 (default, assays refused) -> 24 distinct planted
+errors (one flag each), with NO spurious unit_mismatch noise and a byte-identical
+`audit_id`/`bundle_id` across re-runs (determinism preserved). 1633 tests pass.
+
+### KNOWN, surfaced for citation-locked review (NOT auto-fixed -- no fabricated bounds)
+Under `--confirm-assays`, `mri_volumetrics/structural_volumetry_consensus`
+flags mean cortical thickness 1.75-1.86 mm as `impossible` against its CITED
+`hard_min: 2.0` (Potvin 2017: "<2.0 mm below biologic floor -- severe atrophy OR
+segmentation error"). Real severe-atrophy AD cortex reaches these values, so a
+content decision is required (keep as a hard/impossible bound, or demote to a
+`plausible_min`/informational "severe atrophy / check segmentation"). This is the
+head of the pack-internal threshold review; it is a deliberate cited author
+choice, so it is left to the maintainer rather than changed on a guess.
+
+## [1.40.1] -- 2026-05-29 -- E-2026-011: two over-firing defects (CSF pack + orchestrator severity tiering)
+
+### Fixed (two over-firing defects surfaced by the Complex_AD_Dataset_v3 blind test)
+
+1. **CSF Aβ42/40 ratio pack: diagnostic cutoff was encoded as a hard biological
+   bound.** `csf_biomarkers/csf_amyloid_consensus` had `hard_max: 0.072` (the
+   Lumipulse "likely positive" DIAGNOSTIC cutoff) and `plausible_max: 0.058`
+   (the "positive" cutoff). A healthy amyloid-NEGATIVE subject has a ratio ABOVE
+   these cutoffs, so the pack flagged ~34% of a real cohort (229/667 rows) as
+   "impossible". Diagnostic decision cutoffs are NOT plausibility bounds. The
+   pack now encodes only the mathematical envelope (`hard_min: 0.0`,
+   `hard_max: 1.0`, both per the existing K212622 [0,1] citation); amyloid-status
+   concordance is the job of the cross-sheet layer, not a range pack.
+   Pack bumped `1.0.0 -> 1.1.0`; golden YAML SHA updated; deprecation pointer in
+   `csf_biomarkers/aa_2024` and `test_deprecation_semantics` updated to @1.1.0.
+
+2. **Orchestrator forced ALL cross-sheet flags to the `impossible` tier.** The
+   cross-sheet branch hard-coded `tier=TIER_IMPOSSIBLE` regardless of each
+   invariant's DECLARED `flag_severity`. On the blind test this promoted 57
+   author-declared `warning` invariants (biomarker discordances, trajectory-
+   monotonicity breaks -- "flag for review", not "impossible") into the
+   impossible tier, drowning the 4 true `error`-severity contradictions. The
+   orchestrator now maps declared severity -> tier (error->impossible,
+   warning->implausible, info->informational; unknown->impossible fail-safe).
+
+### Net effect on the blind test
+Impossible-tier flags: 345 -> 59 (6x less false "impossible" noise). True planted
+errors surfaced unchanged (the 4 review-level findings now correctly appear in
+the implausible/review tier instead of being mislabeled impossible). 1629 tests
+pass.
+
 ## [1.40.0] -- 2026-05-29 -- range-pack auto-wiring for wide measurement sheets
 
 ### What

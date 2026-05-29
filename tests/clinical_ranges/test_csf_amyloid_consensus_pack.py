@@ -60,8 +60,10 @@ class TestLumipulseRatio:
         # value=0.040 is BELOW plausible_max=0.058 → passes (it's a valid "positive" reading)
         assert r.n_flagged == 0
 
-    def test_clearly_negative_value_flagged_above_072(self, csf_pack):
-        """Ratio of 0.10 is well above the 0.072 cutoff — exceeds hard_max."""
+    def test_amyloid_negative_value_not_flagged(self, csf_pack):
+        """E-2026-011: a healthy amyloid-NEGATIVE ratio (0.10, above the old
+        0.072 diagnostic cutoff) is biologically normal and must NOT be a range
+        violation. The diagnostic cutoff is not a plausibility bound."""
         df = pd.DataFrame({
             "patient_id": ["P_neg"],
             "visit_id": ["V0"],
@@ -70,11 +72,14 @@ class TestLumipulseRatio:
             "unit": ["ratio"],
         })
         r = audit_clinical_ranges(df, csf_pack)
-        # crosses BOTH plausible_max=0.058 AND hard_max=0.072
-        assert r.n_flagged == 2
+        # within the mathematical [0, 1] envelope -> no flag
+        assert r.n_flagged == 0
 
-    def test_intermediate_zone_flags_plausible_only(self, csf_pack):
-        """Ratio of 0.065 is in the intermediate zone (0.058-0.072)."""
+    def test_intermediate_zone_not_flagged(self, csf_pack):
+        """E-2026-011: a ratio of 0.065 (former 0.058-0.072 'intermediate'
+        zone) is within the physiological envelope and must NOT be flagged.
+        Diagnostic-cutoff interpretation belongs to the cross-sheet
+        amyloid-status concordance layer, not this range pack."""
         df = pd.DataFrame({
             "patient_id": ["P_intermediate"],
             "visit_id": ["V0"],
@@ -83,9 +88,21 @@ class TestLumipulseRatio:
             "unit": ["ratio"],
         })
         r = audit_clinical_ranges(df, csf_pack)
-        # crosses plausible_max=0.058 but NOT hard_max=0.072
-        assert r.n_flagged == 1
-        assert r.flags[0].bound_type == "plausible_max"
+        assert r.n_flagged == 0
+
+    def test_mathematically_impossible_ratio_flagged(self, csf_pack):
+        """E-2026-011 regression: only values OUTSIDE the mathematical [0, 1]
+        bound are hard violations (ratios are bounded [0,1] per K212622)."""
+        df = pd.DataFrame({
+            "patient_id": ["P_lo", "P_hi"],
+            "visit_id": ["V0", "V0"],
+            "measurement_name": ["csf_abeta42_40_ratio_lumipulse"] * 2,
+            "value": [-0.01, 1.5],
+            "unit": ["ratio", "ratio"],
+        })
+        r = audit_clinical_ranges(df, csf_pack)
+        assert r.n_flagged == 2
+        assert {f.bound_type for f in r.flags} == {"hard_min", "hard_max"}
 
 
 class TestCsfAbeta42:

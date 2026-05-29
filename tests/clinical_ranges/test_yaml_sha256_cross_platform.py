@@ -47,7 +47,7 @@ PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
     "genetics/apoe_consensus":
         "3d9cdca055b4b9049c9ee7636987231001c9a93d716920d630afb52016087c8f",
     "csf_biomarkers/csf_amyloid_consensus":
-        "ef9b4e3c75020e618c894e52f68700fa14bd09f079ed971a25fea30d3d8c021b",
+        "6f3d2c90d592ff5c4712004e15d2946bc923124f6bfc107c4ec5f7f3c96186b9",
     "plasma_biomarkers/plasma_amyloid_consensus":
         "2c37622163d3c7b235424ffa1d94bc6f9db41ee1cb9297428cddd1314588bf00",
     "mri_volumetrics/structural_volumetry_consensus":

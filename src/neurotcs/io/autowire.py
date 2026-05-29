@@ -73,9 +73,15 @@ def _norm_unit(u: str | None) -> str:
 
 @lru_cache(maxsize=1)
 def _production_inventory() -> dict[str, tuple[str, str]]:
-    """canonical measurement_name -> (pack_id, normalized_unit), production packs
-    only, and only names that map to EXACTLY one production pack (names shared by
-    >1 pack are dropped to avoid an ambiguous auto-wire)."""
+    """canonical measurement_name -> (pack_id, RAW_unit), production packs only,
+    and only names that map to EXACTLY one production pack (names shared by >1
+    pack are dropped to avoid an ambiguous auto-wire).
+
+    The RAW pack unit string is stored (not the normalized form) because the
+    range auditor compares the submitted unit to ``measurement.unit`` by EXACT
+    string equality. Emitting a normalized unit (e.g. 'pgml' for a 'pg/mL' pack)
+    would trip a spurious unit_mismatch on every row. Normalization is applied
+    only at the compatibility-check site, never to the emitted data."""
     seen: dict[str, list[tuple[str, str]]] = {}
     for p in list_rangepacks():
         if p["status"] != "production":
@@ -83,7 +89,7 @@ def _production_inventory() -> dict[str, tuple[str, str]]:
         pid = p["name"]
         rp = load_rangepack(pid).rangepack
         for m in rp.measurements:
-            seen.setdefault(m.name, []).append((pid, _norm_unit(m.unit)))
+            seen.setdefault(m.name, []).append((pid, m.unit))
     return {name: lst[0] for name, lst in seen.items() if len(lst) == 1}
 
 
@@ -179,6 +185,7 @@ def _find_col(cols: list[str], synonyms: tuple[str, ...]) -> str | None:
 def autowire_ranges(
     tables: dict[str, pd.DataFrame],
     already_wired_sheets: set[str],
+    confirm_assays: bool = False,
 ) -> tuple[list[dict[str, Any]], dict[str, pd.DataFrame], list[str], list[str]]:
     """Return (ranges_specs, extra_long_tables, decisions, refusals).
 
@@ -186,6 +193,17 @@ def autowire_ranges(
     production pack measurements. Columns that resolve cleanly (name + unit) are
     melted per-pack into a synthetic LONG table; a ranges spec is emitted for it.
     Unresolved / unit-mismatched columns are reported in `refusals`.
+
+    Assay/scale-calibrated biomarkers (CSF/plasma p-tau, NfL, centiloid,
+    volumetry, FDG, ...) are REFUSED by default: a column name cannot certify
+    that the data was produced on the same assay/scale the pack's bounds encode,
+    and auto-wiring on a guess produces false flags. They are audited only when
+    ``confirm_assays=True`` -- the operator's explicit assertion that the data
+    was measured on the assay/scale the matched pack encodes (CLI:
+    ``--confirm-assays``). This keeps the zero-config default fail-closed while
+    giving every user a one-flag path to the assay packs, with the assertion
+    recorded in the decision log. A unit mismatch is still refused even under
+    ``confirm_assays`` -- that is a hard incompatibility, not an assay question.
     """
     inv = _production_inventory()
     ranges_specs: list[dict[str, Any]] = []
@@ -193,6 +211,7 @@ def autowire_ranges(
     decisions: list[str] = []
     refusals: list[str] = []
     wired_source_sheets: set[str] = set()
+    assay_confirmed_cols: set[str] = set()
 
     for sheet, df in tables.items():
         if sheet in already_wired_sheets:
@@ -212,22 +231,27 @@ def autowire_ranges(
             if canon is None:
                 continue  # unresolved -> left to coverage (not a refusal per-col)
             pack_id, pack_unit = inv[canon]
-            if canon not in _SAFE_AUTOWIRE_MEASUREMENTS:
+            is_assay = canon not in _SAFE_AUTOWIRE_MEASUREMENTS
+            if is_assay and not confirm_assays:
                 refusals.append(
                     f"{sheet}.{c}: resolves to {canon} ({pack_id}) but that is an "
                     f"assay/scale-calibrated biomarker -- NOT auto-wired (bounds "
                     f"are calibration-specific; a column name cannot certify the "
-                    f"assay). Provide an explicit 'ranges' mapping to audit it."
+                    f"assay). Re-run with --confirm-assays (asserting your data "
+                    f"was measured on the assay/scale this pack encodes) to audit "
+                    f"it, or provide an explicit 'ranges' mapping."
                 )
                 continue
             col_unit = _column_unit_suffix(c)
-            if col_unit is not None and col_unit != pack_unit:
+            if col_unit is not None and col_unit != _norm_unit(pack_unit):
                 refusals.append(
                     f"{sheet}.{c}: resolves to {canon} (pack expects "
                     f"unit '{pack_unit}') but column unit looks like '{col_unit}'"
                     f" -- NOT wired (unit mismatch; provide explicit mapping)."
                 )
                 continue
+            if is_assay:
+                assay_confirmed_cols.add(f"{sheet}.{c}")
             by_pack.setdefault(pack_id, []).append((c, canon, pack_unit))
 
         for pack_id, items in by_pack.items():
@@ -249,9 +273,13 @@ def autowire_ranges(
                 "measurement_name": "measurement_name",
                 "value": "value", "unit": "unit",
             })
+            confirmed = [c for c, _, _ in items
+                         if f"{sheet}.{c}" in assay_confirmed_cols]
+            note = "  [assay-confirmed by operator (--confirm-assays)]" if confirmed else ""
             decisions.append(
                 f"{sheet} -> {pack_id}: "
                 + ", ".join(f"{c}={canon}" for c, canon, _ in items)
+                + note
             )
 
     return ranges_specs, extra_tables, decisions, refusals, wired_source_sheets

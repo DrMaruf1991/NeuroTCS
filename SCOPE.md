@@ -1,7 +1,87 @@
 # NeuroTCS — Declared Audit Scope
 
-**Version:** 1.23.0
-**Last updated:** 2026-05-28
+**Version:** 1.40.3
+**Last updated:** 2026-05-29
+
+> **One-sentence scope statement (leads every report):**
+>
+> NeuroTCS audits **temporal coherence** and **biomarker plausibility** against
+> published, citation-locked staging rules. It runs **data-integrity** checks
+> alongside, and explicitly reports any column it does **not** audit. For
+> demographic validation, protocol-compliance checks, and data-dictionary
+> conformance, use a complementary data-quality tool.
+
+## The four layers any audit run touches
+
+Every dataset audit a user runs traverses four genuine layers. NeuroTCS **owns**
+two-and-a-half, **runs** the third alongside, and **acknowledges but does not
+absorb** the fourth.
+
+| # | Layer | NeuroTCS does what | Why |
+|---|---|---|---|
+| 1 | **Data integrity** — duplicates, orphans, future dates, broken visit ordering, manifest completeness | **Runs alongside** under the `data_integrity` label; never refuses to audit because of it | Pre-condition for temporal coherence; reporting failures keeps the user un-surprised |
+| 2 | **Value plausibility** — biomarker / cognitive-score range bounds | **Owns**, citation-locked at `international_consensus` or stricter | Adjacent to staging; safe only with verbatim cited thresholds |
+| 3 | **Temporal coherence & staging admissibility** — trajectory admissibility, time-window constraints | **Owns**, citation-locked, **never expanded or diluted** | The regulator-defensible heart of NeuroTCS |
+| 4 | **Out-of-scope domain concerns** — sex vocabulary, age, education, protocol eligibility, treatment-arm validation, adverse-event-action logic, data-dictionary conformance, free-text columns | **Acknowledged by name in the report**; **never absorbed**; complementary-tool suggested | Absorbing these dissolves the regulatory trust that the entire tool is built on |
+
+## What the user sees per run
+
+For every column in the input the report says exactly one of:
+- **audited and clean** — wired into a pack, no flags
+- **audited and flagged** — wired into a pack, flag(s) emitted (with tier + citation)
+- **demoted to informational** — wired, but below `impossible`/`implausible` threshold
+- **refused** — recognized but not wired, with the explicit reason
+  (e.g. "assay/scale-calibrated biomarker; pass `--confirm-assays` to assert
+  the data matches the pack's assay")
+- **out of scope** — not in NeuroTCS's domain; complementary tool suggested
+
+Nothing is silent. The user is never surprised later. That is what
+"glad always" means in practice — completeness of communication, not
+omniscience.
+
+## What this position deliberately rejects
+
+- **"Make it universal in scope."** The same trap as "claim 100% accuracy."
+  Both promises collapse on contact with a serious user. A truly universal
+  validator cannot be citation-locked because it would have to invent rules
+  for territory no guideline covers.
+- **Imitating a generic data-QC linter's flag taxonomy.** That flag list is not
+  deterministic, not citation-locked, not reproducible — the very properties
+  NeuroTCS exists to provide.
+- **Silently absorbing out-of-scope columns** so the report "looks complete."
+  This is a worse failure than refusing, because the user thinks they were
+  audited and they weren't.
+
+## Specific in-scope vs out-of-scope examples
+
+**In scope** (NeuroTCS owns or runs):
+- Range bounds on MMSE, MoCA, CDR, CDR-SB, ADAS-Cog, NPI-Q, Braak stage
+  (safe ordinal / categorical scales — scale-invariant, no assay assertion needed)
+- Range bounds on CSF Aβ42/40 ratio, plasma p-tau217, NfL, centiloid, FDG SUVR,
+  cortical thickness, eTIV, WMH (assay-calibrated — `--confirm-assays`-gated)
+- Clinical staging admissibility (CN ↔ MCI ↔ AD transitions per cited rule packs)
+- Biological staging admissibility (A/T/N transitions — once the citation-locked
+  pack is built; until then, refused with `vocabulary_mismatch`, not silently
+  filled in)
+- Cross-sheet concordance (amyloid status vs CSF ratio vs PET centiloid)
+- Longitudinal monotonicity of biomarkers that have a published directional
+  expectation
+- Time-window admissibility of staging transitions (when real visit dates are
+  available)
+
+**Out of scope** (acknowledged in report; NeuroTCS does not audit):
+- Demographic validity (sex vocabulary, age out-of-range for cohort, education
+  years out-of-range) — use a data-dictionary validator
+- Protocol-eligibility violations — use a trial-management QC tool
+- Treatment-assignment validation — use a trial-management QC tool
+- Adverse-event-action logic — use a pharmacovigilance/safety system
+- Data-dictionary conformance (CDISC SDTM compliance, ADaM derivations) — use
+  a clinical-data validator
+- Free-text or operator-comment columns (no published rule to validate against)
+
+---
+
+## Original declared scope (preserved below for reference)
 
 NeuroTCS is a reproducible, citation-locked auditor that verifies longitudinal
 disease-state trajectories and their supporting biomarkers obey the rules of

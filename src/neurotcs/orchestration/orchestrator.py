@@ -113,6 +113,30 @@ def _compute_orchestrator_id(manifest: CoverageManifest) -> str:
     return h.hexdigest()
 
 
+_CROSS_SHEET_SEVERITY_TIER = {
+    "error": TIER_IMPOSSIBLE,        # biologically impossible internal contradiction
+    "warning": TIER_IMPLAUSIBLE,     # discordance/monotonicity break flagged for review
+    "info": TIER_INFORMATIONAL,      # advisory note
+    "informational": TIER_INFORMATIONAL,
+}
+
+
+def _tier_for_cross_sheet_flag(f: Any) -> str:
+    """Map a cross-sheet invariant flag to a severity tier by its DECLARED severity.
+
+    Previously every cross-sheet flag was force-tiered TIER_IMPOSSIBLE. That
+    promoted invariants the pack author declared as `warning` (e.g. biomarker
+    discordances, trajectory-monotonicity breaks -- 'flag for human review',
+    NOT 'biologically impossible') up into the impossible tier, drowning the
+    handful of true `error`-severity contradictions. The invariant YAML is the
+    source of truth for severity; the orchestrator now honors it. Unknown /
+    missing severity falls back to TIER_IMPOSSIBLE (fail-safe: never silently
+    downgrade an unclassified contradiction).
+    """
+    sev = str(getattr(f, "severity", "") or "").strip().lower()
+    return _CROSS_SHEET_SEVERITY_TIER.get(sev, TIER_IMPOSSIBLE)
+
+
 def _tier_for_flag(flag: dict[str, Any]) -> str:
     """Classify a range-pack flag into a severity tier (Invariant B)."""
     sev = str(flag.get("flag_severity", "")).lower()
@@ -263,10 +287,13 @@ def run_full_audit(
                     p, "sha256", getattr(p, "invariantpack_sha256", ""))
             fl = []
             for f in cres.flags:
+                tier = _tier_for_cross_sheet_flag(f)
                 fl.append({"invariant": f.invariant_name,
                            "join_key": f.join_key_values,
-                           "reason": f.flag_reason, "tier": TIER_IMPOSSIBLE})
-                severity[TIER_IMPOSSIBLE] += 1
+                           "reason": f.flag_reason,
+                           "severity": getattr(f, "severity", None),
+                           "tier": tier})
+                severity[tier] += 1
             layers.append(LayerResult(
                 layer="cross_sheet", ran=True,
                 summary={"n_packs": len(pack_names), "n_flags": len(cres.flags)},
