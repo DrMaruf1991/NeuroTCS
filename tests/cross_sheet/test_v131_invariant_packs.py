@@ -58,7 +58,8 @@ def test_extended_coherence_cdr_sb_threshold_is_4():
 def test_monogenic_trajectory_loads_research_preview():
     lp = load_invariantpack("cross_sheet/monogenic_ad_trajectory_consistency")
     assert lp.invariantpack.status == InvariantPackStatus.RESEARCH_PREVIEW
-    assert len(lp.invariantpack.invariants) == 1
+    # v0.2.0 (v1.34.0): extended from 1 (PSEN1) to 3 invariants (+ PSEN2, APP)
+    assert len(lp.invariantpack.invariants) == 3
 
 
 def test_monogenic_trajectory_is_info_severity_advisory():

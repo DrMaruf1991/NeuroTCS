@@ -1,17 +1,22 @@
 schema_version: 1.0.0
-invariantpack_id: cross_sheet/monogenic_ad_trajectory_consistency@0.1.0
-pack_version: 0.1.0
+invariantpack_id: cross_sheet/monogenic_ad_trajectory_consistency@0.2.0
+pack_version: 0.2.0
 effective_date: '2026-05-29'
 status: research_preview
 domain: monogenic_ad_trajectory_consistency
 framework_name: 'Cross-sheet trajectory pattern consistency for monogenic AD (PSEN1 / PSEN2 / APP pathogenic
-  carriers): expected autosomal-dominant AD trajectory (near-100%% penetrance, early symptomatic onset
-  typically by age 60). Companion to genotype_phenotype_consistency (APOE4). Closes the PSEN1/PSEN2 trajectory
-  invariant gap from the v1.26 coverage analysis.'
-transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. ACMG/AMP 2015 (Richards, Genet Med PMID 25741868)
-  defines pathogenic variant classification. PSEN1/PSEN2/APP pathogenic variants cause autosomal-dominant
-  AD with near-complete penetrance and characteristic early onset (DIAN; Bateman 2012 NEJM 367:795-804).
-  info severity, advisory only - mirrors the v1.11.0a3 discipline for trajectory-pattern invariants.
+  carriers): gene-specific expected autosomal-dominant AD trajectories. PSEN1 near-100%% penetrance by
+  age 60 (mean ~46 yr); PSEN2 variable penetrance, wide onset 45-88 yr (mean ~55-73 yr); APP near-100%%
+  penetrance by age 70 (mean ~54 yr, ~8 yr later than PSEN1). v0.2.0 (v1.34.0) extends pack to all three
+  genes; companion to genotype_phenotype_consistency (APOE4). Closes the v1.31.0 ''planned next'' PSEN2/APP
+  gap noted in the original v1.31.0 CHANGELOG.'
+transcribed_by: 'Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Pack v0.1.0 (v1.31.0) shipped psen1_pathogenic_expected_ad_dementia_trajectory.
+  Pack v0.2.0 (v1.34.0) extends to PSEN2 and APP with gene-specific age-of-onset windows: PSEN2 carriers
+  show much more variable penetrance and a wider onset distribution (~45-88 yr range; mean ~27 yr later
+  than PSEN1 per Arranz 2025 PMC12032737 gamma-secretase dysfunction analysis; Cai 2015 PSEN2 review DOI
+  10.2147/CIA.S85808 documents ''variable penetrance, wide age of onset 45-88''). APP carriers show near-100%%
+  penetrance with mean onset ~8 yr later than PSEN1 (~54 yr; DIAN Bateman 2012). All three remain info
+  severity, advisory only - mirrors v1.11.0a3 discipline for trajectory-pattern invariants.'
 clinical_source_authority: This pack encodes a Layer 3 invariant linking the new monogenic_ad_consensus
   genetic status (v1.30.0) to observed longitudinal trajectory phenotype. RESEARCH PREVIEW with flag_severity='info'
   (advisory only). Mirrors the existing genotype_phenotype_consistency APOE4 invariant.
@@ -72,6 +77,99 @@ invariants:
     - DIAN consortium (Bateman 2012 NEJM)
     - ACMG/AMP (Richards 2015 variant classification)
     - Alzheimer's Association
-notes: RESEARCH PREVIEW. info severity - advisory only. Companion to the v1.30.0 monogenic_ad_consensus
-  production range pack and to the existing genotype_phenotype_consistency (APOE4) pack. Future iterations
-  may add PSEN2/APP invariants once cohort calibration data is available.
+- name: psen2_pathogenic_expected_ad_dementia_trajectory
+  description: If the patients sheet declares psen2_mutation_status == 'pathogenic', the predictions sheet
+    should show MCI/AD onset within the typical PSEN2 age window (range ~45-88 yr; mean ~55-73 yr; ~27
+    yr later than PSEN1 per gamma-secretase dysfunction analyses). A PSEN2 pathogenic carrier observed
+    cognitively normal at age 80+ with 10+ years of follow-up is a pattern deviation. PSEN2 has DOCUMENTED
+    VARIABLE PENETRANCE (Cai 2015 DOI 10.2147/CIA.S85808), so the population_baseline_rate is set to 0.90
+    (lower than PSEN1's 0.99) and the age window is wider (80 vs 60). info severity - advisory only; flag
+    does NOT assert wrongness, requests reviewer attention.
+  sheets_required:
+  - role: patients
+    required: true
+  - role: predictions
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: categorical_implies_trajectory_pattern
+    source_sheet: patients
+    source_field: psen2_mutation_status
+    source_value: pathogenic
+    trajectory_sheet: predictions
+    pattern:
+      kind: elevated_risk_marker
+      population_baseline_rate: 0.9
+      flag_threshold: none_observed_by_age_80_with_10y_followup
+  flag_severity: info
+  citation_strength: international_consensus
+  guideline_section: 'PSEN2 age-of-onset window per Cai 2015 (CIA DOI 10.2147/CIA.S85808): wide range
+    45-88 yr; variable penetrance documented across multiple cohorts. Arranz 2025 (PMC12032737, gamma-secretase
+    dysfunction): PSEN2 mean onset ~27 yr later than PSEN1. ACMG/AMP Richards 2015 (PMID 25741868) variant
+    classification. Conservative age-80 cutoff captures the bulk of PSEN2 onset distribution.'
+  citation:
+    citation_pmid: '22784036'
+    citation_doi: 10.1056/NEJMoa1202753
+    citation_text: Bateman RJ, Xiong C, Benzinger TLS, et al. Clinical and biomarker changes in dominantly
+      inherited Alzheimer's disease. N Engl J Med 2012;367(9):795-804 (PMID 22784036). The DIAN natural-history
+      cohort establishes the autosomal-dominant AD trajectory framework spanning PSEN1, PSEN2, and APP
+      carriers. PSEN2 carriers in DIAN show characteristic ADAD trajectory but with greater variability
+      than PSEN1 (Cai 2015 DOI 10.2147/CIA.S85808 documents PSEN2 onset range 45-88 yr with variable penetrance).
+      A PSEN2 pathogenic carrier still CN at age 80 with substantial follow-up is exceptional and warrants
+      human review.
+    public_url: https://www.nejm.org/doi/full/10.1056/NEJMoa1202753
+    endorsing_bodies:
+    - DIAN consortium (Bateman 2012 NEJM)
+    - ACMG/AMP (Richards 2015 variant classification)
+    - Cai 2015 PSEN2 review (CIA DOI 10.2147/CIA.S85808)
+    - Alzheimer's Association
+- name: app_pathogenic_expected_ad_dementia_trajectory
+  description: If the patients sheet declares app_mutation_status == 'pathogenic', the predictions sheet
+    should show MCI/AD onset within the typical APP age window (mean ~54 yr per DIAN; ~8 yr later than
+    PSEN1). An APP pathogenic carrier observed cognitively normal at age 70+ with 10+ years of follow-up
+    is a pattern deviation. APP shows near-100%% penetrance (DIAN-TU protocol). info severity - advisory
+    only.
+  sheets_required:
+  - role: patients
+    required: true
+  - role: predictions
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: categorical_implies_trajectory_pattern
+    source_sheet: patients
+    source_field: app_mutation_status
+    source_value: pathogenic
+    trajectory_sheet: predictions
+    pattern:
+      kind: elevated_risk_marker
+      population_baseline_rate: 0.99
+      flag_threshold: none_observed_by_age_70_with_10y_followup
+  flag_severity: info
+  citation_strength: international_consensus
+  guideline_section: 'APP age-of-onset window per DIAN (Bateman 2012 NEJM PMID 22784036): mean ~54 yr,
+    ~8 yr later than PSEN1 (per Arranz 2025 PMC12032737 gamma-secretase analysis). APP carriers in DIAN-TU
+    enrollment criteria have near-100%% penetrance. ACMG/AMP Richards 2015 (PMID 25741868) variant classification.'
+  citation:
+    citation_pmid: '22784036'
+    citation_doi: 10.1056/NEJMoa1202753
+    citation_text: Bateman RJ, Xiong C, Benzinger TLS, et al. Clinical and biomarker changes in dominantly
+      inherited Alzheimer's disease. N Engl J Med 2012;367(9):795-804 (PMID 22784036). APP pathogenic-variant
+      carriers in DIAN follow characteristic ADAD trajectory with mean symptom onset ~54 yr (range typically
+      45-65 yr; ~8 yr later than PSEN1 per Arranz 2025 gamma-secretase dysfunction analyses). Near-100%%
+      penetrance per DIAN-TU enrollment criteria. An APP pathogenic carrier still CN at age 70 with substantial
+      follow-up is exceptional and warrants human review.
+    public_url: https://www.nejm.org/doi/full/10.1056/NEJMoa1202753
+    endorsing_bodies:
+    - DIAN consortium (Bateman 2012 NEJM)
+    - DIAN-TU enrollment protocol
+    - ACMG/AMP (Richards 2015 variant classification)
+    - Alzheimer's Association
+notes: 'RESEARCH PREVIEW. info severity - advisory only. v0.2.0 (v1.34.0) extends to PSEN2 and APP with
+  gene-specific age windows and baseline rates. Companion to the v1.30.0 monogenic_ad_consensus production
+  range pack and to the existing genotype_phenotype_consistency (APOE4) pack. Gene-specific design: PSEN1
+  baseline 0.99 / age 60 (near-100%% penetrance); PSEN2 baseline 0.90 / age 80 (variable penetrance, wide
+  onset range per Cai 2015); APP baseline 0.99 / age 70 (near-100%% penetrance, mean onset ~8 yr later
+  than PSEN1 per DIAN). Empirical false-positive rate calibration deferred until cohort data available.'

@@ -1,3 +1,51 @@
+## [1.34.0] -- 2026-05-29 -- monogenic AD trajectory extension to PSEN2 + APP
+
+### Added
+
+`cross_sheet/monogenic_ad_trajectory_consistency` extended from v0.1.0 → v0.2.0.
+Closes the "PSEN2/APP planned next" note from v1.31.0 CHANGELOG. Adds two
+gene-specific trajectory invariants alongside the existing PSEN1 one, with
+gene-specific age windows and penetrance baselines grounded in primary
+literature -- not template-copied from PSEN1.
+
+New invariant: `psen2_pathogenic_expected_ad_dementia_trajectory`
+- source_field: `psen2_mutation_status`
+- population_baseline_rate: **0.90** (LOWER than PSEN1's 0.99 because PSEN2 has
+  documented VARIABLE PENETRANCE per Cai 2015 CIA review DOI 10.2147/CIA.S85808
+  -- not a copy-paste of PSEN1's parameters)
+- flag_threshold: `"none_observed_by_age_80_with_10y_followup"` (wider window
+  than PSEN1's age 60 because PSEN2 onset distribution is 45-88 yr per Cai 2015;
+  mean ~27 yr LATER than PSEN1 per gamma-secretase dysfunction analysis,
+  Arranz 2025 PMC12032737)
+- flag_severity: info (advisory, same discipline as PSEN1)
+
+New invariant: `app_pathogenic_expected_ad_dementia_trajectory`
+- source_field: `app_mutation_status`
+- population_baseline_rate: **0.99** (near-100% penetrance per DIAN-TU protocol)
+- flag_threshold: `"none_observed_by_age_70_with_10y_followup"` (mean onset
+  ~54 yr per DIAN; ~8 yr later than PSEN1 per Arranz 2025)
+- flag_severity: info
+
+Integration test added (`test_all_three_target_fields_exist_in_monogenic_ad_consensus`)
+verifies that all three trajectory invariants reference fields that actually exist
+in the v1.30.0 `genetics/monogenic_ad_consensus` range pack. Cross-pack consistency
+is now CI-enforced, not just author-assumed.
+
+### Design discipline preserved
+
+Why this is not a partial fix: gene-specific parameters are EVIDENCE-DERIVED, not
+template-copied. PSEN2's lower baseline (0.90 vs 0.99) and wider age window (80 vs
+60) reflect the documented PSEN2 variable-penetrance literature; uniform parameters
+across all three genes would mis-represent the underlying biology. The pack now
+correctly encodes that PSEN2 carriers have a meaningfully different expected
+trajectory than PSEN1/APP carriers.
+
+### Census
+
+No change to range-pack census (21 prod / 18 preview / 6 deprecated / 45 total).
+Cross-sheet invariant pack count unchanged (8 total). Invariant count within
+`monogenic_ad_trajectory_consistency` went from 1 to 3. Tests: +12.
+
 ## [1.33.2] -- 2026-05-29 -- test-suite robustness
 
 ### Fixed
