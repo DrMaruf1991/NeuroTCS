@@ -214,6 +214,7 @@ def build_bundle(
     input_fingerprint_kind: str = "normalized_data_sha256",
     timings_seconds: dict[str, float] | None = None,
     raw_input_sha256: str | None = None,
+    input_warnings: list[str] | None = None,
 ) -> dict[str, Any]:
     """Build a self-verifying result bundle from an OrchestratorResult.
 
@@ -275,6 +276,10 @@ def build_bundle(
         "python_version": platform.python_version(),
         "timings_seconds": timings_seconds or {},
         "raw_input_sha256": raw_input_sha256,
+        # v1.39.0: input-handling warnings (e.g. derived visit_date) recorded in
+        # the persistent bundle. In run_metadata, so NOT hashed -- the determinism
+        # guarantee (bundle_id) is unaffected, but the note is part of the record.
+        "input_warnings": list(input_warnings or []),
     }
 
     return {

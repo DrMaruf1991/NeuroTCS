@@ -88,26 +88,329 @@ def _match(columns: list[str], canonical: str) -> str:
     return canonical if canonical in columns else f"<FILL:{canonical}>"
 
 
-def _scaffold_mapping(desc: dict[str, Any]) -> dict[str, Any]:
-    """Build a mapping skeleton from detected sheets. Pre-fills columns whose
-    canonical name is present; everything else is a placeholder to review.
-    The auditor never consumes placeholders -- it fails closed until you edit them.
-    """
-    sheets = list(desc.keys())
-    first = sheets[0] if sheets else "<FILL:sheet>"
-    cols0 = desc.get(first, {}).get("columns", []) if sheets else []
-    mapping: dict[str, Any] = {
-        "_detected": desc,  # reference only; ignored by the auditor
-        "clinical": {"sheet": first,
-                     **{c: _match(cols0, c) for c in _STAGING_COLS}},
+# --------------------------------------------------------------------------- #
+# v1.37.0 -- smart sheet + column auto-detection for emit_mapping
+#
+# Before v1.37, _scaffold_mapping did "first sheet wins" -- a 5-sheet file like
+# [Index, EN, AUDIT_CLINICAL, AUDIT_BIOLOGICAL, BIO] would auto-route clinical
+# to Index (table-of-contents!) and biological to EN (enrollment, no biological
+# state). A blind user hit that wall and the tool was unusable. v1.37 fixes the
+# auto-detection so 'describe --emit-mapping' produces a mapping that JUST WORKS
+# for datasets following obvious conventions, without hand-editing JSON.
+# --------------------------------------------------------------------------- #
+
+# Sheet-name patterns and scores per axis. Higher score = stronger match.
+# A pattern is matched substring-case-insensitively on the sheet name.
+_AXIS_SHEET_SCORES = {
+    "clinical": (
+        ("audit_clinical",   100),
+        ("clinical_audit",    95),
+        ("audit_clin",        90),
+        ("clinical_staging",  90),
+        ("clinical_state",    90),
+        ("clinical",          80),
+        ("staging_clinical",  85),
+        ("diagnosis",         72),
+        ("clin_state",        75),
+        ("dx_state",          75),
+        ("cdr_staging",       65),
+        # v1.39.0: CDISC 'QS' (Questionnaires) and short 'dx'/'diagnosis' sheets
+        ("qs",                60),
+        ("dx",                60),
+    ),
+    "biological": (
+        ("audit_biological", 100),
+        ("biological_audit",  95),
+        ("audit_bio",         90),
+        ("biological_staging",90),
+        ("biological_state",  90),
+        ("biological",        80),
+        ("atn_staging",       80),
+        ("atn_state",         80),
+        ("atn",               70),
+        ("biomarker_staging", 70),
+        # v1.39.0: a lone 'BIO' sheet routes to biological (low score so it never
+        # beats AUDIT_BIOLOGICAL when both exist; still subject to the
+        # recognizable-field guard in _build_axis_spec)
+        ("bio",               55),
+    ),
+}
+
+# v1.39.0: candidate MEASUREMENT (range-pack) sheet detection. These are surfaced
+# in _notes as suggestions ONLY -- never auto-assigned to a pack, because picking
+# which pack a sheet maps to is a guess and NeuroTCS does not guess silently.
+# Maps a sheet-name substring -> the range-pack DOMAIN it most likely belongs to.
+_MEASUREMENT_SHEET_HINTS = (
+    ("mmse",      "cognitive_scales"),
+    ("moca",      "cognitive_scales"),
+    ("cdr",       "cognitive_scales"),
+    ("cognition", "cognitive_scales"),
+    ("cog",       "cognitive_scales"),
+    ("mri",       "mri_volumetrics"),
+    ("imaging",   "mri_volumetrics"),
+    ("volumetr",  "mri_volumetrics"),
+    ("amyloid",   "pet_amyloid"),
+    ("av45",      "pet_amyloid"),
+    ("tau_pet",   "tau_pet"),
+    ("av1451",    "tau_pet"),
+    ("fdg",       "fdg_pet"),
+    ("csf",       "csf_biomarkers"),
+    ("plasma",    "plasma_biomarkers"),
+    ("dti",       "dti"),
+    ("perfusion", "perfusion"),
+    ("asl",       "perfusion"),
+    ("oct",       "retinal_biomarkers"),
+    ("retina",    "retinal_biomarkers"),
+    ("sleep",     "sleep"),
+    ("olfact",    "olfactory"),
+)
+
+
+def _suggest_measurement_domain(name: str) -> str | None:
+    """If a sheet name looks like a measurement sheet, return the likely range-pack
+    domain (a SUGGESTION for the user, never an auto-assignment)."""
+    n = name.lower().strip()
+    for pattern, domain in _MEASUREMENT_SHEET_HINTS:
+        if pattern in n:
+            return domain
+    return None
+
+
+def _sheet_has_recognizable_staging_field(info: dict[str, Any]) -> bool:
+    """v1.39.0 (audit item 4): a sheet should not be auto-routed to a staging axis
+    unless it has at least one recognizable subject-id-like column AND one
+    recognizable state-like column. A sheet with neither (e.g. an enrollment sheet
+    with only site + enrollment_date) is not staging data."""
+    cols = list(info.get("columns", []))
+    has_subject = _best_column(cols, _COL_SYN_SUBJECT_ID, "subject_id",
+                               return_none_on_miss=True) is not None
+    has_state = (
+        _best_column(cols, _COL_SYN_STATE_CLINICAL, "state",
+                     return_none_on_miss=True) is not None
+        or _best_column(cols, _COL_SYN_STATE_BIOLOGICAL, "state",
+                        return_none_on_miss=True) is not None
+    )
+    return has_subject and has_state
+
+# Sheet names / column-shape signatures that mean "this is a TOC, NEVER auto-route".
+_TOC_SHEET_NAMES = {
+    "index", "toc", "table_of_contents", "readme", "manifest", "contents",
+    "sheet_index", "sheets", "_index",
+}
+_TOC_COLUMN_SIGNATURES: tuple[tuple[str, ...], ...] = (
+    ("sheet", "rows"),
+    ("sheet", "description"),
+    ("sheet_name", "description"),
+    ("table_name", "description"),
+    ("name", "description"),
+)
+
+# Column-name synonyms per canonical staging field. Each list is searched in order;
+# the highest-scoring synonym present (case-insensitive) wins. Original-case column
+# name from the actual sheet is returned so pandas indexing works downstream.
+#
+# v1.38.0: synonym tables expanded to cover the major real-world clinical-data
+# conventions (CDISC SDTM, ADNI, OASIS, NACC) per the external-audit design, so a
+# file following ANY of these standards auto-maps with zero <FILL:> placeholders:
+#   - CDISC SDTM: USUBJID (subject), VISITNUM/VISIT (visit), SVSTDTC (visit date)
+#   - ADNI:       RID/PTID (subject), VISCODE/VISCODE2 (visit), EXAMDATE (date)
+#   - NACC/OASIS: common dx_status / cognitive-status column names
+_COL_SYN_SUBJECT_ID = (
+    ("subject_id", 100), ("usubjid", 98), ("subjid", 95), ("patient_id", 95),
+    ("patientid", 90), ("rid", 90), ("ptid", 90), ("subject", 80), ("pid", 75),
+    ("id", 50),
+)
+_COL_SYN_VISIT = (
+    ("visit", 100), ("visit_id", 95), ("visitid", 95), ("visitnum", 92),
+    ("visit_code", 85), ("viscode2", 85), ("viscode", 80), ("avisit", 78),
+    ("visitdy", 72), ("event_id", 70), ("event", 65), ("timepoint", 70), ("tp", 60),
+)
+_COL_SYN_VISIT_DATE = (
+    ("visit_date", 100), ("visit_dt", 95), ("examdate", 90), ("exam_date", 90),
+    ("svstdtc", 88), ("assessment_date", 86), ("scandate", 85), ("scan_date", 85),
+    ("vdate", 80), ("date", 55),
+)
+# state column is axis-specific (clinical vs biological)
+_COL_SYN_STATE_CLINICAL = (
+    ("clinical_state", 100), ("dx_state", 95), ("clinical_status", 92),
+    ("dx_status", 90), ("diagnosis_state", 90), ("diagnosis_status", 88),
+    ("cog_status", 85), ("cognitive_status", 85), ("dx_bl", 80), ("diagnosis", 80),
+    ("cdglobal", 72), ("dx", 70), ("state", 60), ("clinical_stage", 65),
+)
+_COL_SYN_STATE_BIOLOGICAL = (
+    ("biological_stage_atn", 100), ("biological_state", 100), ("biological_stage", 95),
+    ("atn_stage", 95), ("stage_atn", 95), ("atn_profile", 92),
+    ("biological_status", 90), ("atn", 70), ("stage", 55), ("state", 50),
+)
+
+
+def _is_toc_sheet(name: str, info: dict[str, Any]) -> bool:
+    """A TOC / Index sheet is NEVER auto-routed to a clinical/biological axis.
+
+    Detection: (a) sheet name matches a TOC name, OR (b) the sheet's columns match
+    a TOC signature like ('Sheet', 'Rows', 'Description')."""
+    n = name.lower().strip()
+    if n in _TOC_SHEET_NAMES:
+        return True
+    cols_lower = {str(c).lower() for c in info.get("columns", [])}
+    for sig in _TOC_COLUMN_SIGNATURES:
+        if all(c in cols_lower for c in sig):
+            return True
+    return False
+
+
+def _score_sheet_for_axis(name: str, axis: str) -> int:
+    """Return the maximum match score for the given axis (0 = no match)."""
+    n = name.lower().strip()
+    best = 0
+    for pattern, score in _AXIS_SHEET_SCORES[axis]:
+        if pattern in n and score > best:
+            best = score
+    return best
+
+
+def _best_column(cols: list[str], synonyms: tuple[tuple[str, int], ...],
+                 fallback_canonical: str, return_none_on_miss: bool = False) -> str | None:
+    """Find the highest-scoring synonym that's present in `cols` (case-insensitive).
+
+    Returns the actual column name from `cols` (original case). If no synonym matches,
+    returns either `<FILL:fallback_canonical>` or None (when `return_none_on_miss`)."""
+    cols_lower_to_orig = {str(c).lower(): str(c) for c in cols}
+    best_score = 0
+    best_col: str | None = None
+    for syn, score in synonyms:
+        if syn.lower() in cols_lower_to_orig and score > best_score:
+            best_score = score
+            best_col = cols_lower_to_orig[syn.lower()]
+    if best_col is not None:
+        return best_col
+    return None if return_none_on_miss else f"<FILL:{fallback_canonical}>"
+
+
+def _build_axis_spec(sheet: str, info: dict[str, Any], axis: str) -> dict[str, Any]:
+    """Build a {sheet, subject_id, visit, visit_date, state} spec by auto-detecting
+    columns via the synonym tables.
+
+    visit_date is special: if no synonym matches, the spec gets visit_date=null and
+    tables_to_submission will DERIVE synthetic dates from visit ordering. This means
+    a real user with a dataset that lacks an explicit date column can still audit
+    without hand-editing JSON. The auditor itself never sees the null -- it sees
+    derived dates that preserve visit order."""
+    cols = list(info.get("columns", []))
+    state_syns = _COL_SYN_STATE_BIOLOGICAL if axis == "biological" else _COL_SYN_STATE_CLINICAL
+    return {
+        "sheet": sheet,
+        "subject_id": _best_column(cols, _COL_SYN_SUBJECT_ID, "subject_id"),
+        "visit":      _best_column(cols, _COL_SYN_VISIT, "visit"),
+        # visit_date may be None -> consumer derives from visit order. Don't FILL.
+        "visit_date": _best_column(cols, _COL_SYN_VISIT_DATE, "visit_date",
+                                   return_none_on_miss=True),
+        "state":      _best_column(cols, state_syns, "state"),
     }
-    # offer a biological skeleton only if a second sheet exists
-    if len(sheets) > 1:
-        cols1 = desc[sheets[1]]["columns"]
-        mapping["biological"] = {"sheet": sheets[1],
-                                 **{c: _match(cols1, c) for c in _STAGING_COLS}}
-    # ranges: empty by default so a fully-mapped staging audit is not blocked by
-    # an unused example. A reference example lives under an ignored '_' key.
+
+
+def _scaffold_mapping(desc: dict[str, Any]) -> dict[str, Any]:
+    """Build a mapping by AUTO-DETECTING which sheet feeds which axis.
+
+    Strategy:
+      1. Reject TOC / Index sheets outright (never auto-routed).
+      2. Score each remaining sheet for clinical and biological axes by name pattern.
+      3. Pick the highest-scoring sheet per axis (must score > 0).
+      4. Within the chosen sheet, auto-detect columns via the synonym tables.
+      5. If a column synonym misses, leave a <FILL:...> placeholder for review;
+         except visit_date, which becomes null and is DERIVED from visit ordering
+         at audit time (no hand-editing required for datasets that omit dates).
+
+    Backward compatibility: a CSV with canonical column names (subject_id, visit,
+    visit_date, state) on a single 'sheet' still works -- the first sheet wins as
+    clinical, all synonyms find exact matches, visit_date is non-null.
+    """
+    if not desc:
+        return {"clinical": {"sheet": "<FILL:sheet>",
+                             **{c: f"<FILL:{c}>" for c in _STAGING_COLS}},
+                "ranges": []}
+
+    # 1. Classify sheets: TOC vs candidate
+    candidates: dict[str, list[tuple[int, str, dict[str, Any]]]] = {
+        "clinical": [], "biological": [],
+    }
+    non_toc_sheets: list[tuple[str, dict[str, Any]]] = []
+    measurement_suggestions: list[str] = []
+    for name, info in desc.items():
+        if _is_toc_sheet(name, info):
+            continue  # never auto-route TOC
+        non_toc_sheets.append((name, info))
+        # collect measurement-sheet suggestions (item 1 extension; notes only)
+        dom = _suggest_measurement_domain(name)
+        if dom is not None:
+            measurement_suggestions.append(f"{name} -> ranges/{dom}")
+        # axis candidates: name must score > 0 AND the sheet must actually have
+        # recognizable staging fields (item 4: don't route a field-less sheet)
+        if not _sheet_has_recognizable_staging_field(info):
+            continue
+        for axis in ("clinical", "biological"):
+            sc = _score_sheet_for_axis(name, axis)
+            if sc > 0:
+                candidates[axis].append((sc, name, info))
+
+    mapping: dict[str, Any] = {"_detected": desc}
+    auto_routed: list[str] = []
+
+    # 2. Pick best sheet per axis (avoid double-assignment of the same sheet)
+    chosen_sheets: set[str] = set()
+    for axis in ("clinical", "biological"):
+        ranked = sorted(candidates[axis], reverse=True)  # (score, name, info)
+        for score, name, info in ranked:
+            if name in chosen_sheets:
+                continue
+            mapping[axis] = _build_axis_spec(name, info, axis)
+            chosen_sheets.add(name)
+            auto_routed.append(f"{axis}<-{name} (score {score})")
+            break
+
+    # 3. If neither axis got a name-pattern match, fall back to the first non-TOC
+    #    sheet that ACTUALLY has recognizable staging fields (item 4 guard) as
+    #    clinical. If no such sheet exists, leave <FILL:sheet>.
+    if not auto_routed:
+        fallback = next(
+            ((n, i) for n, i in non_toc_sheets
+             if _sheet_has_recognizable_staging_field(i)),
+            None,
+        )
+        if fallback is not None:
+            name, info = fallback
+            mapping["clinical"] = _build_axis_spec(name, info, "clinical")
+            auto_routed.append(f"clinical<-{name} (fallback: no name match found)")
+        else:
+            mapping["clinical"] = {
+                "sheet": "<FILL:sheet>",
+                **{c: f"<FILL:{c}>" for c in _STAGING_COLS},
+            }
+
+    # 4. Top-level notes block (consumed by the user, dropped by _clean_mapping)
+    notes = [
+        "v1.37+ emit-mapping: sheets auto-routed by name pattern; columns auto-"
+        "detected by synonym table (CDISC / ADNI / OASIS / NACC conventions).",
+        "Auto-routing performed: " + ("; ".join(auto_routed) if auto_routed
+                                      else "(none -- no sheet had recognizable "
+                                           "staging fields)"),
+        "<FILL:...> placeholders mean auto-detection couldn't find a match. EDIT "
+        "those to point at the right column.",
+        "visit_date == null means no date column was detected; visit_date will "
+        "be DERIVED from visit ordering at audit time and a NOTE will be printed "
+        "(no editing required; pass --allow-no-dates to acknowledge explicitly).",
+        "TOC / Index sheets and sheets with no recognizable staging fields are "
+        "intentionally excluded from auto-routing.",
+    ]
+    if measurement_suggestions:
+        notes.append(
+            "Candidate MEASUREMENT sheets detected (add to 'ranges' with the right "
+            "pack id if they contain biomarker/cognitive measurements; NOT auto-"
+            "assigned because pack selection must be explicit): "
+            + "; ".join(measurement_suggestions)
+        )
+    mapping["_notes"] = notes
+
     mapping["ranges"] = []
     mapping["_ranges_example"] = {
         "sheet": "<FILL:measurements_sheet>",
@@ -159,17 +462,45 @@ def cmd_audit(args: argparse.Namespace) -> int:
              "auditing (the auditor will not guess column names).")
         return EXIT_INPUT
 
+    submission_warnings: list[str] = []
     try:
-        submission = tables_to_submission(tables, mapping)
+        submission = tables_to_submission(tables, mapping, warnings=submission_warnings)
     except (ValueError, KeyError) as e:
         _err(f"mapping does not match the data: {e}")
         return EXIT_INPUT
+
+    # v1.38/v1.39: surface any non-silent fallback (e.g. derived visit_date) to
+    # the user BEFORE running the audit. --allow-no-dates acknowledges explicitly
+    # (suppresses the per-axis stderr NOTE); the bundle records it either way.
+    if submission_warnings and not getattr(args, "allow_no_dates", False):
+        for w in submission_warnings:
+            _err(f"NOTE: {w}")
+        _err("Pass --allow-no-dates to acknowledge derived dates explicitly "
+             "and suppress this note.")
+
+    # v1.39: --dry-run resolves the mapping and reports what WOULD be audited,
+    # then exits without running the audit. Lets a user verify routing first.
+    if getattr(args, "dry_run", False):
+        print("# dry-run: resolved mapping (no audit executed)")
+        for axis in ("clinical", "biological"):
+            if axis in submission:
+                df = submission[axis]
+                print(f"  {axis}: {len(df)} rows, "
+                      f"{df['subject_id'].nunique()} subjects, "
+                      f"states={sorted(df['state'].astype(str).unique())}")
+        if "ranges" in submission:
+            print(f"  ranges: {len(submission['ranges'])} pack(s)")
+        for w in submission_warnings:
+            print(f"  NOTE: {w}")
+        print("dry-run OK -- re-run without --dry-run to produce the audit bundle.")
+        return EXIT_CLEAN
 
     result = run_full_audit(submission)
     try:
         fp = fingerprint_file(args.file)
         bundle = build_bundle(result, input_fingerprint=fp,
-                              input_fingerprint_kind="raw_file_sha256")
+                              input_fingerprint_kind="raw_file_sha256",
+                              input_warnings=submission_warnings)
     except Exception as e:  # noqa: BLE001 - surface any build failure cleanly
         _err(f"failed to build bundle: {e}")
         return EXIT_INPUT
@@ -227,11 +558,42 @@ def _print_summary(bundle: dict[str, Any], outdir: Path, stem: str,
 # --------------------------------------------------------------------------- #
 # verify
 # --------------------------------------------------------------------------- #
+def _resolve_bundle_path(target: str) -> Path | None:
+    """Resolve a verify target to a bundle JSON file.
+
+    v1.39.1: `neurotcs verify` accepts EITHER a bundle file OR the audit output
+    DIRECTORY (the natural workflow: `neurotcs audit ... -o out` then
+    `neurotcs verify out`). Given a directory, locate the single *.bundle.json
+    inside it. Previously, passing a directory crashed with an uncaught
+    IsADirectoryError -- breaking the third leg of describe -> audit -> verify.
+    """
+    p = Path(target)
+    if p.is_dir():
+        candidates = sorted(p.glob("*.bundle.json"))
+        if len(candidates) == 1:
+            return candidates[0]
+        if len(candidates) == 0:
+            _err(f"no '*.bundle.json' found in directory: {target}. Run "
+                 f"`neurotcs audit <file> --mapping <map> -o {target}` first.")
+            return None
+        _err(f"multiple bundles found in {target}: "
+             f"{[c.name for c in candidates]}. Pass the specific bundle file, "
+             f"e.g. `neurotcs verify {candidates[0]}`.")
+        return None
+    return p
+
+
 def cmd_verify(args: argparse.Namespace) -> int:
+    bundle_path = _resolve_bundle_path(args.bundle)
+    if bundle_path is None:
+        return EXIT_INPUT
     try:
-        bundle = json.loads(Path(args.bundle).read_text(encoding="utf-8"))
+        bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        _err(f"bundle not found: {args.bundle}")
+        _err(f"bundle not found: {bundle_path}")
+        return EXIT_INPUT
+    except IsADirectoryError:
+        _err(f"expected a bundle file but got a directory: {bundle_path}")
         return EXIT_INPUT
     except json.JSONDecodeError as e:
         _err(f"bundle is not valid JSON: {e}")
@@ -282,10 +644,19 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--quiet", action="store_true", help="suppress the stdout summary")
     a.add_argument("--allow-pdf", action="store_true",
                    help="enable best-effort PDF table extraction")
+    a.add_argument("--allow-no-dates", action="store_true",
+                   help="acknowledge derived visit_date explicitly (no date column "
+                        "in data): use visit ordering, suppress the per-axis NOTE. "
+                        "The bundle still records that dates were derived.")
+    a.add_argument("--dry-run", action="store_true",
+                   help="resolve the mapping and report what WOULD be audited, then "
+                        "exit without producing a bundle (verify routing first)")
     a.set_defaults(func=cmd_audit)
 
     v = sub.add_parser("verify", help="re-verify a signed bundle")
-    v.add_argument("bundle")
+    v.add_argument("bundle",
+                   help="path to a *.bundle.json file, OR the audit output "
+                        "directory (the bundle inside it is located automatically)")
     v.set_defaults(func=cmd_verify)
     return p
 

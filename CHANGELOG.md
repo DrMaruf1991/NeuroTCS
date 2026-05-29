@@ -1,3 +1,256 @@
+## [1.39.1] -- 2026-05-29 -- verify accepts the audit output directory (blind-test fix)
+
+### The bug a blind end-to-end test exposed
+
+`neurotcs verify <dir>` -- the natural third leg of `describe -> audit -> verify`,
+where `<dir>` is the `-o` output directory -- crashed with an uncaught
+`IsADirectoryError` because `cmd_verify` called `read_text()` directly on the
+path. Users following the documented workflow (`audit ... -o out` then
+`verify out`) hit a stack trace.
+
+### Fix
+
+`cmd_verify` now resolves its target via `_resolve_bundle_path`:
+- a `*.bundle.json` FILE -> used directly (unchanged behavior);
+- a DIRECTORY -> the single `*.bundle.json` inside it is located automatically;
+- empty directory -> clear message ("no '*.bundle.json' found ... run audit first");
+- multiple bundles -> lists them and asks for the specific file;
+- `IsADirectoryError` is now caught defensively.
+
+The `verify` arg help documents that a directory is accepted.
+
+### Verified end-to-end
+
+A reconstruction of the blind-test workbook (`Complex_AD_Dataset_v3.xlsx`:
+sheets Index/EN/QS/BIO/CG/MR/AM/TP/FG/FL/AUDIT_CLINICAL/AUDIT_BIOLOGICAL) now
+runs `describe -> audit --allow-no-dates -> verify <dir>` with NO JSON editing:
+clinical auto-routes to AUDIT_CLINICAL, biological to AUDIT_BIOLOGICAL, dates
+are derived from visit order (visible NOTE + recorded in the bundle), the audit
+correctly flags an impossible AD->CN transition, and `verify <dir>` returns
+VERIFIED OK. That is the bar the external audit set.
+
+### Tests
+
+Two added: `verify` accepts an output directory and returns 0; an empty
+directory yields a clear error. Full CLI suite green.
+
+## [1.39.0] -- 2026-05-29 -- completes the external-audit 6-item input-contract fix list
+
+v1.37 + v1.38 covered items 2 (synonyms) and the core of 1/3/4/5. v1.39 closes
+the rest and publishes the contract.
+
+### Item 1 (extended) -- sheet-name recognition
+
+- Clinical axis now also matches `QS` (CDISC Questionnaires), `dx`, `diagnosis`.
+- A lone `BIO` sheet routes to biological (low score so `AUDIT_BIOLOGICAL`
+  always wins when both exist).
+- Candidate MEASUREMENT sheets (`MMSE`, `MoCA`, `CDR`, `MRI`, `amyloid`, `PET`,
+  `CSF`, `plasma`, `DTI`, `OCT`, `sleep`, ...) are detected and SUGGESTED in the
+  mapping `_notes` with the likely range-pack domain -- but never auto-assigned,
+  because pack selection must be explicit (citation-locking). 21 patterns mapped
+  to the 17 real range-pack domains.
+
+### Item 3 (completed) -- visit_date optional, now with flag + persistent note
+
+- New `neurotcs audit --allow-no-dates` flag: explicit opt-in for date
+  derivation. Without it, the derived-date NOTE prints to stderr; with it, the
+  note is acknowledged and suppressed. Either way the audit never crashes.
+- `build_bundle(..., input_warnings=...)` records the derived-date note in
+  `run_metadata.input_warnings` -- OUTSIDE the hashed deterministic_core, so the
+  `bundle_id` / audit_id is unchanged (verified: identical id with and without
+  warnings) while the note is part of the persistent record.
+
+### Item 4 (completed) -- refuse field-less sheets
+
+A sheet is auto-routed to a staging axis ONLY if it has at least one recognizable
+subject-id column AND one recognizable state column (`_sheet_has_recognizable_
+staging_field`). This closes the "EN enrollment sheet routed to an axis" bug:
+an enrollment sheet with `subject_id, enrollment_date, site` (no state) is now
+left as `<FILL:sheet>` instead of being proposed as clinical data. Applies to the
+fallback path too.
+
+### Item 5 (completed) -- error message references --allow-no-dates
+
+`_require_columns` and the derivation path now share consistent wording:
+"Searched columns: [...]" plus, for a missing date column, "either set
+visit_date: null in the mapping, or run with --allow-no-dates."
+
+### Item 6 -- INPUT_CONTRACT.md published
+
+New `INPUT_CONTRACT.md` at the repo root, AUTO-GENERATED from the live
+recognition tables in `cli.py` (single source of truth -- the doc cannot drift
+from the code). Documents the three-layer model, every recognized sheet-name
+pattern, every column synonym (CDISC/ADNI/OASIS/NACC), the optional-visit_date
+behavior, and the describe -> dry-run -> audit -> verify workflow. A test asserts
+the file exists with the key sections.
+
+### "Better than the six" -- `--dry-run`
+
+New `neurotcs audit --dry-run`: resolves the mapping and reports what WOULD be
+audited (which sheet -> which axis, subject/state counts, derived-date notes)
+then exits WITHOUT producing a bundle. Lets a user verify routing before
+committing -- the confirmation step the audit's three-layer design calls for.
+
+### Tests
+
+`tests/cli/test_v139_contract_completion.py` (11 tests): QS/BIO routing,
+AUDIT_BIOLOGICAL beats BIO, measurement-sheet suggestions, field-guard on
+enrollment + named-but-stateless sheets, bundle input_warnings determinism,
+--allow-no-dates end-to-end, --dry-run writes no bundle, error message wording,
+INPUT_CONTRACT.md presence + sections.
+
+### Census
+
+No range pack / invariant pack changes. CLI + IO + bundle (run_metadata only) +
+new doc. Tests: +11. Full-repo regression: 1616 passed, 21 skipped, 0 FAILED
+(vs v1.38 baseline 1605 passed).
+
+## [1.38.0] -- 2026-05-29 -- standard-convention synonyms + VISIBLE date derivation
+
+Completes the external-audit design that v1.37.0 started. v1.37 fixed sheet
+routing + TOC rejection; v1.38 closes the three remaining gaps the audit's
+full transcript called out.
+
+### Gap 1 -- synonym tables now cover the major real-world conventions
+
+The audit's point: "synonyms come from CDISC, ADNI, OASIS, NACC -- the actual
+conventions of the field. Ship them." Done. A file following ANY of these
+standards now auto-maps with zero `<FILL:...>` placeholders:
+
+- subject_id  <- `USUBJID` (CDISC), `RID`/`PTID` (ADNI), `SUBJID`, `patient_id`
+- visit       <- `VISITNUM`/`VISIT`/`AVISIT` (CDISC), `VISCODE`/`VISCODE2` (ADNI)
+- visit_date  <- `SVSTDTC` (CDISC), `EXAMDATE` (ADNI), `assessment_date`, `scandate`
+- clinical state <- `dx_status`, `diagnosis_status`, `cog_status`,
+  `cognitive_status`, `cdglobal` (NACC / common conventions)
+- biological state <- `atn_profile`, `atn_stage`, `biological_stage_ATN`
+
+Verified against CDISC SDTM v3.4 (USUBJID/VISITNUM/SVSTDTC are the documented
+standard variable names) and ADNI data-dictionary conventions.
+
+### Gap 2 -- date derivation is now VISIBLE, never silent (the central principle)
+
+This is the important one. v1.37.0 derived synthetic visit_date from visit
+ordering when no date column existed -- but did it SILENTLY. That is the exact
+"framework quietly does something the user didn't see" failure the audit warns
+against. v1.38 makes it visible:
+
+- `tables_to_submission(tables, mapping, warnings=...)` gained an optional
+  `warnings` accumulator (backward-compatible: default None still works).
+- When dates are derived, it appends a clear note: "sheet 'X' has no usable
+  visit_date column; dates were DERIVED from visit ordering (column 'visit').
+  Visit ORDER is preserved, but the derived dates are synthetic -- any
+  time-window-dependent rule is not meaningful on this axis. To use real dates,
+  add a visit_date column to 'X' and re-run."
+- `cmd_audit` passes a warnings list and prints every note to stderr (`NOTE: ...`)
+  BEFORE the audit runs, so the user always sees what the framework decided.
+
+Graceful (no crash) AND visible (not silent) -- exactly the audit's reconciliation.
+
+### Gap 3 -- actionable error messages
+
+`_require_columns` now reports "Searched columns: [...]" plus, when a date
+column is the missing one, the escape-hatch hint: "set \"visit_date\": null in
+the mapping for this axis -- NeuroTCS will derive visit ordering from the
+'visit' column and disable time-window-dependent checks." A user who hits the
+error can fix it in seconds instead of guessing where the framework looked.
+
+### Tests
+
+`tests/cli/test_v138_synonyms_and_visible_derivation.py` (9 tests):
+- CDISC SDTM columns (USUBJID/VISITNUM/SVSTDTC) auto-map with zero placeholders.
+- ADNI columns (RID/VISCODE/EXAMDATE) auto-map.
+- `cog_status` -> clinical state; `atn_profile` -> biological state.
+- Date derivation emits exactly one visible warning; no warning when real dates
+  are present; warnings param is optional (backward compat).
+- Error message shows searched columns; missing-date column triggers graceful
+  derivation rather than a crash.
+
+### Census
+
+No range pack / invariant pack changes. CLI + IO behavior only. Tests: +9.
+Full-repo regression: 1605 passed, 21 skipped, 0 FAILED (vs v1.37 baseline
+1596 passed -- the +9 are the new v1.38 tests).
+
+## [1.37.0] -- 2026-05-29 -- `describe --emit-mapping` smart auto-routing (UX fix)
+
+### The bug an external audit caught
+
+`neurotcs describe --emit-mapping` was doing "first sheet wins" -- a 5-sheet
+file like `[Index, EN, AUDIT_CLINICAL, AUDIT_BIOLOGICAL, BIO]` would auto-route
+clinical -> Index (a table of contents!) and biological -> EN (enrollment, no
+biological state). Users had to hand-edit the JSON to point at the right
+sheets. That's exactly the friction that makes a tool unusable for low-knowledge
+users -- they wouldn't know which sheet to use, what the columns mean, or how
+to edit the JSON. The framework was the problem, not the user or the data.
+
+### The real fix (in v1.37, not a hand-edit workaround)
+
+`src/neurotcs/cli.py::_scaffold_mapping` rewritten with:
+
+1. **Sheet classification** -- TOC / Index sheets (by name OR column-shape
+   signature like `[Sheet, Rows, Description]`) are NEVER auto-routed.
+2. **Sheet name pattern matching** -- `AUDIT_CLINICAL`, `clinical`, `*clinical*`,
+   `dx_state`, etc. auto-route to the clinical axis; `AUDIT_BIOLOGICAL`,
+   `biological`, `atn_staging` to biological. Scoring system ensures specific
+   names (AUDIT_CLINICAL) win over vague ones (BIO).
+3. **Column synonym auto-detection** -- `clinical_state`, `dx_state`,
+   `diagnosis` map to the clinical state column. `biological_stage_ATN`,
+   `atn_stage` map to biological state. `examdate`, `scandate`, `visit_dt` map
+   to visit_date. `RID`, `PTID`, `patient_id` map to subject_id. Original case
+   is preserved (so pandas indexing works downstream).
+4. **Graceful `visit_date` fallback** -- if no date column is detected, the
+   mapping gets `visit_date: null` and `tables_to_submission` DERIVES synthetic
+   dates from visit ordering (2000-01-01 + 365 days per visit per subject)
+   instead of demanding the user fabricate dates by hand. Visit order is
+   preserved; downstream invariants get real `datetime64` values.
+5. **`_notes` block** -- the emitted mapping carries a human-readable list of
+   what auto-routing did, so the user can see why the routing decisions were
+   made.
+
+`src/neurotcs/io/readers.py::tables_to_submission` extended to accept
+`visit_date == null` OR `visit_date == "<FILL:...>"` and derive dates from
+visit order (vectorized, no closure issues per ruff B023).
+
+### Behavior on the EXACT external-audit case
+
+A 5-sheet Excel file with `[Index, EN, AUDIT_CLINICAL, AUDIT_BIOLOGICAL, BIO]`:
+
+**Before v1.37:** clinical -> Index (broken). User must hand-edit JSON.
+
+**After v1.37:**
+- `mapping["clinical"]["sheet"]   == "AUDIT_CLINICAL"`
+- `mapping["biological"]["sheet"] == "AUDIT_BIOLOGICAL"`
+- `mapping["clinical"]["state"]   == "clinical_state"`  (synonym detected)
+- `mapping["biological"]["state"] == "biological_stage_ATN"`  (synonym detected)
+- ZERO `<FILL:...>` placeholders in the auto-detected axes
+- Audit runs end-to-end with no JSON editing
+
+### Tests
+
+`tests/cli/test_v137_emit_mapping_routing.py` (17 tests, all green):
+
+- TOC detection by name (`Index`) AND by column-shape signature
+  (`[Sheet, Rows, Description]`) -- so the framework can't be tricked.
+- Sheet scoring: AUDIT_CLINICAL beats BIO for clinical axis; AUDIT_BIOLOGICAL
+  beats BIO for biological. Plain `Index` scores 0 for both axes.
+- End-to-end CLI test: builds the user's exact broken 5-sheet xlsx, runs
+  `describe --emit-mapping`, reads the JSON, asserts the four critical
+  routing decisions are correct.
+- Synonym detection: `RID` -> subject_id, `visit_code` -> visit,
+  `diagnosis` -> state.
+- visit_date derivation: when no date column exists, the audit pipeline
+  derives monotone dates per subject (vectorized, ordered by visit number).
+- Backward-compat regression test: legacy canonical-name CSV
+  (`subject_id, visit, visit_date, state`) still scaffolds the same as
+  before -- no breakage of the v1.0-v1.36 test corpus.
+
+### Census
+
+No range pack changes. No invariant pack changes. CLI behavior change only.
+Tests: +17 (all in new test_v137 file). Full-repo regression: 1596 passed,
+21 skipped, 0 FAILED (vs v1.36 baseline 1579 passed -- the +17 are exactly
+the new v1.37 tests).
+
 ## [1.36.0] -- 2026-05-29 -- input_contract test hygiene + GFAP/NfL monotonicity
 
 Combined increment: one test-hygiene fix + one citation-locked coverage extension.
