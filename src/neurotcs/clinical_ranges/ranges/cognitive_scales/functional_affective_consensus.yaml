@@ -1,0 +1,115 @@
+schema_version: 1.0.0
+rangepack_id: cognitive_scales/functional_affective_consensus@1.0.0
+pack_version: 1.0.0
+effective_date: '2026-05-29'
+status: production
+domain: cognitive_scales
+framework_name: 'Functional and affective scales universal to AD cohorts: Pfeffer Functional Activities
+  Questionnaire (FAQ, total 0-30) and the 15-item Geriatric Depression Scale (GDS-15, total 0-15). Defined-range
+  instruments collected at essentially every ADNI and NACC visit.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29. FAQ total 0-30 verbatim from Pfeffer
+  RI et al. J Gerontol 1982;37(3):323-329 (DOI 10.1093/geronj/37.3.323), 10 items scored 0-3. GDS-15 total
+  0-15 from Yesavage et al. 1982 / Sheikh & Yesavage 1986 short form (15 yes/no items, 1 pt each).
+clinical_source_authority: |-
+  This pack encodes the defined total-score ranges of two universal AD instruments. NeuroTCS audits submitted scores against the instrument's defined range; it does not administer the instruments.
+
+   - faq_total: 0-30 (Pfeffer RI et al. J Gerontol 1982; 10 informant-rated IADL items x 0-3).
+   - gds15_total: 0-15 (Yesavage 1982 / Sheikh & Yesavage 1986; 15 yes/no items, 1 pt each).
+
+  Bounds are the defined instrument total-score ranges; values outside them are coding/data errors.
+anchor_citation:
+  citation_text: 'Pfeffer RI, Kurosaki TT, Harrah CH Jr, Chance JM, Filos S. Measurement of functional
+    activities in older adults in the community. Journal of Gerontology 1982;37(3):323-329 (DOI 10.1093/geronj/37.3.323).
+    The FAQ: 10 informant-rated IADL items, total score 0-30.'
+  public_url: https://www.alz.org/getmedia/73ea01f0-690b-4ff3-b909-4f0fa9a022ef/functional-activities-questionnaire.pdf
+  endorsing_bodies:
+  - Alzheimer's Association
+  - National Institute on Aging (NIA)
+  - Alzheimer's Disease Neuroimaging Initiative (ADNI)
+  - National Alzheimer's Coordinating Center (NACC) UDS
+  - Australian Imaging Biomarkers and Lifestyle Study (AIBL)
+  - Hartford Institute for Geriatric Nursing
+  citation_doi: 10.1093/geronj/37.3.323
+measurements:
+- name: faq_total
+  unit: score
+  description: 'Pfeffer Functional Activities Questionnaire total score (0-30): 10 informant-rated instrumental-ADL
+    items each 0-3; higher = greater functional impairment (Pfeffer RI et al. J Gerontol 1982).'
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: Pfeffer 1982 FAQ total score range (J Gerontol 1982;37(3):323-329) (lower bound
+      of the defined ordinal scale)
+    citation:
+      citation_text: FAQ total score is defined 0-30 (10 items x 0-3; Pfeffer RI et al. J Gerontol 1982).
+        The scale is defined from 0; values below 0 are impossible (data/coding error).
+      public_url: https://www.alz.org/getmedia/73ea01f0-690b-4ff3-b909-4f0fa9a022ef/functional-activities-questionnaire.pdf
+      endorsing_bodies:
+      - Alzheimer's Association
+      - National Institute on Aging (NIA)
+      - Alzheimer's Disease Neuroimaging Initiative (ADNI)
+      - National Alzheimer's Coordinating Center (NACC) UDS
+      - Australian Imaging Biomarkers and Lifestyle Study (AIBL)
+      - Hartford Institute for Geriatric Nursing
+      citation_doi: 10.1093/geronj/37.3.323
+  - bound_type: hard_max
+    value: 30.0
+    citation_strength: international_consensus
+    guideline_section: Pfeffer 1982 FAQ total score range (J Gerontol 1982;37(3):323-329) (upper bound
+      of the defined ordinal scale)
+    citation:
+      citation_text: FAQ total score is defined 0-30 (10 items x 0-3; Pfeffer RI et al. J Gerontol 1982).
+        The scale is defined up to 30; values above 30 are impossible (data/coding error).
+      public_url: https://www.alz.org/getmedia/73ea01f0-690b-4ff3-b909-4f0fa9a022ef/functional-activities-questionnaire.pdf
+      endorsing_bodies:
+      - Alzheimer's Association
+      - National Institute on Aging (NIA)
+      - Alzheimer's Disease Neuroimaging Initiative (ADNI)
+      - National Alzheimer's Coordinating Center (NACC) UDS
+      - Australian Imaging Biomarkers and Lifestyle Study (AIBL)
+      - Hartford Institute for Geriatric Nursing
+      citation_doi: 10.1093/geronj/37.3.323
+- name: gds15_total
+  unit: score
+  description: '15-item Geriatric Depression Scale total score (0-15): 15 yes/no items, 1 pt each; higher
+    = more depressive symptoms (Yesavage 1982 / Sheikh & Yesavage 1986 short form).'
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: GDS-15 short-form total score range (Yesavage 1982; Sheikh & Yesavage 1986) (lower
+      bound of the defined ordinal scale)
+    citation:
+      citation_text: GDS-15 total score is defined 0-15 (15 yes/no items, 1 pt each; Yesavage 1982 / Sheikh
+        & Yesavage 1986). The scale is defined from 0; values below 0 are impossible (data/coding error).
+      public_url: https://doi.org/10.1300/J018v05n01_09
+      endorsing_bodies:
+      - Alzheimer's Disease Neuroimaging Initiative (ADNI)
+      - National Alzheimer's Coordinating Center (NACC)
+      - Australian Imaging Biomarkers and Lifestyle Study (AIBL)
+      - OASIS-3 (WashU Knight ADRC)
+      - American Geriatrics Society
+      - Alzheimer's Association
+      citation_doi: 10.1300/J018v05n01_09
+  - bound_type: hard_max
+    value: 15.0
+    citation_strength: international_consensus
+    guideline_section: GDS-15 short-form total score range (Yesavage 1982; Sheikh & Yesavage 1986) (upper
+      bound of the defined ordinal scale)
+    citation:
+      citation_text: GDS-15 total score is defined 0-15 (15 yes/no items, 1 pt each; Yesavage 1982 / Sheikh
+        & Yesavage 1986). The scale is defined up to 15; values above 15 are impossible (data/coding error).
+      public_url: https://doi.org/10.1300/J018v05n01_09
+      endorsing_bodies:
+      - Alzheimer's Disease Neuroimaging Initiative (ADNI)
+      - National Alzheimer's Coordinating Center (NACC)
+      - Australian Imaging Biomarkers and Lifestyle Study (AIBL)
+      - OASIS-3 (WashU Knight ADRC)
+      - American Geriatrics Society
+      - Alzheimer's Association
+      citation_doi: 10.1300/J018v05n01_09
+notes: Defined instrument total-score ranges, not derived thresholds; values outside them are coding/data
+  errors. Both instruments are collected at essentially every ADNI and NACC visit.

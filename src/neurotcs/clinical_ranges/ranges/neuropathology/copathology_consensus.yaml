@@ -1,0 +1,110 @@
+schema_version: 1.0.0
+rangepack_id: neuropathology/copathology_consensus@1.0.0
+pack_version: 1.0.0
+effective_date: '2026-05-29'
+status: production
+domain: neuropathology
+framework_name: 'AD co-pathology neuropathologic staging recommended by NIA-AA 2012: LATE-NC (limbic-predominant
+  age-related TDP-43 encephalopathy) stage and Lewy-related alpha-synuclein category. Co-pathology is
+  present in a majority of autopsy-confirmed AD and modifies the cognitive trajectory.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29. LATE-NC stage 0-3 verbatim from
+  Nelson PT et al. Brain 2019;142(6):1503-1527 (DOI 10.1093/brain/awz099). Lewy alpha-synuclein categories
+  (modified McKeith) per NIA-AA 2012 (Hyman/Montine 2012) and McKeith IG et al. Neurology 2017 DLB consortium.
+clinical_source_authority: |-
+  This pack encodes the two highest-frequency AD co-pathologies the NIA-AA 2012 guideline recommends assessing at autopsy. NeuroTCS audits neuropathologist-assigned values against the defined consensus ranges; it does not perform the assessment.
+
+  Measurements:
+   - late_nc_stage: 0-3 (Nelson PT et al. Brain 2019 LATE consensus). 0=none, 1=amygdala, 2=+hippocampus/entorhinal, 3=+neocortex.
+   - lewy_alpha_synuclein_category: none / brainstem_predominant / limbic_transitional / neocortical / amygdala_predominant (modified McKeith categories per NIA-AA 2012; McKeith 2017 DLB consortium).
+
+  Bounds are defined consensus scale ranges/categories; values outside them are coding/data errors. Braak alpha-synuclein 0-VI staging and autopsy cerebrovascular grades are deferred to a future pack pending in-session citation verification (research discipline, not omission).
+anchor_citation:
+  citation_text: 'Nelson PT, Dickson DW, Trojanowski JQ, et al. Limbic-predominant age-related TDP-43
+    encephalopathy (LATE): consensus working group report. Brain 2019;142(6):1503-1527 (DOI 10.1093/brain/awz099).
+    Defines the LATE-NC three-stage neuropathologic staging system.'
+  public_url: https://doi.org/10.1093/brain/awz099
+  endorsing_bodies:
+  - International LATE Consensus Working Group (Nelson 2019)
+  - National Institute on Aging (NIA)
+  - Alzheimer's Association
+  - National Alzheimer's Coordinating Center (NACC) UDS
+  - Rush Alzheimer's Disease Center (ROSMAP)
+  - Mayo Clinic Alzheimer's Disease Research Center
+  citation_doi: 10.1093/brain/awz099
+measurements:
+- name: late_nc_stage
+  unit: stage
+  description: 'LATE-NC (limbic-predominant age-related TDP-43 encephalopathy neuropathologic change)
+    stage, 0-3 (Nelson PT et al. Brain 2019): 0=none, 1=amygdala, 2=+hippocampus/entorhinal, 3=+neocortex.'
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: Nelson 2019 LATE consensus working group, three-stage system (Brain 2019;142:1503-1527)
+      (lower bound of the defined ordinal scale)
+    citation:
+      citation_text: LATE-NC stage is a 0-3 ordinal consensus staging system (Nelson PT et al. Brain 2019).
+        The scale is defined from 0; values below 0 are impossible (data/coding error).
+      public_url: https://doi.org/10.1093/brain/awz099
+      endorsing_bodies:
+      - International LATE Consensus Working Group (Nelson 2019)
+      - National Institute on Aging (NIA)
+      - Alzheimer's Association
+      - National Alzheimer's Coordinating Center (NACC) UDS
+      - Rush Alzheimer's Disease Center (ROSMAP)
+      - Mayo Clinic Alzheimer's Disease Research Center
+      citation_doi: 10.1093/brain/awz099
+  - bound_type: hard_max
+    value: 3.0
+    citation_strength: international_consensus
+    guideline_section: Nelson 2019 LATE consensus working group, three-stage system (Brain 2019;142:1503-1527)
+      (upper bound of the defined ordinal scale)
+    citation:
+      citation_text: LATE-NC stage is a 0-3 ordinal consensus staging system (Nelson PT et al. Brain 2019).
+        The scale is defined up to 3; values above 3 are impossible (data/coding error).
+      public_url: https://doi.org/10.1093/brain/awz099
+      endorsing_bodies:
+      - International LATE Consensus Working Group (Nelson 2019)
+      - National Institute on Aging (NIA)
+      - Alzheimer's Association
+      - National Alzheimer's Coordinating Center (NACC) UDS
+      - Rush Alzheimer's Disease Center (ROSMAP)
+      - Mayo Clinic Alzheimer's Disease Research Center
+      citation_doi: 10.1093/brain/awz099
+- name: lewy_alpha_synuclein_category
+  unit: category
+  description: 'Lewy-related alpha-synuclein neuropathology category (modified McKeith, per NIA-AA 2012):
+    none, brainstem_predominant, limbic_transitional, neocortical, amygdala_predominant.'
+  measurement_kind: categorical_set
+  valid_values:
+  - none
+  - brainstem_predominant
+  - limbic_transitional
+  - neocortical
+  - amygdala_predominant
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: NIA-AA 2012 modified McKeith alpha-synuclein categories (Hyman/Montine 2012; McKeith
+      2017 DLB consortium) (categorical set; values outside valid_values are coding errors)
+    citation:
+      citation_text: 'The NIA-AA 2012 guideline (Hyman/Montine 2012) recommends classifying Lewy-related
+        alpha-synuclein pathology into the modified McKeith categories (none, brainstem-predominant, limbic/transitional,
+        neocortical, amygdala-predominant); see also McKeith IG et al. Neurology 2017 DLB consensus. Valid
+        categories: none, brainstem_predominant, limbic_transitional, neocortical, amygdala_predominant.
+        Any other value is a coding/data error.'
+      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
+      endorsing_bodies:
+      - DLB Consortium (McKeith 2017)
+      - NIA-AA Neuropathology Consensus (modified McKeith categories)
+      - National Institute on Aging (NIA)
+      - Alzheimer's Association
+      - National Alzheimer's Coordinating Center (NACC) UDS
+      - Lewy Body Dementia Association
+      citation_pmid: '22265587'
+      citation_doi: 10.1016/j.jalz.2011.10.007
+notes: Defined consensus scale ranges/categories; values outside them are coding/data errors. NeuroTCS
+  audits neuropathologist-assigned co-pathology values only. Co-pathology (TDP-43/LATE-NC, Lewy) occurs
+  in a majority of autopsy-confirmed AD and is a major cognitive-trajectory modifier.

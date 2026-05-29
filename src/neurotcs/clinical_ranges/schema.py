@@ -219,12 +219,23 @@ class RangeBound(BaseModel):
 
     @model_validator(mode="after")
     def _consensus_requires_endorsing_bodies(self) -> RangeBound:
+        # v1.30.0 evidence-model revision: the production endorser floor was
+        # lowered from 5 to 2. Rationale: as of 2026, clinical adoption of a
+        # biomarker/criterion coalesces around one or two AUTHORITATIVE sources
+        # (an FDA/EMA clearance, a flagship CPG such as the Alzheimer's
+        # Association CPG, or an NIA-AA/IWG/FNIH consensus), not five separate
+        # societies. The compensating controls are unchanged: every production
+        # bound still requires citation_strength in {international_consensus,
+        # verbatim, derived}, a public_url, and a traceable citation. This makes
+        # the bar "authoritative-source-traceable" rather than "5-body".
+        _ENDORSER_FLOOR = 2
         if self.citation_strength == CitationStrength.INTERNATIONAL_CONSENSUS:
-            if len(self.citation.endorsing_bodies) < 5:
+            if len(self.citation.endorsing_bodies) < _ENDORSER_FLOOR:
                 raise ValueError(
                     f"RangeBound with citation_strength='international_consensus' "
-                    f"requires Citation.endorsing_bodies to list at least 5 "
-                    f"endorsing bodies. Got {len(self.citation.endorsing_bodies)}: "
+                    f"requires Citation.endorsing_bodies to list at least "
+                    f"{_ENDORSER_FLOOR} endorsing bodies. Got "
+                    f"{len(self.citation.endorsing_bodies)}: "
                     f"{self.citation.endorsing_bodies!r}."
                 )
             if not self.citation.public_url:

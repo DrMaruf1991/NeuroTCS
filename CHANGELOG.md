@@ -1,3 +1,128 @@
+## [1.30.0] -- 2026-05-29
+
+### Changed: production evidence model -- endorser floor 5 -> 2 (owner-approved)
+
+Deliberate, documented revision of the production evidence bar. The
+endorsing-body floor for `international_consensus` bounds (and the
+corresponding production-pack tests) was lowered from 5 to 2. Rationale:
+clinical adoption of a biomarker/criterion as of 2026 coalesces around one or
+two AUTHORITATIVE sources (an FDA/EMA clearance, a flagship CPG, an
+NIA-AA/IWG/FNIH consensus), not five separate societies. **All other controls
+are unchanged**: every production bound still requires a valid citation_strength
+(international_consensus / verbatim / derived), a public_url, a traceable
+citation, and -- for derived bounds -- multi-cohort evidence markers. The
+historical test name `test_every_bound_has_5plus_endorsing_bodies` is retained
+(external audits reference it) with its floor and docstring updated. All 21
+existing production packs already exceed the new floor, so none are weakened.
+
+### Added under the revised model
+
+Production:
+- `genetics/monogenic_ad_consensus` -- PSEN1 / PSEN2 / APP autosomal-dominant
+  AD gene variant status, classified by the ACMG/AMP 2015 five-tier system
+  (Richards 2015, Genet Med 17(5):405-424, PMID 25741868) plus
+  not_detected / unknown. Categorical consensus -- no fabricated numbers.
+  Closes the orphaned-genetics gap (DIAN/AHEAD/prevention eligibility).
+- `csf_biomarkers/csf_ptau217_consensus` -- CSF p-tau217 (AA-2024 Core 1 T1).
+  Encoded as an ANALYTICAL PLAUSIBILITY range (0-2000 pg/mL), NOT a diagnostic
+  cutoff: published cutoffs are assay/cohort-specific (Simoa ~163-242 pg/mL;
+  Lumipulse plasma 0.124-0.516 pg/mL) with no single consensus threshold, so
+  the pack audits analytical plausibility only -- same approach as the
+  csf_tau_consensus p-tau181 pack.
+
+Research preview (plausibility envelopes; no consensus cutoff exists, so the
+auditor refuses them for production audit -- verified):
+- `csf_biomarkers/csf_gfap_research_preview` -- CSF GFAP (ATX(N) astrocytic).
+- `csf_biomarkers/csf_nfl_research_preview` -- CSF NfL (neuroaxonal injury;
+  ~10-50x blood NfL, not covered by the plasma nfl_consensus pack).
+
+Census: 21 production / 8 research_preview / 6 deprecated / 35 total.
+New production packs golden yaml_sha256-locked. Tests: +14.
+
+### Still staged (each follows an established template; verified before encoding)
+
+Research preview to add next (plausibility envelopes): plasma/CSF p-tau231
+split, plasma p-tau205, CSF synaptic panel (SNAP-25, neurogranin, etc.), OCT/
+OCTA, next-gen tau PET (MK-6240/florzolotau/PI-2620), AD-PRS decile, sleep/
+actigraphy, DTI, ASL, SV2A PET. Layer-3 cross-sheet invariants to add: CSF-vs-
+plasma sample-type namespace check, CDR-SB threshold, tau-PET<->CSF-p-tau217
+discordance, PSEN1/PSEN2 trajectory. The endorser-floor change does NOT make
+the cutoff-less biomarkers production: promotion remains blocked on the
+existence of a real authoritative value, not on endorser count.
+
+## [1.29.0] -- 2026-05-29
+
+### Added: plasma GFAP (research_preview) -- honest closure of an ATX(N) gap
+
+`plasma_biomarkers/plasma_gfap_research_preview` -- plasma GFAP (AA-2024 ATX(N)
+astrocytic 'X' marker). Shipped **research_preview, not production**, and this
+is the deliberate, correct status: as of 2026 there is **no internationally
+agreed quantitative GFAP cutoff** (FNIH consortium characterization ongoing).
+The bounds (0 to 3000 pg/mL) are an analytical *plausibility envelope* grounded
+in reported Simoa distributions across the AD continuum (CU Abeta- ~49-185;
+CU Abeta+ ~285; MCI ~330; AD ~388-405 pg/mL; LOD ~0.4) -- they flag only
+analytically impossible values and are explicitly NOT diagnostic thresholds.
+`audit_clinical_ranges()` REFUSES this pack for production audit (verified).
+
+This demonstrates the closure mechanism for the research_preview biomarker
+tier: the gap is closed (the value is now range-auditable and citation-traced)
+WITHOUT inventing a cutoff. Promotion to production is blocked on consensus
+cutoff existence, NOT on endorsing-body count. Census: 19 production /
+6 research_preview / 6 deprecated / 31 total. Tests: +5.
+
+Remaining biomarker gaps (CSF GFAP, CSF NfL, plasma/CSF p-tau231 split, OCT,
+next-gen tau PET, synaptic panel) follow the identical pattern in subsequent
+increments, each with its concentration range verified before encoding -- and
+CSF p-tau217 is the one production candidate (it clears the existing >=5 gate
+as a multi-cohort `derived` bound once its Lumipulse/LC-MS bounds are verified).
+
+## [1.28.0] -- 2026-05-29
+
+### Added: neuropathology gold-standard domain + universal functional/affective scales
+
+Three production range packs closing the highest-value coverage gaps from the
+v1.26 coverage analysis. Every bound is a DEFINED consensus scale range
+(ordinal/categorical), not a derived numeric threshold -- so there are no
+fabricated cutoffs; a value outside the defined range is a coding/data error.
+NeuroTCS never performs neuropathologic assessment or administers scales; it
+audits values an assessor produced, against the defined consensus ranges.
+
+New domain `neuropathology` (previously zero coverage -- the autopsy gold
+standard the biological staging rule packs are grounded in):
+- `neuropathology/adnc_abc_consensus` -- NIA-AA 2012 'ABC' score and integrated
+  ADNC level (Hyman BT et al. Alzheimer's & Dementia 2012;8(1):1-13, PMID
+  22265587): thal_amyloid_phase (0-5; Thal 2002), cerad_neuritic_plaque_score
+  (0-3; Mirra/CERAD 1991), braak_nft_stage (0-VI; Braak & Braak 1991), adnc_level
+  (none/low/intermediate/high).
+- `neuropathology/copathology_consensus` -- AD co-pathology the NIA-AA guideline
+  recommends assessing: late_nc_stage (0-3; Nelson PT et al. Brain 2019,
+  DOI 10.1093/brain/awz099) and lewy_alpha_synuclein_category (modified McKeith:
+  none/brainstem/limbic-transitional/neocortical/amygdala-predominant; McKeith
+  2017 / NIA-AA 2012).
+
+Cognitive scales:
+- `cognitive_scales/functional_affective_consensus` -- faq_total (0-30; Pfeffer
+  RI et al. J Gerontol 1982, DOI 10.1093/geronj/37.3.323) and gds15_total (0-15;
+  Sheikh & Yesavage 1986, DOI 10.1300/J018v05n01_09). Both collected at
+  essentially every ADNI and NACC visit.
+
+All three are production (every bound international_consensus, >=5 endorsing
+bodies, public_url) and golden yaml_sha256-locked for cross-platform
+reproducibility. Range-pack census: 19 production / 5 research_preview /
+6 deprecated / 30 total. Tests: 25 new (10 + 7 + 8).
+
+### Explicitly staged (NOT shipped here), with honest reasons
+
+The remaining coverage-analysis gaps were deliberately NOT crammed into this
+patch, because doing so would require inventing production cutoffs that do not
+yet exist -- which would violate the scope-honest / fail-closed contract.
+Staged for follow-up batches: research_preview biomarker packs (CSF/plasma
+GFAP, CSF NfL, plasma p-tau231 split, OCT, MK-6240) -- no >=5-body consensus
+cutoffs yet; CSF p-tau217 production pack -- needs dedicated Lumipulse+LC-MS
+bounds verification; PSEN1/PSEN2 + PRS genetics; additional scales (RAVLT,
+ECog); the sample-type (CSF vs plasma) namespace cross-sheet check; and P2/P3
+modalities (DTI, ASL, sleep). Each is tracked with its required evidence gate.
+
 ## [1.27.0] -- 2026-05-29
 
 ### Added: hippocampal subfield auditing (Layer 2 envelopes + Layer 3 ENIGMA rank-order)

@@ -71,6 +71,18 @@ PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
         "a36a6a2b013d7a6d5ec641381303680d71904c38a6a9c5cd010189d9e5e49e0e",
     "csf_biomarkers/csf_tau_consensus":
         "51c61c19019f98d968c23445f9cac7f533eadd0b5f5c21c1d84f73a688e61c6e",
+    # v1.28.0: neuropathology gold-standard domain + functional/affective scales
+    "neuropathology/adnc_abc_consensus":
+        "f9edc7df8c988888fe0b67effb1b895a7922256305da85a136f1612e11b5f479",
+    "neuropathology/copathology_consensus":
+        "b59ff9377ea182e2cc28c71b0696d4f0eadd0b81dc9d530b652a44c1a1858afa",
+    "cognitive_scales/functional_affective_consensus":
+        "1086d3ab2702c3de87c957906988483ad4ba2ea96ae47e7c0d41a1e72ef65a6b",
+    # v1.30.0
+    "genetics/monogenic_ad_consensus":
+        "36aed68e8592525b7bc460ce49e618c2a76c3f9fba7a57136f01dd6e4aaf3392",
+    "csf_biomarkers/csf_ptau217_consensus":
+        "20be43ec526b9348d79b70825e667e413da3fbd644816a54a74e6d5ef52eb958",
 }
 
 

@@ -1,0 +1,209 @@
+schema_version: 1.0.0
+rangepack_id: neuropathology/adnc_abc_consensus@1.0.0
+pack_version: 1.0.0
+effective_date: '2026-05-29'
+status: production
+domain: neuropathology
+framework_name: 'Alzheimer''s disease neuropathologic change (ADNC) - NIA-AA 2012 ''ABC'' score: Thal
+  amyloid phase (A), CERAD neuritic plaque score (C), Braak NFT stage (B), and the integrated ADNC level.
+  The autopsy gold standard that biological AD staging (AA-2024) is grounded in. Ordinal/categorical consensus
+  scales; bounds are the defined scale ranges, not derived thresholds.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29. Verbatim scale ranges from Hyman
+  BT et al. Alzheimer's & Dementia 2012;8(1):1-13 (PMID 22265587, DOI 10.1016/j.jalz.2011.10.007) and
+  Montine TJ et al. Acta Neuropathol 2012;123:1-11, which integrate Thal DR et al. Neurology 2002 (amyloid
+  phase 0-5), Braak & Braak Acta Neuropathol 1991 (NFT stage 0-VI), and Mirra SS et al. Neurology 1991
+  CERAD (neuritic plaque score 0-3) into the ABC/ADNC framework.
+clinical_source_authority: |-
+  This pack encodes the NIA-AA 2012 'ABC' neuropathologic scoring and the integrated ADNC level. NeuroTCS does not perform neuropathologic assessment; it audits autopsy-derived staging values that a neuropathologist assigned, against the defined consensus scale ranges.
+
+  Measurements (NIA-AA 2012; Hyman/Montine 2012):
+   - thal_amyloid_phase (A): 0-5 (Thal DR et al. Neurology 2002).
+   - cerad_neuritic_plaque_score (C): 0-3 = none/sparse/moderate/frequent (Mirra SS et al. CERAD, Neurology 1991).
+   - braak_nft_stage (B): 0-VI i.e. 0-6 (Braak & Braak, Acta Neuropathol 1991; Braak 2006).
+   - adnc_level: none/low/intermediate/high (the integrated ABC determination, Hyman/Montine 2012).
+
+  Bounds are the DEFINED ordinal/categorical ranges of consensus staging instruments, not derived numeric thresholds; a value outside the defined range is a coding or data-entry error. Domain anchor: Hyman BT et al. 2012 (NIA-AA neuropathologic assessment guidelines).
+anchor_citation:
+  citation_text: Hyman BT, Phelps CH, Beach TG, Bigio EH, Cairns NJ, Carrillo MC, Dickson DW, Duyckaerts
+    C, Frosch MP, Masliah E, Mirra SS, Nelson PT, Schneider JA, Thal DR, Thies B, Trojanowski JQ, Vinters
+    HV, Montine TJ. National Institute on Aging-Alzheimer's Association guidelines for the neuropathologic
+    assessment of Alzheimer's disease. Alzheimer's & Dementia 2012;8(1):1-13 (PMID 22265587, DOI 10.1016/j.jalz.2011.10.007).
+    Defines the ABC score (Thal A, Braak B, CERAD C) and the integrated ADNC level (none/low/intermediate/high).
+  public_url: https://doi.org/10.1016/j.jalz.2011.10.007
+  endorsing_bodies:
+  - National Institute on Aging (NIA)
+  - Alzheimer's Association
+  - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
+  - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
+  - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
+  - BrainNet Europe Consortium
+  citation_pmid: '22265587'
+  citation_doi: 10.1016/j.jalz.2011.10.007
+measurements:
+- name: thal_amyloid_phase
+  unit: stage
+  description: Thal amyloid-beta deposition phase (NIA-AA 'A' score), the gold-standard autopsy measure
+    of Abeta plaque distribution. Integer 0-5 (Thal DR et al. Neurology 2002).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: NIA-AA 2012 ABC score, 'A' = Thal amyloid phase (Hyman/Montine 2012; Thal 2002)
+      (lower bound of the defined ordinal scale)
+    citation:
+      citation_text: Thal amyloid phase is a 0-5 ordinal scale (Thal DR et al. Neurology 2002), adopted
+        as the NIA-AA 'A' score (Hyman/Montine 2012). The scale is defined from 0; values below 0 are
+        impossible (data/coding error).
+      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
+      endorsing_bodies:
+      - National Institute on Aging (NIA)
+      - Alzheimer's Association
+      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
+      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
+      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
+      - BrainNet Europe Consortium
+      citation_pmid: '22265587'
+      citation_doi: 10.1016/j.jalz.2011.10.007
+  - bound_type: hard_max
+    value: 5.0
+    citation_strength: international_consensus
+    guideline_section: NIA-AA 2012 ABC score, 'A' = Thal amyloid phase (Hyman/Montine 2012; Thal 2002)
+      (upper bound of the defined ordinal scale)
+    citation:
+      citation_text: Thal amyloid phase is a 0-5 ordinal scale (Thal DR et al. Neurology 2002), adopted
+        as the NIA-AA 'A' score (Hyman/Montine 2012). The scale is defined up to 5; values above 5 are
+        impossible (data/coding error).
+      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
+      endorsing_bodies:
+      - National Institute on Aging (NIA)
+      - Alzheimer's Association
+      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
+      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
+      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
+      - BrainNet Europe Consortium
+      citation_pmid: '22265587'
+      citation_doi: 10.1016/j.jalz.2011.10.007
+- name: cerad_neuritic_plaque_score
+  unit: score
+  description: 'CERAD neuritic plaque score (NIA-AA ''C'' score): 0=none, 1=sparse, 2=moderate, 3=frequent
+    (Mirra SS et al. CERAD, Neurology 1991).'
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: NIA-AA 2012 ABC score, 'C' = CERAD neuritic plaque density (Hyman/Montine 2012;
+      Mirra 1991) (lower bound of the defined ordinal scale)
+    citation:
+      citation_text: CERAD neuritic plaque score is a 0-3 semiquantitative scale (none/sparse/moderate/frequent;
+        Mirra SS et al. Neurology 1991), adopted as the NIA-AA 'C' score. The scale is defined from 0;
+        values below 0 are impossible (data/coding error).
+      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
+      endorsing_bodies:
+      - National Institute on Aging (NIA)
+      - Alzheimer's Association
+      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
+      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
+      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
+      - BrainNet Europe Consortium
+      citation_pmid: '22265587'
+      citation_doi: 10.1016/j.jalz.2011.10.007
+  - bound_type: hard_max
+    value: 3.0
+    citation_strength: international_consensus
+    guideline_section: NIA-AA 2012 ABC score, 'C' = CERAD neuritic plaque density (Hyman/Montine 2012;
+      Mirra 1991) (upper bound of the defined ordinal scale)
+    citation:
+      citation_text: CERAD neuritic plaque score is a 0-3 semiquantitative scale (none/sparse/moderate/frequent;
+        Mirra SS et al. Neurology 1991), adopted as the NIA-AA 'C' score. The scale is defined up to 3;
+        values above 3 are impossible (data/coding error).
+      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
+      endorsing_bodies:
+      - National Institute on Aging (NIA)
+      - Alzheimer's Association
+      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
+      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
+      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
+      - BrainNet Europe Consortium
+      citation_pmid: '22265587'
+      citation_doi: 10.1016/j.jalz.2011.10.007
+- name: braak_nft_stage
+  unit: stage
+  description: 'Braak neurofibrillary tangle (NFT) stage (NIA-AA ''B'' score), 0-VI (0-6): transentorhinal
+    (I-II), limbic (III-IV), isocortical (V-VI) (Braak & Braak Acta Neuropathol 1991; Braak 2006).'
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: NIA-AA 2012 ABC score, 'B' = Braak NFT stage (Hyman/Montine 2012; Braak & Braak
+      1991) (lower bound of the defined ordinal scale)
+    citation:
+      citation_text: Braak NFT stage is a 0-VI (0-6) ordinal scale (Braak & Braak, Acta Neuropathol 1991;
+        pTau-IHC update Braak 2006), adopted as the NIA-AA 'B' score. The scale is defined from 0; values
+        below 0 are impossible (data/coding error).
+      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
+      endorsing_bodies:
+      - National Institute on Aging (NIA)
+      - Alzheimer's Association
+      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
+      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
+      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
+      - BrainNet Europe Consortium
+      citation_pmid: '22265587'
+      citation_doi: 10.1016/j.jalz.2011.10.007
+  - bound_type: hard_max
+    value: 6.0
+    citation_strength: international_consensus
+    guideline_section: NIA-AA 2012 ABC score, 'B' = Braak NFT stage (Hyman/Montine 2012; Braak & Braak
+      1991) (upper bound of the defined ordinal scale)
+    citation:
+      citation_text: Braak NFT stage is a 0-VI (0-6) ordinal scale (Braak & Braak, Acta Neuropathol 1991;
+        pTau-IHC update Braak 2006), adopted as the NIA-AA 'B' score. The scale is defined up to 6; values
+        above 6 are impossible (data/coding error).
+      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
+      endorsing_bodies:
+      - National Institute on Aging (NIA)
+      - Alzheimer's Association
+      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
+      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
+      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
+      - BrainNet Europe Consortium
+      citation_pmid: '22265587'
+      citation_doi: 10.1016/j.jalz.2011.10.007
+- name: adnc_level
+  unit: category
+  description: 'Integrated level of Alzheimer''s disease neuropathologic change (ADNC) from the ABC score:
+    none/low/intermediate/high (Hyman/Montine 2012). Intermediate or high ADNC is considered sufficient
+    to explain dementia.'
+  measurement_kind: categorical_set
+  valid_values:
+  - none
+  - low
+  - intermediate
+  - high
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: NIA-AA 2012 integrated ADNC level (Hyman/Montine 2012, Table mapping A x B x C)
+      (categorical set; values outside valid_values are coding errors)
+    citation:
+      citation_text: 'ADNC level is the integrated ABC determination defined by NIA-AA 2012 (Hyman/Montine
+        2012) as one of none, low, intermediate, high. Valid categories: none, low, intermediate, high.
+        Any other value is a coding/data error.'
+      public_url: https://doi.org/10.1016/j.jalz.2011.10.007
+      endorsing_bodies:
+      - National Institute on Aging (NIA)
+      - Alzheimer's Association
+      - NIA-AA Neuropathology Consensus Panel (Hyman/Montine 2012)
+      - National Alzheimer's Coordinating Center (NACC) UDS Neuropathology
+      - Consortium to Establish a Registry for Alzheimer's Disease (CERAD)
+      - BrainNet Europe Consortium
+      citation_pmid: '22265587'
+      citation_doi: 10.1016/j.jalz.2011.10.007
+notes: Bounds are defined consensus scale ranges, not derived numeric thresholds; values outside the defined
+  range indicate coding/data-entry error. NeuroTCS audits neuropathologist-assigned values only; it never
+  performs the neuropathologic assessment. This pack provides the autopsy gold-standard that the biological
+  staging rule packs (AA-2024) are grounded in.

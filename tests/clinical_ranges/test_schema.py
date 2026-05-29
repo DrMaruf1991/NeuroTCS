@@ -397,17 +397,30 @@ class TestCitationStrengthGates:
             endorsing_bodies=[f"Body_{i}" for i in range(n_bodies)],
         )
 
-    def test_international_consensus_requires_5_bodies(self):
-        """Fewer than 5 endorsing bodies must reject international_consensus."""
+    def test_international_consensus_requires_2plus_bodies(self):
+        """v1.30.0 evidence-model revision: the endorser floor was lowered
+        from 5 to 2 (owner-approved; reflects that 2026 clinical adoption rests
+        on one or two authoritative sources). Fewer than 2 bodies must still
+        reject; 2+ bodies is now accepted."""
         from neurotcs.clinical_ranges.schema import CitationStrength
+        # below the revised floor -> still rejected
         with pytest.raises(ValidationError):
             RangeBound(
                 bound_type=BoundType.HARD_MIN,
                 value=50.0,
-                citation=self._strong_citation(n_bodies=4, with_url=True),
+                citation=self._strong_citation(n_bodies=1, with_url=True),
                 citation_strength=CitationStrength.INTERNATIONAL_CONSENSUS,
                 guideline_section="Test section",
             )
+        # at the revised floor -> accepted
+        ok = RangeBound(
+            bound_type=BoundType.HARD_MIN,
+            value=50.0,
+            citation=self._strong_citation(n_bodies=2, with_url=True),
+            citation_strength=CitationStrength.INTERNATIONAL_CONSENSUS,
+            guideline_section="Test section",
+        )
+        assert len(ok.citation.endorsing_bodies) == 2
 
     def test_international_consensus_requires_public_url(self):
         """international_consensus must have public_url set."""

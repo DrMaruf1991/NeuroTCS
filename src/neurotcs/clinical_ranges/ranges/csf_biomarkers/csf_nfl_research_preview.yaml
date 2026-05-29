@@ -1,0 +1,59 @@
+schema_version: 1.0.0
+rangepack_id: csf_biomarkers/csf_nfl_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: csf_biomarkers
+framework_name: CSF neurofilament light chain (NfL) - non-specific neuroaxonal injury marker (AA-2024
+  N).
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. CSF NfL is ~10-50x higher than blood NfL (typically
+  hundreds to a few thousand pg/mL in older adults, higher in neurodegeneration); the plasma nfl_consensus
+  pack does NOT cover CSF values. Plausibility envelope (0-50000 pg/mL); no consensus diagnostic cutoff
+  as of 2026.
+clinical_source_authority: 'NeuroTCS audits a csf_nfl_pgml value an assay produced. RESEARCH PREVIEW plausibility
+  pack: hard_min 0, hard_max 50000 pg/mL (generous analytical ceiling above reported distributions). NOT
+  a diagnostic cutoff. No >=2-body international consensus cutoff exists, which is why this is research_preview;
+  audit_clinical_ranges() refuses it for production audit.'
+anchor_citation:
+  citation_text: CSF NfL is ~10-50x higher than blood NfL (typically hundreds to a few thousand pg/mL
+    in older adults, higher in neurodegeneration); the plasma nfl_consensus pack does NOT cover CSF values.
+  public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9555092/
+  endorsing_bodies:
+  - ADNI
+  - BioFINDER
+  - NACC
+  citation_doi: 10.1186/s13195-022-01093-6
+measurements:
+- name: csf_nfl_pgml
+  unit: pg/mL
+  description: 'csf_nfl_pgml concentration (ultrasensitive immunoassay). Research-grade: no consensus
+    cutoff as of 2026.'
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (research_preview) (lower bound)
+    citation:
+      citation_text: CSF NfL is ~10-50x higher than blood NfL (typically hundreds to a few thousand pg/mL
+        in older adults, higher in neurodegeneration); the plasma nfl_consensus pack does NOT cover CSF
+        values. Plausibility ceiling, not a cutoff.
+      public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9555092/
+      endorsing_bodies: &id001
+      - ADNI
+      - BioFINDER
+      - NACC
+      citation_doi: 10.1186/s13195-022-01093-6
+  - bound_type: hard_max
+    value: 50000.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (research_preview) (upper plausibility bound)
+    citation:
+      citation_text: CSF NfL is ~10-50x higher than blood NfL (typically hundreds to a few thousand pg/mL
+        in older adults, higher in neurodegeneration); the plasma nfl_consensus pack does NOT cover CSF
+        values. Plausibility ceiling, not a cutoff.
+      public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9555092/
+      endorsing_bodies: *id001
+      citation_doi: 10.1186/s13195-022-01093-6
+notes: RESEARCH PREVIEW plausibility envelope, not a diagnostic cutoff. Promotion blocked on consensus
+  cutoff existence, not endorser count.

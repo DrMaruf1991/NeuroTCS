@@ -118,7 +118,7 @@ class TestPacksListAccurate:
     def test_exactly_sixteen_production_packs(self):
         packs = list_rangepacks()
         production = [p for p in packs if p.get("status") == "production"]
-        assert len(production) == 16
+        assert len(production) == 21
         names = {p["name"] for p in production}
         assert names == {
             "ad/aria_safety",
@@ -139,6 +139,13 @@ class TestPacksListAccurate:
             "csf_biomarkers/csf_tau_consensus",
             # v1.22.0 (NfL plasma biomarker plausibility pack)
             "plasma_biomarkers/nfl_consensus",
+            # v1.28.0 (neuropathology gold standard + functional/affective scales)
+            "neuropathology/adnc_abc_consensus",
+            "neuropathology/copathology_consensus",
+            "cognitive_scales/functional_affective_consensus",
+            # v1.30.0
+            "genetics/monogenic_ad_consensus",
+            "csf_biomarkers/csf_ptau217_consensus",
         }
 
     def test_four_research_preview_packs(self):
@@ -153,7 +160,7 @@ class TestPacksListAccurate:
         downgrades."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
-        assert len(preview) == 5
+        assert len(preview) == 8
         names = {p["name"] for p in preview}
         assert names == {
             "mri_volumetrics/freesurfer_extended",
@@ -161,6 +168,9 @@ class TestPacksListAccurate:
             "csf_biomarkers/csf_ptau231_research_preview",
             "genetics/trem2_research_preview",
             "mri_volumetrics/hippocampal_subfields_research_preview",
+            "plasma_biomarkers/plasma_gfap_research_preview",  # NEW v1.29.0
+            "csf_biomarkers/csf_gfap_research_preview",  # NEW v1.30.0
+            "csf_biomarkers/csf_nfl_research_preview",  # NEW v1.30.0
         }
 
     def test_six_deprecated_packs(self):

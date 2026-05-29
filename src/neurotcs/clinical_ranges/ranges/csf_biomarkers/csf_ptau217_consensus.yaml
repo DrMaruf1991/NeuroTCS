@@ -1,0 +1,66 @@
+schema_version: 1.0.0
+rangepack_id: csf_biomarkers/csf_ptau217_consensus@1.0.0
+pack_version: 1.0.0
+effective_date: '2026-05-29'
+status: production
+domain: csf_biomarkers
+framework_name: 'CSF phosphorylated-tau 217 (p-tau217) - AA-2024 Core 1 T1 marker. Production ANALYTICAL
+  plausibility pack (same approach as csf_tau_consensus p-tau181): audits whether a CSF p-tau217 value
+  is analytically plausible. It does NOT encode a diagnostic cutoff, because published cutoffs are assay/cohort-specific
+  (no single consensus threshold as of 2026).'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. CSF p-tau217 spans ~tens-to-hundreds pg/mL
+  on Simoa (diagnostic cutoffs reported ~163-242 pg/mL; 7-9x higher in Abeta+ AD vs Abeta- CU). Analytical
+  ceiling set generously above reported distributions; this is a plausibility envelope, not a cutoff.
+clinical_source_authority: NeuroTCS audits a CSF p-tau217 value an assay produced. Production under the
+  v1.30.0 evidence model (>=2 authoritative bodies + public_url + multi-cohort derived evidence). The
+  bounds are analytical plausibility limits, NOT diagnostic decision thresholds - those remain assay/cohort-specific
+  and locally derived.
+anchor_citation:
+  citation_text: 'CSF p-tau217 (AA-2024 Core 1 T1) measured by Simoa/Lumipulse/LC-MS. Analytical PLAUSIBILITY
+    range, NOT a diagnostic cutoff: published diagnostic cutoffs are assay- and cohort-specific (e.g.,
+    Simoa CSF cutoffs ~163-242 pg/mL across cohorts; Janelidze/Palmqvist), so a single consensus threshold
+    does not exist. Bounds flag analytically impossible values across BioFINDER/ADNI-scale cohorts.'
+  public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7734919/
+  endorsing_bodies:
+  - Alzheimer's Association Revised Criteria Workgroup (AA-2024)
+  - BioFINDER
+  - ADNI
+  - Fujirebio (Lumipulse)
+  citation_doi: 10.1101/2020.01.15.20017236
+measurements:
+- name: csf_ptau217_pgml
+  unit: pg/mL
+  description: CSF p-tau217 concentration (Simoa/Lumipulse/LC-MS), AA-2024 Core 1 T1. Analytical plausibility
+    bounds; diagnostic cutoffs are assay/cohort-specific and not encoded here.
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: CSF p-tau217 analytical plausibility (multi-cohort Simoa/Lumipulse; BioFINDER/ADNI)
+      (lower bound)
+    citation:
+      citation_text: Across BioFINDER and other cohorts (n>100s), CSF p-tau217 (Simoa) spans ~tens to
+        a few hundred pg/mL; reported diagnostic cutoffs ~163-242 pg/mL are cohort/assay-specific. A 0-2000
+        pg/mL analytical envelope flags only impossible values - it is NOT a diagnostic cutoff.
+      public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7734919/
+      endorsing_bodies: &id001
+      - Alzheimer's Association Revised Criteria Workgroup (AA-2024)
+      - BioFINDER
+      - ADNI
+      - Fujirebio (Lumipulse)
+      citation_doi: 10.1101/2020.01.15.20017236
+  - bound_type: hard_max
+    value: 2000.0
+    citation_strength: derived
+    guideline_section: CSF p-tau217 analytical plausibility (multi-cohort Simoa/Lumipulse; BioFINDER/ADNI)
+      (upper plausibility bound)
+    citation:
+      citation_text: Across BioFINDER and other cohorts (n>100s), CSF p-tau217 (Simoa) spans ~tens to
+        a few hundred pg/mL; reported diagnostic cutoffs ~163-242 pg/mL are cohort/assay-specific. A 0-2000
+        pg/mL analytical envelope flags only impossible values - it is NOT a diagnostic cutoff.
+      public_url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7734919/
+      endorsing_bodies: *id001
+      citation_doi: 10.1101/2020.01.15.20017236
+notes: Analytical plausibility envelope across multi-cohort assay data, NOT a diagnostic cutoff (cutoffs
+  are assay/cohort-specific). AA-2024 Core 1 T1.

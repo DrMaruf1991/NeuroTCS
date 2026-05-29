@@ -174,7 +174,7 @@ class TestRosterCounts:
     def test_fifteen_production_packs(self) -> None:
         packs = list_rangepacks()
         prod = [p for p in packs if p.get("status") == "production"]
-        assert len(prod) == 16
+        assert len(prod) == 21
 
     def test_four_research_preview_packs(self) -> None:
         """v1.15.0: research_preview pack count grows from 1 to 2 with
@@ -191,7 +191,7 @@ class TestRosterCounts:
         poor)."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
-        assert len(preview) == 5
+        assert len(preview) == 8
         names = {p["name"] for p in preview}
         assert names == {
             "mri_volumetrics/freesurfer_extended",
@@ -199,6 +199,9 @@ class TestRosterCounts:
             "csf_biomarkers/csf_ptau231_research_preview",
             "genetics/trem2_research_preview",
             "mri_volumetrics/hippocampal_subfields_research_preview",
+            "plasma_biomarkers/plasma_gfap_research_preview",  # NEW v1.29.0
+            "csf_biomarkers/csf_gfap_research_preview",  # NEW v1.30.0
+            "csf_biomarkers/csf_nfl_research_preview",  # NEW v1.30.0
         }
 
     def test_six_deprecated_packs(self) -> None:
@@ -214,9 +217,11 @@ class TestRosterCounts:
         Prior net: 26 total (16 prod + 4 preview + 6 deprecated).
         v1.22.0: +1 production pack (NfL).
         v1.27.0: +1 research_preview pack (hippocampal subfields) -> 27 total
-        (16 prod + 5 preview + 6 deprecated)."""
+        (16 prod + 5 preview + 6 deprecated).
+        v1.28.0: +3 production packs (neuropathology ADNC + co-pathology +
+        FAQ/GDS) -> 30 total (19 prod + 5 preview + 6 deprecated)."""
         packs = list_rangepacks()
-        assert len(packs) == 27  # 16 prod + 5 preview + 6 deprecated
+        assert len(packs) == 35  # 21 prod + 8 preview + 6 deprecated
 
 
 class TestDeprecationSchemaValidator:

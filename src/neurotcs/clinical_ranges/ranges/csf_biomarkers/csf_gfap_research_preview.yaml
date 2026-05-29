@@ -1,0 +1,59 @@
+schema_version: 1.0.0
+rangepack_id: csf_biomarkers/csf_gfap_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: csf_biomarkers
+framework_name: CSF glial fibrillary acidic protein (GFAP) - AA-2024 ATX(N) astrocytic marker.
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. CSF GFAP (Simoa) is substantially higher in
+  absolute terms than plasma GFAP (typically low-thousands to tens-of-thousands pg/mL; increases with
+  age and across the AD continuum; Benedet 2021). Plausibility envelope (0-100000 pg/mL); no consensus
+  diagnostic cutoff as of 2026.
+clinical_source_authority: 'NeuroTCS audits a csf_gfap_pgml value an assay produced. RESEARCH PREVIEW
+  plausibility pack: hard_min 0, hard_max 100000 pg/mL (generous analytical ceiling above reported distributions).
+  NOT a diagnostic cutoff. No >=2-body international consensus cutoff exists, which is why this is research_preview;
+  audit_clinical_ranges() refuses it for production audit.'
+anchor_citation:
+  citation_text: CSF GFAP (Simoa) is substantially higher in absolute terms than plasma GFAP (typically
+    low-thousands to tens-of-thousands pg/mL; increases with age and across the AD continuum; Benedet
+    2021).
+  public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
+  endorsing_bodies:
+  - FNIH Biomarkers Consortium
+  - ADNI
+  - BioFINDER
+  citation_doi: 10.1001/jamaneurol.2021.3671
+measurements:
+- name: csf_gfap_pgml
+  unit: pg/mL
+  description: 'csf_gfap_pgml concentration (ultrasensitive immunoassay). Research-grade: no consensus
+    cutoff as of 2026.'
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (research_preview) (lower bound)
+    citation:
+      citation_text: CSF GFAP (Simoa) is substantially higher in absolute terms than plasma GFAP (typically
+        low-thousands to tens-of-thousands pg/mL; increases with age and across the AD continuum; Benedet
+        2021). Plausibility ceiling, not a cutoff.
+      public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
+      endorsing_bodies: &id001
+      - FNIH Biomarkers Consortium
+      - ADNI
+      - BioFINDER
+      citation_doi: 10.1001/jamaneurol.2021.3671
+  - bound_type: hard_max
+    value: 100000.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (research_preview) (upper plausibility bound)
+    citation:
+      citation_text: CSF GFAP (Simoa) is substantially higher in absolute terms than plasma GFAP (typically
+        low-thousands to tens-of-thousands pg/mL; increases with age and across the AD continuum; Benedet
+        2021). Plausibility ceiling, not a cutoff.
+      public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
+      endorsing_bodies: *id001
+      citation_doi: 10.1001/jamaneurol.2021.3671
+notes: RESEARCH PREVIEW plausibility envelope, not a diagnostic cutoff. Promotion blocked on consensus
+  cutoff existence, not endorser count.

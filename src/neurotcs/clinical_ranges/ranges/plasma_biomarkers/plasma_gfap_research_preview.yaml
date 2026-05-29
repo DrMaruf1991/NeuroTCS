@@ -1,0 +1,77 @@
+schema_version: 1.0.0
+rangepack_id: plasma_biomarkers/plasma_gfap_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: plasma_biomarkers
+framework_name: 'Plasma glial fibrillary acidic protein (GFAP) - AA-2024 ATX(N) astrocytic ''X'' marker.
+  RESEARCH PREVIEW: bounds are an analytical/physiological plausibility envelope (Simoa), NOT a diagnostic
+  cutoff. As of 2026 there is no internationally agreed quantitative GFAP cutoff, so this pack ships research_preview
+  and the auditor refuses to use it for production audit.'
+transcribed_by: 'Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Plausibility envelope grounded in reported
+  Simoa plasma GFAP distributions across the AD continuum: CU Abeta- ~160-185 pg/mL, CU Abeta+ ~285, MCI
+  Abeta+ ~330, AD dementia ~388-405 pg/mL (TRIAD/Paris cohorts; Benedet/Pereira dynamics; clinical cohort
+  medians ~400). Simoa LOD ~0.4 pg/mL. No consensus cutoff exists; bounds flag only analytically impossible
+  values.'
+clinical_source_authority: 'NeuroTCS audits a plasma GFAP value an assay produced; it does not measure
+  GFAP. This is a research_preview plausibility pack: hard_min = 0 (concentration cannot be negative);
+  hard_max = 3000 pg/mL, a generous analytical ceiling well above all reported AD-continuum distributions
+  (means 49-405 pg/mL; individual values rarely exceed low-thousands on Simoa). These are NOT diagnostic
+  thresholds. GFAP is an AA-2024 ATX(N) astrocytic marker, but no >=5-body international consensus cutoff
+  exists as of 2026 (FNIH consortium characterization ongoing), which is precisely why this is research_preview
+  rather than production. audit_clinical_ranges() refuses research_preview packs unless explicitly overridden.'
+anchor_citation:
+  citation_doi: 10.1001/jamaneurol.2021.3671
+  citation_text: 'Benedet AL, Mila-Aloma M, Vrillon A, et al. Differences between plasma and CSF GFAP
+    levels across the Alzheimer disease continuum. JAMA Neurol 2021. Plasma GFAP (Simoa) increases across
+    the AD continuum: TRIAD CU Abeta+ mean 285 pg/mL, MCI Abeta+ 332, AD 388; CU Abeta- 185 pg/mL. Used
+    here to ground an analytical plausibility envelope, not a cutoff.'
+  public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
+  pmid_pending: true
+  endorsing_bodies:
+  - FNIH Biomarkers Consortium
+  - ADNI
+  - BioFINDER
+  - TRIAD cohort
+measurements:
+- name: plasma_gfap_pgml
+  unit: pg/mL
+  description: 'Plasma GFAP concentration (Simoa or equivalent ultrasensitive immunoassay), AA-2024 ATX(N)
+    astrocytic marker. Research-grade: no consensus diagnostic cutoff as of 2026.'
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity of a concentration)
+    citation:
+      citation_doi: 10.1001/jamaneurol.2021.3671
+      citation_text: A measured concentration cannot be negative. Simoa plasma GFAP LOD ~0.4 pg/mL; reported
+        across-cohort distributions begin in the tens of pg/mL (CU Abeta- ~49-185).
+      public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
+      pmid_pending: true
+      endorsing_bodies:
+      - FNIH Biomarkers Consortium
+      - ADNI
+      - BioFINDER
+      - TRIAD cohort
+  - bound_type: hard_max
+    value: 3000.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling (well above reported AD-continuum cohort distributions)
+    citation:
+      citation_doi: 10.1001/jamaneurol.2021.3671
+      citation_text: Reported Simoa plasma GFAP means span ~49 pg/mL (CU Abeta-T-) to ~405 pg/mL (AD dementia)
+        across cohorts (TRIAD/Paris; Benedet/Pereira dynamics; clinical cohort medians ~400 [280-503]).
+        A 3000 pg/mL ceiling is a generous analytical plausibility bound that flags only clearly impossible
+        values; it is NOT a diagnostic cutoff.
+      public_url: https://www.quanterix.com/posters/differences-between-plasma-and-cerebrospinal-fluid-glial-fibrillary-acidic-protein-levels-across-the-alzheimer-disease-continuum/
+      pmid_pending: true
+      endorsing_bodies:
+      - FNIH Biomarkers Consortium
+      - ADNI
+      - BioFINDER
+      - TRIAD cohort
+notes: RESEARCH PREVIEW plausibility envelope, not a diagnostic cutoff. No internationally agreed quantitative
+  plasma GFAP cutoff exists as of 2026; promotion to production is blocked on that consensus, NOT on endorsing-body
+  count. The auditor refuses research_preview packs for production audit.

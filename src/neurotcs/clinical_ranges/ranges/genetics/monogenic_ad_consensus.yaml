@@ -1,0 +1,122 @@
+schema_version: 1.0.0
+rangepack_id: genetics/monogenic_ad_consensus@1.0.0
+pack_version: 1.0.0
+effective_date: '2026-05-29'
+status: production
+domain: genetics
+framework_name: 'Monogenic (autosomal-dominant) Alzheimer''s disease gene variant status: PSEN1, PSEN2,
+  APP, each classified by the ACMG/AMP 2015 5-tier system. Critical for DIAN/AHEAD/prevention-trial eligibility.
+  Categorical consensus classification - no fabricated numbers.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Valid categories = ACMG/AMP 2015 five-tier
+  (Richards 2015, Genet Med 17(5):405-424, PMID 25741868) plus not_detected/unknown. PSEN1/PSEN2/APP are
+  the three established ADAD genes (DIAN; Bateman 2012).
+clinical_source_authority: NeuroTCS audits a variant classification a clinical genetics lab assigned;
+  it does not call variants. Valid values follow the ACMG/AMP 2015 international consensus. Promoted to
+  production under the v1.30.0 evidence model (>=2 authoritative endorsing bodies + public_url).
+anchor_citation:
+  citation_text: Richards S, et al. ACMG/AMP standards and guidelines for the interpretation of sequence
+    variants. Genet Med 2015;17(5):405-424.
+  public_url: https://doi.org/10.1038/gim.2015.30
+  endorsing_bodies:
+  - American College of Medical Genetics and Genomics (ACMG)
+  - Association for Molecular Pathology (AMP)
+  - ClinGen
+  - Dominantly Inherited Alzheimer Network (DIAN)
+  citation_pmid: '25741868'
+  citation_doi: 10.1038/gim.2015.30
+measurements:
+- name: psen1_mutation_status
+  unit: category
+  description: psen1 sequence-variant classification (ACMG/AMP 5-tier). PSEN1 is an established autosomal-dominant
+    Alzheimer's disease gene; pathogenic/likely-pathogenic variants confer early-onset ADAD and gate DIAN/prevention-trial
+    eligibility.
+  measurement_kind: categorical_set
+  valid_values:
+  - pathogenic
+  - likely_pathogenic
+  - uncertain_significance
+  - likely_benign
+  - benign
+  - not_detected
+  - unknown
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: ACMG/AMP 2015 variant classification (Richards 2015) (categorical set)
+    citation:
+      citation_text: 'Variant classified per ACMG/AMP 2015 (Richards 2015) into one of: pathogenic, likely_pathogenic,
+        uncertain_significance, likely_benign, benign; plus not_detected / unknown. PSEN1 is a canonical
+        ADAD gene.'
+      public_url: https://doi.org/10.1038/gim.2015.30
+      endorsing_bodies:
+      - American College of Medical Genetics and Genomics (ACMG)
+      - Association for Molecular Pathology (AMP)
+      - ClinGen
+      - Dominantly Inherited Alzheimer Network (DIAN)
+      citation_pmid: '25741868'
+      citation_doi: 10.1038/gim.2015.30
+- name: psen2_mutation_status
+  unit: category
+  description: psen2 sequence-variant classification (ACMG/AMP 5-tier). PSEN2 is an established autosomal-dominant
+    Alzheimer's disease gene; pathogenic/likely-pathogenic variants confer early-onset ADAD and gate DIAN/prevention-trial
+    eligibility.
+  measurement_kind: categorical_set
+  valid_values:
+  - pathogenic
+  - likely_pathogenic
+  - uncertain_significance
+  - likely_benign
+  - benign
+  - not_detected
+  - unknown
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: ACMG/AMP 2015 variant classification (Richards 2015) (categorical set)
+    citation:
+      citation_text: 'Variant classified per ACMG/AMP 2015 (Richards 2015) into one of: pathogenic, likely_pathogenic,
+        uncertain_significance, likely_benign, benign; plus not_detected / unknown. PSEN2 is a canonical
+        ADAD gene.'
+      public_url: https://doi.org/10.1038/gim.2015.30
+      endorsing_bodies:
+      - American College of Medical Genetics and Genomics (ACMG)
+      - Association for Molecular Pathology (AMP)
+      - ClinGen
+      - Dominantly Inherited Alzheimer Network (DIAN)
+      citation_pmid: '25741868'
+      citation_doi: 10.1038/gim.2015.30
+- name: app_mutation_status
+  unit: category
+  description: app sequence-variant classification (ACMG/AMP 5-tier). APP is an established autosomal-dominant
+    Alzheimer's disease gene; pathogenic/likely-pathogenic variants confer early-onset ADAD and gate DIAN/prevention-trial
+    eligibility.
+  measurement_kind: categorical_set
+  valid_values:
+  - pathogenic
+  - likely_pathogenic
+  - uncertain_significance
+  - likely_benign
+  - benign
+  - not_detected
+  - unknown
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: international_consensus
+    guideline_section: ACMG/AMP 2015 variant classification (Richards 2015) (categorical set)
+    citation:
+      citation_text: 'Variant classified per ACMG/AMP 2015 (Richards 2015) into one of: pathogenic, likely_pathogenic,
+        uncertain_significance, likely_benign, benign; plus not_detected / unknown. APP is a canonical
+        ADAD gene.'
+      public_url: https://doi.org/10.1038/gim.2015.30
+      endorsing_bodies:
+      - American College of Medical Genetics and Genomics (ACMG)
+      - Association for Molecular Pathology (AMP)
+      - ClinGen
+      - Dominantly Inherited Alzheimer Network (DIAN)
+      citation_pmid: '25741868'
+      citation_doi: 10.1038/gim.2015.30
+notes: ADAD gene variant status; categorical ACMG/AMP consensus. Polygenic risk score (PRS) is a separate
+  research_preview pack (study-specific weighting, no universal cutoff).

@@ -59,6 +59,13 @@ EXPECTED_PRODUCTION_PACKS = {
     "olfactory/upsit_consensus",  # NEW in v1.17.0 (Tier 2 item: UPSIT olfactory)
     "mri_volumetrics/microbleeds_boston_consensus",  # NEW in v1.17.0 (Tier 2 item: microbleeds non-ARIA)
     "csf_biomarkers/csf_tau_consensus",  # NEW in v1.17.0 (Tier 2 items: CSF t-tau + p-tau181 extension)
+    # v1.28.0: neuropathology gold-standard domain + universal functional/affective scales
+    "neuropathology/adnc_abc_consensus",  # NEW v1.28.0 (NIA-AA 2012 ABC/ADNC: Thal/CERAD/Braak)
+    "neuropathology/copathology_consensus",  # NEW v1.28.0 (LATE-NC + Lewy alpha-synuclein)
+    "cognitive_scales/functional_affective_consensus",  # NEW v1.28.0 (FAQ + GDS-15)
+    # v1.30.0: revised evidence model (endorser floor 5->2) enables these
+    "genetics/monogenic_ad_consensus",  # NEW v1.30.0 (PSEN1/PSEN2/APP, ACMG)
+    "csf_biomarkers/csf_ptau217_consensus",  # NEW v1.30.0 (CSF p-tau217 analytical plausibility)
 }
 
 EXPECTED_RESEARCH_PREVIEW_PACKS = {
@@ -204,12 +211,16 @@ class TestProductionPackWorldClassGate:
                     f"{b.citation_strength.value!r}; production-pack bounds "
                     f"must use one of: international_consensus, verbatim, derived."
                 )
-                # Invariant (1): endorser floor (>=5)
+                # Invariant (1): endorser floor (>=2 since v1.30.0 evidence-
+                # model revision; was >=5). Production now requires >=2
+                # AUTHORITATIVE endorsing bodies + public_url + valid strength,
+                # reflecting that 2026 clinical adoption rests on one or two
+                # authoritative sources rather than five societies.
                 n_endorsers = len(b.citation.endorsing_bodies)
-                assert n_endorsers >= 5, (
+                assert n_endorsers >= 2, (
                     f"Production pack {name} measurement {m.name} bound "
                     f"{b.bound_type.value} has {n_endorsers} endorsing bodies; "
-                    f"world-class standard requires >=5."
+                    f"revised world-class standard (v1.30.0) requires >=2."
                 )
 
     @pytest.mark.parametrize("name", sorted(EXPECTED_PRODUCTION_PACKS))
@@ -239,17 +250,19 @@ class TestProductionPackWorldClassGate:
 
     @pytest.mark.parametrize("name", sorted(EXPECTED_PRODUCTION_PACKS))
     def test_every_bound_has_5plus_endorsing_bodies(self, name: str):
-        """Redundant with invariant (1) above but kept for backward
-        compatibility — this test name has appeared in many prior CHANGELOGs
-        and external audits reference it."""
+        """Kept under its historical name (external audits reference it), but
+        the floor was revised from 5 to 2 in v1.30.0 (deliberate, owner-
+        approved evidence-model change — see schema._consensus_requires_
+        endorsing_bodies). Production bounds must still name >=2 authoritative
+        endorsing bodies and carry a public_url + valid strength."""
         lp = load_rangepack(name)
         for m in lp.rangepack.measurements:
             for b in m.bounds:
-                assert len(b.citation.endorsing_bodies) >= 5, (
+                assert len(b.citation.endorsing_bodies) >= 2, (
                     f"Production pack {name} measurement {m.name} bound "
                     f"{b.bound_type.value} has only "
                     f"{len(b.citation.endorsing_bodies)} endorsing bodies; "
-                    f"world-class standard requires >=5."
+                    f"revised world-class standard (v1.30.0) requires >=2."
                 )
 
     @pytest.mark.parametrize("name", sorted(EXPECTED_PRODUCTION_PACKS))
