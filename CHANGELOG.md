@@ -1,3 +1,47 @@
+## [1.39.3] -- 2026-05-29 -- unified coverage honesty (AD-only, domain-free)
+
+### Problem
+
+A blind test against a 63-error answer key showed zero-config `audit` caught 8
+staging violations but said nothing about the rest of the file. Two distinct
+gaps existed and neither was surfaced together:
+  (1) un-wired sheets -- present in the input, no pack attached (zero-config
+      wires only the staging axes), and
+  (2) skipped layers -- a wired axis the engine refused (e.g. a 4-axis A/T/N
+      biological vocabulary matching no production rule pack).
+(1) was invisible; (2) was buried in the manifest's layers_skipped. A confident
+"VERIFIED OK, 8 flags" hid that most of the file was never really audited.
+
+### Fix -- ONE unified coverage statement
+
+After the audit runs, `cmd_audit` emits a single `COVERAGE:` statement (stderr +
+bundle) naming BOTH un-wired sheets AND engine-skipped layers, with remediation.
+A single line now tells the user everything that did not get a real audit.
+
+- Domain-free: reasons only about sheets vs the mapping and the engine's
+  layers_skipped -- never about disease. Verified on a non-AD-named file shape
+  (different sheet names, different TOC) to confirm it is not tuned to any
+  dataset.
+- Reuses the single existing `_is_toc_sheet` heuristic (no second hardcoded
+  TOC list).
+- Recorded in run_metadata.input_warnings (OUTSIDE the hash). The audit_id is
+  unaffected by coverage text; the only id change vs 1.39.2 is the intentional
+  framework_version binding. Verified: deterministic_core is byte-identical to
+  1.39.2 except framework_version.
+
+### Scope
+
+NeuroTCS remains AD-only. No PD/non-AD rule packs, range packs, vocabulary, or
+data exist or were added; the schema actively rejects non-AD domains. This
+change adds no domain content -- it is pure coverage reporting.
+
+### Tests
+
+tests/cli/test_v1393_file_coverage.py (4): un-wired sheets declared on stderr +
+recorded in bundle; TOC never mislabeled; a wired biological axis with 4-axis
+ATN tokens (no matching pack) has its skipped layer named in the coverage line.
+Full suite: 1624 passed.
+
 ## [1.39.2] -- 2026-05-29 -- zero-config audit for low-knowledge users (no --mapping)
 
 `neurotcs audit <file> -o <out>` now works with NO --mapping: it auto-scaffolds

@@ -448,6 +448,21 @@ def _has_placeholder(obj: Any) -> bool:
     return False
 
 
+def _sheets_referenced_by_mapping(mapping: dict[str, Any]) -> set[str]:
+    """Every sheet name the mapping actually wires into an audit (clinical /
+    biological axes + each ranges entry). Used to compute file-level coverage:
+    any sheet in the input NOT in this set was not audited."""
+    refs: set[str] = set()
+    for axis in ("clinical", "biological"):
+        spec = mapping.get(axis)
+        if isinstance(spec, dict) and isinstance(spec.get("sheet"), str):
+            refs.add(spec["sheet"])
+    for r in mapping.get("ranges") or []:
+        if isinstance(r, dict) and isinstance(r.get("sheet"), str):
+            refs.add(r["sheet"])
+    return refs
+
+
 def cmd_audit(args: argparse.Namespace) -> int:
     tables = _load_tables(args.file, args.allow_pdf)
     if tables is None:
@@ -537,6 +552,47 @@ def cmd_audit(args: argparse.Namespace) -> int:
         return EXIT_CLEAN
 
     result = run_full_audit(submission)
+
+    # v1.39.3: UNIFIED COVERAGE HONESTY. NeuroTCS must never present a confident
+    # audit while leaving part of the input un-audited and undeclared. There are
+    # exactly two ways a slice of the input fails to get a real audit:
+    #   (1) un-wired sheets   -- present in the file but no pack was attached
+    #                            (e.g. zero-config wires only the staging axes);
+    #   (2) skipped layers    -- a wired axis the engine then refused, e.g. a
+    #                            staging vocabulary that matches no rule pack
+    #                            (fail-closed: a score on mismatched vocab is not
+    #                            a meaningful number).
+    # Both are collected into ONE coverage statement, printed loudly and recorded
+    # in the bundle, so a single line tells the user everything that did NOT get a
+    # real audit. Domain-free: it reasons only about sheets/layers, never disease.
+    referenced = _sheets_referenced_by_mapping(mapping)
+    unaudited_sheets = [
+        s for s in tables
+        if s not in referenced
+        and not _is_toc_sheet(s, {"columns": list(tables[s].columns)})
+    ]
+    skipped_layers = dict(getattr(result.manifest, "layers_skipped", {}) or {})
+    if unaudited_sheets or skipped_layers:
+        parts = ["coverage: not all input was audited."]
+        if unaudited_sheets:
+            parts.append(
+                f"Un-wired sheet(s) (no pack attached, values NOT examined): "
+                f"{unaudited_sheets}."
+            )
+        for layer, reason in sorted(skipped_layers.items()):
+            short = reason.split(":")[0] if ":" in reason else reason
+            parts.append(
+                f"Wired-but-skipped layer '{layer}' ({short}) -- no score emitted."
+            )
+        parts.append(
+            "To audit un-wired sheets add 'ranges' entries to a mapping "
+            "(`neurotcs describe ... --emit-mapping`); skipped layers need a rule "
+            "pack whose vocabulary matches the data."
+        )
+        msg = " ".join(parts)
+        submission_warnings.append(msg)
+        _err(f"COVERAGE: {msg}")
+
     try:
         fp = fingerprint_file(args.file)
         bundle = build_bundle(result, input_fingerprint=fp,
