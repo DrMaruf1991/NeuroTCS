@@ -1,3 +1,54 @@
+## [1.40.0] -- 2026-05-29 -- range-pack auto-wiring for wide measurement sheets
+
+### What
+
+Zero-config `audit` now also audits biomarker/cognitive VALUES, not just staging.
+Wide-format measurement sheets (one column per measurement) are auto-melted to
+long format and wired to production range packs. Coverage jumps from staging-only
+to staging + assay-independent ordinal scales.
+
+### Strict safety boundary (verified, no false positives)
+
+A naive "wire every recognizable column" approach was BUILT, RUN, and REJECTED:
+it flagged 100% of rows for 8 assay-calibrated biomarkers (CSF/plasma p-tau, NfL,
+centiloid, eTIV, WMH, FDG dose, Fazekas) -- 5331 false implausible flags --
+because those packs encode assay/scale-specific bounds a generic column name
+cannot certify. The shipped behavior wires ONLY assay-independent, definitionally
+-bounded ordinal scales (MMSE 0-30, MoCA, ADAS, CDR-SB, NPI-Q, FAQ, GDS-15, UPSIT,
+Braak 0-6, Thal, CERAD). Assay-specific biomarkers are REFUSED with a clear
+reason and surfaced in the coverage declaration (auditable only via explicit
+mapping, where the user asserts the assay). Unit suffixes (cm^3 vs mm^3) are
+checked so a volume can never be silently audited against a mismatched bound.
+
+Every wiring decision is printed (`# auto-wired range packs ...`); nothing is a
+silent guess. New module: neurotcs/io/autowire.py.
+
+### Verified on two datasets (executed, not predicted)
+
+- Complex_AD_Dataset_v3 (real): staging 8 + range impossible 6 (MMSE 35, neg MoCA,
+  CDR-SB 22, ADAS 95, NPI-Q 50, Braak 9), implausible 0.
+- A larger synthetic AD set (200 subjects / 910 rows, ADNI-style RID/VISCODE,
+  different sheet names): seeded 6 MMSE>30 / 4 neg MoCA / 3 Braak>6 / AD->CN
+  reversals -> executed flags mmse_total 6, moca_total 4, braak_nft_stage 3,
+  staging 4 (the 4 real reversals), implausible 0, assay-specific FLUID refused.
+  VERIFIED OK. Proves generality (different names) without dataset hardcoding.
+
+### Scope / honest limitations (declared, not silently dropped)
+
+- Assay-specific quantitative biomarkers require explicit mapping (calibration).
+- 4-axis A/T/N(+/-) biological staging still has no matching production pack
+  (layer honestly skipped).
+- The pack's INFORMATIONAL soft-reference tier still fires on disease-cohort
+  values (e.g. MMSE>23); these are notes, not errors, and are reported as-is
+  (suppressing a pack-defined tier would falsify the audit).
+
+### Tests
+
+tests/cli/test_v140_range_autowire.py (4): safe ordinal scales wired; assay-
+specific refused; unit-mismatch refused; a single out-of-scale value yields one
+impossible flag, never one-per-row. v1.39.3 coverage tests updated for the new
+partial-wiring behavior. Full suite green.
+
 ## [1.39.3] -- 2026-05-29 -- unified coverage honesty (AD-only, domain-free)
 
 ### Problem

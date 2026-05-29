@@ -465,6 +465,8 @@ def _sheets_referenced_by_mapping(mapping: dict[str, Any]) -> set[str]:
 
 def cmd_audit(args: argparse.Namespace) -> int:
     tables = _load_tables(args.file, args.allow_pdf)
+    range_refusals: list[str] = []
+    _autowired_source_sheets: set[str] = set()
     if tables is None:
         return EXIT_INPUT
 
@@ -501,6 +503,26 @@ def cmd_audit(args: argparse.Namespace) -> int:
                           f"visit_date={vd} state={sp['state']}")
             print("  (to override, generate and edit a mapping with "
                   "`neurotcs describe ... --emit-mapping mapping.json`)")
+
+        # v1.40.0: auto-wire range packs to wide-format measurement sheets so
+        # biomarker/cognitive VALUES are audited too -- not just staging. Strict:
+        # a column is wired only on a confident name+unit match to exactly one
+        # production pack; ambiguous / unit-mismatched columns are refused (left
+        # to the coverage declaration). Every wiring decision is printed.
+        from neurotcs.io.autowire import autowire_ranges
+        wired_sheets = _sheets_referenced_by_mapping(mapping)
+        rspecs, extra_tables, decisions, _refusals, _wired_src = autowire_ranges(
+            tables, wired_sheets)
+        range_refusals.extend(_refusals)
+        _autowired_source_sheets.update(_wired_src)
+        if rspecs:
+            tables.update(extra_tables)
+            mapping.setdefault("ranges", []).extend(rspecs)
+            if not args.quiet:
+                print("# auto-wired range packs (values audited; "
+                      "each decision shown):")
+                for d in decisions:
+                    print(f"  {d}")
     else:
         try:
             mapping = json.loads(Path(args.mapping).read_text(encoding="utf-8"))
@@ -569,10 +591,12 @@ def cmd_audit(args: argparse.Namespace) -> int:
     unaudited_sheets = [
         s for s in tables
         if s not in referenced
+        and s not in _autowired_source_sheets
+        and not s.startswith("__autowired__")
         and not _is_toc_sheet(s, {"columns": list(tables[s].columns)})
     ]
     skipped_layers = dict(getattr(result.manifest, "layers_skipped", {}) or {})
-    if unaudited_sheets or skipped_layers:
+    if unaudited_sheets or skipped_layers or range_refusals:
         parts = ["coverage: not all input was audited."]
         if unaudited_sheets:
             parts.append(
@@ -584,6 +608,8 @@ def cmd_audit(args: argparse.Namespace) -> int:
             parts.append(
                 f"Wired-but-skipped layer '{layer}' ({short}) -- no score emitted."
             )
+        for rr in range_refusals:
+            parts.append(f"Column NOT wired: {rr}")
         parts.append(
             "To audit un-wired sheets add 'ranges' entries to a mapping "
             "(`neurotcs describe ... --emit-mapping`); skipped layers need a rule "

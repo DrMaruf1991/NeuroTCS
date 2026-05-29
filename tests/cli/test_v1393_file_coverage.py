@@ -28,12 +28,14 @@ def _make_multisheet(path):
         pd.DataFrame({"subject_id": ["S1"] * 3, "visit": [0, 1, 2],
                       "clinical_state": ["CN", "MCI", "AD"]}).to_excel(
             xw, sheet_name="AUDIT_CLINICAL", index=False)
-        # un-wired measurement sheets -> must be declared un-audited
-        pd.DataFrame({"subject_id": ["S1"], "visit": [0], "mmse": [35]}).to_excel(
-            xw, sheet_name="CG", index=False)
+        # genuinely un-wireable sheets (columns resolve to no pack) ->
+        # must be declared un-audited
         pd.DataFrame({"subject_id": ["S1"], "visit": [0],
-                      "hippocampus_total_cm3": [9.9]}).to_excel(
-            xw, sheet_name="MR", index=False)
+                      "site_code": ["A1"]}).to_excel(
+            xw, sheet_name="SITE", index=False)
+        pd.DataFrame({"subject_id": ["S1"], "visit": [0],
+                      "custom_lab_xyz": [1.0]}).to_excel(
+            xw, sheet_name="LAB", index=False)
 
 
 def test_unwired_sheets_declared_on_stderr(tmp_path, capsys):
@@ -43,7 +45,7 @@ def test_unwired_sheets_declared_on_stderr(tmp_path, capsys):
     assert rc in (0, 3)
     err = capsys.readouterr().err
     assert "COVERAGE" in err
-    assert "CG" in err and "MR" in err          # un-wired sheets named
+    assert "SITE" in err and "LAB" in err       # un-wireable sheets named
     # the WIRED & audited sheet must NOT be listed among un-wired sheets
     cov = [ln for ln in err.splitlines() if "Un-wired sheet" in ln]
     assert cov and "AUDIT_CLINICAL" not in cov[0]
@@ -55,7 +57,7 @@ def test_unwired_sheets_recorded_in_bundle(tmp_path):
     main(["audit", str(f), "-o", str(tmp_path / "out"), "--allow-no-dates", "--quiet"])
     b = json.load(open(glob.glob(str(tmp_path / "out" / "*.bundle.json"))[0]))
     warns = b["neurotcs_bundle"]["run_metadata"]["input_warnings"]
-    assert any(w.startswith("coverage:") and "CG" in w for w in warns)
+    assert any(w.startswith("coverage:") and "SITE" in w for w in warns)
 
 
 def test_toc_sheet_never_listed_as_unwired(tmp_path, capsys):
