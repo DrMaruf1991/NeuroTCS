@@ -1,0 +1,94 @@
+schema_version: 1.0.0
+rangepack_id: perfusion/asl_cbf_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: perfusion
+framework_name: 'Arterial spin labeling (ASL) MRI cerebral blood flow - non-invasive perfusion biomarker.
+  ISMRM/European ASL-in-Dementia consensus (Alsop 2015 Magn Reson Med) is the canonical implementation
+  reference. Typical adult cortical GM ~50-70 mL/100g/min, WM ~20 mL/100g/min. Hypoperfusion patterns
+  in AD parallel FDG-PET hypometabolism. RESEARCH PREVIEW: plausibility envelope, NOT a diagnostic cutoff.'
+transcribed_by: 'Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Plausibility envelope grounded in Alsop 2015
+  (Magn Reson Med 73:102-116, PMID 24715426 - ISMRM Perfusion Study Group + European Consortium for ASL
+  in Dementia consensus): cortical GM CBF 50-70 mL/100g/min in healthy young adults; WM CBF ~20.'
+clinical_source_authority: 'NeuroTCS audits ASL CBF values an MRI perfusion pipeline produced. RESEARCH
+  PREVIEW: hard_min 0 (perfusion non-negativity); hard_max 200 mL/100g/min (well above typical adult cortical
+  CBF). NOT a diagnostic cutoff. audit_clinical_ranges() refuses for production audit. Cohort/age-stratified
+  diagnostic thresholds are not internationally codified.'
+anchor_citation:
+  citation_text: 'Alsop DC, Detre JA, Golay X, et al. Recommended implementation of arterial spin-labeled
+    perfusion MRI for clinical applications: A consensus of the ISMRM perfusion study group and the European
+    consortium for ASL in dementia. Magn Reson Med 2015;73(1):102-116. PMID 24715426. Canonical implementation
+    reference for ASL CBF quantification.'
+  public_url: https://pubmed.ncbi.nlm.nih.gov/24715426/
+  endorsing_bodies:
+  - ISMRM Perfusion Study Group
+  - European Consortium for ASL in Dementia (ASLid)
+  - ASL White Paper
+  citation_pmid: '24715426'
+  citation_doi: 10.1002/mrm.25197
+measurements:
+- name: asl_cbf_global_ml_per_100g_min
+  unit: mL/100g/min
+  measurement_kind: numeric
+  description: Global cerebral blood flow from ASL MRI (whole-brain average). Healthy adult average ~40-60
+    mL/100g/min (Alsop 2015 + Heijtel 2014 ASL-vs-PET comparisons).
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (perfusion non-negativity)
+    citation:
+      citation_text: CBF is a flow measure; cannot be negative.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/24715426/
+      endorsing_bodies:
+      - ISMRM Perfusion Study Group
+      - ASL White Paper
+      citation_pmid: '24715426'
+      citation_doi: 10.1002/mrm.25197
+  - bound_type: hard_max
+    value: 200.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling
+    citation:
+      citation_text: Healthy adult global CBF ~40-60 mL/100g/min; > 200 is implausible outside extreme
+        hyperperfusion artifacts.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/24715426/
+      endorsing_bodies:
+      - ISMRM Perfusion Study Group
+      - Alsop 2015 consensus
+      - ASL White Paper
+      citation_pmid: '24715426'
+      citation_doi: 10.1002/mrm.25197
+- name: asl_cbf_gray_matter_ml_per_100g_min
+  unit: mL/100g/min
+  measurement_kind: numeric
+  description: Gray-matter cerebral blood flow from ASL MRI. Healthy adult cortical GM ~50-70 mL/100g/min
+    (Alsop 2015 consensus).
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: CBF cannot be negative.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/24715426/
+      endorsing_bodies:
+      - ISMRM Perfusion Study Group
+      citation_pmid: '24715426'
+      citation_doi: 10.1002/mrm.25197
+  - bound_type: hard_max
+    value: 200.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling
+    citation:
+      citation_text: 'Healthy adult GM CBF ~50-70 mL/100g/min; > 200 implausible.  '
+      public_url: https://pubmed.ncbi.nlm.nih.gov/24715426/
+      endorsing_bodies:
+      - ISMRM Perfusion Study Group
+      - Alsop 2015 consensus
+      citation_pmid: '24715426'
+      citation_doi: 10.1002/mrm.25197
+notes: RESEARCH PREVIEW. New domain 'perfusion'. Plausibility envelopes only; not diagnostic cutoffs.
+  Promotion blocked on cohort/age-stratified consensus cutoff emergence. Closes the ASL P2 gap from the
+  v1.26 coverage analysis.

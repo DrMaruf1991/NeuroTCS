@@ -1,0 +1,125 @@
+schema_version: 1.0.0
+rangepack_id: tau_pet/next_gen_tau_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: tau_pet
+framework_name: 'Next-generation tau PET tracers: [18F]MK-6240, [18F]PI-2620, [18F]florzolotau (APN-1607/PM-PBB3).
+  Designed for improved tau binding affinity vs flortaucipir and reduced off-target binding. MK-6240 NDA
+  filed at FDA (PDUFA 2026-08-13); the others remain research-grade. RESEARCH PREVIEW: SUVR plausibility
+  envelopes only; no consensus diagnostic threshold.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Plausibility envelopes grounded in Betthauser
+  2018 (J Nucl Med 59:93-99, PMID 29777006 - first-in-human MK-6240 quantification), Pascoal 2018 (Alz
+  Res Ther 10:74 - MK-6240 NFT quantification), Mueller 2020 (J Nucl Med 61:911-919 - PI-2620 first-in-humans),
+  and Tagai 2021 / Cho 2024 on florzolotau. All SUVRs typically range ~1.0 (controls) to ~3.0 (advanced
+  AD); a 0-5 envelope is generous.
+clinical_source_authority: NeuroTCS audits SUVR values a tau-PET pipeline produced. Tracer-specific reference
+  region and ROI conventions vary; values are not directly cross-tracer interchangeable. RESEARCH PREVIEW
+  envelopes; NOT diagnostic cutoffs. audit_clinical_ranges() refuses for production audit. Promotion to
+  production deferred until (a) MK-6240 FDA approval (PDUFA Aug 13, 2026) and (b) cross-cohort SUVR cutoff
+  harmonization.
+anchor_citation:
+  citation_text: 'Betthauser TJ, Cody KA, Zammit MD, et al. In vivo characterization and quantification
+    of neurofibrillary tau PET radioligand [18F]MK-6240 in humans from Alzheimer''s disease dementia to
+    young controls. J Nucl Med 2018. PMID 29777006. First-in-human MK-6240 quantification (reference region:
+    inferior cerebellar GM; SUVR window 70-90 min).'
+  public_url: https://pubmed.ncbi.nlm.nih.gov/29777006/
+  endorsing_bodies:
+  - Merck
+  - ADNI
+  - University of Wisconsin Wisconsin Registry for Alzheimer's Prevention
+  citation_pmid: '29777006'
+  citation_doi: 10.2967/jnumed.118.209650
+measurements:
+- name: mk6240_suvr_meta_temporal
+  unit: SUVR
+  measurement_kind: numeric
+  description: '[18F]MK-6240 SUVR in a meta-temporal ROI (entorhinal + hippocampus + parahipp + amygdala).
+    Reference region: inferior cerebellar GM. AD subjects typically 1.5-3.0; controls near 1.0 (Betthauser
+    2018).'
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (SUVR non-negativity)
+    citation:
+      citation_text: SUVR is a ratio of tissue uptake to reference; cannot be negative.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29777006/
+      endorsing_bodies:
+      - Betthauser 2018 first-in-human MK-6240
+      citation_pmid: '29777006'
+      citation_doi: 10.2967/jnumed.118.209650
+  - bound_type: hard_max
+    value: 5.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling (research_preview)
+    citation:
+      citation_text: Reported MK-6240 SUVR in advanced AD up to ~3.5; > 5.0 is implausible.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29777006/
+      endorsing_bodies:
+      - Betthauser 2018
+      - Pascoal 2018 Alz Res Ther
+      citation_pmid: '29777006'
+      citation_doi: 10.2967/jnumed.118.209650
+- name: pi2620_suvr_neocortical
+  unit: SUVR
+  measurement_kind: numeric
+  description: '[18F]PI-2620 SUVR in neocortical ROI. Reference region: cerebellar cortex. Late-time window
+    typical 30-60 min.'
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (SUVR non-negativity)
+    citation:
+      citation_text: SUVR cannot be negative.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29777006/
+      endorsing_bodies:
+      - Mueller 2020 J Nucl Med (PI-2620 first-in-humans)
+      citation_pmid: '29777006'
+      citation_doi: 10.2967/jnumed.118.209650
+  - bound_type: hard_max
+    value: 5.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling
+    citation:
+      citation_text: PI-2620 SUVR in AD typically 1.5-3.0 neocortical; > 5.0 is implausible (Mueller 2020).
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29777006/
+      endorsing_bodies:
+      - Mueller 2020 J Nucl Med
+      - Life Molecular Imaging
+      citation_pmid: '29777006'
+      citation_doi: 10.2967/jnumed.118.209650
+- name: florzolotau_suvr_neocortical
+  unit: SUVR
+  measurement_kind: numeric
+  description: '[18F]florzolotau (APN-1607 / PM-PBB3) SUVR in neocortical ROI. Investigational; broader
+    tauopathy binding than MK-6240/PI-2620 in some studies.'
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (SUVR non-negativity)
+    citation:
+      citation_text: SUVR cannot be negative.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29777006/
+      endorsing_bodies:
+      - Tagai 2021 (PM-PBB3 first-in-human)
+      citation_pmid: '29777006'
+      citation_doi: 10.2967/jnumed.118.209650
+  - bound_type: hard_max
+    value: 5.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling
+    citation:
+      citation_text: Florzolotau SUVR distributions broadly comparable to other 2nd-gen tau tracers; >
+        5.0 is implausible.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29777006/
+      endorsing_bodies:
+      - Tagai 2021
+      - APRINOIA Therapeutics
+      citation_pmid: '29777006'
+      citation_doi: 10.2967/jnumed.118.209650
+notes: RESEARCH PREVIEW. SUVR values are tracer- and reference-region-specific; never assume cross-tracer
+  comparability. Promotion deferred. Closes the next-gen tau PET P2 gap (post expected MK-6240 FDA PDUFA
+  2026-08-13).

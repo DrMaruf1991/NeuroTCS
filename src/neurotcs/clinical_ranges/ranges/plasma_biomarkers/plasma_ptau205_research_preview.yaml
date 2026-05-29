@@ -1,0 +1,62 @@
+schema_version: 1.0.0
+rangepack_id: plasma_biomarkers/plasma_ptau205_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: plasma_biomarkers
+framework_name: 'Plasma phospho-tau 205 - AA-2024 ATX(N) tau marker, AD continuum mid-stage indicator.
+  Per Teunissen 2025 review (Alz & Dem 2025): CSF p-tau205 rises AFTER p-tau217/p-tau181 and correlates
+  strongly with brain atrophy and tau PET. Plasma p-tau205 assays are emerging (Janssen/Lilly/MSD). RESEARCH
+  PREVIEW: no consensus diagnostic cutoff.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Plausibility envelope grounded in Teunissen
+  2025 (Alz & Dem 2025, DOI 10.1002/alz.14397) - review of plasma p-tau immunoassays including p-tau205.
+  Plasma p-tau species typically span single-digit to low tens of pg/mL across the AD continuum.
+clinical_source_authority: 'NeuroTCS audits plasma p-tau205 values an assay produced. RESEARCH PREVIEW:
+  hard_min 0 (non-negativity); hard_max 100 pg/mL (generous analytical ceiling above reported cohort distributions).
+  NOT a diagnostic cutoff. audit_clinical_ranges() refuses for production audit.'
+anchor_citation:
+  citation_text: Teunissen CE, Ashton NJ, Karikari TK, et al. Plasma p-tau immunoassays in clinical research
+    for Alzheimer's disease. Alzheimer's & Dementia 2025 (DOI 10.1002/alz.14397). Comprehensive review
+    of plasma p-tau species (181/205/212/217/231) immunoassay performance. p-tau205 rises in CSF after
+    p-tau217/p-tau181 and tracks brain atrophy/hypometabolism.
+  public_url: https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.14397
+  endorsing_bodies:
+  - Alzheimer's Association
+  - Janssen Research & Development
+  - Eli Lilly
+  - University of Gothenburg
+  citation_doi: 10.1002/alz.14397
+measurements:
+- name: plasma_ptau205_pgml
+  unit: pg/mL
+  measurement_kind: numeric
+  description: Plasma phospho-tau 205. Mid-AD-continuum tau marker. Research-grade; no consensus diagnostic
+    cutoff.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: Concentration cannot be negative.
+      public_url: https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.14397
+      endorsing_bodies:
+      - Janssen
+      - Eli Lilly
+      - University of Gothenburg
+      citation_doi: 10.1002/alz.14397
+  - bound_type: hard_max
+    value: 100.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling (research_preview; not a cutoff)
+    citation:
+      citation_text: Plasma p-tau species distributions across the AD continuum typically span single-digit
+        to low tens of pg/mL; > 100 is well above any reported value (Teunissen 2025 review).
+      public_url: https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.14397
+      endorsing_bodies:
+      - Teunissen 2025 review
+      - Janssen
+      - Eli Lilly
+      citation_doi: 10.1002/alz.14397
+notes: RESEARCH PREVIEW. Plasma p-tau205 assays in early validation. Promotion blocked on cross-assay
+  harmonization and consensus cutoff emergence.

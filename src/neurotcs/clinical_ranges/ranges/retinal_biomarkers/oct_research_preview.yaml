@@ -1,0 +1,121 @@
+schema_version: 1.0.0
+rangepack_id: retinal_biomarkers/oct_research_preview@0.1.0
+pack_version: 0.1.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: retinal_biomarkers
+framework_name: 'Retinal optical coherence tomography (OCT) thickness measurements - research-grade neurodegeneration
+  biomarkers. RNFL (peripapillary retinal nerve fiber layer), GC-IPL (macular ganglion cell - inner plexiform
+  layer), and total macular thickness are reduced in AD/MCI in cross-sectional studies and prospectively
+  associated with incident dementia (Mutlu 2018 JAMA Neurol Rotterdam Study). RESEARCH PREVIEW: no diagnostic
+  cutoff.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. Plausibility envelopes grounded in Mutlu 2018
+  (JAMA Neurol 75:1256-1263, PMID 29946702 - Rotterdam Study n=3289, inner retinal layers and dementia
+  risk) and the broader RNFL/GC-IPL literature (Cheung 2015, Kim 2019). Normal RNFL ~80-100 um peripapillary;
+  AD/MCI thinning of order 10-20 um.
+clinical_source_authority: NeuroTCS audits RNFL/GC-IPL/macular-thickness values an OCT pipeline produced.
+  RESEARCH PREVIEW analytical plausibility envelopes (hard_min 0, hard_max above instrument ceiling);
+  NOT diagnostic cutoffs. audit_clinical_ranges() refuses for production audit.
+anchor_citation:
+  citation_text: 'Mutlu U, Colijn JM, Ikram MA, et al. Association of Retinal Neurodegeneration on Optical
+    Coherence Tomography With Dementia: A Population-Based Study. JAMA Neurol 2018;75(10):1256-1263. PMID
+    29946702. Population-based prospective study (Rotterdam Study) showing thinner inner retinal layers
+    associate with incident dementia.'
+  public_url: https://pubmed.ncbi.nlm.nih.gov/29946702/
+  endorsing_bodies:
+  - Rotterdam Study
+  - JAMA Neurology
+  - Erasmus MC Rotterdam
+  citation_pmid: '29946702'
+  citation_doi: 10.1001/jamaneurol.2018.1563
+measurements:
+- name: rnfl_peripapillary_thickness_um
+  unit: um
+  measurement_kind: numeric
+  description: Peripapillary retinal nerve fiber layer thickness, average across quadrants. Normal ~80-100
+    um; AD/MCI thinning ~10-20 um (Mutlu 2018, Kim 2019).
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: Retinal layer thickness is a physical measurement; cannot be negative.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29946702/
+      endorsing_bodies:
+      - Rotterdam Study
+      citation_pmid: '29946702'
+      citation_doi: 10.1001/jamaneurol.2018.1563
+  - bound_type: hard_max
+    value: 200.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling (research_preview)
+    citation:
+      citation_text: Normal peripapillary RNFL ~80-100 um with SD ~10-15 um; thickening to >200 um is
+        implausible (papilledema or segmentation error).
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29946702/
+      endorsing_bodies:
+      - Rotterdam Study
+      - Cirrus HD-OCT normative database
+      citation_pmid: '29946702'
+      citation_doi: 10.1001/jamaneurol.2018.1563
+- name: gc_ipl_macular_thickness_um
+  unit: um
+  measurement_kind: numeric
+  description: Macular ganglion cell - inner plexiform layer average thickness. Normal ~70-90 um. Mutlu
+    2018 reports prospective association of thinner GC-IPL with incident dementia.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: GC-IPL thickness cannot be negative.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29946702/
+      endorsing_bodies:
+      - Rotterdam Study
+      citation_pmid: '29946702'
+      citation_doi: 10.1001/jamaneurol.2018.1563
+  - bound_type: hard_max
+    value: 150.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling
+    citation:
+      citation_text: Normal GC-IPL ~70-90 um; > 150 um is implausible.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29946702/
+      endorsing_bodies:
+      - Rotterdam Study
+      - Cirrus HD-OCT normative database
+      citation_pmid: '29946702'
+      citation_doi: 10.1001/jamaneurol.2018.1563
+- name: macular_total_thickness_um
+  unit: um
+  measurement_kind: numeric
+  description: Total macular thickness (central subfield). Normal ~250-300 um.
+  bounds:
+  - bound_type: hard_min
+    value: 0.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility (non-negativity)
+    citation:
+      citation_text: Total macular thickness cannot be negative.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29946702/
+      endorsing_bodies:
+      - Rotterdam Study
+      citation_pmid: '29946702'
+      citation_doi: 10.1001/jamaneurol.2018.1563
+  - bound_type: hard_max
+    value: 500.0
+    citation_strength: derived
+    guideline_section: Analytical plausibility ceiling
+    citation:
+      citation_text: Normal central macular thickness ~250-300 um; > 500 um suggests macular edema or
+        segmentation error.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/29946702/
+      endorsing_bodies:
+      - Rotterdam Study
+      - Cirrus HD-OCT normative database
+      citation_pmid: '29946702'
+      citation_doi: 10.1001/jamaneurol.2018.1563
+notes: RESEARCH PREVIEW. New domain 'retinal_biomarkers'. Plausibility envelopes only; no diagnostic cutoffs
+  (cohort/instrument/normative-database specific). Closes the OCT P1 gap from the v1.26 coverage analysis.

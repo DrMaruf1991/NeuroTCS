@@ -1,3 +1,43 @@
+## [1.32.0] -- 2026-05-29
+
+### Added: 4 fully-grounded research_preview plausibility packs
+
+This batch continues the coverage expansion from v1.31, picking up the next four
+deferred items where verified PMID/DOI anchors landed. The remaining three
+(DTI per-tract FA/MD, SV2A UCB-J SUVR, sleep/actigraphy) stay deferred until
+their own anchor citations are verified -- no fabricated ceilings.
+
+Range packs (research_preview):
+- `retinal_biomarkers/oct_research_preview` -- new domain. OCT thickness
+  measurements (RNFL peripapillary, GC-IPL macular, total macular). Plausibility
+  envelopes 0-200/150/500 um grounded in Mutlu U et al. JAMA Neurol 2018
+  (Rotterdam Study, PMID 29946702, DOI 10.1001/jamaneurol.2018.1563): inner
+  retinal layer thinning prospectively associated with incident dementia.
+- `tau_pet/next_gen_tau_research_preview` -- second-generation tau PET tracers:
+  [18F]MK-6240 (NDA at FDA, PDUFA 2026-08-13), [18F]PI-2620, [18F]florzolotau
+  (APN-1607/PM-PBB3). SUVR plausibility envelopes 0-5 grounded in Betthauser
+  TJ et al. J Nucl Med 2018 (PMID 29777006, DOI 10.2967/jnumed.118.209650 --
+  first-in-human MK-6240) and Mueller A et al. J Nucl Med 2020 (PI-2620). NOT
+  cross-tracer comparable.
+- `plasma_biomarkers/plasma_ptau205_research_preview` -- mid-AD-continuum tau
+  marker; rises after p-tau217/p-tau181, tracks brain atrophy. Plausibility
+  envelope 0-100 pg/mL grounded in Teunissen CE et al. Alzheimer's & Dementia
+  2025 (DOI 10.1002/alz.14397, comprehensive plasma p-tau immunoassay review).
+- `perfusion/asl_cbf_research_preview` -- new domain. ASL MRI cerebral blood
+  flow (global, gray matter). Plausibility envelope 0-200 mL/100g/min grounded
+  in Alsop DC et al. Magn Reson Med 2015 (PMID 24715426,
+  DOI 10.1002/mrm.25197 -- ISMRM Perfusion Study Group + European Consortium
+  for ASL in Dementia consensus implementation).
+
+Census: 21 production / 15 research_preview / 6 deprecated / 42 total range
+packs. New domains added: `retinal_biomarkers`, `perfusion`. Tests: +13.
+
+### Still staged
+
+DTI per-tract FA/MD; SV2A UCB-J SUVR; sleep/actigraphy. Each follows the
+established research_preview plausibility-envelope template; each needs a
+verified concentration/value-range reference citation before encoding.
+
 ## [1.31.0] -- 2026-05-29
 
 ### Added: architectural split + AD-PRS + CSF synaptic panel + three Layer-3 invariants
