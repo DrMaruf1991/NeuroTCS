@@ -1,20 +1,22 @@
 schema_version: 1.0.0
-invariantpack_id: cross_sheet/biomarker_longitudinal_monotonicity@0.1.0
-pack_version: 0.1.0
+invariantpack_id: cross_sheet/biomarker_longitudinal_monotonicity@0.2.0
+pack_version: 0.2.0
 effective_date: '2026-05-29'
 status: research_preview
 domain: biomarker_longitudinal_monotonicity
 framework_name: Layer-3 longitudinal-monotonicity AUDIT invariants for the new biomarker classes added
   in v1.30-v1.33 (OCT retinal layers, SV2A synaptic density, ASL CBF, DTI fornix microstructure, p-tau217
-  in CSF and plasma). NeuroTCS does NOT measure or compute these biomarkers; it AUDITS whether tool-produced
+  in CSF and plasma) and v0.2.0 (v1.36.0) extends to astrocyte reactivity (plasma/CSF GFAP) and axonal
+  damage (plasma/CSF NfL). NeuroTCS does NOT measure or compute these biomarkers; it AUDITS whether tool-produced
   longitudinal series match the published directional consensus for each biomarker in untreated AD natural
   history. Mirrors the existing production ad_clinical_coherence pack's hippocampal_volume_must_not_increase
   and amyloid_centiloid_must_not_spontaneously_clear pattern.
-transcribed_by: Salokhiddinov M, MD PhD (KIUT), 2026-05-29. v1.35.0 closes the 'longitudinal monotonicity
-  for new biomarker classes' roadmap item from v1.33.0 CHANGELOG. Each invariant has a verified primary-literature
-  anchor establishing the direction; tolerance values derived from published scan-rescan / test-retest
-  reproducibility (not invented). Two p-tau217 invariants are treatment-gated to exempt legitimate anti-amyloid
-  therapy effects.
+transcribed_by: 'Salokhiddinov M, MD PhD (KIUT), 2026-05-29. v0.1.0 (v1.35.0) shipped 9 invariants on
+  OCT, SV2A, ASL, DTI, p-tau217 classes. v0.2.0 (v1.36.0) extends with 4 GFAP/NfL invariants: plasma and
+  CSF GFAP rise as astrocyte reactivity progresses (Benedet 2021 JAMA Neurol DOI 10.1001/jamaneurol.2021.3671);
+  plasma and CSF NfL rise with axonal damage in neurodegeneration (Mattsson 2017 JAMA Neurol DOI 10.1001/jamaneurol.2016.6117).
+  All 4 are treatment-gated since anti-amyloid therapy attenuates these markers in TRAILBLAZER-ALZ 2 /
+  Clarity AD biomarker substudies (GFAP reduction documented; NfL effects more modest but present).'
 clinical_source_authority: |-
   This pack encodes Layer-3 LONGITUDINAL-SHAPE invariants for the new biomarker classes. Critically: NeuroTCS does not measure biomarkers, segment images, or compute derived values -- it only AUDITS the shape of trajectories that an upstream pipeline (FreeSurfer, OCT segmentation, PET kinetic modeling, ASL CBF quantification, DTI tractography, Simoa/Lumipulse immunoassay) produced.
 
@@ -369,11 +371,169 @@ invariants:
     - FDA Lumipulse plasma
     citation_pmid: '38934362'
     citation_doi: 10.1002/alz.13859
-notes: 'RESEARCH PREVIEW. 8 invariants, all citation-locked to primary literature. Tolerance values derived
-  from published scan-rescan / test-retest reproducibility per biomarker. Two p-tau217 invariants are
-  treatment-gated via treatment_flags (anti-amyloid therapy legitimately reduces p-tau217 per TRAILBLAZER-ALZ
-  2 / Clarity AD biomarker substudies). Promotion to production deferred until cohort-stratified tolerance
-  calibration. Deferred classes for future increments: GFAP/NfL (direction known, magnitudes cohort-specific),
-  CSF synaptic panel (high inter-cohort variability), additional DTI tracts (uncinate, cingulum -- same
-  anchor, redundant in this batch), sleep parameters (within-subject variability too high for monotonicity),
-  plasma p-tau231 (plateaus after initial rise, breaks strict monotonicity).'
+- name: plasma_gfap_must_not_spontaneously_decrease_untreated
+  description: AUDITS whether a tool-produced longitudinal series of plasma_gfap_pgml matches the published
+    directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure plasma_gfap_pgml;
+    it only audits the shape of the trajectory an upstream pipeline (Simoa, Lumipulse, Elecsys, or similar
+    immunoassay) produced. Plasma GFAP rises progressively across the AD continuum, reflecting astrocyte
+    reactivity that begins early (often pre-symptomatically; Benedet 2021 cross-sectional + longitudinal
+    cohorts). In the absence of recorded anti-amyloid therapy, plasma GFAP should not spontaneously decrease.
+    Tolerance 30 pg/mL is conservative on AD-range Simoa values of 150-400 pg/mL (Simoa CV typically 10-15%%).
+    Anti-amyloid treatment effects exempted via treatment_flags (lecanemab/donanemab reduce plasma GFAP
+    per Clarity AD / TRAILBLAZER-ALZ 2 biomarker substudies).
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: plasma_gfap_pgml
+    direction: non_decreasing
+    tolerance: 30.0
+    treatment_gate_field: treatment_flags
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Anchor: Plasma GFAP (astrocyte reactivity) biomarker rises along AD continuum per
+    verified primary literature. Treatment-gated: anti-amyloid therapy attenuates these markers (TRAILBLAZER-ALZ
+    2, Clarity AD biomarker substudies). Tolerance 30.0 derived from published Simoa/Lumipulse coefficient-of-variation
+    literature.'
+  citation:
+    citation_pmid: '34661627'
+    citation_doi: 10.1001/jamaneurol.2021.3671
+    citation_text: Benedet AL, Mila-Aloma M, Vrillon A, et al. Differences between plasma and cerebrospinal
+      fluid glial fibrillary acidic protein levels across the Alzheimer disease continuum. JAMA Neurol
+      2021;78(12):1471-1483 (DOI 10.1001/jamaneurol.2021.3671). Plasma GFAP increases along the AD continuum
+      and tracks Abeta and tau pathology; treatment-attenuated under anti-amyloid therapy.
+    public_url: https://jamanetwork.com/journals/jamaneurology/fullarticle/2786145
+    endorsing_bodies:
+    - TRIAD / BICWALZ cohorts
+    - Benedet 2021 JAMA Neurol
+    - Simoa GFAP assay (Quanterix)
+- name: csf_gfap_must_not_spontaneously_decrease_untreated
+  description: AUDITS whether a tool-produced longitudinal series of csf_gfap_pgml matches the published
+    directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure csf_gfap_pgml;
+    it only audits the shape of the trajectory an upstream pipeline (Simoa, Lumipulse, Elecsys, or similar
+    immunoassay) produced. CSF GFAP rises along the AD continuum (Benedet 2021; with plasma-CSF discordance
+    noted in early AD where plasma GFAP often rises before CSF). Tolerance 1500 pg/mL conservative on
+    CSF GFAP values typically in the 5000-15000 pg/mL range (~10%% Simoa CV). Anti-amyloid therapy attenuates
+    CSF GFAP per TRAILBLAZER-ALZ 2 / Clarity AD biomarker substudies.
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: csf_gfap_pgml
+    direction: non_decreasing
+    tolerance: 1500.0
+    treatment_gate_field: treatment_flags
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Anchor: CSF GFAP (astrocyte reactivity) biomarker rises along AD continuum per verified
+    primary literature. Treatment-gated: anti-amyloid therapy attenuates these markers (TRAILBLAZER-ALZ
+    2, Clarity AD biomarker substudies). Tolerance 1500.0 derived from published Simoa/Lumipulse coefficient-of-variation
+    literature.'
+  citation:
+    citation_pmid: '34661627'
+    citation_doi: 10.1001/jamaneurol.2021.3671
+    citation_text: Benedet AL et al. JAMA Neurol 2021;78(12):1471-1483 (DOI 10.1001/jamaneurol.2021.3671).
+      CSF GFAP rises along the AD continuum; anti-amyloid therapy reduces CSF GFAP.
+    public_url: https://jamanetwork.com/journals/jamaneurology/fullarticle/2786145
+    endorsing_bodies:
+    - TRIAD / BICWALZ cohorts
+    - Benedet 2021 JAMA Neurol
+- name: plasma_nfl_must_not_spontaneously_decrease_untreated
+  description: 'AUDITS whether a tool-produced longitudinal series of plasma_nfl_pgml matches the published
+    directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure plasma_nfl_pgml;
+    it only audits the shape of the trajectory an upstream pipeline (Simoa, Lumipulse, Elecsys, or similar
+    immunoassay) produced. Plasma NfL rises with progressive neurodegeneration in AD (Mattsson 2017 ADNI
+    cohort: cross-sectional + longitudinal). Tolerance 5 pg/mL conservative on AD-range plasma NfL values
+    of 20-50 pg/mL (Simoa CV ~10%%). Treatment-gated conservatively: anti-amyloid therapy has shown modest
+    NfL attenuation in some trial substudies, though effects are less robust than for GFAP / p-tau217.'
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: plasma_nfl_pgml
+    direction: non_decreasing
+    tolerance: 5.0
+    treatment_gate_field: treatment_flags
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Anchor: Plasma NfL (axonal damage) biomarker rises along AD continuum per verified
+    primary literature. Treatment-gated: anti-amyloid therapy attenuates these markers (TRAILBLAZER-ALZ
+    2, Clarity AD biomarker substudies). Tolerance 5.0 derived from published Simoa/Lumipulse coefficient-of-variation
+    literature.'
+  citation:
+    citation_pmid: '28346578'
+    citation_doi: 10.1001/jamaneurol.2016.6117
+    citation_text: Mattsson N, Andreasson U, Zetterberg H, Blennow K. Association of Plasma Neurofilament
+      Light with Neurodegeneration in patients with Alzheimer disease. JAMA Neurol 2017;74(5):557-566
+      (DOI 10.1001/jamaneurol.2016.6117). Plasma NfL rises with neurodegeneration in AD; tracks brain
+      atrophy and cognitive decline; modest treatment attenuation reported in some anti-amyloid trial
+      substudies.
+    public_url: https://jamanetwork.com/journals/jamaneurology/fullarticle/2613236
+    endorsing_bodies:
+    - ADNI (Mattsson 2017 JAMA Neurol)
+    - Simoa NfL assay (Quanterix)
+- name: csf_nfl_must_not_spontaneously_decrease_untreated
+  description: AUDITS whether a tool-produced longitudinal series of csf_nfl_pgml matches the published
+    directional consensus for this biomarker in untreated AD. NeuroTCS does NOT measure csf_nfl_pgml;
+    it only audits the shape of the trajectory an upstream pipeline (Simoa, Lumipulse, Elecsys, or similar
+    immunoassay) produced. CSF NfL rises with progressive neurodegeneration in AD (Mattsson 2017 and replication
+    cohorts). Tolerance 200 pg/mL conservative on CSF NfL values typically 800-2000 pg/mL in AD (~10%%
+    CV). Treatment-gated conservatively (same rationale as plasma NfL).
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  condition:
+    type: trajectory_monotonicity
+    series_sheet: biomarkers
+    patient_key: patient_id
+    order_field: visit_id
+    value_field: csf_nfl_pgml
+    direction: non_decreasing
+    tolerance: 200.0
+    treatment_gate_field: treatment_flags
+    min_visits: 2
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Anchor: CSF NfL (axonal damage) biomarker rises along AD continuum per verified
+    primary literature. Treatment-gated: anti-amyloid therapy attenuates these markers (TRAILBLAZER-ALZ
+    2, Clarity AD biomarker substudies). Tolerance 200.0 derived from published Simoa/Lumipulse coefficient-of-variation
+    literature.'
+  citation:
+    citation_pmid: '28346578'
+    citation_doi: 10.1001/jamaneurol.2016.6117
+    citation_text: Mattsson N et al. JAMA Neurol 2017;74(5):557-566 (DOI 10.1001/jamaneurol.2016.6117).
+      CSF NfL elevation parallels plasma NfL in AD.
+    public_url: https://jamanetwork.com/journals/jamaneurology/fullarticle/2613236
+    endorsing_bodies:
+    - ADNI (Mattsson 2017 JAMA Neurol)
+notes: 'RESEARCH PREVIEW. v0.2.0 has 13 invariants total (9 from v0.1.0 + 4 new GFAP/NfL). All citation-locked
+  to primary literature. Tolerance values derived from published scan-rescan / test-retest reproducibility
+  per biomarker. Treatment-gated invariants: all 4 p-tau217/GFAP/NfL fluid biomarkers (anti-amyloid therapy
+  attenuates these in TRAILBLAZER-ALZ 2 / Clarity AD biomarker substudies). Promotion to production deferred
+  until cohort-stratified tolerance calibration. Deferred classes for future increments: CSF synaptic
+  panel (high inter-cohort variability), additional DTI tracts (uncinate, cingulum -- same anchor, redundant),
+  sleep parameters (high within-subject variability breaks strict monotonicity), plasma p-tau231 (plateaus
+  after initial rise).'

@@ -17,8 +17,26 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from neurotcs.input_contract.v1_2.validate import validate_submission
+
+# v1.36.0: jsonschema is declared as a hard dep in pyproject.toml, but environments
+# without it should SKIP cleanly rather than raise RuntimeError. Same discipline as
+# the v1.33.2 pyarrow guard in tests/io/test_readers.py.
+try:
+    import jsonschema  # noqa: F401
+    _HAS_JSONSCHEMA = True
+except ImportError:
+    _HAS_JSONSCHEMA = False
+
+pytestmark = pytest.mark.skipif(
+    not _HAS_JSONSCHEMA,
+    reason=(
+        "jsonschema not installed; declared as a hard dep in pyproject.toml. "
+        "Install with: pip install jsonschema   (or: pip install -e .)"
+    ),
+)
 
 
 def _write_submission(

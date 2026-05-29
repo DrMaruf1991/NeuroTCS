@@ -32,10 +32,11 @@ def by_name(pack):
 
 
 # ---------- pack-level ----------
-def test_pack_loads_research_preview_with_nine_invariants(pack):
-    assert pack.invariantpack_id == "cross_sheet/biomarker_longitudinal_monotonicity@0.1.0"
+def test_pack_loads_research_preview_with_thirteen_invariants(pack):
+    # v0.1.0 shipped 9 invariants (v1.35.0); v0.2.0 (v1.36.0) added 4 GFAP/NfL
+    assert pack.invariantpack_id == "cross_sheet/biomarker_longitudinal_monotonicity@0.2.0"
     assert pack.status == InvariantPackStatus.RESEARCH_PREVIEW
-    assert len(pack.invariants) == 9
+    assert len(pack.invariants) == 13
 
 
 def test_all_invariants_use_trajectory_monotonicity_condition(by_name):
@@ -86,17 +87,33 @@ def test_md_and_ptau217_are_non_decreasing(by_name):
         assert by_name[name].condition.direction == "non_decreasing"
 
 
-def test_only_ptau217_invariants_are_treatment_gated(by_name):
-    """Anti-amyloid therapy reduces p-tau217 (TRAILBLAZER, Clarity AD); other classes are not
-    treatment-reversible at present, so should not have a treatment_gate_field."""
-    for inv in by_name.values():
-        if "ptau217" in inv.name:
+def test_fluid_biomarker_invariants_are_treatment_gated(by_name):
+    """Anti-amyloid therapy attenuates p-tau217, GFAP, NfL (TRAILBLAZER, Clarity AD);
+    structural imaging biomarkers (OCT, SV2A, ASL, DTI) are not treatment-reversible at
+    present and should not have a treatment_gate_field. Updated in v1.36.0 when GFAP/NfL
+    invariants joined the pack.
+
+    Uses an explicit enumeration (not substring matching) because 'nfl' is a substring of
+    'rnfl' (RNFL = peripapillary retinal nerve fiber layer thickness, which is a STRUCTURAL
+    optical-coherence biomarker, NOT a fluid neurofilament-light marker). Substring matching
+    on 'nfl' would wrongly require the RNFL invariant to be treatment-gated."""
+    TREATMENT_GATED = {
+        "csf_ptau217_must_not_spontaneously_decrease_untreated",
+        "plasma_ptau217_must_not_spontaneously_decrease_untreated",
+        "plasma_gfap_must_not_spontaneously_decrease_untreated",
+        "csf_gfap_must_not_spontaneously_decrease_untreated",
+        "plasma_nfl_must_not_spontaneously_decrease_untreated",
+        "csf_nfl_must_not_spontaneously_decrease_untreated",
+    }
+    for name, inv in by_name.items():
+        if name in TREATMENT_GATED:
             assert inv.condition.treatment_gate_field == "treatment_flags", (
-                f"{inv.name} should be treatment-gated"
+                f"{name} (fluid biomarker, attenuated by anti-amyloid therapy) "
+                f"must be treatment-gated"
             )
         else:
             assert inv.condition.treatment_gate_field is None, (
-                f"{inv.name} should NOT be treatment-gated"
+                f"{name} (structural imaging biomarker) must NOT be treatment-gated"
             )
 
 
@@ -125,6 +142,11 @@ RANGE_PACK_OF_FIELD = {
     "md_fornix":                           "dti/microstructure_research_preview",
     "csf_ptau217_pgml":                    "csf_biomarkers/csf_ptau217_consensus",
     "plasma_ptau217_pgml":                 "plasma_biomarkers/plasma_amyloid_consensus",
+    # v1.36.0 additions:
+    "plasma_gfap_pgml":                    "plasma_biomarkers/plasma_gfap_research_preview",
+    "csf_gfap_pgml":                       "csf_biomarkers/csf_gfap_research_preview",
+    "plasma_nfl_pgml":                     "plasma_biomarkers/nfl_consensus",
+    "csf_nfl_pgml":                        "csf_biomarkers/csf_nfl_research_preview",
 }
 
 
