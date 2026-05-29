@@ -1,3 +1,30 @@
+## [1.33.2] -- 2026-05-29 -- test-suite robustness
+
+### Fixed
+
+`tests/io/test_readers.py::test_read_parquet` now skips cleanly when neither
+`pyarrow` nor `fastparquet` is installed, instead of erroring out with the
+pandas `ImportError: Unable to find a usable engine`. This makes the test
+suite report an honest count in every environment, not just ones that happen
+to have a parquet engine installed.
+
+Triggered by an external audit catching test-count drift: a Windows install
+without `pyarrow` was reporting `1436 passed, 13 skipped, 1 FAILED` while the
+README v1.33.1 said `expect 1437 passed, 13 skipped`. The discrepancy was a
+test-suite-design issue, not a NeuroTCS functional issue -- the parquet test
+should have skipped (because no engine was available), but pandas raises
+`ImportError` rather than reporting cleanly. v1.33.2 adds a top-level
+`_HAS_PARQUET_ENGINE` detection and a `pytest.mark.skipif` decorator.
+
+Behavior after v1.33.2:
+- Environment with pyarrow or fastparquet installed: 13 passed (parquet
+  test included) -- matches README v1.33.1's "1437 passed, 13 skipped".
+- Environment without either engine: 12 passed, 1 additionally skipped
+  (total 14 skipped). The test suite reports honestly instead of failing.
+
+No functional change. No range-pack census change. No production-pack
+change. Pure test-suite robustness fix.
+
 ## [1.33.1] -- 2026-05-29 -- metadata-hygiene release
 
 ### Fixed -- staleness sweep prompted by external audit

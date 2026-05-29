@@ -16,6 +16,22 @@ from neurotcs.io import (
 warnings.filterwarnings("ignore")
 
 
+# Detect whether a parquet engine (pyarrow or fastparquet) is installed.
+# Without one, pandas.to_parquet/read_parquet raise ImportError. Skipping
+# cleanly is the right behavior so the test suite reports an honest count
+# in every environment (introduced v1.33.2 after an external audit caught
+# README test-count drift on a parquet-engine-less Windows install).
+try:
+    import pyarrow  # noqa: F401
+    _HAS_PARQUET_ENGINE = True
+except ImportError:
+    try:
+        import fastparquet  # noqa: F401
+        _HAS_PARQUET_ENGINE = True
+    except ImportError:
+        _HAS_PARQUET_ENGINE = False
+
+
 def _staging_df():
     return pd.DataFrame({
         "sid": ["P1", "P1", "P2", "P2"],
@@ -47,6 +63,10 @@ def test_read_excel_all_sheets(tmp_path):
     assert set(t) == {"A", "B"}
 
 
+@pytest.mark.skipif(
+    not _HAS_PARQUET_ENGINE,
+    reason="no parquet engine installed (pyarrow or fastparquet); skip rather than ImportError",
+)
 def test_read_parquet(tmp_path):
     f = tmp_path / "d.parquet"
     _staging_df().to_parquet(f)
