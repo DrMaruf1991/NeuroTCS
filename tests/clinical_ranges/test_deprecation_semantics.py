@@ -166,7 +166,7 @@ class TestRosterCounts:
     production per world-class evidence honesty discipline):
       + csf_biomarkers/csf_ptau231_research_preview (CSF + plasma p-tau231)
       + genetics/trem2_research_preview (TREM2 R47H + R62H)
-    Net: (16 prod, 4 preview, 6 deprecated, 26 total).
+    Net (v1.27.0): (16 prod, 5 preview, 6 deprecated, 27 total).
     v1.22.0: +1 production (plasma_biomarkers/nfl_consensus) -> 16 prod / 26
     total. (Demographic plausibility moved to the input-contract layer, where
     data-integrity checks belong; it is not a clinical range pack.)"""
@@ -183,16 +183,22 @@ class TestRosterCounts:
         csf_biomarkers/csf_ptau231_research_preview and
         genetics/trem2_research_preview added (Tier 2 items that ship
         as research_preview because no FDA clearance + no AA-2024
-        recognition + no clinical-grade actionable threshold)."""
+        recognition + no clinical-grade actionable threshold).
+        v1.27.0: grows from 4 to 5 with
+        mri_volumetrics/hippocampal_subfields_research_preview (12 canonical
+        FreeSurfer subfields x 2 hemispheres; research_preview because no
+        consensus subfield normative exists and FS6/FS7 comparability is
+        poor)."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
-        assert len(preview) == 4
+        assert len(preview) == 5
         names = {p["name"] for p in preview}
         assert names == {
             "mri_volumetrics/freesurfer_extended",
             "tau_pet/tau_research_preview",
             "csf_biomarkers/csf_ptau231_research_preview",
             "genetics/trem2_research_preview",
+            "mri_volumetrics/hippocampal_subfields_research_preview",
         }
 
     def test_six_deprecated_packs(self) -> None:
@@ -205,10 +211,12 @@ class TestRosterCounts:
     def test_total_pack_count(self) -> None:
         """v1.16.0 adds 1 pack (fdg_pet/fdg_consensus production -> 17 total).
         v1.17.0 adds 8 packs (6 production + 2 research_preview).
-        Net: 26 total packs (16 prod + 4 preview + 6 deprecated).
-        v1.22.0: +1 production pack (NfL)."""
+        Prior net: 26 total (16 prod + 4 preview + 6 deprecated).
+        v1.22.0: +1 production pack (NfL).
+        v1.27.0: +1 research_preview pack (hippocampal subfields) -> 27 total
+        (16 prod + 5 preview + 6 deprecated)."""
         packs = list_rangepacks()
-        assert len(packs) == 26  # 16 prod + 4 preview + 6 deprecated
+        assert len(packs) == 27  # 16 prod + 5 preview + 6 deprecated
 
 
 class TestDeprecationSchemaValidator:

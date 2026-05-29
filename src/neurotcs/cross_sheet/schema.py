@@ -495,7 +495,89 @@ class ReferentialIntegrityCondition(BaseModel):
     parent_field: str = Field(..., min_length=1)
 
 
-# Discriminated union for the 9 condition types
+# --- Condition type 10: subfield_rank_constraint ----------------------
+
+
+class SubfieldRankRule(BaseModel):
+    """One rank constraint on a single field within a ranked field set.
+
+    The rank is 1-based over `value_fields` ordered by DESCENDING value
+    (rank 1 = largest). `operator` compares the field's actual rank to
+    `rank`:
+      - "eq": actual rank must equal `rank`
+      - "le": actual rank must be <= `rank` (i.e., not ranked lower/smaller)
+      - "ge": actual rank must be >= `rank`
+    A rule with enabled=False is parsed and hashed but NOT evaluated; this
+    mirrors the ENIGMA convention of shipping the "CA1 is largest" rule
+    switched off by default (Saemann 2022: oversensitive in large samples).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    field: str = Field(..., min_length=1, description="A member of value_fields.")
+    operator: Literal["eq", "le", "ge"] = Field(
+        ..., description="How actual rank must relate to `rank`."
+    )
+    rank: int = Field(..., ge=1, description="1-based target rank (1 = largest).")
+    enabled: bool = Field(
+        default=True,
+        description="If False, the rule is recorded/hashed but not evaluated.",
+    )
+
+
+class SubfieldRankConstraintCondition(BaseModel):
+    """Rank-ordering constraints over a set of numeric fields in one sheet.
+
+    Within each row of `sheet`, `value_fields` are ranked by descending
+    value (ties broken deterministically by field name ascending, so the
+    audit_id is reproducible). Each enabled rule asserts the rank of one
+    field. A row is only evaluated if every field in `value_fields` is
+    present and numeric; rows missing a field are skipped (missingness is
+    the input-contract layer's concern, not this rule's).
+
+    Motivating use (Saemann 2022 ENIGMA hippocampal-subfield QC): the
+    subregion volume rank order is highly robust across scanners/samples,
+    so ranking violations flag likely segmentation error. NeuroTCS never
+    measures the subfields; it audits the rank order of values another
+    tool produced. Declarative; no code execution.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    type: Literal["subfield_rank_constraint"] = "subfield_rank_constraint"
+    sheet: Literal["manifest", "predictions", "patients", "biomarkers", "attribution"] = Field(
+        default="biomarkers",
+        description="Sheet whose rows carry all of value_fields.",
+    )
+    value_fields: list[str] = Field(
+        ..., min_length=2,
+        description="Numeric fields ranked by descending value (rank 1 = largest).",
+    )
+    rules: list[SubfieldRankRule] = Field(
+        ..., min_length=1,
+        description="Rank constraints; each field must be in value_fields.",
+    )
+
+    @model_validator(mode="after")
+    def _check_rules_reference_known_fields(self) -> SubfieldRankConstraintCondition:
+        if len(set(self.value_fields)) != len(self.value_fields):
+            raise ValueError("value_fields must not contain duplicates.")
+        n = len(self.value_fields)
+        vf = set(self.value_fields)
+        for r in self.rules:
+            if r.field not in vf:
+                raise ValueError(
+                    f"SubfieldRankRule.field {r.field!r} is not in value_fields."
+                )
+            if r.rank > n:
+                raise ValueError(
+                    f"SubfieldRankRule.rank {r.rank} exceeds the number of "
+                    f"value_fields ({n}) for field {r.field!r}."
+                )
+        return self
+
+
+# Discriminated union for the 10 condition types
 ConditionSpec = (
     CategoricalImpliesRangeCondition
     | FieldPresenceConsistencyCondition
@@ -506,6 +588,7 @@ ConditionSpec = (
     | TrajectoryMonotonicityCondition
     | CategoricalImpliesRangeRowwiseCondition
     | ReferentialIntegrityCondition
+    | SubfieldRankConstraintCondition
 )
 
 

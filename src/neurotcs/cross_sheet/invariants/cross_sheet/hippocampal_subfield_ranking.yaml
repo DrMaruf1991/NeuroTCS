@@ -1,0 +1,159 @@
+schema_version: 1.0.0
+invariantpack_id: cross_sheet/hippocampal_subfield_ranking@1.0.0
+pack_version: 1.0.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: hippocampal_subfield_rank_consistency
+framework_name: 'Cross-sheet hippocampal-subfield rank-order consistency (research_preview) - ENIGMA subregion
+  ranking-violation QC rules (Saemann 2022) applied to externally-measured FreeSurfer subfield volumes.
+  Ships research_preview: single-consortium QC heuristic, not international_consensus; audit_cross_sheet
+  refuses it outside dry_run.'
+transcribed_by: Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29. Verbatim rule transcription from
+  Saemann PG, Iglesias JE et al. Human Brain Mapping 2022;43(1):207-233 (DOI 10.1002/hbm.25326), ENIGMA
+  hippocampal-subfields QC protocol, Section 2.3 ranking-violation rules derived from N=626 subjects.
+clinical_source_authority: |-
+  This pack encodes the ENIGMA hippocampal-subfield ranking-violation QC rules as cross-sheet invariants over the biomarkers sheet. The subregion volume rank order is highly robust across scanners and samples (Saemann 2022, Figure 2a), so a violation flags likely segmentation error in the upstream measurement tool.
+
+  Ranking set: the 11 tissue subfields per hemisphere (CA1, CA3, CA4, subiculum, presubiculum, parasubiculum, molecular layer HP, GC-ML-DG, HATA, fimbria, hippocampal tail). The hippocampal fissure is excluded from the ranking because it is a CSF cleft, not hippocampal tissue.
+
+  Rules (Saemann 2022, N=626):
+   - CA1 must be rank #1 (largest). DISABLED by default, matching ENIGMA (oversensitive in large samples).
+   - Hippocampal tail must not rank below #3 (rank <= 3).
+   - Subiculum must rank #4.
+
+  STATUS = research_preview: this is a single-consortium QC heuristic, not an international_consensus rule with >=5 endorsing bodies. audit_cross_sheet() refuses a research_preview pack unless dry_run=True. NeuroTCS never measures or segments subfields; it audits the rank order of values another tool produced.
+
+  Companion: mri_volumetrics/hippocampal_subfields_research_preview (Layer 2 per-subfield plausibility envelopes). This Layer 3 pack adds the cross-subfield ordering check that per-field bounds cannot express.
+anchor_citation:
+  citation_doi: 10.1002/hbm.25326
+  pmid_pending: true
+  citation_text: 'Saemann PG, Iglesias JE, Gutman B, et al. FreeSurfer-based segmentation of hippocampal
+    subfields: a review of methods and applications, with a novel quality control procedure for ENIGMA
+    studies and other collaborative efforts. Human Brain Mapping 2022;43(1):207-233 (DOI 10.1002/hbm.25326).
+    The ENIGMA hippocampal-subfields QC protocol.'
+  public_url: https://doi.org/10.1002/hbm.25326
+  endorsing_bodies:
+  - ENIGMA Hippocampal Subfields Working Group
+  - Saemann 2022 (Human Brain Mapping)
+  - FreeSurfer hippocampal-subfield module (Iglesias 2015)
+invariants:
+- name: left_hippocampal_subfield_rank_order_enigma
+  description: 'Left hippocampal subfield volumes must follow the ENIGMA-validated subregion rank order
+    (Saemann 2022, N=626): the hippocampal tail must not rank below #3 by volume, and the subiculum must
+    rank #4. A violation indicates likely segmentation error in the upstream tool. The ''CA1 is largest''
+    rule (rank #1) is included but disabled by default, mirroring ENIGMA (oversensitive in large samples).
+    NeuroTCS does not measure subfields; it audits the rank order of values another tool produced.'
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  - visit_id
+  condition:
+    type: subfield_rank_constraint
+    sheet: biomarkers
+    value_fields:
+    - ca1_volume_left_mm3
+    - ca3_volume_left_mm3
+    - ca4_volume_left_mm3
+    - subiculum_volume_left_mm3
+    - presubiculum_volume_left_mm3
+    - parasubiculum_volume_left_mm3
+    - molecular_layer_hp_volume_left_mm3
+    - gc_ml_dg_volume_left_mm3
+    - hata_volume_left_mm3
+    - fimbria_volume_left_mm3
+    - hippocampal_tail_volume_left_mm3
+    rules:
+    - field: ca1_volume_left_mm3
+      operator: eq
+      rank: 1
+      enabled: false
+    - field: hippocampal_tail_volume_left_mm3
+      operator: le
+      rank: 3
+      enabled: true
+    - field: subiculum_volume_left_mm3
+      operator: eq
+      rank: 4
+      enabled: true
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Saemann PG, Iglesias JE et al. Human Brain Mapping 2022;43(1):207-233, Section 2.3
+    ranking-violation QC rules (N=626): CA1 rank #1 (optional), hippocampal tail not below rank #3, subiculum
+    rank #4.'
+  citation:
+    citation_doi: 10.1002/hbm.25326
+    pmid_pending: true
+    citation_text: 'Saemann PG, Iglesias JE, Gutman B, et al. FreeSurfer-based segmentation of hippocampal
+      subfields: a review of methods and applications, with a novel quality control procedure for ENIGMA
+      studies. Human Brain Mapping 2022;43(1):207-233 (DOI 10.1002/hbm.25326). The subregion volume rank
+      order is highly robust across scanners and samples; three ranking violations were defined from N=626
+      subjects (CA1 not rank #1 ~11% [optional]; tail below rank #3 ~2%; subiculum not rank #4 ~2%).'
+    public_url: https://doi.org/10.1002/hbm.25326
+    endorsing_bodies:
+    - ENIGMA Hippocampal Subfields Working Group
+    - Saemann 2022 (Human Brain Mapping)
+    - FreeSurfer hippocampal-subfield module (Iglesias 2015)
+- name: right_hippocampal_subfield_rank_order_enigma
+  description: 'Right hippocampal subfield volumes must follow the ENIGMA-validated subregion rank order
+    (Saemann 2022, N=626): the hippocampal tail must not rank below #3 by volume, and the subiculum must
+    rank #4. A violation indicates likely segmentation error in the upstream tool. The ''CA1 is largest''
+    rule (rank #1) is included but disabled by default, mirroring ENIGMA (oversensitive in large samples).
+    NeuroTCS does not measure subfields; it audits the rank order of values another tool produced.'
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  - visit_id
+  condition:
+    type: subfield_rank_constraint
+    sheet: biomarkers
+    value_fields:
+    - ca1_volume_right_mm3
+    - ca3_volume_right_mm3
+    - ca4_volume_right_mm3
+    - subiculum_volume_right_mm3
+    - presubiculum_volume_right_mm3
+    - parasubiculum_volume_right_mm3
+    - molecular_layer_hp_volume_right_mm3
+    - gc_ml_dg_volume_right_mm3
+    - hata_volume_right_mm3
+    - fimbria_volume_right_mm3
+    - hippocampal_tail_volume_right_mm3
+    rules:
+    - field: ca1_volume_right_mm3
+      operator: eq
+      rank: 1
+      enabled: false
+    - field: hippocampal_tail_volume_right_mm3
+      operator: le
+      rank: 3
+      enabled: true
+    - field: subiculum_volume_right_mm3
+      operator: eq
+      rank: 4
+      enabled: true
+  flag_severity: warning
+  citation_strength: derived
+  guideline_section: 'Saemann PG, Iglesias JE et al. Human Brain Mapping 2022;43(1):207-233, Section 2.3
+    ranking-violation QC rules (N=626): CA1 rank #1 (optional), hippocampal tail not below rank #3, subiculum
+    rank #4.'
+  citation:
+    citation_doi: 10.1002/hbm.25326
+    pmid_pending: true
+    citation_text: 'Saemann PG, Iglesias JE, Gutman B, et al. FreeSurfer-based segmentation of hippocampal
+      subfields: a review of methods and applications, with a novel quality control procedure for ENIGMA
+      studies. Human Brain Mapping 2022;43(1):207-233 (DOI 10.1002/hbm.25326). The subregion volume rank
+      order is highly robust across scanners and samples; three ranking violations were defined from N=626
+      subjects (CA1 not rank #1 ~11% [optional]; tail below rank #3 ~2%; subiculum not rank #4 ~2%).'
+    public_url: https://doi.org/10.1002/hbm.25326
+    endorsing_bodies:
+    - ENIGMA Hippocampal Subfields Working Group
+    - Saemann 2022 (Human Brain Mapping)
+    - FreeSurfer hippocampal-subfield module (Iglesias 2015)
+notes: 'Ranking is deterministic: value_fields sorted by descending value, ties broken by field name ascending,
+  so flag_id is reproducible. Rows missing any value_field are skipped (missingness is an input-contract
+  concern). Must not be promoted to production until validated against empirical false-positive rates
+  on real and synthetic cohorts, consistent with the genotype_phenotype_consistency promotion discipline.'

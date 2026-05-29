@@ -1,3 +1,47 @@
+## [1.27.0] -- 2026-05-29
+
+### Added: hippocampal subfield auditing (Layer 2 envelopes + Layer 3 ENIGMA rank-order)
+
+Two research_preview packs and one new cross_sheet condition type, so NeuroTCS
+can audit externally-measured hippocampal-subfield volumes without ever
+measuring them.
+
+Layer 2 -- `mri_volumetrics/hippocampal_subfields_research_preview` (research_
+preview). The 12 canonical FreeSurfer hippocampal-subfield-module subregions
+per hemisphere (24 measurements), anchored on the Iglesias 2015 ex vivo atlas
+(PMID 25936807), with wide biological-plausibility envelopes (citation_strength
+=derived). research_preview because no consensus subfield normative exists,
+FS6/FS7 comparability is poor, and several small subfields have low T1
+reliability (Saemann 2022); the production world-class evidence-bar tests
+(>=5 endorsers + multi-source) therefore correctly block promotion until a
+multi-cohort, version-harmonized normative is published. `audit_clinical_
+ranges()` refuses to run it; unaudited subfield columns surface in the
+orchestrator coverage manifest's `columns_ignored`.
+
+Layer 3 -- new `subfield_rank_constraint` cross_sheet condition type (the 10th),
+fully wired into the discriminated `ConditionSpec` union, `_evaluate_invariant`
+dispatch, and the canonical/yaml hash (no partition change needed; the cross_
+sheet canonical hash dumps the whole model). It encodes within-row rank-ordering
+rules over a set of numeric fields, ranked by descending value (ties broken by
+field name for reproducible flag_ids). Shipped as `cross_sheet/hippocampal_
+subfield_ranking` (research_preview, 2 invariants) encoding the ENIGMA ranking-
+violation QC rules (Saemann 2022, Human Brain Mapping 43(1):207-233, DOI
+10.1002/hbm.25326, N=626): CA1 == rank #1 (disabled by default, per ENIGMA),
+hippocampal tail <= rank #3, subiculum == rank #4. `audit_cross_sheet` refuses
+it outside dry_run (research_preview). This is the cross-subfield ordering check
+that per-field range bounds structurally cannot express.
+
+Docs: `mri_volumetrics/freesurfer_extended` subfield note updated to point at
+the new interim packs. The production pack `mri_volumetrics/structural_
+volumetry_consensus` is intentionally left byte-frozen (golden yaml_sha256
+locked); its exclusion note remains accurate -- it anticipates a future
+PRODUCTION subfield pack post-harmonization, which is still deferred.
+
+Tests: 16 (Layer 2 pack) + 13 (Layer 3 condition type & pack) = 29 new, all
+passing. Range-pack census updated to 16 production / 5 research_preview /
+6 deprecated / 27 total in test_deprecation_semantics.py and
+test_trial_file_validation.py.
+
 ## [1.26.0] -- 2026-05-28
 
 ### Added: PDF report renderer + pre-push CI gate

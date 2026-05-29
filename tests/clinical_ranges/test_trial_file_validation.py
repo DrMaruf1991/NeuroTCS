@@ -153,13 +153,14 @@ class TestPacksListAccurate:
         downgrades."""
         packs = list_rangepacks()
         preview = [p for p in packs if p.get("status") == "research_preview"]
-        assert len(preview) == 4
+        assert len(preview) == 5
         names = {p["name"] for p in preview}
         assert names == {
             "mri_volumetrics/freesurfer_extended",
             "tau_pet/tau_research_preview",
             "csf_biomarkers/csf_ptau231_research_preview",
             "genetics/trem2_research_preview",
+            "mri_volumetrics/hippocampal_subfields_research_preview",
         }
 
     def test_six_deprecated_packs(self):

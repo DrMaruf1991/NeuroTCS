@@ -1,0 +1,1042 @@
+schema_version: 1.0.0
+rangepack_id: mri_volumetrics/hippocampal_subfields_research_preview@1.0.0
+pack_version: 1.0.0
+effective_date: '2026-05-29'
+status: research_preview
+domain: structural_brain_mri_volumetry
+framework_name: 'Hippocampal subfield volumetry (research_preview) - the 12 canonical FreeSurfer hippocampal-subfield-module
+  subregions per hemisphere (Iglesias 2015 ex vivo atlas), with research-grade biological-plausibility
+  envelopes. NOT at international_consensus normative standard: no consensus subfield normative database
+  exists, segmentation changes materially across FreeSurfer versions (FS6 vs FS7), and several small subfields
+  have low test-retest reliability (Saemann 2022). Ships research_preview pending cross-version harmonization.'
+transcribed_by: 'Salokhiddinov M, MD PhD (KIUT, Uzbekistan), 2026-05-29. Subfield set and atlas: Iglesias
+  JE et al. NeuroImage 2015;115:117-137 (PMID 25936807, DOI 10.1016/j.neuroimage.2015.04.042), the FreeSurfer
+  hippocampal-subfield module reference. Plausibility/reliability framework: Saemann PG, Iglesias JE et
+  al. Human Brain Mapping 2022;43(1):207-233 (DOI 10.1002/hbm.25326), the ENIGMA hippocampal-subfields
+  QC protocol. Envelope magnitudes informed by FreeSurfer canonical hippoSfVolumes output ranges.'
+clinical_source_authority: |-
+  This pack encodes research-grade biological-plausibility envelopes for the 12 canonical FreeSurfer hippocampal-subfield-module subregions per hemisphere. It is a rulebook the auditor checks externally-measured subfield values against; NeuroTCS never measures or segments subfields.
+
+  Subfield set (Iglesias 2015 atlas, FreeSurfer hippoSfVolumes output): CA1, CA3 (includes CA2), CA4, subiculum, presubiculum, parasubiculum, molecular layer (HP), GC-ML-DG, HATA, fimbria, hippocampal fissure, hippocampal tail -- left and right (24 measurements).
+
+  Why research_preview, not production:
+   - No consensus subfield normative database exists (Bethlehem 2022 whole-hippocampus normative does not extend to subfields; no FDA-cleared subfield normative).
+   - Iglesias 2015 segmentation changed materially between FreeSurfer 6 and 7; cross-version comparability is poor (still documented as of 2025).
+   - Several small subfields (parasubiculum, fimbria, hippocampal fissure, HATA) have low test-retest reliability on T1-only data (Saemann 2022).
+   - The hippocampal fissure is a CSF cleft, not hippocampal tissue.
+
+  Consequence: audit_clinical_ranges() refuses to run a research_preview pack. These envelopes are loadable for experimentation and validation only, not production audit. Bounds are wide pipeline-error / biological-plausibility envelopes (citation_strength=derived), NOT validated normative percentiles.
+
+  Companion: mri_volumetrics/structural_volumetry_consensus@1.0.0 (production) covers whole-hippocampus volume at international_consensus. The ENIGMA subfield ranking-violation rules (Saemann 2022: CA1 largest; tail not below rank 3; subiculum rank 4) are a cross-subfield ordering check not expressible in the current range-pack or cross_sheet invariant schema; they are tracked for a dedicated subfield-rank invariant type.
+anchor_citation:
+  citation_pmid: '25936807'
+  citation_doi: 10.1016/j.neuroimage.2015.04.042
+  citation_text: 'Iglesias JE, Augustinack JC, Nguyen K, Player CM, Player A, Wright M, Roy N, Frosch
+    MP, McKee AC, Wald LL, Fischl B, Van Leemput K. A computational atlas of the hippocampal formation
+    using ex vivo, ultra-high resolution MRI: Application to adaptive segmentation of in vivo MRI. NeuroImage.
+    2015 Jul 15;115:117-137 (PMID 25936807, DOI 10.1016/j.neuroimage.2015.04.042). The reference ex vivo
+    atlas (15 autopsy samples, ~0.13 mm isotropic, 13 manually segmented subregions) at the core of the
+    FreeSurfer hippocampal-subfield module and the most cited hippocampal-subfield segmentation reference.'
+  public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+  endorsing_bodies:
+  - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+  - ENIGMA Hippocampal Subfields Working Group
+  - FreeSurfer canonical hippocampal-subfield pipeline
+  - Saemann 2022 ENIGMA subfield QC protocol
+notes: 'Bound derivation: hard_min = segmentation-failure floor; hard_max = biologically implausible ceiling.
+  Envelopes are deliberately wide to accommodate FreeSurfer-version and age/sex variation; they detect
+  gross pipeline errors, not normal-range deviation. Low-reliability subfields (parasubiculum, fimbria,
+  hippocampal fissure, HATA) carry wider envelopes and an explicit reliability caveat per Saemann 2022.
+  This pack asserts nothing about normative percentiles and must not be promoted to production until a
+  consensus, version-harmonized subfield normative is published.'
+measurements:
+- name: ca1_volume_left_mm3
+  unit: mm^3
+  description: Left CA1 volume in mm^3 (FreeSurfer hippocampal-subfield module label CA1, lh.hippoSfVolumes;
+    Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 150.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left CA1 volume at or below 150 mm^3 is below the FreeSurfer canonical output magnitude
+        for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions, Saemann 2022)
+        and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 1200.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left CA1 volume above 1200 mm^3 is biologically implausible for this subfield per
+        FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions (Saemann
+        2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: ca1_volume_right_mm3
+  unit: mm^3
+  description: Right CA1 volume in mm^3 (FreeSurfer hippocampal-subfield module label CA1, rh.hippoSfVolumes;
+    Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 150.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right CA1 volume at or below 150 mm^3 is below the FreeSurfer canonical output magnitude
+        for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions, Saemann 2022)
+        and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 1200.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right CA1 volume above 1200 mm^3 is biologically implausible for this subfield per
+        FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions (Saemann
+        2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: ca3_volume_left_mm3
+  unit: mm^3
+  description: Left CA3 (includes CA2 in FreeSurfer) volume in mm^3 (FreeSurfer hippocampal-subfield module
+    label CA3, lh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 50.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left CA3 (includes CA2 in FreeSurfer) volume at or below 50 mm^3 is below the FreeSurfer
+        canonical output magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions,
+        Saemann 2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 700.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left CA3 (includes CA2 in FreeSurfer) volume above 700 mm^3 is biologically implausible
+        for this subfield per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference
+        distributions (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated
+        normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: ca3_volume_right_mm3
+  unit: mm^3
+  description: Right CA3 (includes CA2 in FreeSurfer) volume in mm^3 (FreeSurfer hippocampal-subfield
+    module label CA3, rh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 50.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right CA3 (includes CA2 in FreeSurfer) volume at or below 50 mm^3 is below the FreeSurfer
+        canonical output magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions,
+        Saemann 2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 700.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right CA3 (includes CA2 in FreeSurfer) volume above 700 mm^3 is biologically implausible
+        for this subfield per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference
+        distributions (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated
+        normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: ca4_volume_left_mm3
+  unit: mm^3
+  description: Left CA4 volume in mm^3 (FreeSurfer hippocampal-subfield module label CA4, lh.hippoSfVolumes;
+    Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 80.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left CA4 volume at or below 80 mm^3 is below the FreeSurfer canonical output magnitude
+        for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions, Saemann 2022)
+        and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 700.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left CA4 volume above 700 mm^3 is biologically implausible for this subfield per
+        FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions (Saemann
+        2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: ca4_volume_right_mm3
+  unit: mm^3
+  description: Right CA4 volume in mm^3 (FreeSurfer hippocampal-subfield module label CA4, rh.hippoSfVolumes;
+    Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 80.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right CA4 volume at or below 80 mm^3 is below the FreeSurfer canonical output magnitude
+        for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions, Saemann 2022)
+        and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 700.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right CA4 volume above 700 mm^3 is biologically implausible for this subfield per
+        FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions (Saemann
+        2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: subiculum_volume_left_mm3
+  unit: mm^3
+  description: Left subiculum volume in mm^3 (FreeSurfer hippocampal-subfield module label subiculum,
+    lh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 120.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left subiculum volume at or below 120 mm^3 is below the FreeSurfer canonical output
+        magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions, Saemann
+        2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 1000.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left subiculum volume above 1000 mm^3 is biologically implausible for this subfield
+        per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions
+        (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: subiculum_volume_right_mm3
+  unit: mm^3
+  description: Right subiculum volume in mm^3 (FreeSurfer hippocampal-subfield module label subiculum,
+    rh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 120.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right subiculum volume at or below 120 mm^3 is below the FreeSurfer canonical output
+        magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions, Saemann
+        2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 1000.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right subiculum volume above 1000 mm^3 is biologically implausible for this subfield
+        per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions
+        (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: presubiculum_volume_left_mm3
+  unit: mm^3
+  description: Left presubiculum volume in mm^3 (FreeSurfer hippocampal-subfield module label presubiculum,
+    lh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 80.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left presubiculum volume at or below 80 mm^3 is below the FreeSurfer canonical output
+        magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions, Saemann
+        2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 800.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left presubiculum volume above 800 mm^3 is biologically implausible for this subfield
+        per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions
+        (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: presubiculum_volume_right_mm3
+  unit: mm^3
+  description: Right presubiculum volume in mm^3 (FreeSurfer hippocampal-subfield module label presubiculum,
+    rh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 80.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right presubiculum volume at or below 80 mm^3 is below the FreeSurfer canonical output
+        magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions, Saemann
+        2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 800.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right presubiculum volume above 800 mm^3 is biologically implausible for this subfield
+        per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions
+        (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: parasubiculum_volume_left_mm3
+  unit: mm^3
+  description: Left parasubiculum volume in mm^3 (FreeSurfer hippocampal-subfield module label parasubiculum,
+    lh.hippoSfVolumes; Iglesias 2015 atlas). Low-reliability subfield on T1-only data (Saemann 2022).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 10.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Left parasubiculum volume at or below 10 mm^3 is below the FreeSurfer canonical
+        output magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions,
+        Saemann 2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile. NOTE: low test-retest reliability on T1-only data
+        (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 300.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Left parasubiculum volume above 300 mm^3 is biologically implausible for this subfield
+        per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions
+        (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+        NOTE: low test-retest reliability on T1-only data (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: parasubiculum_volume_right_mm3
+  unit: mm^3
+  description: Right parasubiculum volume in mm^3 (FreeSurfer hippocampal-subfield module label parasubiculum,
+    rh.hippoSfVolumes; Iglesias 2015 atlas). Low-reliability subfield on T1-only data (Saemann 2022).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 10.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Right parasubiculum volume at or below 10 mm^3 is below the FreeSurfer canonical
+        output magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions,
+        Saemann 2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile. NOTE: low test-retest reliability on T1-only data
+        (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 300.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Right parasubiculum volume above 300 mm^3 is biologically implausible for this subfield
+        per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions
+        (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+        NOTE: low test-retest reliability on T1-only data (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: molecular_layer_hp_volume_left_mm3
+  unit: mm^3
+  description: Left molecular layer of the hippocampus proper volume in mm^3 (FreeSurfer hippocampal-subfield
+    module label molecular_layer_HP, lh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 150.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left molecular layer of the hippocampus proper volume at or below 150 mm^3 is below
+        the FreeSurfer canonical output magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA
+        reference distributions, Saemann 2022) and indicates segmentation failure or a pipeline error.
+        Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 1200.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left molecular layer of the hippocampus proper volume above 1200 mm^3 is biologically
+        implausible for this subfield per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA
+        reference distributions (Saemann 2022). Research-grade biological-plausibility envelope, NOT a
+        validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: molecular_layer_hp_volume_right_mm3
+  unit: mm^3
+  description: Right molecular layer of the hippocampus proper volume in mm^3 (FreeSurfer hippocampal-subfield
+    module label molecular_layer_HP, rh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 150.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right molecular layer of the hippocampus proper volume at or below 150 mm^3 is below
+        the FreeSurfer canonical output magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA
+        reference distributions, Saemann 2022) and indicates segmentation failure or a pipeline error.
+        Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 1200.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right molecular layer of the hippocampus proper volume above 1200 mm^3 is biologically
+        implausible for this subfield per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA
+        reference distributions (Saemann 2022). Research-grade biological-plausibility envelope, NOT a
+        validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: gc_ml_dg_volume_left_mm3
+  unit: mm^3
+  description: Left granule cell and molecular layer of the dentate gyrus volume in mm^3 (FreeSurfer hippocampal-subfield
+    module label GC-ML-DG, lh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 80.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left granule cell and molecular layer of the dentate gyrus volume at or below 80
+        mm^3 is below the FreeSurfer canonical output magnitude for this subfield (Iglesias 2015 ex vivo
+        atlas; ENIGMA reference distributions, Saemann 2022) and indicates segmentation failure or a pipeline
+        error. Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 800.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left granule cell and molecular layer of the dentate gyrus volume above 800 mm^3
+        is biologically implausible for this subfield per FreeSurfer canonical output magnitudes (Iglesias
+        2015) and ENIGMA reference distributions (Saemann 2022). Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: gc_ml_dg_volume_right_mm3
+  unit: mm^3
+  description: Right granule cell and molecular layer of the dentate gyrus volume in mm^3 (FreeSurfer
+    hippocampal-subfield module label GC-ML-DG, rh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 80.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right granule cell and molecular layer of the dentate gyrus volume at or below 80
+        mm^3 is below the FreeSurfer canonical output magnitude for this subfield (Iglesias 2015 ex vivo
+        atlas; ENIGMA reference distributions, Saemann 2022) and indicates segmentation failure or a pipeline
+        error. Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 800.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right granule cell and molecular layer of the dentate gyrus volume above 800 mm^3
+        is biologically implausible for this subfield per FreeSurfer canonical output magnitudes (Iglesias
+        2015) and ENIGMA reference distributions (Saemann 2022). Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: hata_volume_left_mm3
+  unit: mm^3
+  description: Left hippocampus-amygdala transition area volume in mm^3 (FreeSurfer hippocampal-subfield
+    module label HATA, lh.hippoSfVolumes; Iglesias 2015 atlas). Low-reliability subfield on T1-only data
+    (Saemann 2022).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 10.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Left hippocampus-amygdala transition area volume at or below 10 mm^3 is below the
+        FreeSurfer canonical output magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference
+        distributions, Saemann 2022) and indicates segmentation failure or a pipeline error. Research-grade
+        biological-plausibility envelope, NOT a validated normative percentile. NOTE: low test-retest
+        reliability on T1-only data (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 250.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Left hippocampus-amygdala transition area volume above 250 mm^3 is biologically
+        implausible for this subfield per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA
+        reference distributions (Saemann 2022). Research-grade biological-plausibility envelope, NOT a
+        validated normative percentile. NOTE: low test-retest reliability on T1-only data (Saemann 2022);
+        bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: hata_volume_right_mm3
+  unit: mm^3
+  description: Right hippocampus-amygdala transition area volume in mm^3 (FreeSurfer hippocampal-subfield
+    module label HATA, rh.hippoSfVolumes; Iglesias 2015 atlas). Low-reliability subfield on T1-only data
+    (Saemann 2022).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 10.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Right hippocampus-amygdala transition area volume at or below 10 mm^3 is below the
+        FreeSurfer canonical output magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference
+        distributions, Saemann 2022) and indicates segmentation failure or a pipeline error. Research-grade
+        biological-plausibility envelope, NOT a validated normative percentile. NOTE: low test-retest
+        reliability on T1-only data (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 250.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Right hippocampus-amygdala transition area volume above 250 mm^3 is biologically
+        implausible for this subfield per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA
+        reference distributions (Saemann 2022). Research-grade biological-plausibility envelope, NOT a
+        validated normative percentile. NOTE: low test-retest reliability on T1-only data (Saemann 2022);
+        bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: fimbria_volume_left_mm3
+  unit: mm^3
+  description: Left fimbria volume in mm^3 (FreeSurfer hippocampal-subfield module label fimbria, lh.hippoSfVolumes;
+    Iglesias 2015 atlas). Low-reliability subfield on T1-only data (Saemann 2022).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 10.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Left fimbria volume at or below 10 mm^3 is below the FreeSurfer canonical output
+        magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions, Saemann
+        2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile. NOTE: low test-retest reliability on T1-only data
+        (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 400.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Left fimbria volume above 400 mm^3 is biologically implausible for this subfield
+        per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions
+        (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+        NOTE: low test-retest reliability on T1-only data (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: fimbria_volume_right_mm3
+  unit: mm^3
+  description: Right fimbria volume in mm^3 (FreeSurfer hippocampal-subfield module label fimbria, rh.hippoSfVolumes;
+    Iglesias 2015 atlas). Low-reliability subfield on T1-only data (Saemann 2022).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 10.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Right fimbria volume at or below 10 mm^3 is below the FreeSurfer canonical output
+        magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions, Saemann
+        2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile. NOTE: low test-retest reliability on T1-only data
+        (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 400.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Right fimbria volume above 400 mm^3 is biologically implausible for this subfield
+        per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions
+        (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+        NOTE: low test-retest reliability on T1-only data (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: hippocampal_fissure_volume_left_mm3
+  unit: mm^3
+  description: Left hippocampal fissure (CSF cleft, not hippocampal tissue) volume in mm^3 (FreeSurfer
+    hippocampal-subfield module label hippocampal-fissure, lh.hippoSfVolumes; Iglesias 2015 atlas). Low-reliability
+    subfield on T1-only data (Saemann 2022).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 20.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Left hippocampal fissure (CSF cleft, not hippocampal tissue) volume at or below
+        20 mm^3 is below the FreeSurfer canonical output magnitude for this subfield (Iglesias 2015 ex
+        vivo atlas; ENIGMA reference distributions, Saemann 2022) and indicates segmentation failure or
+        a pipeline error. Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+        NOTE: low test-retest reliability on T1-only data (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 700.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Left hippocampal fissure (CSF cleft, not hippocampal tissue) volume above 700 mm^3
+        is biologically implausible for this subfield per FreeSurfer canonical output magnitudes (Iglesias
+        2015) and ENIGMA reference distributions (Saemann 2022). Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile. NOTE: low test-retest reliability on T1-only data
+        (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: hippocampal_fissure_volume_right_mm3
+  unit: mm^3
+  description: Right hippocampal fissure (CSF cleft, not hippocampal tissue) volume in mm^3 (FreeSurfer
+    hippocampal-subfield module label hippocampal-fissure, rh.hippoSfVolumes; Iglesias 2015 atlas). Low-reliability
+    subfield on T1-only data (Saemann 2022).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 20.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Right hippocampal fissure (CSF cleft, not hippocampal tissue) volume at or below
+        20 mm^3 is below the FreeSurfer canonical output magnitude for this subfield (Iglesias 2015 ex
+        vivo atlas; ENIGMA reference distributions, Saemann 2022) and indicates segmentation failure or
+        a pipeline error. Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+        NOTE: low test-retest reliability on T1-only data (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 700.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: 'Right hippocampal fissure (CSF cleft, not hippocampal tissue) volume above 700 mm^3
+        is biologically implausible for this subfield per FreeSurfer canonical output magnitudes (Iglesias
+        2015) and ENIGMA reference distributions (Saemann 2022). Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile. NOTE: low test-retest reliability on T1-only data
+        (Saemann 2022); bounds are intentionally wide.'
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: hippocampal_tail_volume_left_mm3
+  unit: mm^3
+  description: Left hippocampal tail volume in mm^3 (FreeSurfer hippocampal-subfield module label Hippocampal_tail,
+    lh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 120.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left hippocampal tail volume at or below 120 mm^3 is below the FreeSurfer canonical
+        output magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions,
+        Saemann 2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 1300.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Left hippocampal tail volume above 1300 mm^3 is biologically implausible for this
+        subfield per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions
+        (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+- name: hippocampal_tail_volume_right_mm3
+  unit: mm^3
+  description: Right hippocampal tail volume in mm^3 (FreeSurfer hippocampal-subfield module label Hippocampal_tail,
+    rh.hippoSfVolumes; Iglesias 2015 atlas).
+  measurement_kind: numeric
+  bounds:
+  - bound_type: hard_min
+    value: 120.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output floor (segmentation-failure threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right hippocampal tail volume at or below 120 mm^3 is below the FreeSurfer canonical
+        output magnitude for this subfield (Iglesias 2015 ex vivo atlas; ENIGMA reference distributions,
+        Saemann 2022) and indicates segmentation failure or a pipeline error. Research-grade biological-plausibility
+        envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol
+  - bound_type: hard_max
+    value: 1300.0
+    citation_strength: derived
+    guideline_section: FreeSurfer canonical hippocampal-subfield output ceiling (biologically implausible
+      threshold)
+    citation:
+      citation_pmid: '25936807'
+      citation_doi: 10.1016/j.neuroimage.2015.04.042
+      citation_text: Right hippocampal tail volume above 1300 mm^3 is biologically implausible for this
+        subfield per FreeSurfer canonical output magnitudes (Iglesias 2015) and ENIGMA reference distributions
+        (Saemann 2022). Research-grade biological-plausibility envelope, NOT a validated normative percentile.
+      public_url: https://pubmed.ncbi.nlm.nih.gov/25936807/
+      endorsing_bodies:
+      - Iglesias 2015 ex vivo hippocampal atlas (FreeSurfer module)
+      - ENIGMA Hippocampal Subfields Working Group
+      - FreeSurfer canonical hippocampal-subfield pipeline
+      - Saemann 2022 ENIGMA subfield QC protocol

@@ -40,8 +40,13 @@ clinical_source_authority: |
      precuneus, fusiform)
    - Hippocampal subfields (Iglesias 2015) - DISABLED in this pack
      because cross-FreeSurfer-version variability is too large for
-     stable bounds. Subfields will get their own dedicated pack when
-     cross-version harmonization is published.
+     stable bounds. An interim research_preview subfield pack now exists
+     (v1.27.0): mri_volumetrics/hippocampal_subfields_research_preview
+     (12 canonical subfields x 2 hemispheres, per-subfield plausibility
+     envelopes), paired with the Layer 3 cross_sheet/hippocampal_subfield_
+     ranking pack (ENIGMA rank-order QC, Saemann 2022). Both remain
+     research_preview pending cross-version harmonization; the production
+     subfield pack is still deferred until harmonization is published.
 
   WHAT THIS PACK DOES NOT CONTAIN:
    - Destrieux 148-region cortical parcellation (no FDA tool uses;
