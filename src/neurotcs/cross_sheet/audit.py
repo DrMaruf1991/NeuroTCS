@@ -47,6 +47,7 @@ from neurotcs.cross_sheet.schema import (
     InvariantPackStatus,
     NumericConflictCondition,
     ReferentialIntegrityCondition,
+    SubfieldRankConstraintCondition,
     TrajectoryMonotonicityCondition,
     ValueRangeConditionalCondition,
 )
@@ -264,6 +265,8 @@ def _evaluate_invariant(
         flags.extend(_evaluate_categorical_implies_range_rowwise(invariant, cond, submission, lp))
     elif isinstance(cond, ReferentialIntegrityCondition):
         flags.extend(_evaluate_referential_integrity(invariant, cond, submission, lp))
+    elif isinstance(cond, SubfieldRankConstraintCondition):
+        flags.extend(_evaluate_subfield_rank_constraint(invariant, cond, submission, lp))
     else:
         raise NotImplementedError(
             f"Unknown condition type for invariant {invariant.name!r}: "
@@ -1546,3 +1549,108 @@ def _derive_flag_id(payload: dict[str, Any]) -> str:
     """
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _evaluate_subfield_rank_constraint(
+    invariant: CrossSheetInvariant,
+    cond: SubfieldRankConstraintCondition,
+    submission: dict[str, Any],
+    lp: LoadedInvariantPack,
+) -> list[CrossSheetFlag]:
+    """Evaluate a subfield_rank_constraint condition.
+
+    For each row of cond.sheet in which every value_field is present and
+    numeric, rank the value_fields by descending value (ties broken by
+    field name ascending, so flag_id is reproducible). Each ENABLED rule
+    asserts the rank of one field; violations emit a flag. Rows missing
+    any value_field are skipped (missingness is an input-contract concern).
+    """
+    flags: list[CrossSheetFlag] = []
+
+    rows = _iter_rows(submission.get(cond.sheet))
+    if not rows:
+        return flags
+
+    enabled_rules = [r for r in cond.rules if r.enabled]
+    if not enabled_rules:
+        return flags
+
+    join_keys = invariant.join_keys or ["patient_id"]
+
+    for row in rows:
+        vals: dict[str, float] = {}
+        complete = True
+        for fld in cond.value_fields:
+            raw = row.get(fld)
+            if raw is None or isinstance(raw, bool):
+                complete = False
+                break
+            try:
+                vals[fld] = float(raw)
+            except (TypeError, ValueError):
+                complete = False
+                break
+        if not complete:
+            continue  # cannot rank a partial row; skip honestly
+
+        # Deterministic ranking: largest first; ties broken by field name.
+        ordered = sorted(cond.value_fields, key=lambda f: (-vals[f], f))
+        rank_of = {fld: i + 1 for i, fld in enumerate(ordered)}
+
+        for rule in enabled_rules:
+            actual = rank_of[rule.field]
+            if rule.operator == "eq":
+                violated = actual != rule.rank
+            elif rule.operator == "le":
+                violated = actual > rule.rank
+            else:  # "ge"
+                violated = actual < rule.rank
+            if violated:
+                jkv = {k: row.get(k) for k in join_keys if k in row}
+                flags.append(
+                    _make_subfield_rank_flag(
+                        invariant=invariant, lp=lp, cond=cond, rule=rule,
+                        actual_rank=actual, field_value=vals[rule.field],
+                        join_key_values=jkv,
+                    )
+                )
+    return flags
+
+
+def _make_subfield_rank_flag(
+    invariant: CrossSheetInvariant,
+    lp: LoadedInvariantPack,
+    cond: SubfieldRankConstraintCondition,
+    rule: Any,
+    actual_rank: int,
+    field_value: float,
+    join_key_values: dict[str, Any],
+) -> CrossSheetFlag:
+    payload = {
+        "yaml_sha256": lp.yaml_sha256,
+        "invariant_name": invariant.name,
+        "kind": "subfield_rank_violation",
+        "sheet": cond.sheet,
+        "field": rule.field,
+        "operator": rule.operator,
+        "expected_rank": int(rule.rank),
+        "actual_rank": int(actual_rank),
+        "join_key_values": _stringify_for_hash(join_key_values),
+        "contract_version": "1.2.0",
+    }
+    op_word = {"eq": "==", "le": "<=", "ge": ">="}[rule.operator]
+    return CrossSheetFlag(
+        flag_id=_derive_flag_id(payload),
+        pack_id=lp.invariantpack.invariantpack_id,
+        invariant_name=invariant.name,
+        severity=invariant.flag_severity,
+        join_key_values=dict(join_key_values),
+        observed_value=field_value,
+        flag_reason=(
+            f"subfield rank violation: {rule.field} ranked #{actual_rank} by "
+            f"volume but rule requires rank {op_word} {rule.rank}"
+        ),
+        citation_pmid=invariant.citation.citation_pmid,
+        citation_doi=invariant.citation.citation_doi,
+        citation_public_url=invariant.citation.public_url,
+    )
