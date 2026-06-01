@@ -1,3 +1,77 @@
+## [1.59.0] -- 2026-06-01 -- E-2026-032: subject-label synonym ontology (USIL increment 1, opt-in)
+
+First scoped, verify-first increment of the external auditor's "Universal Subject
+Intelligence Layer" roadmap. The auditor's USIL is a multi-part product roadmap,
+not one unit of work; this release ships the ONE piece buildable with no dataset
+we lack and no fabricated clinical rules: a citation-anchored synonym ontology
+that normalizes the RAW clinical-stage labels real studies use into the canonical
+vocabulary the staging packs already consume (CN/SMC/EMCI/LMCI/MCI/AD). Default
+OFF -> existing runs are byte-identical (v3 unchanged at 69/65/1236, deterministic
+core byte-identical; bundle format stays 1.4.0, no envelope change).
+
+### Problem it solves
+
+Today a dataset that labels its clinical state column "cognitively normal" /
+"early MCI" / "Alzheimer's dementia" (instead of the canonical CN/EMCI/AD) hits
+the vocabulary gate as a mismatch -> staging_clinical is skipped, no score
+emitted. The same cohort, same clinical meaning, simply cannot be audited because
+of label spelling. This layer lets it audit -- without guessing.
+
+### Added
+
+- src/neurotcs/orchestration/label_ontology.yaml: citation-anchored synonym map.
+  Each group lists alternative STRINGS for the SAME canonical clinical-stage
+  label, anchored to a verified source: ADNI Clinical Core (Aisen 2024, DOI
+  10.1002/alz.14167) + ADNI2 protocol for the CN/SMC/EMCI/LMCI/MCI/AD label set;
+  the SCD-Initiative consensus (Jessen 2014, DOI 10.1016/j.jalz.2014.01.001) for
+  the interchangeable SCD/subjective-memory-complaint cluster -> SMC. Every
+  identifier was verified by source lookup before encoding.
+- src/neurotcs/orchestration/label_normalization.py: load_label_ontology()
+  (cross-platform SHA-pinned, collision-checked at load) + normalize_labels().
+- cli.py: opt-in --normalize-labels flag. When set, maps the clinical-axis state
+  column through the ontology BEFORE staging, prints each substitution, and
+  records the normalization (ontology id + sha + every raw->canonical mapping)
+  in the bundle's input_warnings for provenance. Applies to the clinical axis
+  only (biological A/T/N is a different vocabulary, not covered here).
+- pyproject.toml: "neurotcs.orchestration" = ["*.yaml"] added to package-data so
+  the ontology ships in the wheel (caught by the v1.56.0 packaging-parity guard).
+
+### Safety design (the NeuroTCS ethos, enforced + tested)
+
+- SYNONYMS ONLY: maps different strings for the same label. It deliberately does
+  NOT collapse distinct clinical categories -- no SMC->CN, no EMCI/LMCI->MCI.
+  Those are diagnostic reinterpretations (a clinical judgment), out of scope; a
+  consumer wanting the collapsed 3-class scheme selects ad/niaaa_2018 instead.
+- NEVER GUESS: only exact (case/space/punctuation-normalized) known synonyms are
+  mapped; everything else passes through UNCHANGED so it still surfaces as
+  contamination in the vocabulary gate. Bare "dementia" is intentionally NOT an
+  AD synonym (could be vascular/DLB/FTD).
+- AMBIGUITY-SAFE: a synonym string mapping to >1 canonical fails closed at load.
+- CITATION-ANCHORED + REPORTED: every mapping carries its source; every
+  substitution is recorded for the regulator-readable bundle.
+- OPT-IN: nothing runs unless --normalize-labels is passed.
+
+### Explicitly NOT in this release (still roadmap, not faked)
+
+CDISC long-format zero-config reshaping, per-site/per-column assay certification,
+MRI-pipeline metadata mapping, conversion derivation (stable/converter MCI),
+disease-control ontology, ARIA/safety fields, trial-eligibility parsing, and new
+cohort adapters. Each needs a real dataset and/or verified rule source and is
+deferred to its own verify-first batch rather than fabricated here.
+
+### Tests
+
+1815 -> 1825 passed (+10). New tests/orchestration/test_label_normalization.py:
+collision-free load; canonical targets equal staging-pack states; real-world
+variants normalize; unrecognized tokens (incl. bare "dementia") pass through;
+distinct categories never collapsed; canonical idempotence; every group
+citation-anchored; provenance on each mapping; ambiguous ontology fails closed;
+nulls preserved. ruff clean over src/ tests/ scripts/. Default v3 run unchanged
+at 69/65/1236, deterministic. Ontology ships in the built wheel. All new files
+strict-ASCII.
+
+---
+
 ## [1.58.0] -- 2026-06-01 -- E-2026-031: machine-readable column coverage ledger + bundle envelope 1.4.0
 
 Closes the last real defect-class item from the external audit: the bundle's

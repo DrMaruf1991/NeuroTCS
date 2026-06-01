@@ -708,6 +708,39 @@ def cmd_audit(args: argparse.Namespace) -> int:
         _err(f"mapping does not match the data: {e}")
         return EXIT_INPUT
 
+    # v1.59.0 (opt-in, --normalize-labels): map raw clinical-stage labels to the
+    # canonical CN/SMC/EMCI/LMCI/MCI/AD vocabulary via the citation-anchored
+    # subject-label synonym ontology, so a dataset that writes "cognitively
+    # normal"/"early MCI"/"Alzheimer's dementia" audits against the clinical
+    # staging packs instead of being read as contamination. SYNONYMS ONLY: it
+    # never collapses distinct categories; unrecognized tokens pass through
+    # unchanged. Applies ONLY to the clinical axis (the biological A/T/N
+    # vocabulary is a different ontology not covered here). Every substitution is
+    # recorded in the bundle. Default OFF -> existing runs are byte-identical.
+    if getattr(args, "normalize_labels", False):
+        from neurotcs.orchestration.label_normalization import (
+            load_label_ontology,
+            normalize_labels,
+        )
+        _ont = load_label_ontology()
+        _clin = submission.get("clinical")
+        if _clin is not None and "state" in getattr(_clin, "columns", []):
+            _res = normalize_labels(list(_clin["state"]), _ont)
+            _clin = _clin.copy()
+            _clin["state"] = _res.normalized
+            submission["clinical"] = _clin
+            if not args.quiet and _res.mapping:
+                print("# label normalization (--normalize-labels), clinical axis:")
+                for raw, canon in sorted(_res.mapping.items()):
+                    print(f"  {raw!r} -> {canon}")
+            if _res.mapping:
+                _subs = "; ".join(f"{raw}->{canon}"
+                                  for raw, canon in sorted(_res.mapping.items()))
+                submission_warnings.append(
+                    f"label_normalization: clinical-stage labels normalized via "
+                    f"{_res.ontology_id} (sha256 {_res.ontology_sha256[:12]}): "
+                    f"{_subs}")
+
     # v1.42.0: AUTO-WIRE the Layer-3b cross-sheet coherence audit. Before this,
     # the cross-sheet layer never ran in zero-config (nothing populated
     # submission["cross_sheet"]), silently disabling ~1/5 of the auditor's
@@ -1035,6 +1068,16 @@ def build_parser() -> argparse.ArgumentParser:
                         "Off by default (fail-closed): without this flag those "
                         "columns are refused, since a column name cannot certify "
                         "the assay. The assertion is recorded in the bundle.")
+    a.add_argument("--normalize-labels", action="store_true",
+                   help="normalize raw clinical-stage labels (e.g. 'cognitively "
+                        "normal', 'CU', 'subjective memory complaint', 'early "
+                        "MCI', \"Alzheimer's dementia\") to the canonical "
+                        "vocabulary (CN/SMC/EMCI/LMCI/MCI/AD) via the "
+                        "citation-anchored subject-label synonym ontology before "
+                        "staging. Off by default. SYNONYMS ONLY -- never collapses "
+                        "distinct categories; unrecognized tokens pass through "
+                        "unchanged (still surface as contamination). Every "
+                        "substitution is recorded in the bundle.")
     a.set_defaults(func=cmd_audit)
 
     v = sub.add_parser("verify", help="re-verify a signed bundle")

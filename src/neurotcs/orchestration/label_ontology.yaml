@@ -1,0 +1,144 @@
+schema_version: "1.0.0"
+ontology_id: "subject_label/ad_clinical_stage@1.0.0"
+ontology_version: "1.0.0"
+effective_date: "2026-06-01"
+status: "research_preview"
+domain: "ad_clinical_stage"
+
+description: >
+  Citation-anchored synonym ontology that normalizes the RAW clinical-stage
+  labels different AD studies use into the canonical clinical-stage vocabulary
+  the NeuroTCS staging rule packs already consume (CN / SMC / EMCI / LMCI / MCI
+  / AD). This is a SYNONYM map only: every entry lists alternative STRINGS that
+  denote the SAME canonical clinical-stage label. It deliberately does NOT
+  collapse distinct clinical categories (e.g. it does NOT map SMC to CN, nor
+  EMCI/LMCI to MCI) -- those are diagnostic reinterpretations, not synonyms, and
+  are a clinical judgment outside the scope of a label normalizer. Tokens that
+  are not exact (normalized) synonyms pass through UNCHANGED so they still
+  surface as contamination in the vocabulary gate (fail-honest: never guess).
+
+transcribed_by: >
+  Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo
+  International University in Tashkent (KIUT), Uzbekistan. USIL increment 1: a
+  scoped, verify-first label-synonym layer feeding orchestration/vocabulary.py.
+  Every synonym group is anchored to an authoritative source verified before
+  encoding (ADNI Clinical Core / ADNI2 protocol for the CN/SMC/EMCI/LMCI/MCI/AD
+  label set; the SCD-Initiative consensus (Jessen 2014) for the
+  SCD/SMC interchangeable-term cluster).
+
+canonical_source_authority: |
+  Canonical clinical-stage label set (CN, SMC, EMCI, LMCI, MCI, AD): ADNI
+  Clinical Core, Aisen et al., Alzheimers Dement 2024 (DOI 10.1002/alz.14167),
+  and the ADNI2 protocol, which define the six clinical-stage cohorts used at
+  screening: cognitively normal (CN), subjective memory concern (SMC), early MCI
+  (EMCI), late MCI (LMCI), mild cognitive impairment (MCI), and Alzheimer's
+  disease dementia (AD).
+
+  SCD/SMC synonym cluster: Subjective Cognitive Decline Initiative (SCD-I)
+  Working Group, Jessen et al., "A conceptual framework for research on
+  subjective cognitive decline in preclinical Alzheimer's disease," Alzheimers
+  Dement 2014;10:844-852 (DOI 10.1016/j.jalz.2014.01.001), which establishes
+  that "subjective cognitive decline," "subjective memory complaint,"
+  "subjective cognitive complaint," and "subjective memory impairment" are
+  interchangeable terms for the same underlying concept.
+
+  IMPORTANT scope limits encoded by omission:
+  - SMC is diagnostically "still cognitively normal" and EMCI/LMCI are
+    diagnostically "MCI" in ADNI's own collapsed coding, but those are
+    REINTERPRETATIONS across distinct categories, not synonyms; they are NOT
+    encoded here. A consumer who wants the collapsed 3-class scheme should
+    select the ad/niaaa_2018 (CN/MCI/AD) pack, not rely on this synonym map.
+  - This ontology maps ONLY clinical-stage labels. It does not touch biomarker
+    (A/T/N) vocabularies, genetic risk, or progression labels.
+
+citations:
+  - key: "adni_clinical_core_2024"
+    citation_doi: "10.1002/alz.14167"
+    citation_text: >
+      Aisen PS, et al. The Alzheimer's Disease Neuroimaging Initiative Clinical
+      Core. Alzheimers Dement 2024. Defines the CN / SMC / EMCI / LMCI / MCI /
+      AD clinical-stage cohorts.
+  - key: "scd_i_jessen_2014"
+    citation_doi: "10.1016/j.jalz.2014.01.001"
+    citation_pmid: "24798886"
+    citation_text: >
+      Jessen F, et al. (SCD-I Working Group). A conceptual framework for
+      research on subjective cognitive decline in preclinical Alzheimer's
+      disease. Alzheimers Dement 2014;10:844-852. Establishes the interchangeable
+      SCD / subjective-memory-complaint terminology.
+
+# Each group: canonical = an EXACT state name in the staging packs; synonyms =
+# alternative raw strings that denote the SAME label. Matching is performed on a
+# normalized form (lowercased, whitespace/punctuation collapsed); the OUTPUT is
+# always the exact canonical string. The canonical string itself is always a
+# valid synonym of itself (handled in code; need not be repeated here).
+groups:
+  - canonical: "CN"
+    source: "adni_clinical_core_2024"
+    synonyms:
+      - "cognitively normal"
+      - "cognitively unimpaired"
+      - "normal control"
+      - "normal controls"
+      - "healthy control"
+      - "healthy controls"
+      - "control"
+      - "normal"
+      - "CU"
+      - "NC"
+      - "NL"
+
+  - canonical: "SMC"
+    source: "scd_i_jessen_2014"
+    synonyms:
+      - "subjective memory concern"
+      - "subjective memory concerns"
+      - "subjective memory complaint"
+      - "subjective memory complaints"
+      - "subjective cognitive decline"
+      - "subjective cognitive complaint"
+      - "subjective cognitive complaints"
+      - "subjective cognitive impairment"
+      - "subjective memory impairment"
+      - "SCD"
+      - "SCI"
+      - "SMI"
+      - "SCC"
+
+  - canonical: "EMCI"
+    source: "adni_clinical_core_2024"
+    synonyms:
+      - "early mild cognitive impairment"
+      - "early MCI"
+
+  - canonical: "LMCI"
+    source: "adni_clinical_core_2024"
+    synonyms:
+      - "late mild cognitive impairment"
+      - "late MCI"
+
+  - canonical: "MCI"
+    source: "adni_clinical_core_2024"
+    synonyms:
+      - "mild cognitive impairment"
+      - "amnestic MCI"
+      - "amnestic mild cognitive impairment"
+      - "aMCI"
+
+  - canonical: "AD"
+    source: "adni_clinical_core_2024"
+    synonyms:
+      - "Alzheimer's disease"
+      - "Alzheimers disease"
+      - "Alzheimer disease"
+      - "Alzheimer's dementia"
+      - "Alzheimers dementia"
+      - "Alzheimer's disease dementia"
+      - "AD dementia"
+      - "dementia due to AD"
+      - "dementia due to Alzheimer's disease"
+      - "probable AD"
+      - "probable Alzheimer's disease"
+      # NOTE: bare "dementia" is deliberately NOT a synonym of AD -- dementia can
+      # be vascular/DLB/FTD/etc. Mapping it to AD would be a reinterpretation,
+      # not a synonym, so it is left to pass through as contamination.

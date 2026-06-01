@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurotcs"
-version = "1.58.0"
+version = "1.59.0"
 description = "Citation-locked, fail-closed longitudinal medical AI audit framework (NeuroTCS / temporalmetric)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -79,6 +79,7 @@ where = ["src"]
 "neurotcs.rulepack" = ["rules/**/*.yaml"]
 "neurotcs.clinical_ranges" = ["ranges/**/*.yaml"]
 "neurotcs.cross_sheet" = ["invariants/**/*.yaml"]
+"neurotcs.orchestration" = ["*.yaml"]
 "neurotcs.input_contract.v1_0" = ["schemas/*.json", "SPECIFICATION.md"]
 "neurotcs.input_contract.v1_1" = ["schemas/*.json", "SPECIFICATION.md"]
 "neurotcs.input_contract.v1_2" = ["schemas/*.json", "SPECIFICATION.md"]
