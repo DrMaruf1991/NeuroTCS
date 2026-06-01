@@ -1,4 +1,4 @@
-"""Tests for the universal multi-format / multi-file reader (v1.43.0).
+﻿"""Tests for the universal multi-format / multi-file reader (v1.43.0).
 
 Covers: folder ingestion, zip archives, gz single files, globs, lists,
 encoding-honest CSV (utf-8-sig / cp1251 / latin-1 fallback), nested-JSON
@@ -83,14 +83,18 @@ class TestGlobAndList:
         assert set(tables.keys()) == {"a", "b"}
 
     def test_list_of_files(self, tmp_path):
-        f1 = tmp_path / "a.csv"; _write_csv(f1, pd.DataFrame({"x": [1]}))
-        f2 = tmp_path / "b.csv"; _write_csv(f2, pd.DataFrame({"x": [2]}))
+        f1 = tmp_path / "a.csv"
+        _write_csv(f1, pd.DataFrame({"x": [1]}))
+        f2 = tmp_path / "b.csv"
+        _write_csv(f2, pd.DataFrame({"x": [2]}))
         tables = read_tables([str(f1), str(f2)])
         assert set(tables.keys()) == {"a", "b"}
 
     def test_name_collision_disambiguated(self, tmp_path):
-        d1 = tmp_path / "s1"; d1.mkdir()
-        d2 = tmp_path / "s2"; d2.mkdir()
+        d1 = tmp_path / "s1"
+        d1.mkdir()
+        d2 = tmp_path / "s2"
+        d2.mkdir()
         _write_csv(d1 / "data.csv", pd.DataFrame({"x": [1]}))
         _write_csv(d2 / "data.csv", pd.DataFrame({"x": [2]}))
         tables = read_tables([str(d1 / "data.csv"), str(d2 / "data.csv")])
@@ -224,3 +228,4 @@ class TestStatisticalFormats:
             f.write_bytes(b"not a real sav")
             with pytest.raises(UnsupportedFormatError):
                 read_tables(f)
+
