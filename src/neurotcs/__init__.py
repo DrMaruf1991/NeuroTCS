@@ -11,6 +11,7 @@ Subpackages:
   neurotcs.silent_deployment      — Kwong 2022 silent-trial methodology (v1.7.0+)
   neurotcs.scanner_factorial      — Scanner × vendor × interval factorial (v1.7.0+)
   neurotcs.threshold_derivation   — Empirical operational thresholds (v1.7.0+)
+  neurotcs.provenance             — Primary-source citation/quote registry (v1.52.0+)
   neurotcs.output_schema          — FHIR Observation interop schema (ROADMAP v1.9.x; raises ImportError until shipped)
   neurotcs.adapters               — Dataset adapters: ADNI, OASIS-3, NACC, MIRIAD (4 AD cohorts; Piece 6, partial — see input_contract/v1_1/adapters/)
   neurotcs.validation_harness     — Synthetic-trajectory self-tests (ROADMAP v1.9.x; raises ImportError until shipped)
@@ -23,7 +24,7 @@ Public API (the most common imports):
     from neurotcs.silent_deployment import make_silent_deployment_evidence
 """
 
-__version__ = "1.51.0"
+__version__ = "1.52.0"
 __author__ = "Marufjon Salokhiddinov, MD PhD"
 __license__ = "Apache-2.0"
 

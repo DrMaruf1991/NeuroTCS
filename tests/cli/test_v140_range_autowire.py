@@ -269,3 +269,68 @@ def test_explicit_mapping_with_confirm_assays_audits_assay_packs(tmp_path, capsy
     # under --confirm-assays the assay column IS wired
     assert "plasma_ptau217" in captured.out
     assert "assay-confirmed by operator" in captured.out
+
+
+class TestLongFormatValueAuditing:
+    """v1.52.0: CDISC long-format measurement sheets (values in a single column
+    keyed by --TESTCD / PARAMCD) must be range-audited in zero-config, by
+    pivoting long -> wide and reusing the wide-column resolution path. Wide-
+    format sheets are unaffected (locked separately by the v3 blind set)."""
+
+    def test_long_format_pivots_and_wires(self):
+        qs = pd.DataFrame({
+            "subject_id": ["001", "001", "002", "002"],
+            "visit": [1, 1, 1, 1],
+            "QSTESTCD": ["MMSE", "MOCA", "MMSE", "MOCA"],
+            "QSSTRESN": [28, 26, 27, 25]})
+        rspecs, extra, decisions, _ref, wired = autowire_ranges(
+            {"QS": qs}, set(), confirm_assays=False)
+        assert any("long format" in d.lower() for d in decisions)
+        assert len(rspecs) == 1
+        syn = list(extra.values())[0]
+        assert set(syn["measurement_name"]) == {"mmse_total", "moca_total"}
+        # pivot preserved every (subject, visit, code) value
+        assert len(syn) == 4
+
+    def test_long_format_paramcd_recognized(self):
+        adqs = pd.DataFrame({
+            "subject_id": ["001", "001"], "visit": [1, 1],
+            "PARAMCD": ["MMSE", "MOCA"], "AVAL": [29, 27]})
+        rspecs, extra, decisions, _ref, _wired = autowire_ranges(
+            {"ADQS": adqs}, set(), confirm_assays=False)
+        assert any("long format" in d.lower() for d in decisions)
+        assert len(rspecs) == 1
+
+    def test_long_format_out_of_range_value_flagged_end_to_end(self, tmp_path):
+        clin = pd.DataFrame({
+            "subject_id": ["001", "001", "002", "002"],
+            "visit": [1, 2, 1, 2],
+            "visit_date": ["2024-01-01", "2024-07-01",
+                           "2024-01-01", "2024-07-01"],
+            "clinical_stage": ["CN", "MCI", "MCI", "AD"]})
+        qs = pd.DataFrame({
+            "subject_id": ["001", "001", "002"],
+            "visit": [1, 2, 1],
+            "QSTESTCD": ["MMSE", "MMSE", "MMSE"],
+            "QSSTRESN": [29, 27, 99]})  # 99 impossible for MMSE (0-30)
+        p = tmp_path / "cohort.xlsx"
+        with pd.ExcelWriter(p) as w:
+            clin.to_excel(w, sheet_name="CLINICAL", index=False)
+            qs.to_excel(w, sheet_name="QS", index=False)
+        out = tmp_path / "out"
+        main(["audit", str(p), "-o", str(out)])
+        bundle = json.load(open(glob.glob(str(out / "*.bundle.json"))[0]))
+        core = bundle["neurotcs_bundle"]["deterministic_core"]
+        allf = core["flags"]["impossible"] + core["flags"].get("implausible", [])
+        assert any("mmse" in str(f).lower() and "99" in str(f.get("observed_value", ""))
+                   for f in allf)
+
+    def test_wide_format_sheet_not_treated_as_long(self):
+        # a wide sheet with a normal MMSE column must NOT trip long-format logic
+        wide = pd.DataFrame({
+            "subject_id": ["001", "002"], "visit": [1, 1],
+            "mmse": [29, 27], "moca": [28, 26]})
+        rspecs, extra, decisions, _ref, _wired = autowire_ranges(
+            {"COG": wide}, set(), confirm_assays=False)
+        assert not any("long format" in d.lower() for d in decisions)
+        assert len(rspecs) == 1  # still wired the wide way

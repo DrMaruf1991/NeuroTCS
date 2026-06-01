@@ -189,6 +189,43 @@ def _find_col(cols: list[str], synonyms: tuple[str, ...]) -> str | None:
     return None
 
 
+# CDISC/long-format recognition (mirrors io/autowire.py + io/data_integrity.py).
+_MEASUREMENT_CODE_SYNONYMS = (
+    "testcd", "paramcd", "measurement", "measurement_code", "measurement_name",
+    "test_code", "param_code", "measure", "analyte",
+)
+_LONG_VALUE_SYNONYMS = (
+    "stresn", "aval", "value", "result", "orres", "stresc", "measurement_value",
+    "val",
+)
+
+
+def _find_measurement_code_col(cols: list[str]) -> str | None:
+    hit = _find_col(cols, _MEASUREMENT_CODE_SYNONYMS)
+    if hit is not None:
+        return hit
+    for c in cols:
+        n = _norm(c)
+        if n.endswith("testcd") or n.endswith("paramcd"):
+            return c
+    return None
+
+
+def _has_long_format_values(df: pd.DataFrame, code_col: str) -> bool:
+    """True if a paired numeric value column exists (a real long-format
+    measurement sheet, not just a code column on a wide sheet)."""
+    cols = [str(c) for c in df.columns]
+    vc = _find_col(cols, _LONG_VALUE_SYNONYMS)
+    if vc is not None and vc != code_col:
+        return True
+    for c in cols:
+        n = _norm(c)
+        if c != code_col and (n.endswith("stresn") or n.endswith("orresn")
+                              or n.endswith("aval")):
+            return True
+    return False
+
+
 def _canonicalize_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
     """Rename real columns to canonical invariant field names via EXACT
     normalized synonym match. Returns (renamed_df, {original: canonical})."""
@@ -320,6 +357,16 @@ def _classify_sheet(
 
     # visit but no state column
     if len(measurement_like) == 0:
+        # v1.52.0: a CDISC long-format sheet keeps measurements as VALUES in a
+        # code column with the numbers in a single value column, so it has no
+        # measurement-NAMED numeric column. Recognize it explicitly and route to
+        # biomarkers so its values are range-audited (autowire pivots it).
+        code_col = _find_measurement_code_col(cols)
+        if (code_col is not None and code_col not in (pid, visit)
+                and _has_long_format_values(df, code_col)):
+            return "biomarkers", (
+                f"id + visit + CDISC long-format measurements "
+                f"(code='{code_col}')")
         return None, "id + visit but no state and no measurement columns"
     return "biomarkers", "id + visit + measurements"
 

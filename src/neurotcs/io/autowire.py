@@ -182,6 +182,62 @@ def _find_col(cols: list[str], synonyms: tuple[str, ...]) -> str | None:
     return None
 
 
+# A CDISC/long-format measurement-code column (QSTESTCD, PARAMCD, ...). Mirrors
+# the detector in io/data_integrity.py so both layers agree on what "long" means.
+_MEASUREMENT_CODE_SYNONYMS = (
+    "testcd", "paramcd", "measurement", "measurement_code", "measurement_name",
+    "test_code", "param_code", "measure", "analyte",
+)
+# The numeric value column that pairs with a long-format code column.
+_LONG_VALUE_SYNONYMS = (
+    "stresn", "aval", "value", "result", "orres", "stresc", "measurement_value",
+    "val",
+)
+
+
+def _find_measurement_code_col(cols: list[str]) -> str | None:
+    hit = _find_col(cols, _MEASUREMENT_CODE_SYNONYMS)
+    if hit is not None:
+        return hit
+    for c in cols:
+        n = _norm(c)
+        if n.endswith("testcd") or n.endswith("paramcd"):
+            return c
+    return None
+
+
+def _find_long_value_col(cols: list[str], code_col: str) -> str | None:
+    hit = _find_col(cols, _LONG_VALUE_SYNONYMS)
+    if hit is not None and hit != code_col:
+        return hit
+    # CDISC suffix --STRESN / --ORRES (numeric result)
+    for c in cols:
+        n = _norm(c)
+        if c != code_col and (n.endswith("stresn") or n.endswith("orresn")
+                              or n.endswith("aval")):
+            return c
+    return None
+
+
+def _pivot_long_to_wide(
+    df: pd.DataFrame, pid: str, vis: str, code_col: str, val_col: str
+) -> pd.DataFrame:
+    """Pivot a CDISC long-format sheet (one row per measurement code) to wide
+    (one column per code) so the existing wide-column resolution path can audit
+    its VALUES. Deterministic: codes sorted; last value wins on the rare
+    (subject, visit, code) collision (already flagged by data_integrity)."""
+    work = df[[pid, vis, code_col, val_col]].copy()
+    work[code_col] = work[code_col].astype(str)
+    # numeric coercion of the value column (long values are strings under typed-read)
+    work[val_col] = pd.to_numeric(work[val_col], errors="coerce")
+    wide = work.pivot_table(
+        index=[pid, vis], columns=code_col, values=val_col,
+        aggfunc="last", sort=True,
+    ).reset_index()
+    wide.columns = [str(c) for c in wide.columns]
+    return wide
+
+
 def autowire_ranges(
     tables: dict[str, pd.DataFrame],
     already_wired_sheets: set[str],
@@ -221,6 +277,26 @@ def autowire_ranges(
         vis = _find_col(cols, _VISIT_SYNONYMS)
         if pid is None or vis is None:
             continue  # not a per-subject measurement sheet; coverage declares it
+
+        # v1.52.0: LONG-format value auditing. A CDISC long sheet keeps its
+        # measurements as VALUES in a code column (QSTESTCD/PARAMCD) with the
+        # numbers in a single value column, so no column NAME resolves and the
+        # sheet was silently skipped. Pivot long -> wide so the existing
+        # wide-column resolution path (resolve/unit/assay/refuse) audits its
+        # values unchanged. Wide sheets (no code column) are untouched.
+        code_col = _find_measurement_code_col(cols)
+        if code_col is not None and code_col not in (pid, vis):
+            val_col = _find_long_value_col(cols, code_col)
+            if val_col is not None:
+                df = _pivot_long_to_wide(df, pid, vis, code_col, val_col)
+                cols = [str(c) for c in df.columns]
+                pid = _find_col(cols, _PID_SYNONYMS) or pid
+                vis = _find_col(cols, _VISIT_SYNONYMS) or vis
+                decisions.append(
+                    f"{sheet}: recognized CDISC long format "
+                    f"(code='{code_col}', value='{val_col}') -> pivoted to wide "
+                    f"for value range-auditing."
+                )
 
         # group resolvable value columns by target pack
         by_pack: dict[str, list[tuple[str, str, str]]] = {}

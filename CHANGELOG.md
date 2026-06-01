@@ -1,3 +1,90 @@
+## [1.52.0] -- 2026-06-01 -- E-2026-025: long-format value auditing + provenance registry
+
+Three increments built and tested as one unit (each independently regression-
+locked). The v3 blind set is unchanged at 69 / 65 / 1236, 63/63; deterministic
+core byte-identical across runs.
+
+### 1. Long-format VALUE range-auditing (zero-config) -- three-layer fix
+
+Before this release, CDISC long-format sheets (measurements as VALUES in a code
+column --TESTCD / PARAMCD, numbers in a single value column) were integrity-
+checked (v1.51.0) but their VALUES were never range-audited in zero-config: the
+range auto-wirer resolves measurement COLUMN NAMES, and a long sheet has no such
+columns, so it was silently skipped. Fixed at the root across the three layers
+that needed it:
+  - io/cross_sheet_autowire.py (_classify_sheet): recognizes a long-format sheet
+    (measurement-code column + paired numeric value column) and routes it to the
+    biomarkers role instead of rejecting it as "no measurement columns".
+  - io/autowire.py (autowire_ranges): detects long format and pivots long -> wide
+    (deterministic: codes sorted, last value wins on the rare collision already
+    flagged by data_integrity), then reuses the EXISTING wide-column resolution
+    path unchanged (resolve / unit-check / assay-refuse). Wide sheets untouched.
+Result: an out-of-range value in a long sheet (e.g. MMSE=99, bounds 0-30) is now
+flagged, end-to-end, with zero configuration. Assay-calibrated biomarkers still
+require --confirm-assays (a column/code name cannot certify an assay) -- the
+long path inherits that boundary unchanged. Verified end-to-end on a clinical-
+staging + long-QS cohort; v3 (wide) unchanged.
+
+### 2. A/T/N biological staging pack -- verified, deliberately NOT rebuilt
+
+The 2024 AT1T2NISV biological staging is ALREADY encoded comprehensively in
+rules/ad/aa_2024.yaml (integrated clinical x biological staging: Stage 0-6 x
+A/B/C/D, with Table 4/6/7 cell mappings), and the legacy 8-state Jack 2018 AT(N)
+in rules/ad/atn_2018.yaml. Building a "new" 2024 pack would be make-work. The
+2030-facing world-class action was to VERIFY and harden the existing 2024 pack
+against primary sources (see #3) rather than duplicate it. The biological-stage
+structure (stage A=A+, B=A+/T2MTL+, C=A+/T2MOD+, D=A+/T2HIGH+) was independently
+corroborated against an external ADNI validation (Mendes et al., Neurology 2025,
+DOI 10.1212/WNL.0000000000213675).
+
+### 3. Primary-source provenance registry (regulatory-grade, the audit blocker)
+
+The external audit named citation provenance the real remaining blocker for an
+FDA conversation. Every load-bearing verbatim quote was verified word-for-word
+against the PRIMARY source, and every DOI/PMID against publisher + PubMed/PMC:
+  - Jack 2024 (DOI 10.1002/alz.13859, PMID 38934362): Sec 3 inadmissibility,
+    Sec 4.3 A->T2->N->C sequence, Sec 5.2 Stage 0 -- all EXACT (Wiley full text).
+  - Kwong 2022 (DOI 10.3389/fdgth.2022.929508, PMID 36052317): 3-stage roadmap +
+    silent-trial definition -- EXACT (Frontiers/PMC).
+  - DECIDE-AI / Vasey 2022 (DOI 10.1038/s41591-022-01772-9, PMID 35585196),
+    Larson 2025 (DOI 10.1016/j.jacr.2025.02.008, PMID 40057886), FUTURE-AI
+    (10.1136/bmj-2024-081554, PMID 39909534), Riley (10.1136/bmj-2023-074821,
+    PMID 38253388): identifiers verified.
+All quotes/identifiers checked were CORRECT (no fabrication). New module
+src/neurotcs/provenance/ records each citation with identifiers, verification
+source, and verification date; tests/provenance/ asserts the codebase's
+constants match the registry AND that each verified verbatim quote actually
+appears in the source that relies on it -- so provenance drift cannot pass
+silently.
+
+### Added
+
+- src/neurotcs/io/cross_sheet_autowire.py: long-format sheet recognition ->
+  biomarkers role.
+- src/neurotcs/io/autowire.py: long->wide pivot in autowire_ranges; long-format
+  detector + value-column finder.
+- src/neurotcs/provenance/__init__.py: primary-source citation/quote registry.
+- tests/cli/test_v140_range_autowire.py (+4): long-format pivot/wire, PARAMCD,
+  out-of-range value flagged end-to-end, wide-sheet not mistaken for long.
+- tests/provenance/test_provenance.py (+5): identifier well-formedness,
+  constants-match-registry, PMID in rule packs, verified-quotes-present.
+
+### Tests
+
+1792 -> 1801 passed (+9). ruff clean over src/ tests/ scripts/. v3 blind set
+unchanged at 69 / 65 / 1236, 63/63; deterministic core byte-identical.
+
+### Scope note (honest)
+
+Long-format VALUE auditing reaches assay-independent ordinal scales (MMSE, MoCA,
+CDR-SB, Braak, ...) in zero-config; assay-calibrated long-format biomarkers
+still require --confirm-assays, identical to the wide path. The provenance
+registry covers external citations carried in code constants and rule-pack
+verbatim quotes; it is not a claim that every sentence of every pack is quoted
+(most are paraphrase by design, marked guideline_quote vs interpretation).
+
+---
+
 ## [1.51.0] -- 2026-06-01 -- E-2026-024: long-format integrity fixes + citation-provenance correction
 
 Resolves two confirmed false-positive defects on CDISC long-format data (found
