@@ -157,6 +157,18 @@ REGISTRY: dict[str, VerifiedCitation] = {
         source="BMJ + PubMed",
         quote_verified=False,
     ),
+    "kurihara_2026": VerifiedCitation(
+        key="kurihara_2026",
+        short=(
+            "Kurihara M, Ihara R, Yoshii G, et al. ATNIVS biomarker "
+            "heterogeneity in real-world patients receiving lecanemab. "
+            "J Prev Alzheimers Dis 2026;13:100567."
+        ),
+        doi="10.1016/j.tjpad.2026.100567",
+        pmid="",  # JPAD/Elsevier; DOI verified at publisher, no PMID on hand
+        source="JPAD (Elsevier ScienceDirect) current issue + article",
+        quote_verified=False,
+    ),
 }
 
 

@@ -41,6 +41,24 @@ clinical_source_authority: |
   status VALUES another pipeline recorded for a (subject, visit) and notes the
   mismatch pattern. Declarative; no code execution.
 
+  Real-world corroboration (added v1.55.0). Kurihara M, Ihara R, Yoshii G, et
+  al. ATNIVS biomarker heterogeneity in real-world patients receiving
+  lecanemab. J Prev Alzheimers Dis 2026;13:100567 (DOI 10.1016/j.tjpad.2026.
+  100567, open access CC BY). In a single-center cohort of 93 lecanemab-treated
+  patients profiled across the full ATNIVS set, the authors observed that a
+  subset with low tau-PET-based stage (Braak 0-II) had more advanced CLINICAL
+  stage than their biological stage predicted, and -- citing Jack 2024 -- read
+  this biological-less-than-clinical discordance as suggestive of co-pathology.
+  This is independent real-world support, from a treatment-eligible AD cohort,
+  for exactly the discordance this advisory encodes (amyloid-positive AD with
+  neurodegeneration not explained by AD tauopathy). It is recorded here as
+  corroborating evidence only; it does NOT change the rule, its threshold-free
+  categorical predicates, its info severity, or its research_preview status.
+  (The same paper's amyloid-PET regional-vs-widespread centiloid cutpoints are
+  deliberately NOT encoded: they are single-cohort, single-tracer, single-
+  pipeline values the authors themselves flag as method- and population-
+  specific -- not a universal staging rule.)
+
   Vocabulary: the invariant reads three categorical status fields -- amyloid
   status, tau status, neurodegeneration status -- using the canonical
   positive/negative/present vocabulary. A row is evaluated only when all three

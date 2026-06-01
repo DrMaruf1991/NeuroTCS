@@ -1,3 +1,45 @@
+## [1.55.0] -- 2026-06-01 -- E-2026-028: real-world corroborating reference for the T2N-mismatch advisory (Kurihara 2026)
+
+Documentation/provenance only -- no audit logic changed; v3 unchanged at
+69 / 65 / 1236, 63/63; deterministic core byte-identical.
+
+### Added
+
+- src/neurotcs/cross_sheet/invariants/cross_sheet/copathology_advisory.yaml:
+  records Kurihara M, Ihara R, Yoshii G, et al. "ATNIVS biomarker heterogeneity
+  in real-world patients receiving lecanemab." J Prev Alzheimers Dis
+  2026;13:100567 (DOI 10.1016/j.tjpad.2026.100567, open access CC BY) as
+  independent real-world corroboration for the T2N-mismatch advisory. In a
+  93-patient lecanemab cohort profiled across the full ATNIVS set, a subset with
+  low tau-PET stage (Braak 0-II) but more advanced clinical stage was read --
+  citing Jack 2024 -- as suggestive of co-pathology, i.e. exactly the
+  biological-less-than-clinical discordance this advisory encodes. Recorded as
+  corroborating evidence only; the rule, predicates, info severity, and
+  research_preview status are unchanged.
+- src/neurotcs/provenance/__init__.py: kurihara_2026 added to the registry
+  (DOI verified at publisher; JPAD is DOI-only, no PMID).
+- tests/provenance/test_provenance.py: identifier well-formedness test now
+  allows DOI-only citations (PMID optional, validated only when present).
+
+### Explicitly NOT added (scope discipline)
+
+The Kurihara paper's amyloid-PET regional-vs-widespread centiloid cutpoints
+(e.g. 10.9-20.8, 41.5) are single-cohort, single-tracer (flutemetamol), single-
+pipeline (VIZCalc, no PVC) ROC values the authors themselves flag as method- and
+population-specific. They are NOT encoded as universal thresholds -- doing so
+would violate the universal-not-dataset-specific principle. The paper's
+resilient/vulnerable (clinical-less-than-biological) mismatch is a genuine
+future increment (the mirror of this advisory) and is deliberately left for its
+own verify-first batch, not bolted on from a single paper.
+
+### Tests
+
+1809 passed (unchanged count; +0 tests, 1 test relaxed for DOI-only citations).
+ruff clean over src/ tests/ scripts/. v3 unchanged at 69 / 65 / 1236, 63/63;
+deterministic core byte-identical. All changed files strict-ASCII.
+
+---
+
 ## [1.54.0] -- 2026-06-01 -- E-2026-027: verbatim-quote diligence pass (aa_2024 Sec 4.6 verified, Table 7 corrected)
 
 A pure-diligence pass on the two lower-stakes verbatim blocks in aa_2024.yaml

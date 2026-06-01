@@ -34,7 +34,10 @@ def test_registry_identifiers_wellformed():
     for key, c in REGISTRY.items():
         assert c.key == key
         assert c.doi.startswith("10."), f"{key}: DOI not a DOI"
-        assert c.pmid.isdigit() and 7 <= len(c.pmid) <= 8, f"{key}: bad PMID"
+        # PMID is optional (some journals are DOI-only); when present it must be
+        # a well-formed 7-8 digit identifier.
+        if c.pmid:
+            assert c.pmid.isdigit() and 7 <= len(c.pmid) <= 8, f"{key}: bad PMID"
         assert c.source, f"{key}: missing verification source"
 
 
