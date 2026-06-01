@@ -57,7 +57,7 @@ from neurotcs.orchestration.orchestrator import OrchestratorResult
 
 # Envelope schema version. Bump when the bundle STRUCTURE or the canonicalization
 # rule changes, independently of the framework version.
-BUNDLE_FORMAT_VERSION = "1.3.0"
+BUNDLE_FORMAT_VERSION = "1.4.0"
 
 STATUS_CLEAN = "CLEAN"
 STATUS_FLAGS_PRESENT = "FLAGS_PRESENT"
@@ -209,6 +209,9 @@ def _coverage_from(result: OrchestratorResult) -> dict[str, Any]:
         "packs_applied": dict(sorted(m.packs_applied.items())),
         "columns_consumed": {k: sorted(v) for k, v in sorted(m.columns_consumed.items())},
         "columns_ignored": {k: sorted(v) for k, v in sorted(m.columns_ignored.items())},
+        "columns_refused": dict(sorted(getattr(m, "columns_refused", {}).items())),
+        "columns_unwired": {k: sorted(v) for k, v in
+                            sorted(getattr(m, "columns_unwired", {}).items())},
         "sub_audit_ids": dict(sorted(m.sub_audit_ids.items())),
     }
 

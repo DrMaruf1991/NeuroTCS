@@ -75,6 +75,10 @@ class CoverageManifest:
     columns_consumed: dict[str, list[str]]    # sheet -> columns the audit read
     columns_ignored: dict[str, list[str]]     # sheet -> columns no layer audited
     sub_audit_ids: dict[str, str]             # layer -> per-layer audit_id
+    # v1.58.0: machine-readable coverage ledger (default {} for back-compat with
+    # constructors that predate these fields; the CLI populates them).
+    columns_refused: dict[str, str] = field(default_factory=dict)
+    columns_unwired: dict[str, list[str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -624,6 +628,8 @@ def run_full_audit(
     cols_consumed = submission.get("columns_consumed", {})
     cols_ignored = {sheet: [c for c in cols if c not in cols_consumed.get(sheet, [])]
                     for sheet, cols in cols_present.items()}
+    cols_refused = submission.get("columns_refused", {})
+    cols_unwired = submission.get("columns_unwired", {})
 
     manifest = CoverageManifest(
         orchestrator_version=ORCHESTRATOR_VERSION,
@@ -632,6 +638,8 @@ def run_full_audit(
         packs_applied=packs_applied,
         columns_consumed=cols_consumed,
         columns_ignored=cols_ignored,
+        columns_refused=cols_refused,
+        columns_unwired=cols_unwired,
         sub_audit_ids=sub_ids,
     )
 

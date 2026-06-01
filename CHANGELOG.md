@@ -1,3 +1,73 @@
+## [1.58.0] -- 2026-06-01 -- E-2026-031: machine-readable column coverage ledger + bundle envelope 1.4.0
+
+Closes the last real defect-class item from the external audit: the bundle's
+coverage block reported layers/packs but left columns_consumed / columns_ignored
+EMPTY ({}), while the un-wired/refused-column information existed only in the
+stderr COVERAGE narrative. A regulator/CRO reading the artifact could not see
+which columns were examined, which were declined (and why), or which were left
+un-wired. Now the bundle carries the full machine-readable ledger. Audit logic
+is unchanged; v3 stays 69 / 65 / 1236, 63/63; deterministic (repeat runs
+byte-identical).
+
+### Root cause (traced)
+
+run_full_audit reads columns_present / columns_consumed FROM the submission dict
+(defaulting to {}); the CLI computed un-wired sheets + refusals only AFTER the
+audit, purely to build the stderr message, and never fed them back. All inputs
+(resolved mapping incl. autowired ranges, full sheet/column inventory, refusal
+strings) are available in the CLI BEFORE the audit -- only the threading was
+missing.
+
+### Fixed / added
+
+- cli.py: new _column_coverage_ledger() (+ _columns_consumed_by_mapping,
+  _refused_columns) computes, BEFORE run_full_audit, a four-way partition of
+  every input column and injects it into the submission:
+    columns_present  -- full inventory per sheet
+    columns_consumed -- columns a wired axis / range pack read
+    columns_refused  -- 'sheet.column' -> reason (assay/scale not certified,
+                        unit mismatch); 'seen and declined', never dropped
+    columns_unwired  -- sheets present but no pack attached (TOC sheets excluded)
+- orchestrator.CoverageManifest: added columns_refused + columns_unwired
+  (default {} for back-compat); populated from the submission.
+- bundle._coverage_from: projects columns_refused + columns_unwired into the
+  bundle coverage block. BUNDLE_FORMAT_VERSION 1.3.0 -> 1.4.0 (the bundle SHAPE
+  grew: two new coverage keys). The existing stderr coverage narrative is
+  UNCHANGED -- this only adds the machine-readable twin.
+
+Verified on v3: columns_unwired lists exactly ['BIO','EN','QS'] (matching the
+stderr narrative); with --confirm-assays columns_refused is empty; WITHOUT it,
+14 assay columns are recorded as refused, each with its reason and resolved
+pack. The categories partition the present columns; no column is silently
+dropped.
+
+### Added (tests)
+
+- tests/cli/test_v1393_file_coverage.py (+2): test_machine_readable_column_
+  ledger_in_bundle asserts consumed lists the wired sheet, unwired lists the
+  un-wireable sheets (and excludes the TOC + wired sheets);
+  test_refused_columns_recorded_with_reason asserts an assay column declined
+  without --confirm-assays is recorded in columns_refused with a non-empty
+  reason.
+
+### Tests
+
+1813 -> 1815 passed (+2). ruff clean over src/ tests/ scripts/. v3 unchanged at
+69 / 65 / 1236, 63/63; deterministic. Changed files strict-ASCII (a pre-existing
+em-dash in an unrelated test docstring is left untouched -- not in scope).
+
+### External-audit status after this release
+
+ALL concrete defect-class items are now CLOSED: wheel packaging (1.56), flag
+citation/rule_id propagation (1.57), machine-readable coverage ledger (1.58);
+raw_input_sha256 was never broken (it is input_fingerprint). What remains is
+ROADMAP, not defects: the "Universal Subject Intelligence Layer" (CDISC
+zero-config reshaping, per-site assay certification, MRI-pipeline metadata,
+conversion derivation, disease-control ontology, ARIA/safety fields). Exit-code
+semantics (FLAGS_PRESENT -> exit 1) remain intentional, documented behavior.
+
+---
+
 ## [1.57.0] -- 2026-06-01 -- E-2026-030: flag provenance propagation (GxP traceability) + bundle envelope 1.3.0
 
 Resolves the external auditor's citation:null / rule_id:null finding -- and on

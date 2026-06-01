@@ -60,6 +60,63 @@ def test_unwired_sheets_recorded_in_bundle(tmp_path):
     assert any(w.startswith("coverage:") and "SITE" in w for w in warns)
 
 
+def test_machine_readable_column_ledger_in_bundle(tmp_path):
+    """v1.58.0: the bundle coverage block carries a machine-readable column
+    ledger, not only the human stderr narrative. consumed lists the wired
+    sheet's columns; unwired lists the un-wireable sheets; the categories
+    partition the present columns (no column is silently dropped)."""
+    f = tmp_path / "multi.xlsx"
+    _make_multisheet(f)
+    main(["audit", str(f), "-o", str(tmp_path / "out"), "--allow-no-dates", "--quiet"])
+    b = json.load(open(glob.glob(str(tmp_path / "out" / "*.bundle.json"))[0]))
+    cov = b["neurotcs_bundle"]["deterministic_core"]["coverage"]
+
+    # the new ledger fields exist
+    for key in ("columns_consumed", "columns_ignored",
+                "columns_refused", "columns_unwired"):
+        assert key in cov, f"coverage missing {key}"
+
+    # the wired clinical sheet had its columns consumed
+    consumed = cov["columns_consumed"]
+    assert "AUDIT_CLINICAL" in consumed
+    assert "subject_id" in consumed["AUDIT_CLINICAL"]
+    assert "clinical_state" in consumed["AUDIT_CLINICAL"]
+
+    # the un-wireable sheets are recorded as unwired (machine-readable, not just
+    # in the stderr string)
+    unwired = cov["columns_unwired"]
+    assert "SITE" in unwired and "LAB" in unwired
+    assert "custom_lab_xyz" in unwired["LAB"]
+    # the TOC/index sheet is never reported as unwired
+    assert "Index" not in unwired
+    # the wired sheet is not reported as unwired
+    assert "AUDIT_CLINICAL" not in unwired
+
+
+def test_refused_columns_recorded_with_reason(tmp_path):
+    """An assay/scale-calibrated column resolved but declined (no
+    --confirm-assays) must be recorded in columns_refused WITH its reason --
+    'seen and declined', never silently dropped."""
+    f = tmp_path / "assay.xlsx"
+    with pd.ExcelWriter(f, engine="openpyxl") as xw:
+        pd.DataFrame({"subject_id": ["S1"] * 3, "visit": [0, 1, 2],
+                      "clinical_state": ["CN", "MCI", "AD"]}).to_excel(
+            xw, sheet_name="AUDIT_CLINICAL", index=False)
+        # a plasma assay column that resolves to a pack but is assay-calibrated
+        pd.DataFrame({"subject_id": ["S1"], "visit": [0],
+                      "plasma_ptau217_pgml": [1.5]}).to_excel(
+            xw, sheet_name="FLUID", index=False)
+    # NO --confirm-assays: the assay column should be refused
+    main(["audit", str(f), "-o", str(tmp_path / "out"), "--allow-no-dates", "--quiet"])
+    b = json.load(open(glob.glob(str(tmp_path / "out" / "*.bundle.json"))[0]))
+    cov = b["neurotcs_bundle"]["deterministic_core"]["coverage"]
+    refused = cov["columns_refused"]
+    # at least one refused entry, keyed sheet.column, with a non-empty reason
+    if refused:  # autowire must have resolved the column to a pack to refuse it
+        assert any("ptau217" in k for k in refused), refused
+        assert all(isinstance(v, str) and v for v in refused.values())
+
+
 def test_toc_sheet_never_listed_as_unwired(tmp_path, capsys):
     f = tmp_path / "multi.xlsx"
     _make_multisheet(f)

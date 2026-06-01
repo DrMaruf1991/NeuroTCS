@@ -489,6 +489,109 @@ def _sheets_referenced_by_mapping(mapping: dict[str, Any]) -> set[str]:
     return refs
 
 
+def _columns_consumed_by_mapping(mapping: dict[str, Any]) -> dict[str, list[str]]:
+    """Per source sheet, the columns the mapping actually wires into an audit.
+
+    Staging axes consume {subject_id, visit, visit_date, state}; each ranges
+    entry consumes {subject_id, visit_id, measurement_name, observed_value}.
+    Only real, named columns are counted -- this is the machine-readable twin of
+    the human coverage narrative, so it must never overstate what was examined.
+    """
+    consumed: dict[str, set[str]] = {}
+    for axis in ("clinical", "biological"):
+        spec = mapping.get(axis)
+        if not isinstance(spec, dict):
+            continue
+        sheet = spec.get("sheet")
+        if not isinstance(sheet, str):
+            continue
+        for key in ("subject_id", "visit", "visit_date", "state"):
+            col = spec.get(key)
+            if isinstance(col, str) and col:
+                consumed.setdefault(sheet, set()).add(col)
+    for r in mapping.get("ranges") or []:
+        if not isinstance(r, dict):
+            continue
+        sheet = r.get("sheet")
+        if not isinstance(sheet, str):
+            continue
+        for key in ("subject_id", "visit_id", "measurement_name",
+                    "observed_value"):
+            col = r.get(key)
+            if isinstance(col, str) and col:
+                consumed.setdefault(sheet, set()).add(col)
+    return {s: sorted(cols) for s, cols in consumed.items()}
+
+
+def _refused_columns(range_refusals: list[str]) -> dict[str, str]:
+    """Parse autowire refusals 'sheet.column: reason' -> {'sheet.column': reason}.
+
+    Captures the assay-not-certified / unit-mismatch refusals so the bundle
+    records WHY a column was not audited, not only that it was skipped.
+    """
+    out: dict[str, str] = {}
+    for rr in range_refusals:
+        if ":" in rr:
+            key, reason = rr.split(":", 1)
+            out[key.strip()] = reason.strip()
+        else:
+            out[rr.strip()] = ""
+    return out
+
+
+def _column_coverage_ledger(
+    tables: dict[str, Any],
+    mapping: dict[str, Any],
+    autowired_sources: set[str],
+    range_refusals: list[str],
+) -> dict[str, Any]:
+    """Build the machine-readable column-coverage ledger for the bundle.
+
+    Partitions every column of every input sheet into exactly one of:
+      consumed -- a wired pack/axis read it,
+      refused  -- a pack resolved it but declined (assay/unit), with the reason,
+      unwired  -- present but no pack attached (sheet not referenced/autowired),
+    plus columns_present (the full inventory). Fail-honest: a column is only
+    'consumed' if the mapping names it; everything else is reported, never
+    silently dropped.
+    """
+    columns_present: dict[str, list[str]] = {}
+    for sheet, df in tables.items():
+        if sheet.startswith("__autowired__"):
+            continue
+        try:
+            cols = [str(c) for c in df.columns]
+        except Exception:
+            continue
+        columns_present[sheet] = cols
+
+    columns_consumed = _columns_consumed_by_mapping(mapping)
+    columns_refused = _refused_columns(range_refusals)
+    refused_cols_by_sheet: dict[str, set[str]] = {}
+    for key in columns_refused:
+        if "." in key:
+            sheet, col = key.split(".", 1)
+            refused_cols_by_sheet.setdefault(sheet, set()).add(col)
+
+    referenced = _sheets_referenced_by_mapping(mapping)
+    columns_unwired: dict[str, list[str]] = {}
+    for sheet, cols in columns_present.items():
+        if sheet in referenced or sheet in autowired_sources:
+            # sheet was wired/used; any of its columns not consumed are reported
+            # as ignored by the orchestrator (present - consumed), not unwired.
+            continue
+        if _is_toc_sheet(sheet, {"columns": cols}):
+            continue
+        columns_unwired[sheet] = sorted(cols)
+
+    return {
+        "columns_present": columns_present,
+        "columns_consumed": columns_consumed,
+        "columns_refused": columns_refused,
+        "columns_unwired": columns_unwired,
+    }
+
+
 def cmd_audit(args: argparse.Namespace) -> int:
     tables = _load_tables(args.file, args.allow_pdf, args.encoding)
     range_refusals: list[str] = []
@@ -688,6 +791,19 @@ def cmd_audit(args: argparse.Namespace) -> int:
         ("cross_sheet", "cross_sheet"),
         ("data_integrity", "data_integrity"),
     ) if submission.get(key) is not None]
+
+    # v1.58.0: machine-readable column-coverage ledger. All inputs are known
+    # here (resolved mapping incl. autowired ranges, full sheet/column inventory,
+    # refusals) BEFORE the audit, so the bundle records exactly which columns were
+    # consumed / refused (with reason) / left un-wired -- the same coverage the
+    # CLI prints to stderr, now in the artifact a regulator reads.
+    _ledger = _column_coverage_ledger(
+        tables, mapping, _autowired_source_sheets, range_refusals)
+    submission["columns_present"] = _ledger["columns_present"]
+    submission["columns_consumed"] = _ledger["columns_consumed"]
+    submission["columns_refused"] = _ledger["columns_refused"]
+    submission["columns_unwired"] = _ledger["columns_unwired"]
+
     result = run_full_audit(submission, expected_layers=_expected)
 
     # v1.39.3: UNIFIED COVERAGE HONESTY. NeuroTCS must never present a confident
