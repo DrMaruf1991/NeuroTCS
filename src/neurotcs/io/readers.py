@@ -35,6 +35,8 @@ from typing import Any
 
 import pandas as pd
 
+from neurotcs.io.typed_read import apply_typed_read_contract
+
 
 class UnsupportedFormatError(ValueError):
     """Raised for a file type NeuroTCS will not read without explicit opt-in."""
@@ -184,13 +186,15 @@ def _read_single_file(
                 "your data to CSV."
             ) from e
         sheets = pd.read_excel(p, sheet_name=None)
-        return {str(k): v for k, v in sheets.items()}
+        return {str(k): apply_typed_read_contract(v, f"{p.name}:{k}", decisions)
+                for k, v in sheets.items()}
     if ext == ".parquet":
-        return {p.stem: pd.read_parquet(p)}
+        return {p.stem: apply_typed_read_contract(
+            pd.read_parquet(p), p.name, decisions)}
     if ext == ".json":
-        return {p.stem: _read_json(p)}
+        return {p.stem: apply_typed_read_contract(_read_json(p), p.name, decisions)}
     if ext in (".jsonl", ".ndjson"):
-        return {p.stem: _read_jsonl(p)}
+        return {p.stem: apply_typed_read_contract(_read_jsonl(p), p.name, decisions)}
     if ext in SUPPORTED_STATISTICAL:
         return {p.stem: _read_statistical(p, ext, decisions)}
     if ext == ".pdf":
@@ -236,7 +240,8 @@ def _read_delimited(
         if sep != ",":
             decisions.append(f"{p.name}: delimiter detected as {sep!r}")
 
-    return pd.read_csv(io.StringIO(raw), sep=sep)
+    df = pd.read_csv(io.StringIO(raw), sep=sep)
+    return apply_typed_read_contract(df, p.name, decisions)
 
 
 def _decode_bytes(
@@ -514,20 +519,23 @@ def _read_bytes_as_table(
     if ext in (".csv", ".tsv", ".txt"):
         text, _enc = _decode_bytes(data, name, encoding, decisions)
         sep = "\t" if ext == ".tsv" else _sniff_delimiter(text, name)
-        return {stem: pd.read_csv(io.StringIO(text), sep=sep)}
+        return {stem: apply_typed_read_contract(
+            pd.read_csv(io.StringIO(text), sep=sep), name, decisions)}
     if ext in (".xlsx", ".xls"):
         sheets = pd.read_excel(io.BytesIO(data), sheet_name=None)
-        return {str(k): v for k, v in sheets.items()}
+        return {str(k): apply_typed_read_contract(v, f"{name}:{k}", decisions)
+                for k, v in sheets.items()}
     if ext == ".parquet":
-        return {stem: pd.read_parquet(io.BytesIO(data))}
+        return {stem: apply_typed_read_contract(
+            pd.read_parquet(io.BytesIO(data)), name, decisions)}
     if ext == ".json":
         df = pd.read_json(io.BytesIO(data))
         _refuse_nested(df, name)
-        return {stem: df}
+        return {stem: apply_typed_read_contract(df, name, decisions)}
     if ext in (".jsonl", ".ndjson"):
         df = pd.read_json(io.BytesIO(data), lines=True)
         _refuse_nested(df, name)
-        return {stem: df}
+        return {stem: apply_typed_read_contract(df, name, decisions)}
     if ext in SUPPORTED_STATISTICAL:
         # write to a temp file -- the statistical readers need a path
         import tempfile

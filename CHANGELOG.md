@@ -1,4 +1,67 @@
-## [1.46.0] -- 2026-06-01 -- E-2026-019: mixed-dementia / differential-diagnosis cohort partitioning
+## [1.47.0] -- 2026-06-01 -- E-2026-020: typed-read contract (schema-on-read with provenance)
+
+### Net effect — every type decision the reader makes is now explicit, locale-independent, surfaced, and reproducible (the honest v1.44 debt, paid)
+
+Until now the reader handed pandas' implicit type inference straight through
+(`pd.read_csv(...)` with no dtype/na_values/decimal control). That inference is
+deterministic on one machine but the DECISIONS were invisible and unguarded --
+unacceptable for sponsors who must reproduce a result at another site
+(21 CFR Part 11 / GxP). Three latent failure modes are now closed:
+
+  1. **ID collapse** -- a long numeric ID ("100000000000123") silently coerced
+     to float, or a leading-zero ID ("007") losing its zeros, corrupting joins
+     and de-identification. FIXED: columns whose name matches an ID pattern
+     (subject/RID/PTID/USUBJID/site/visit_id/record_id/MRN/...) are forced to
+     string with full precision and leading zeros preserved; never numerically
+     coerced. A float-collapsed long ID is recovered to its integer string.
+  2. **Locale misparse** -- EU-formatted decimals ("2,5") read as strings or
+     mis-split. FIXED: a column becomes numeric under a SINGLE decimal
+     convention decided by consistency; decimal-comma is detected and applied
+     and SURFACED. Only a column that contains commas AND parses to different
+     values under the two conventions is treated as ambiguous (stays string);
+     a dot-only column is unambiguously dot.
+  3. **Sentinel-as-value** -- a numeric missing code (-9/-99/-999) silently read
+     as a real number, or a textual sentinel silently turned to NaN with no
+     record. FIXED: only a documented textual sentinel set ("", NA, NaN, null,
+     none, ".", <NA>, missing) is treated as missing by default; numeric missing
+     codes are KEPT as values (a real -9 is never dropped) and REPORTED so the
+     operator can assert them explicitly.
+
+Every decision is appended to the reader's `decisions` provenance stream (which
+flows into the bundle). A deterministic per-column `schema_fingerprint` lets two
+sites confirm they typed the same data the same way.
+
+### Downstream-safe by design (the reason this didn't break anything)
+
+The contract is NOT "read everything as text" (which would have darkened the
+`pd.api.types.is_numeric_dtype(...)` branches in data_integrity and
+cross_sheet_autowire and silently stopped numeric auditing -- the exact trap the
+v1.44 deferral note warned about). It produces REAL numeric dtypes for numeric
+columns, so those branches keep firing identically. Verified: v3 blind set
+unchanged at impossible 69 / implausible 65 / informational 1236, 63/63 caught,
+deterministic core byte-identical across two runs; full suite 1742 -> 1754.
+
+### Added
+
+- src/neurotcs/io/typed_read.py -- `apply_typed_read_contract(df, name,
+  decisions)` (explicit per-column typing) and `schema_fingerprint(df)`. Applied
+  at every leaf read path in readers.py (delimited, Excel, parquet, JSON, JSONL,
+  and the in-memory zip/gz member equivalents).
+- tests/io/test_typed_read.py (+12): ID protection (leading-zero, long-ID
+  recovery, name patterns), decimal convention (EU comma applied, dot default,
+  integers stay integer), sentinel discipline (numeric -9 kept, textual NA
+  missing), downstream-safety (numeric columns remain numeric, values
+  unchanged), provenance (deterministic schema fingerprint, recorded decisions).
+
+### Note
+
+A decimal-convention bug was caught by the new tests during development (a
+dot-only column with a separator was wrongly flagged ambiguous and left as
+string) and fixed before shipping: only comma-containing columns can be
+locale-ambiguous.
+
+---
+
 
 ### Net effect — NeuroTCS now "works always" on real mixed cohorts instead of refusing any cohort that contains non-AD dementia
 
