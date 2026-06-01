@@ -167,3 +167,43 @@ class TestDeterminismAndSerialization:
         # numeric int64 / float64 must serialize
         flags = audit_data_integrity({"EN": en})
         json.dumps(flags)  # must not raise
+
+
+class TestLongFormatDuplicateAwareness:
+    """v1.51: CDISC long-format duplicate detection must key on
+    (subject, visit, measurement_code), not (subject, visit) -- so valid
+    long-format sheets (one row per code per visit) are NOT falsely flagged,
+    while a genuine duplicate (same code twice at a visit) IS still caught."""
+
+    def _ndup(self, flags):
+        return len([f for f in flags if f["rule_id"] == "duplicate_record"])
+
+    def _long(self, extra=None):
+        rows = [{"subject_id": s, "visit": v, "QSTESTCD": c, "QSSTRESN": x}
+                for s in ["001", "002", "003"] for v in [1, 2]
+                for c, x in [("MMSE", 28), ("CDRSB", 0.5), ("ADASCOG", 15)]]
+        if extra:
+            rows += extra
+        return pd.DataFrame(rows)
+
+    def test_valid_long_format_no_false_duplicate_flood(self):
+        # one row per code per (subject, visit) is VALID -- must not flag.
+        assert self._ndup(audit_data_integrity({"QS": self._long()})) == 0
+
+    def test_genuine_long_format_duplicate_still_caught(self):
+        # same code twice at the same (subject, visit) IS a real duplicate.
+        extra = [{"subject_id": "001", "visit": 1, "QSTESTCD": "MMSE",
+                  "QSSTRESN": 99}]
+        assert self._ndup(audit_data_integrity({"QS": self._long(extra)})) == 1
+
+    def test_wide_format_duplicate_still_caught(self):
+        wide = pd.DataFrame({"subject_id": ["A", "A", "B"], "visit": [1, 1, 1],
+                             "age": [70, 70, 68]})
+        assert self._ndup(audit_data_integrity({"DEMO": wide})) == 1
+
+    def test_paramcd_long_format_recognized(self):
+        # ADaM PARAMCD long format must be recognized too.
+        adam = pd.DataFrame({
+            "subject_id": ["001", "001", "001"], "visit": [1, 1, 1],
+            "PARAMCD": ["MMSE", "CDRSB", "ADASCOG"], "AVAL": [28, 0.5, 15]})
+        assert self._ndup(audit_data_integrity({"ADQS": adam})) == 0

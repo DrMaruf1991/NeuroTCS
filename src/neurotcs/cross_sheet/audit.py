@@ -1129,6 +1129,15 @@ def _evaluate_numeric_conflict(
     for trow in target_rows:
         target_index.setdefault(_key(trow), []).append(trow)
 
+    # Wide-into-long fan-out guard: when a wide source row joins a long target
+    # (many rows per join key, e.g. CDISC --TESTCD long format), the same
+    # genuine conflict would otherwise be emitted once per target row -- N
+    # byte-identical copies. Dedup on (join-key tuple, source value, target
+    # value) so each distinct conflict is reported once, at the granularity the
+    # invariant declares via its join_keys. A genuinely different conflict (a
+    # different join key or different values) is preserved.
+    seen: set[tuple] = set()
+
     for srow in source_rows:
         s_raw = srow.get(cond.source_field)
         if s_raw is None:
@@ -1150,6 +1159,11 @@ def _evaluate_numeric_conflict(
                 continue
             if not _cmp(t_val, cond.target_threshold, cond.target_direction):
                 continue  # target side not tripped -> no conflict
+
+            dedup_key = (_key(srow), s_val, t_val)
+            if dedup_key in seen:
+                continue  # identical conflict already emitted (fan-out copy)
+            seen.add(dedup_key)
 
             join_key_values = {k: srow.get(k) for k in join_keys if k in srow}
             flags.append(

@@ -75,6 +75,37 @@ def _find_col(cols: list[str], synonyms: tuple[str, ...]) -> str | None:
     return None
 
 
+# Exact-name synonyms for a CDISC/long-format measurement-code column. The
+# suffix patterns (--TESTCD / PARAMCD) below catch the domain-prefixed forms
+# (QSTESTCD, RSTESTCD, LBTESTCD, PARAMCD, ...) robustly across CDISC versions.
+_MEASUREMENT_CODE_SYNONYMS = (
+    "testcd", "paramcd", "measurement", "measurement_code", "measurement_name",
+    "test_code", "param_code", "measure", "analyte",
+)
+
+
+def _find_measurement_code_col(cols: list[str]) -> str | None:
+    """Return the column that makes a sheet LONG-format (one row per measurement
+    code at a given subject/visit), or None for wide-format sheets.
+
+    A long-format sheet keys legitimate uniqueness on (subject, visit, CODE):
+    the SAME (subject, visit) holds many rows, one per code, which is valid and
+    must NOT be flagged as a duplicate record. Detection is by stable structural
+    role -- the CDISC --TESTCD / PARAMCD suffix, plus an explicit synonym set --
+    never by guessing on arbitrary column names.
+    """
+    # exact synonyms first
+    hit = _find_col(cols, _MEASUREMENT_CODE_SYNONYMS)
+    if hit is not None:
+        return hit
+    # CDISC suffix patterns: <domain>TESTCD / <domain>PARAMCD
+    for c in cols:
+        n = _norm(c)
+        if n.endswith("testcd") or n.endswith("paramcd"):
+            return c
+    return None
+
+
 def _is_non_data_sheet(name: str) -> bool:
     n = _norm(name)
     return any(tok.replace("_", "") in n for tok in _NON_DATA_SHEET_TOKENS)
@@ -244,19 +275,34 @@ def audit_data_integrity(tables: dict[str, pd.DataFrame]) -> list[dict[str, Any]
         # map normalized -> real for the columns we check
         norm_to_real = {_norm(c): c for c in cols}
 
-        # 1) duplicate-record: same (subject, visit) appears twice
+        # 1) duplicate-record: same primary key appears twice.
+        #    WIDE format -> key is (subject, visit).
+        #    LONG format (CDISC --TESTCD / PARAMCD, etc.) -> one (subject, visit)
+        #    legitimately holds many rows (one per measurement code), so the key
+        #    is (subject, visit, measurement_code). This eliminates the false
+        #    "duplicate_record" flood on long-format sheets while STILL catching
+        #    a genuine duplicate (the SAME code recorded twice at the same visit).
         if pid is not None and visit is not None:
-            dup_mask = df.duplicated(subset=[pid, visit], keep=False)
+            mcode = _find_measurement_code_col(cols)
+            key_cols = [pid, visit] + ([mcode] if mcode is not None else [])
+            dup_mask = df.duplicated(subset=key_cols, keep=False)
             if dup_mask.any():
-                dups = df[dup_mask][[pid, visit]].drop_duplicates()
+                dups = df[dup_mask][key_cols].drop_duplicates()
+                key_label = ("(subject,visit,measurement)" if mcode is not None
+                             else "(subject,visit)")
                 for _, row in dups.iterrows():
+                    detail = (f"{row[pid]}@{row[visit]}"
+                              + (f":{row[mcode]}" if mcode is not None else ""))
+                    extra = (f" for measurement '{row[mcode]}'"
+                             if mcode is not None else "")
                     flags.append(_flag(
-                        TIER_IMPOSSIBLE, row[pid], row[visit], f"{name}:(subject,visit)",
-                        f"{row[pid]}@{row[visit]}", "duplicate_record",
-                        f"Sheet '{name}': subject {row[pid]} visit {row[visit]} "
-                        f"appears more than once; a longitudinal record must be "
-                        f"unique on (subject, visit).",
-                        citation="Data-integrity axiom: unique primary key (subject, visit)."))
+                        TIER_IMPOSSIBLE, row[pid], row[visit],
+                        f"{name}:{key_label}", detail, "duplicate_record",
+                        f"Sheet '{name}': subject {row[pid]} visit {row[visit]}"
+                        f"{extra} appears more than once; a longitudinal record "
+                        f"must be unique on {key_label}.",
+                        citation=f"Data-integrity axiom: unique primary key "
+                                 f"{key_label}."))
 
         # 2) orphan-record: a per-visit sheet row whose subject is not enrolled
         if (pid is not None and visit is not None and enrolled_ids

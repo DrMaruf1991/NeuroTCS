@@ -11,12 +11,16 @@ cTCS / pTCS audit alarms, grounded in:
     DOI: 10.1016/j.jacr.2025.02.008
     PMID: 40057886
 
-The ACR-SIIM Practice Parameter for Imaging AI (approved 5 May 2026)
-requires "ongoing monitoring with drift detection and stop rules". This
-module derives those stop rules EMPIRICALLY from a reference epoch's audit
-distribution, rather than picking arbitrary numerical thresholds.
+The ACR-SIIM Practice Parameter for Imaging Artificial Intelligence (approved
+by ACR Council on 5 May 2026 at ACR 2026; a distinct source from Larson 2025
+below) calls for ongoing post-deployment performance monitoring, including
+detection of model drift. This module derives stop-rule thresholds EMPIRICALLY
+from a reference epoch's audit distribution, rather than picking arbitrary
+numerical thresholds. (Requirement paraphrased, not quoted; see the ACR-SIIM
+Practice Parameter document for the authoritative wording.)
 
-Why empirical? Per the Larson 2025 roadmap (verbatim):
+Why empirical? Per the Larson 2025 roadmap, which motivates local quality
+management because (verbatim from the abstract):
 
     "real-world performance often differs from that demonstrated in
      premarket testing"

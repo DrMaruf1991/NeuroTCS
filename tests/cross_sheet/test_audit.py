@@ -532,3 +532,65 @@ class TestEndToEndWithShippedPack:
         assert result.n_rows_audited == 3
         assert result.n_invariants_evaluated == 5  # v1.11.0a8: + unknown-tool catch-all
         assert "cross_sheet/tool_declaration_consistency@1.1.0" in result.packs_run
+
+
+class TestNumericConflictFanOutDedup:
+    """v1.51: a wide source row joined to a LONG target (many rows per join key,
+    e.g. CDISC --TESTCD long format) must emit each genuine numeric conflict
+    ONCE, not once per target row. Distinct conflicts are still preserved."""
+
+    def _pack(self):
+        from neurotcs.cross_sheet.schema import NumericConflictCondition
+        cond = NumericConflictCondition(
+            source_sheet="biomarkers", source_field="moca",
+            source_threshold=27, source_direction="ge",
+            target_sheet="predictions", target_field="mmse",
+            target_threshold=20, target_direction="le")
+        inv = CrossSheetInvariant(
+            name="test_invariant",
+            description="A test invariant for fan-out dedup.",
+            sheets_required=[SheetSpec(role="biomarkers"),
+                             SheetSpec(role="predictions")],
+            join_keys=["patient_id", "visit_id"],
+            condition=cond, flag_severity="warning",
+            citation=_citation(),
+            citation_strength=CitationStrength.INTERNATIONAL_CONSENSUS,
+            guideline_section="Test section")
+        pack = InvariantPack(
+            schema_version="1.0.0",
+            invariantpack_id="cross_sheet/test/fanout_pack@1.0.0",
+            pack_version="1.0.0", effective_date=date(2026, 5, 25),
+            status=InvariantPackStatus.RESEARCH_PREVIEW, domain="test",
+            framework_name="Test framework for fan-out dedup",
+            transcribed_by="Test, 2026-05-25",
+            clinical_source_authority="Test authority for validation",
+            anchor_citation=_citation(), invariants=[inv])
+        return LoadedInvariantPack(
+            name="cross_sheet/test/fanout_pack", invariantpack=pack,
+            canonical_sha256=pack.canonical_sha256(), yaml_sha256="0" * 64,
+            status=InvariantPackStatus.RESEARCH_PREVIEW)
+
+    def test_fan_out_collapses_to_one(self):
+        lp = self._pack()
+        # 1 genuine inversion for P1, but the long target has 4 rows same key.
+        submission = {
+            "biomarkers": [{"patient_id": "P1", "visit_id": "v1", "moca": 28}],
+            "predictions": [{"patient_id": "P1", "visit_id": "v1", "mmse": 18}] * 4,
+        }
+        res = audit_cross_sheet(submission, [lp], dry_run=True)
+        conflict_flags = [f for f in res.flags
+                          if getattr(f, "invariant_name", "") == "test_invariant"]
+        assert len(conflict_flags) == 1
+
+    def test_distinct_conflicts_preserved(self):
+        lp = self._pack()
+        submission = {
+            "biomarkers": [{"patient_id": "P1", "visit_id": "v1", "moca": 28},
+                           {"patient_id": "P2", "visit_id": "v1", "moca": 29}],
+            "predictions": [{"patient_id": "P1", "visit_id": "v1", "mmse": 18},
+                            {"patient_id": "P2", "visit_id": "v1", "mmse": 17}],
+        }
+        res = audit_cross_sheet(submission, [lp], dry_run=True)
+        conflict_flags = [f for f in res.flags
+                          if getattr(f, "invariant_name", "") == "test_invariant"]
+        assert len(conflict_flags) == 2

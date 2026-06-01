@@ -1,4 +1,80 @@
-## [1.50.0] -- 2026-06-01 -- E-2026-023: orchestrator graceful degradation + warning-free deterministic date parsing
+## [1.51.0] -- 2026-06-01 -- E-2026-024: long-format integrity fixes + citation-provenance correction
+
+Resolves two confirmed false-positive defects on CDISC long-format data (found
+by external audit, independently reproduced at source before fixing) plus one
+citation-provenance correction. All three fixes are surgical and additive; the
+v3 blind set is unchanged at 69 / 65 / 1236, 63/63, deterministic core
+byte-identical across runs.
+
+### 1. Long-format duplicate_record flood (data_integrity) -- root fix, not suppression
+
+`data_integrity.py` keyed duplicate detection on (subject, visit) for every
+sheet. In CDISC long format one (subject, visit) legitimately holds many rows
+(one per --TESTCD / PARAMCD), so every long row was flagged "duplicate_record"
+-- a flood that would light up an entire valid CDISC submission as impossible.
+Fixed by adding a measurement-code detector (`_find_measurement_code_col`:
+--TESTCD / PARAMCD suffix + an explicit synonym set) and keying duplicate
+detection on (subject, visit, measurement_code) for long sheets while keeping
+(subject, visit) for wide sheets. This ELIMINATES the false flood AND preserves
+genuine duplicate detection: the same code recorded twice at one visit is still
+flagged. Verified: valid long -> 0; long true-duplicate -> 1; wide
+true-duplicate -> 1; wide clean -> 0.
+
+### 2. cross_sheet numeric-conflict fan-out (cross_sheet/audit.py) -- dedup
+
+`_evaluate_numeric_conflict` emitted one flag per (source row x matching target
+row). When a wide source sheet joins a LONG target (many rows per join key), one
+genuine conflict was emitted N times as byte-identical copies (e.g. 8 real
+inversions -> 32 emitted at 4x). Fixed by deduping on (join-key tuple, source
+value, target value): each distinct conflict is reported once, at the
+granularity the invariant declares via its join_keys; genuinely distinct
+conflicts (different key or values) are preserved. The underlying rule
+(moca_grossly_exceeds_mmse, MoCA>=27 AND MMSE<=20, Nasreddine 2005) is correct
+by design and unchanged -- only the duplication is removed. Verified: 1 genuine
+inversion across 4 long rows -> 1 flag; two distinct patients -> 2 flags.
+
+### 3. threshold_derivation citation-provenance correction
+
+The module attributed the ACR-SIIM Practice Parameter requirement loosely under
+the Larson 2025 roadmap citation and presented an unverified verbatim
+requirement string. Corrected: the ACR-SIIM Practice Parameter for Imaging AI
+(ACR Council approval 5 May 2026 at ACR 2026 -- a real, distinct source,
+verified) is now attributed separately, with the requirement paraphrased rather
+than quoted; the Larson 2025 quote ("real-world performance often differs from
+that demonstrated in premarket testing") is retained as it verifies against the
+JACR abstract. All citation IDENTIFIERS in the module were independently
+verified against primary sources and are correct: Kwong 2022 (DOI
+10.3389/fdgth.2022.929508, PMID 36052317), DECIDE-AI / Vasey 2022 (DOI
+10.1038/s41591-022-01772-9, PMID 35585196), Larson 2025 (DOI
+10.1016/j.jacr.2025.02.008, PMID 40057886).
+
+### Added
+
+- src/neurotcs/io/data_integrity.py: `_find_measurement_code_col` + long-format-
+  aware duplicate key.
+- src/neurotcs/cross_sheet/audit.py: fan-out dedup in `_evaluate_numeric_conflict`.
+- src/neurotcs/threshold_derivation/__init__.py: provenance correction (docstring).
+- tests/io/test_data_integrity.py (+4): valid long no-flood, long true-dup
+  caught, wide true-dup caught, PARAMCD long recognized.
+- tests/cross_sheet/test_audit.py (+2): fan-out collapses to one, distinct
+  conflicts preserved.
+
+### Tests
+
+1786 -> 1792 passed (+6). ruff clean over src/ tests/ scripts/. v3 blind set
+unchanged at 69 / 65 / 1236, 63/63; deterministic core byte-identical across
+two runs.
+
+### Scope note (honest, unchanged by this fix)
+
+Long-format sheets are now correctly INTEGRITY-checked; long-format VALUE
+range-auditing still requires an explicit mapping (zero-config wires the staging
+axes). Calibrated biomarkers still require --confirm-assays. These are
+deliberate boundaries, not defects.
+
+---
+
+
 
 Two robustness fixes deferred from v1.49.0, each built and tested as a complete
 unit. Both are additive / defensive; the v3 blind set is unchanged at
