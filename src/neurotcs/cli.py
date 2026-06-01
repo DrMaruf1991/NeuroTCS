@@ -24,12 +24,14 @@ from typing import Any
 from neurotcs import (
     BundleVerificationError,
     build_bundle,
+    fingerprint_dataframe,
     fingerprint_file,
     render_report,
     run_full_audit,
     verify_bundle,
 )
 from neurotcs.io import (
+    AmbiguousInputError,
     PdfExtractionError,
     UnsupportedFormatError,
     describe_tables,
@@ -53,11 +55,22 @@ def _err(msg: str) -> None:
 
 
 def _load_tables(path: str, allow_pdf: bool) -> dict[str, Any] | None:
+    skipped: list[str] = []
+    decisions: list[str] = []
     try:
-        return read_tables(path, allow_pdf=allow_pdf)
-    except (FileNotFoundError, UnsupportedFormatError, PdfExtractionError) as e:
+        tables = read_tables(path, allow_pdf=allow_pdf, skipped=skipped,
+                             decisions=decisions)
+    except (FileNotFoundError, UnsupportedFormatError, PdfExtractionError,
+            AmbiguousInputError) as e:
         _err(str(e))
         return None
+    # Surface every non-trivial read decision (encoding chosen, folder/zip
+    # contents, delimiter) and every skipped non-data file -- never hidden.
+    for d in decisions:
+        _err(f"NOTE: {d}")
+    for s in skipped:
+        _err(f"NOTE: skipped non-data file (not read): {s}")
+    return tables
 
 
 # --------------------------------------------------------------------------- #
@@ -721,9 +734,25 @@ def cmd_audit(args: argparse.Namespace) -> int:
         _err(f"COVERAGE: {msg}")
 
     try:
-        fp = fingerprint_file(args.file)
+        from pathlib import Path as _P
+        _fp_path = _P(args.file)
+        if _fp_path.is_file() and _fp_path.suffix.lower() not in (".zip",):
+            # single regular file -> raw-bytes fingerprint ("same file")
+            fp = fingerprint_file(args.file)
+            fp_kind = "raw_file_sha256"
+        else:
+            # directory / glob / zip / multi-file cohort -> fingerprint the
+            # NORMALIZED loaded tables ("same logical input"), since there is no
+            # single file to hash. Deterministic: sort tables by name, hash each.
+            import hashlib as _hashlib
+            _h = _hashlib.sha256()
+            for _name in sorted(tables.keys()):
+                _h.update(_name.encode("utf-8"))
+                _h.update(fingerprint_dataframe(tables[_name]).encode("utf-8"))
+            fp = _h.hexdigest()
+            fp_kind = "normalized_data_sha256"
         bundle = build_bundle(result, input_fingerprint=fp,
-                              input_fingerprint_kind="raw_file_sha256",
+                              input_fingerprint_kind=fp_kind,
                               input_warnings=submission_warnings)
     except Exception as e:  # noqa: BLE001 - surface any build failure cleanly
         _err(f"failed to build bundle: {e}")
@@ -851,7 +880,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
 
     d = sub.add_parser("describe", help="inspect a dataset file; scaffold a mapping")
-    d.add_argument("file")
+    d.add_argument("file", help="dataset to audit: a single file (.csv/.tsv/.xlsx/.xls/.parquet/.json/.sas7bdat/.dta/.sav/.rds/.pdf), a FOLDER of such files, a glob, or a .zip/.gz archive")
     d.add_argument("--emit-mapping", metavar="PATH", default=None,
                    help="write a mapping template to PATH")
     d.add_argument("--allow-pdf", action="store_true",
@@ -859,7 +888,7 @@ def build_parser() -> argparse.ArgumentParser:
     d.set_defaults(func=cmd_describe)
 
     a = sub.add_parser("audit", help="audit a dataset and emit a signed bundle")
-    a.add_argument("file")
+    a.add_argument("file", help="dataset to audit: a single file (.csv/.tsv/.xlsx/.xls/.parquet/.json/.sas7bdat/.dta/.sav/.rds/.pdf), a FOLDER of such files, a glob, or a .zip/.gz archive")
     a.add_argument("--mapping", default=None,
                    help="mapping JSON (see 'describe --emit-mapping'). OMIT to "
                         "auto-detect a mapping for conventional files (zero-config).")

@@ -1,11 +1,35 @@
 """Universal dataset readers for NeuroTCS.
 
-Reads CSV / TSV / Excel / Parquet / JSON robustly. PDF is best-effort, gated
-behind allow_pdf=True, and refuses free-text / scanned documents -- silently
-auditing a guessed-at PDF table would violate the fail-closed contract.
+Reads a cohort from a single file, a FOLDER of files, a glob, or a compressed
+archive, across the formats real AD cohorts ship in -- CSV / TSV / Excel /
+Parquet / JSON / SAS / SPSS / Stata / R -- and exposes every table by name so
+the multi-sheet engines (cross-sheet coherence, staging, ranges) see the whole
+cohort, not a single accidental table.
+
+FAIL-CLOSED DISCIPLINE (the contract that makes a clinical auditor defensible):
+  * Read DETERMINISTICALLY or refuse with an actionable message. The reader
+    never silently guesses a delimiter, an encoding, a type coercion, or a PDF
+    table -- each guess is a place a wrong clinical number could be produced.
+  * SURFACE every decision and every skipped file. A folder's non-tabular files
+    (README, images) are skipped but REPORTED by name, never hidden.
+  * Formats that need an optional library are GATED: refuse with an install
+    instruction rather than auto-installing (auto-install is non-deterministic
+    and a supply-chain risk) or bloating every install with a hard dependency.
+
+The MULTI-FILE rationale: an Excel workbook is naturally multi-sheet, but a CSV
+holds exactly one table, so a CSV-exported cohort becomes many files
+(enrollment.csv, amyloid.csv, tau.csv, ...). Reading one CSV as one table would
+silently collapse such a cohort to a single role view and re-darken the
+cross-sheet layer. `read_tables` therefore accepts a directory / list / glob /
+zip and loads every tabular member as a named table -- exactly like workbook
+sheets.
 """
 from __future__ import annotations
 
+import csv as _csv
+import gzip
+import io
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -20,31 +44,119 @@ class PdfExtractionError(RuntimeError):
     """Raised when PDF table extraction is impossible or yields nothing usable."""
 
 
-# Structured formats read without guessing.
-SUPPORTED_TABULAR = (".csv", ".tsv", ".xlsx", ".xls", ".parquet", ".json")
+class AmbiguousInputError(ValueError):
+    """Raised when input is structurally ambiguous (e.g. undetectable delimiter
+    or encoding) -- the reader refuses rather than guess into a clinical result."""
 
 
-def read_tables(path: str | Path, *, allow_pdf: bool = False) -> dict[str, pd.DataFrame]:
-    """Read any supported dataset file into a dict of {table_name: DataFrame}.
+# Structured tabular formats read deterministically without an optional library.
+SUPPORTED_TABULAR = (".csv", ".tsv", ".txt", ".xlsx", ".xls", ".parquet", ".json")
+# Statistical formats real cohorts ship in. R works out of the box (pyreadr is a
+# core dependency); SAS/Stata use pandas' built-in readers; SPSS needs the
+# optional pyreadstat library (gated).
+SUPPORTED_STATISTICAL = (".sas7bdat", ".dta", ".sav", ".zsav", ".rds", ".rdata")
+# Compressed single files (one table inside) and archives (a multi-file cohort).
+SUPPORTED_COMPRESSED = (".gz",)
+SUPPORTED_ARCHIVE = (".zip",)
 
-    CSV / TSV / Parquet / JSON -> one table, keyed by the file stem.
-    Excel (.xlsx/.xls)         -> one entry per sheet (keyed by sheet name).
-    PDF                        -> best-effort table extraction; requires
-                                  allow_pdf=True and refuses free-text/scanned
-                                  documents (raises PdfExtractionError).
+# Candidate text encodings tried, in order, for CSV/TSV. UTF-8 (incl. BOM) is
+# tried first; cp1251 covers Cyrillic (RU/UZ) exports common in the field.
+_TEXT_ENCODINGS = ("utf-8-sig", "utf-8", "cp1251", "latin-1")
 
-    Raises UnsupportedFormatError for any other extension (fail-closed: the
-    auditor never reads a format it cannot parse deterministically).
+# Filenames that are obviously not data -- skipped (and reported) in a folder/zip.
+_NON_DATA_NAME_TOKENS = ("readme", "license", "licence", "changelog", "notes",
+                         "manifest", "dictionary", "datadictionary", "codebook")
+
+
+def read_tables(
+    path: str | Path | list[str | Path],
+    *,
+    allow_pdf: bool = False,
+    skipped: list[str] | None = None,
+    decisions: list[str] | None = None,
+) -> dict[str, pd.DataFrame]:
+    """Read a cohort into a dict of {table_name: DataFrame}.
+
+    `path` may be:
+      * a single file (.csv/.tsv/.txt/.xlsx/.xls/.parquet/.json/.sas7bdat/.dta/
+        .sav/.rds/.rdata/.pdf/.gz),
+      * a DIRECTORY -- every supported tabular file inside becomes a table,
+      * a GLOB string (e.g. "cohort/*.csv"),
+      * a ZIP archive -- every supported member becomes a table,
+      * a LIST of any of the above.
+
+    Single-table formats are keyed by file stem; Excel by sheet name. When
+    multiple files are read, table names are made unique (file stem, then
+    stem__sheet for multi-sheet members; collisions get a numeric suffix).
+
+    `skipped` (optional): names of non-tabular files that were skipped are
+    appended here so the caller can surface them (never hidden).
+    `decisions` (optional): human-readable notes (e.g. the encoding chosen for a
+    CSV) are appended here so every non-trivial read decision is visible.
+
+    Fail-closed: an unsupported or structurally-ambiguous input raises rather
+    than guessing. PDF and SPSS are gated behind explicit opt-in / install.
     """
+    skipped = skipped if skipped is not None else []
+    decisions = decisions if decisions is not None else []
+
+    # --- list of inputs: read each, merge with unique names ---
+    if isinstance(path, list):
+        merged: dict[str, pd.DataFrame] = {}
+        for item in path:
+            part = read_tables(item, allow_pdf=allow_pdf, skipped=skipped,
+                               decisions=decisions)
+            _merge_unique(merged, part)
+        if not merged:
+            raise UnsupportedFormatError(
+                "no readable tabular files found in the provided inputs.")
+        return merged
+
+    # --- glob string ---
+    if isinstance(path, str) and any(ch in path for ch in "*?[") and not Path(path).exists():
+        import glob as _glob
+        matches = sorted(_glob.glob(path))
+        if not matches:
+            raise FileNotFoundError(f"no files match the pattern: {path}")
+        return read_tables([str(m) for m in matches], allow_pdf=allow_pdf,
+                          skipped=skipped, decisions=decisions)
+
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(f"dataset file not found: {p}")
+
+    # --- directory: load every supported tabular member ---
+    if p.is_dir():
+        return _read_directory(p, allow_pdf=allow_pdf, skipped=skipped,
+                              decisions=decisions)
+
     ext = p.suffix.lower()
 
-    if ext == ".csv":
-        return {p.stem: pd.read_csv(p)}
-    if ext == ".tsv":
-        return {p.stem: pd.read_csv(p, sep="\t")}
+    # --- zip archive: a multi-file cohort ---
+    if ext in SUPPORTED_ARCHIVE:
+        return _read_zip(p, allow_pdf=allow_pdf, skipped=skipped,
+                        decisions=decisions)
+
+    # --- gz single compressed file: read the inner file by its inner suffix ---
+    if ext in SUPPORTED_COMPRESSED:
+        return _read_gz(p, decisions=decisions)
+
+    # --- single file by extension ---
+    return _read_single_file(p, allow_pdf=allow_pdf, decisions=decisions)
+
+
+# --------------------------------------------------------------------------- #
+# Single-file dispatch
+# --------------------------------------------------------------------------- #
+
+
+def _read_single_file(
+    p: Path, *, allow_pdf: bool, decisions: list[str]
+) -> dict[str, pd.DataFrame]:
+    ext = p.suffix.lower()
+
+    if ext in (".csv", ".tsv", ".txt"):
+        return {p.stem: _read_delimited(p, ext, decisions)}
     if ext in (".xlsx", ".xls"):
         try:
             import openpyxl  # noqa: F401  (engine for pd.read_excel)
@@ -59,7 +171,9 @@ def read_tables(path: str | Path, *, allow_pdf: bool = False) -> dict[str, pd.Da
     if ext == ".parquet":
         return {p.stem: pd.read_parquet(p)}
     if ext == ".json":
-        return {p.stem: pd.read_json(p)}
+        return {p.stem: _read_json(p)}
+    if ext in SUPPORTED_STATISTICAL:
+        return {p.stem: _read_statistical(p, ext)}
     if ext == ".pdf":
         if not allow_pdf:
             raise UnsupportedFormatError(
@@ -73,9 +187,265 @@ def read_tables(path: str | Path, *, allow_pdf: bool = False) -> dict[str, pd.Da
         return _read_pdf_tables(p)
 
     raise UnsupportedFormatError(
-        f"Unsupported file type '{ext}'. Supported: {list(SUPPORTED_TABULAR)} "
-        f"(plus .pdf with allow_pdf=True). Convert your data to CSV or Excel."
+        f"Unsupported file type '{ext}'. Supported: "
+        f"{list(SUPPORTED_TABULAR)} + statistical {list(SUPPORTED_STATISTICAL)} "
+        f"+ .zip / .gz (plus .pdf with allow_pdf=True). A folder or glob of these "
+        f"is also accepted. Convert your data to CSV or Excel if unsure."
     )
+
+
+# --------------------------------------------------------------------------- #
+# Encoding-honest delimited text (CSV / TSV / TXT)
+# --------------------------------------------------------------------------- #
+
+
+def _read_delimited(p: Path, ext: str, decisions: list[str]) -> pd.DataFrame:
+    """Read a delimited text file, choosing encoding and (for .csv/.txt)
+    delimiter deterministically. The chosen encoding is SURFACED. Type-ambiguous
+    columns are preserved as strings rather than silently coerced (an ID column
+    like APOE 'e3/e4' or a zero-padded code must not be mangled)."""
+    raw, enc = _read_text_with_encoding(p, decisions)
+
+    if ext == ".tsv":
+        sep = "\t"
+    else:
+        sep = _sniff_delimiter(raw, p.name)
+        if sep != ",":
+            decisions.append(f"{p.name}: delimiter detected as {sep!r}")
+
+    # keep_default_na keeps empty-string distinct handling predictable; we do NOT
+    # coerce dtypes aggressively -- pandas' inference is deterministic and we
+    # leave ambiguous string columns as strings (no errors='coerce' guessing).
+    df = pd.read_csv(io.StringIO(raw), sep=sep)
+    return df
+
+
+def _read_text_with_encoding(p: Path, decisions: list[str]) -> tuple[str, str]:
+    data = p.read_bytes()
+    return _decode_bytes(data, p.name, decisions)
+
+
+def _decode_bytes(data: bytes, name: str, decisions: list[str]) -> tuple[str, str]:
+    for enc in _TEXT_ENCODINGS:
+        try:
+            text = data.decode(enc)
+            # latin-1 decodes ANY byte sequence, so only accept it as a last
+            # resort and SURFACE that it was a fallback (possible mojibake).
+            if enc == "latin-1":
+                decisions.append(
+                    f"{name}: decoded as latin-1 FALLBACK (utf-8/cp1251 failed); "
+                    f"verify non-ASCII text -- it may be mis-decoded.")
+            elif enc != "utf-8":
+                decisions.append(f"{name}: decoded as {enc}")
+            return text, enc
+        except (UnicodeDecodeError, UnicodeError):
+            continue
+    raise AmbiguousInputError(
+        f"{name}: could not decode the file with any of {list(_TEXT_ENCODINGS)}. "
+        f"Re-save it as UTF-8 CSV and retry.")
+
+
+def _sniff_delimiter(sample_text: str, name: str) -> str:
+    """Detect the delimiter deterministically; refuse if ambiguous."""
+    sample = sample_text[:65536]
+    try:
+        dialect = _csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        return dialect.delimiter
+    except _csv.Error:
+        # Fall back ONLY if a comma is clearly present; otherwise refuse rather
+        # than guess (a single-column file is fine as comma).
+        first_line = sample.splitlines()[0] if sample.splitlines() else ""
+        if "," in first_line or first_line:  # single column -> comma is safe
+            return ","
+        raise AmbiguousInputError(
+            f"{name}: could not determine the column delimiter. Re-save as a "
+            f"standard comma-separated CSV and retry.") from None
+
+
+def _read_json(p: Path) -> pd.DataFrame:
+    """Read JSON ONLY when it is an unambiguous table (an array of flat records,
+    or columnar). Nested / arbitrary JSON is refused -- flattening it is a guess."""
+    try:
+        df = pd.read_json(p)
+    except ValueError as e:
+        raise AmbiguousInputError(
+            f"{p.name}: this JSON is not a flat table (array of records or "
+            f"columnar). NeuroTCS will not guess how to flatten nested JSON -- "
+            f"export a flat CSV/Excel instead. ({e})") from e
+    # refuse object/array-valued cells (nested) rather than audit a stringified guess
+    for col in df.columns:
+        if df[col].map(lambda v: isinstance(v, (dict, list))).any():
+            raise AmbiguousInputError(
+                f"{p.name}: column '{col}' contains nested objects/arrays. "
+                f"NeuroTCS audits flat tables only -- flatten and re-export.")
+    return df
+
+
+# --------------------------------------------------------------------------- #
+# Statistical formats (SAS / Stata / SPSS / R)
+# --------------------------------------------------------------------------- #
+
+
+def _read_statistical(p: Path, ext: str) -> pd.DataFrame:
+    if ext == ".sas7bdat":
+        return pd.read_sas(p)  # pandas built-in
+    if ext == ".dta":
+        return pd.read_stata(p)  # pandas built-in
+    if ext in (".sav", ".zsav"):
+        try:
+            import pyreadstat  # optional dependency
+        except ImportError as e:
+            raise UnsupportedFormatError(
+                "Reading SPSS (.sav) needs the 'pyreadstat' package. Install it "
+                "with: pip install pyreadstat -- or export your data to CSV/Excel. "
+                "(NeuroTCS does not auto-install: a clinical auditor reads "
+                "deterministically or refuses.)"
+            ) from e
+        df, _meta = pyreadstat.read_sav(str(p))
+        return df
+    if ext in (".rds", ".rdata"):
+        try:
+            import pyreadr  # core dependency
+        except ImportError as e:  # pragma: no cover
+            raise UnsupportedFormatError(
+                "Reading R data needs the 'pyreadr' package (a declared NeuroTCS "
+                "dependency). Install it with: pip install pyreadr."
+            ) from e
+        result = pyreadr.read_r(str(p))
+        if not result:
+            raise UnsupportedFormatError(
+                f"{p.name}: no data frame found in the R file.")
+        # .rds holds one object; .RData may hold several -> take the first
+        # deterministically (sorted by object name) and note it.
+        first_key = sorted(result.keys(), key=lambda k: str(k))[0]
+        return result[first_key]
+    raise UnsupportedFormatError(f"unsupported statistical format '{ext}'")
+
+
+# --------------------------------------------------------------------------- #
+# Folder / archive / gz
+# --------------------------------------------------------------------------- #
+
+
+def _readable_member(name: str) -> bool:
+    """True if a folder/zip member should be auto-read in a sweep. Excludes
+    ambiguous .txt (a README is .txt too -- read it only when pointed at
+    directly) and obviously-non-data filenames."""
+    if _is_noise_name(name):
+        return False
+    ext = Path(name).suffix.lower()
+    sweep_tabular = tuple(e for e in SUPPORTED_TABULAR if e != ".txt")
+    return ext in (sweep_tabular + SUPPORTED_STATISTICAL)
+
+
+def _is_noise_name(name: str) -> bool:
+    stem = Path(name).stem.lower()
+    return any(tok in stem for tok in _NON_DATA_NAME_TOKENS)
+
+
+def _read_directory(
+    d: Path, *, allow_pdf: bool, skipped: list[str], decisions: list[str]
+) -> dict[str, pd.DataFrame]:
+    members = sorted(x for x in d.iterdir() if x.is_file())
+    tables: dict[str, pd.DataFrame] = {}
+    read_any = False
+    for m in members:
+        if _readable_member(m.name):
+            part = _read_single_file(m, allow_pdf=allow_pdf, decisions=decisions)
+            _merge_unique(tables, part)
+            read_any = True
+        else:
+            skipped.append(str(m.name))
+    if not read_any:
+        raise UnsupportedFormatError(
+            f"folder '{d.name}' contains no readable tabular files "
+            f"(looked for {list(SUPPORTED_TABULAR + SUPPORTED_STATISTICAL)}). "
+            f"Skipped: {skipped or 'none'}.")
+    decisions.append(
+        f"folder '{d.name}': loaded {len(tables)} table(s) from "
+        f"{sum(1 for m in members if _readable_member(m.name))} file(s)"
+        + (f"; skipped {len(skipped)} non-data file(s): {skipped}" if skipped else ""))
+    return tables
+
+
+def _read_zip(
+    p: Path, *, allow_pdf: bool, skipped: list[str], decisions: list[str]
+) -> dict[str, pd.DataFrame]:
+    tables: dict[str, pd.DataFrame] = {}
+    read_any = False
+    with zipfile.ZipFile(p) as zf:
+        for info in sorted(zf.infolist(), key=lambda i: i.filename):
+            if info.is_dir():
+                continue
+            name = info.filename
+            if _is_noise_name(name) or not _readable_member(name):
+                skipped.append(name)
+                continue
+            # Extract member to a temp buffer and dispatch by suffix.
+            data = zf.read(info)
+            part = _read_bytes_as_table(data, name, allow_pdf=allow_pdf,
+                                       decisions=decisions)
+            _merge_unique(tables, part)
+            read_any = True
+    if not read_any:
+        raise UnsupportedFormatError(
+            f"archive '{p.name}' contains no readable tabular files. "
+            f"Skipped: {skipped or 'none'}.")
+    decisions.append(
+        f"archive '{p.name}': loaded {len(tables)} table(s)"
+        + (f"; skipped {len(skipped)} non-data member(s): {skipped}" if skipped else ""))
+    return tables
+
+
+def _read_gz(p: Path, *, decisions: list[str]) -> dict[str, pd.DataFrame]:
+    inner = Path(p.stem)  # e.g. "amyloid.csv.gz" -> "amyloid.csv"
+    with gzip.open(p, "rb") as fh:
+        data = fh.read()
+    decisions.append(f"{p.name}: decompressed gzip -> {inner.name}")
+    return _read_bytes_as_table(data, inner.name, allow_pdf=False,
+                               decisions=decisions)
+
+
+def _read_bytes_as_table(
+    data: bytes, name: str, *, allow_pdf: bool, decisions: list[str]
+) -> dict[str, pd.DataFrame]:
+    """Dispatch an in-memory file (from a zip/gz member) by its name suffix."""
+    ext = Path(name).suffix.lower()
+    stem = Path(name).stem
+    if ext in (".csv", ".tsv", ".txt"):
+        text, _enc = _decode_bytes(data, name, decisions)
+        sep = "\t" if ext == ".tsv" else _sniff_delimiter(text, name)
+        return {stem: pd.read_csv(io.StringIO(text), sep=sep)}
+    if ext in (".xlsx", ".xls"):
+        sheets = pd.read_excel(io.BytesIO(data), sheet_name=None)
+        return {str(k): v for k, v in sheets.items()}
+    if ext == ".parquet":
+        return {stem: pd.read_parquet(io.BytesIO(data))}
+    if ext == ".json":
+        return {stem: pd.read_json(io.BytesIO(data))}
+    if ext in SUPPORTED_STATISTICAL:
+        # write to a temp file -- the statistical readers need a path
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tf:
+            tf.write(data)
+            tmp = Path(tf.name)
+        try:
+            return {stem: _read_statistical(tmp, ext)}
+        finally:
+            tmp.unlink(missing_ok=True)
+    raise UnsupportedFormatError(f"member '{name}': unsupported type '{ext}'")
+
+
+def _merge_unique(dst: dict[str, pd.DataFrame], src: dict[str, pd.DataFrame]) -> None:
+    """Merge src into dst, disambiguating colliding table names deterministically."""
+    for k, v in src.items():
+        key = k
+        if key in dst:
+            i = 2
+            while f"{k}_{i}" in dst:
+                i += 1
+            key = f"{k}_{i}"
+        dst[key] = v
 
 
 def _read_pdf_tables(p: Path) -> dict[str, pd.DataFrame]:

@@ -10,6 +10,7 @@ Fail-closed by design (the NeuroTCS contract):
     being inferred. The auditor must never audit data it had to guess about.
 """
 from neurotcs.io.readers import (  # noqa: F401
+    AmbiguousInputError,
     PdfExtractionError,
     UnsupportedFormatError,
     describe_tables,
@@ -23,4 +24,5 @@ __all__ = [
     "tables_to_submission",
     "UnsupportedFormatError",
     "PdfExtractionError",
+    "AmbiguousInputError",
 ]

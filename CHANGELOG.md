@@ -1,4 +1,59 @@
-## [1.42.0] -- 2026-06-01 -- E-2026-015: orchestration completeness fix (two dead layers revived) + universal cross-sheet & Layer-1 data-integrity auto-wiring
+## [1.43.0] -- 2026-06-01 -- E-2026-016: universal multi-format & multi-file dataset ingestion
+
+### Net effect — NeuroTCS reads a whole cohort, not one accidental table, across the formats real AD cohorts ship in
+
+Before v1.43.0: `read_tables` read CSV/TSV/XLSX/Parquet/JSON/PDF, but a single
+CSV is ONE table -- so a CSV-exported cohort (enrollment.csv, amyloid.csv,
+tau.csv, ...) loaded as a single role view and silently re-darkened the
+cross-sheet layer (the same circular-completeness failure v1.42.0 fixed for
+Excel, reintroduced through the CSV front door).
+
+After v1.43.0: point NeuroTCS at a single file, a FOLDER, a glob, a list, or a
+.zip / .gz archive, across CSV / TSV / TXT / Excel / Parquet / JSON / SAS
+(.sas7bdat) / Stata (.dta) / SPSS (.sav) / R (.rds/.RData). Every tabular member
+becomes a named table, exactly like workbook sheets, so the cross-sheet engine
+sees the whole cohort. Verified: the v3 blind cohort, exported to a FOLDER OF
+CSVs and to a ZIP, both catch **63/63** with all five layers and severity
+69/65/1236 -- identical to the Excel path.
+
+### Added -- multi-file / multi-format ingestion (fail-closed, surfaced)
+
+- Directory, glob, list, .zip archive, and .gz single-file inputs.
+- Statistical formats: SAS .sas7bdat and Stata .dta via pandas (no new dep);
+  R .rds/.RData via pyreadr (already a core dep); SPSS .sav via the optional
+  pyreadstat (gated like PDF: refuses with an install instruction rather than
+  auto-installing -- a clinical auditor reads deterministically or refuses).
+- Encoding-honest CSV/TSV: tries utf-8-sig / utf-8 / cp1251 / latin-1 and
+  SURFACES the chosen encoding; latin-1 is a last-resort fallback flagged as
+  possible mojibake. (Matters for trilingual EN/RU/UZ Cyrillic exports.)
+- Deterministic delimiter sniffing; refuses (AmbiguousInputError) rather than
+  guess when ambiguous.
+- Nested/arbitrary JSON is refused (flattening is a guess); only flat tables
+  read.
+- Non-data files in a folder/zip (README, images, .docx) are SKIPPED but
+  REPORTED by name via the new `skipped` accumulator; every read decision is
+  reported via `decisions`. The CLI surfaces both as NOTE lines. Ambiguous
+  .txt is read only when pointed at directly, never swept from a folder.
+
+### Changed
+
+- `read_tables(path, *, allow_pdf=False, skipped=None, decisions=None)` now
+  accepts str | Path | list and resolves directories/globs/archives.
+- CLI input fingerprint is adaptive: raw-bytes SHA-256 for a single file
+  ("same file"); normalized-table SHA-256 for a multi-file cohort ("same
+  logical input"), since a directory has no single file to hash.
+- New optional-dependency extras: `pip install neurotcs[spss]`,
+  `neurotcs[pdf]`, `neurotcs[formats]`.
+
+### Tests
+
++16 (1695 -> 1711): folder / zip / gz / glob / list ingestion, name-collision
+disambiguation, cp1251 + utf-8-BOM encoding honesty, nested-JSON refusal,
+unsupported-extension refusal, direct-.txt read, Stata round-trip, and the
+SPSS gated-refusal path.
+
+---
+
 
 ### Net effect — closes a circular-completeness hole; all five audit layers now run universally in zero-config
 
