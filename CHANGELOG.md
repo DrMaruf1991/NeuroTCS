@@ -1,3 +1,83 @@
+## [1.60.0] -- 2026-06-01 -- E-2026-033: biological A/T/N notation synonym layer (USIL increment 2, opt-in)
+
+The biological mirror of the v1.59.0 clinical-stage synonym layer, and the
+second scoped increment of the auditor's "Universal Subject Intelligence Layer"
+roadmap. Normalizes the many ways studies write an NIA-AA AT(N) biomarker
+profile -- "A+T-N+", "A+/T-/N+", "A pos T neg N pos", "amyloid positive, tau
+negative, neurodegeneration positive" -- onto the EXACT canonical profile
+strings the biological staging packs consume (A+T-N+ etc., or the 2-axis A+T-).
+Reuses the same opt-in --normalize-labels flag; default OFF -> existing runs
+byte-identical (v3 unchanged 69/65/1236, deterministic; bundle format stays
+1.4.0).
+
+### Problem it solves
+
+A dataset whose biological state column reads "amyloid positive tau negative"
+or "A+/T-/N+" hits the vocabulary gate as a mismatch -> staging_biological is
+skipped, no score. The same cohort cannot be audited purely because of notation.
+This layer lets it audit -- without ever changing polarity or inventing a
+profile.
+
+### Critical safety property (deep-checked)
+
+The v1.59.0 clinical normalizer's _norm_token strips +/- (non-alphanumeric),
+which would collapse A+T+N+ and A-T-N- to the same key -- a catastrophic
+collision. The biological layer is therefore a SEPARATE, sign-preserving module
+that parses axis+polarity pairs and reassembles in canonical A,T,(N) order. A
+regression test asserts A+T+N+ and A-T-N- remain distinct.
+
+### Added
+
+- src/neurotcs/orchestration/atn_ontology.yaml: citation-anchored AT(N) notation
+  map (axis words: amyloid/Abeta/A->A, tau/ptau/T->T, neurodegeneration/N->N;
+  polarity words: positive/pos/+/abnormal->+, negative/neg/-/normal->-), anchored
+  to the NIA-AA 2018 Research Framework (Jack 2018, DOI 10.1016/j.jalz.2018.02.018,
+  verified before encoding).
+- src/neurotcs/orchestration/atn_normalization.py: load_atn_ontology()
+  (collision-checked, SHA-pinned) + normalize_atn_labels(raw, valid_states).
+  A reassembled profile is EMITTED ONLY IF it is an exact member of the target
+  pack's state space -- reassembly can never invent a profile the pack does not
+  define; anything else passes through unchanged.
+- cli.py: --normalize-labels now ALSO normalizes the biological axis (after the
+  clinical axis), verified against the union of ad/atn_2018 + ad/at_biological
+  states, with each substitution printed and recorded in the bundle's
+  input_warnings.
+
+### Safety design (the NeuroTCS ethos, enforced + tested)
+
+- NOTATION ONLY: re-expresses the same profile; never changes polarity, never
+  infers a missing axis.
+- VERIFIED AGAINST THE PACK: emit only exact canonical states.
+- NEVER GUESS: unparseable tokens, conflicting duplicate axes, single-axis
+  fragments, or profiles not in the pack pass through unchanged (reported as
+  unmatched -> still surface as contamination).
+- AMBIGUITY-SAFE: an axis/polarity word mapping to two meanings fails closed at
+  load.
+- OPT-IN + CITATION-ANCHORED + REPORTED.
+
+### Tests
+
+1825 -> 1837 passed (+12). New tests/orchestration/test_atn_normalization.py:
+A+T+N+ vs A-T-N- do not collide; separator + prose variants normalize; 2-axis
+vs 3-axis arity respected; never invents a non-pack profile; unparseable passes
+through; conflicting duplicate axis not mapped; canonical idempotence; citation
+on each mapping; nulls preserved; ambiguous ontology fails closed. ruff clean;
+default v3 unchanged at 69/65/1236 (and a v3 run WITH the flag is a verified
+no-op since v3 already uses canonical labels); ontology ships in the wheel; all
+new files strict-ASCII.
+
+### USIL roadmap status
+
+Two increments now shipped (clinical labels v1.59.0; biological A/T/N v1.60.0),
+both opt-in, synonyms/notation-only, citation-anchored, fail-honest. Still
+roadmap (each needs a real dataset and/or verified rule source, deferred to its
+own verify-first batch): CDISC long-format zero-config reshaping, per-site assay
+certification, MRI-pipeline metadata mapping, conversion derivation,
+disease-control ontology, ARIA/safety fields, trial-eligibility parsing, new
+cohort adapters.
+
+---
+
 ## [1.59.0] -- 2026-06-01 -- E-2026-032: subject-label synonym ontology (USIL increment 1, opt-in)
 
 First scoped, verify-first increment of the external auditor's "Universal Subject

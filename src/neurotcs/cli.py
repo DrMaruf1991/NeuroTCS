@@ -741,6 +741,45 @@ def cmd_audit(args: argparse.Namespace) -> int:
                     f"{_res.ontology_id} (sha256 {_res.ontology_sha256[:12]}): "
                     f"{_subs}")
 
+        # v1.60.0: biological A/T/N notation normalization (same opt-in flag).
+        # Re-express prose / separator-variant AT(N) profiles ("amyloid positive
+        # tau negative", "A+/T-/N+") as the canonical profile strings the
+        # biological packs consume (A+T-N+ etc.), VERIFIED against the packs'
+        # state sets so a reassembled profile is never invented. Applies to the
+        # biological axis only; clinical axis handled above.
+        from neurotcs.orchestration.atn_normalization import (
+            load_atn_ontology,
+            normalize_atn_labels,
+        )
+        from neurotcs.rulepack.loader import load_rulepack as _load_rp
+        _bio = submission.get("biological")
+        if _bio is not None and "state" in getattr(_bio, "columns", []):
+            _valid: set[str] = set()
+            for _bp in ("ad/atn_2018", "ad/at_biological"):
+                try:
+                    _valid |= {s.name for s in
+                               _load_rp(_bp).rulepack.state_space}
+                except Exception:  # noqa: BLE001 - missing pack must not break audit
+                    pass
+            if _valid:
+                _aont = load_atn_ontology()
+                _ares = normalize_atn_labels(list(_bio["state"]), _valid, _aont)
+                _bio = _bio.copy()
+                _bio["state"] = _ares.normalized
+                submission["biological"] = _bio
+                if not args.quiet and _ares.mapping:
+                    print("# label normalization (--normalize-labels), "
+                          "biological A/T/N axis:")
+                    for raw, canon in sorted(_ares.mapping.items()):
+                        print(f"  {raw!r} -> {canon}")
+                if _ares.mapping:
+                    _bsubs = "; ".join(f"{raw}->{canon}"
+                                       for raw, canon in sorted(_ares.mapping.items()))
+                    submission_warnings.append(
+                        f"label_normalization: biological A/T/N labels normalized "
+                        f"via {_ares.ontology_id} "
+                        f"(sha256 {_ares.ontology_sha256[:12]}): {_bsubs}")
+
     # v1.42.0: AUTO-WIRE the Layer-3b cross-sheet coherence audit. Before this,
     # the cross-sheet layer never ran in zero-config (nothing populated
     # submission["cross_sheet"]), silently disabling ~1/5 of the auditor's

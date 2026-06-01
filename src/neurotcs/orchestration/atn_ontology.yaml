@@ -1,0 +1,92 @@
+schema_version: "1.0.0"
+ontology_id: "subject_label/ad_atn_biological@1.0.0"
+ontology_version: "1.0.0"
+effective_date: "2026-06-01"
+status: "research_preview"
+domain: "ad_atn_biological"
+
+description: >
+  Citation-anchored notation ontology for the NIA-AA AT(N) biological
+  classification. It maps the WORDS different studies use to express each
+  biomarker axis and its polarity ("amyloid positive", "tau negative",
+  "A pos", "Abeta+", "neurodegeneration abnormal", ...) onto the canonical
+  axis letters (A, T, N) and signs (+, -), so a profile written in prose or a
+  non-canonical separator style can be re-assembled into the exact canonical
+  profile string the biological staging packs consume (e.g. A+T-N-). It is a
+  SYNONYM/notation map only: it never changes which axes are positive/negative,
+  and a re-assembled profile is emitted ONLY if it is an exact member of the
+  target pack's state space (otherwise the token passes through unchanged --
+  never guess).
+
+transcribed_by: >
+  Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo
+  International University in Tashkent (KIUT), Uzbekistan. USIL increment 2:
+  the biological mirror of the v1.59.0 clinical-stage synonym layer. The AT(N)
+  notation (A/T/N axes; +/- polarity; eight 3-axis profiles) is taken verbatim
+  from the NIA-AA 2018 Research Framework (Jack 2018), verified before encoding.
+
+canonical_source_authority: |
+  NIA-AA AT(N) notation: Jack CR Jr, Bennett DA, Blennow K, et al. "NIA-AA
+  Research Framework: Toward a biological definition of Alzheimer's disease."
+  Alzheimers Dement 2018;14(4):535-562 (DOI 10.1016/j.jalz.2018.02.018). The
+  framework groups biomarkers into beta-amyloid (A), pathologic tau (T), and
+  neurodegeneration/neuronal injury (N), and classifies a subject into one of
+  eight 3-axis profiles using +/- polarity per axis (e.g. A+ = amyloid
+  positive, T- = tau negative). The 2-axis A/T form (A-T-, A+T-, A+T+) is the
+  amyloid-tau subset used when neurodegeneration is not assessed.
+
+  Scope limits encoded by omission:
+  - This ontology maps NOTATION/wording only. It NEVER changes polarity and
+    NEVER infers a missing axis (e.g. it will not guess N when only A and T are
+    given). A token is normalized only when its parsed axes EXACTLY match a
+    canonical profile in the target pack; otherwise it passes through unchanged.
+  - It does not map clinical-stage labels (CN/MCI/AD) -- that is the separate
+    subject_label/ad_clinical_stage ontology.
+
+citations:
+  - key: "niaaa_2018_jack"
+    citation_doi: "10.1016/j.jalz.2018.02.018"
+    citation_pmid: "29653606"
+    citation_text: >
+      Jack CR Jr, et al. NIA-AA Research Framework: Toward a biological
+      definition of Alzheimer's disease. Alzheimers Dement 2018;14:535-562.
+      Defines the AT(N) axes and the +/- polarity notation.
+
+# Axis words: alternative strings (normalized: lowercased, separators collapsed)
+# that denote each biomarker AXIS. The canonical letter is the output.
+axis_words:
+  A:
+    - "a"
+    - "amyloid"
+    - "abeta"
+    - "a beta"
+    - "a-beta"
+    - "beta amyloid"
+    - "beta-amyloid"
+  T:
+    - "t"
+    - "tau"
+    - "ptau"
+    - "p-tau"
+    - "p tau"
+    - "phosphorylated tau"
+  N:
+    - "n"
+    - "neurodegeneration"
+    - "neuronal injury"
+    - "neurodegeneration or neuronal injury"
+
+# Polarity words: alternative strings that denote each SIGN. Canonical: + / -.
+polarity_words:
+  "+":
+    - "+"
+    - "pos"
+    - "positive"
+    - "abnormal"
+    - "abn"
+  "-":
+    - "-"
+    - "neg"
+    - "negative"
+    - "normal"
+    - "norm"
