@@ -187,6 +187,29 @@ measurements:
             - "EAN (joint with EANM)"
             - "AA-2024 NIA-AA Revised Criteria (Jack et al.)"
             - "Mosconi 2008 J Nucl Med multicenter (PMID 18287270)"
+      - bound_type: "plausible_min"
+        value: 74.0
+        citation_strength: "verbatim"
+        bound_semantic: "physiological_envelope"
+        guideline_section: "FDA Fludeoxyglucose F-18 Injection label §2: minimum 74 MBq (2 mCi) diagnostic dose"
+        citation:
+          citation_pmid: "N/A"
+          citation_doi: "N/A"
+          citation_text: |
+            FDA Fludeoxyglucose F-18 Injection Prescribing Information §2:
+            "Doses of Fludeoxyglucose F 18 Injection ranged from 74-370 MBq
+            (2-10 mCi)." A dose below 74 MBq is below the minimum diagnostic
+            administered activity for adult brain FDG-PET; EANM Brain FDG-PET
+            v3 recommends 125-250 MBq. A dose of e.g. 20 MBq is diagnostically
+            insufficient (physiological/protocol envelope floor).
+          public_url: "https://www.accessdata.fda.gov/drugsatfda_docs/label/2005/021870lbl.pdf"
+          endorsing_bodies:
+            - "FDA (Fludeoxyglucose F-18 Injection PI §2 Dosing)"
+            - "EANM Brain FDG-PET Guideline v3 (2022, PMID 35094103)"
+            - "SNMMI Procedure Standard 2024 v2.0"
+            - "CMS (NCD 220.6.13)"
+            - "EAN (joint with EANM)"
+            - "Mosconi 2008 J Nucl Med multicenter (PMID 18287270)"
       - bound_type: "plausible_max"
         value: 250.0
         citation_strength: "verbatim"

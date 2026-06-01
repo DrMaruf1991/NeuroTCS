@@ -80,6 +80,7 @@ class ClinicalRangeFlag:
     citation_text: str
     guideline_section: str
     flag_severity: str
+    bound_semantic: str = "diagnostic_threshold"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -95,6 +96,7 @@ class ClinicalRangeFlag:
             "citation_text": self.citation_text,
             "guideline_section": self.guideline_section,
             "flag_severity": self.flag_severity,
+            "bound_semantic": self.bound_semantic,
         }
 
 
@@ -315,6 +317,7 @@ def audit_clinical_ranges(
                         "hard" if bound_type in (BoundType.HARD_MIN, BoundType.HARD_MAX)
                         else "plausible"
                     ),
+                    bound_semantic=getattr(bound, "bound_semantic", "diagnostic_threshold"),
                 ))
 
     n_flagged = len(flags)

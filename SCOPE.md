@@ -19,10 +19,21 @@ absorb** the fourth.
 
 | # | Layer | NeuroTCS does what | Why |
 |---|---|---|---|
-| 1 | **Data integrity** — duplicates, orphans, future dates, broken visit ordering, manifest completeness | **Runs alongside** under the `data_integrity` label; never refuses to audit because of it | Pre-condition for temporal coherence; reporting failures keeps the user un-surprised |
-| 2 | **Value plausibility** — biomarker / cognitive-score range bounds | **Owns**, citation-locked at `international_consensus` or stricter | Adjacent to staging; safe only with verbatim cited thresholds |
+| 1 | **Data integrity** — duplicate (subject,visit) records, orphan records (referential integrity), intra-subject temporal cadence breaks, broken visit ordering, APOE genotype validity (alleles ⊆ {e2,e3,e4}; diploid), categorical-domain validity (sex/handedness), hard patient-level bounds (education, age), anti-amyloid protocol eligibility | **Runs (v1.42.0)** under the `data_integrity` label as a universal, deterministic, fail-closed Layer-1 check over all raw sheets; biological constraints are citation-locked, pure integrity axioms cite the rule itself | Pre-condition for every downstream layer; these are hard, universally-true facts (an allele that does not exist; a non-existent sex code; a negative count), not domain opinions |
+| 2 | **Value plausibility** — biomarker / cognitive-score range bounds; `bound_semantic` separates diagnostic-threshold bounds (informational) from physiological-envelope bounds (implausible) | **Owns**, citation-locked at `international_consensus` or stricter (physiological-envelope bounds may be honestly `derived`) | Adjacent to staging; safe only with verbatim cited thresholds |
 | 3 | **Temporal coherence & staging admissibility** — trajectory admissibility, time-window constraints | **Owns**, citation-locked, **never expanded or diluted** | The regulator-defensible heart of NeuroTCS |
-| 4 | **Out-of-scope domain concerns** — sex vocabulary, age, education, protocol eligibility, treatment-arm validation, adverse-event-action logic, data-dictionary conformance, free-text columns | **Acknowledged by name in the report**; **never absorbed**; complementary-tool suggested | Absorbing these dissolves the regulatory trust that the entire tool is built on |
+| 3b | **Cross-sheet coherence (v1.42.0 live in zero-config)** — cross-modal concordance, within-instrument consistency, longitudinal monotonicity | **Owns**, citation-locked; auto-wired by the universal role resolver; only production invariant packs run by default | Catches contradictions BETWEEN values that no single-value layer can see |
+| 4 | **Genuinely out-of-scope domain concerns** — adverse-event-action logic, free-text/narrative columns, data-dictionary conformance beyond structural integrity, site-specific protocol logic | **Acknowledged by name in the report**; **never absorbed**; complementary-tool suggested | Absorbing open-ended domain logic dissolves the regulatory trust the tool is built on |
+
+> **v1.42.0 scope note.** Layers 1 and 3b were present in the codebase but
+> never reached in zero-config before v1.42.0 (a circular completeness hole:
+> a layer was "applicable" only if its submission key was pre-populated, and
+> nothing populated them). They now run universally, and a structural
+> completeness guard (`expected_layers`) refuses on any silent wiring omission.
+> Patient-level hard facts (sex domain, APOE validity, education/age bounds,
+> anti-amyloid eligibility) moved from "out-of-scope domain concern" to the
+> in-scope Layer-1 integrity check, because each is a single, citable,
+> universally-true constraint — not open-ended domain logic.
 
 ## What the user sees per run
 

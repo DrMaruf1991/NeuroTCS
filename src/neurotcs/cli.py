@@ -482,6 +482,12 @@ def cmd_audit(args: argparse.Namespace) -> int:
     if tables is None:
         return EXIT_INPUT
 
+    # v1.42.0: snapshot the ORIGINAL wide-format sheets before autowire_ranges
+    # mutates `tables` with derived long-format range tables. The cross-sheet
+    # role resolver must see the original cohort sheets, not the long-format
+    # measurement tables (which would mis-merge on measurement_name/value/unit).
+    _original_tables = dict(tables)
+
     # v1.39.2: zero-config path. If --mapping is omitted, auto-scaffold one
     # in-memory from the recognized sheet/column conventions. This is the
     # Layer-1 "strong conventions, zero mapping" path the input contract
@@ -585,6 +591,52 @@ def cmd_audit(args: argparse.Namespace) -> int:
         _err(f"mapping does not match the data: {e}")
         return EXIT_INPUT
 
+    # v1.42.0: AUTO-WIRE the Layer-3b cross-sheet coherence audit. Before this,
+    # the cross-sheet layer never ran in zero-config (nothing populated
+    # submission["cross_sheet"]), silently disabling ~1/5 of the auditor's
+    # detection power (cross-modal conflicts, longitudinal monotonicity
+    # reversals, genotype/phenotype coherence). The resolver maps raw cohort
+    # sheets -> abstract roles deterministically and fail-closed; unresolved
+    # sheets are surfaced, never force-fit. Only PRODUCTION invariant packs run
+    # by default (research_preview packs require explicit opt-in).
+    try:
+        from neurotcs.cross_sheet.loader import list_invariantpacks
+        from neurotcs.io.cross_sheet_autowire import build_cross_sheet_submission
+
+        cs_sub, cs_res = build_cross_sheet_submission(_original_tables)
+        # A cross-sheet audit is meaningful only with a data role view present
+        # (predictions / patients / biomarkers) to relate; absent that there is
+        # nothing to cross-check.
+        data_role_views = [r for r in ("predictions", "patients", "biomarkers")
+                           if r in cs_sub and cs_sub[r]]
+        if len(data_role_views) >= 1 and ("biomarkers" in cs_sub or "predictions" in cs_sub):
+            prod_pack_names = [p["name"] for p in list_invariantpacks()
+                               if p.get("status") == "production"]
+            if prod_pack_names:
+                submission["cross_sheet"] = (cs_sub, prod_pack_names)
+        # Surface role resolution (which sheet -> which role; what was unresolved)
+        for line in cs_res.summary_lines():
+            submission_warnings.append(line)
+    except Exception as e:  # never let auto-wiring break the core audit
+        submission_warnings.append(
+            f"cross_sheet auto-wiring skipped (non-fatal): {type(e).__name__}: {e}")
+
+    # v1.42.0: AUTO-WIRE the Layer-1 data-integrity audit. Runs universal,
+    # deterministic, fail-closed structural checks over the ORIGINAL raw sheets
+    # (categorical-domain validity, APOE genotype validity, hard patient-level
+    # bounds, duplicate records, orphan records, intra-subject temporal cadence
+    # breaks). Before this, none of these error classes were reachable in
+    # zero-config because the patient-level enrollment sheet has no visit axis
+    # and the visit-keyed range/staging layers never touched it.
+    try:
+        from neurotcs.io.data_integrity import audit_data_integrity
+        di_flags = audit_data_integrity(_original_tables)
+        if di_flags:
+            submission["data_integrity"] = di_flags
+    except Exception as e:  # never let integrity wiring break the core audit
+        submission_warnings.append(
+            f"data_integrity auto-wiring skipped (non-fatal): {type(e).__name__}: {e}")
+
     # v1.38/v1.39: surface any non-silent fallback (e.g. derived visit_date) to
     # the user BEFORE running the audit. --allow-no-dates acknowledges explicitly
     # (suppresses the per-axis stderr NOTE); the bundle records it either way.
@@ -611,7 +663,18 @@ def cmd_audit(args: argparse.Namespace) -> int:
         print("dry-run OK -- re-run without --dry-run to produce the audit bundle.")
         return EXIT_CLEAN
 
-    result = run_full_audit(submission)
+    # Declare the layers the CLI expects to have offered, so the orchestrator's
+    # structural completeness guard refuses on a silent wiring omission (the
+    # circular-completeness hole). We expect every layer for which supporting
+    # input is present in the submission.
+    _expected = [name for name, key in (
+        ("staging_clinical", "clinical"),
+        ("staging_biological", "biological"),
+        ("ranges", "ranges"),
+        ("cross_sheet", "cross_sheet"),
+        ("data_integrity", "data_integrity"),
+    ) if submission.get(key) is not None]
+    result = run_full_audit(submission, expected_layers=_expected)
 
     # v1.39.3: UNIFIED COVERAGE HONESTY. NeuroTCS must never present a confident
     # audit while leaving part of the input un-audited and undeclared. There are

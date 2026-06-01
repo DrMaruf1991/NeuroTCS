@@ -47,7 +47,7 @@ PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
     "genetics/apoe_consensus":
         "3d9cdca055b4b9049c9ee7636987231001c9a93d716920d630afb52016087c8f",
     "csf_biomarkers/csf_amyloid_consensus":
-        "6f3d2c90d592ff5c4712004e15d2946bc923124f6bfc107c4ec5f7f3c96186b9",
+        "303c52502cab24ffd4b42284961fa702a16cb9418e6a63b2d24b5d6cc88ef0b2",
     "plasma_biomarkers/plasma_amyloid_consensus":
         "2c37622163d3c7b235424ffa1d94bc6f9db41ee1cb9297428cddd1314588bf00",
     "mri_volumetrics/structural_volumetry_consensus":
@@ -57,7 +57,7 @@ PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
     "tau_pet/tau_consensus":
         "76c8ff423ff25731dbba961d2f8ef18e341ea18335b9a303c4b3c0412b7ba9cb",
     "fdg_pet/fdg_consensus":
-        "eb3893444a26ae41178901445706d9dc5966480250c05b791e540db2f8afb275",
+        "6c1fc1ec6183b7d19adb687332edd7e450844a85b1238e82d2af64f989e25599",
     # v1.17.0: 6 new production packs covering all 12 Tier 2 backlog items
     "cognitive_scales/cdr_mmse_moca_consensus":
         "262ee4649947061bcbfbce98dd729439f53b2b8347084e7e103176e32149539e",
@@ -70,7 +70,7 @@ PRODUCTION_YAML_SHA256_GOLDEN: dict[str, str] = {
     "mri_volumetrics/microbleeds_boston_consensus":
         "a36a6a2b013d7a6d5ec641381303680d71904c38a6a9c5cd010189d9e5e49e0e",
     "csf_biomarkers/csf_tau_consensus":
-        "51c61c19019f98d968c23445f9cac7f533eadd0b5f5c21c1d84f73a688e61c6e",
+        "f26de8a48fe65b601d987d81cd6ed2bb15b68051e550a1900c4a03d252916fed",
     # v1.28.0: neuropathology gold-standard domain + functional/affective scales
     "neuropathology/adnc_abc_consensus":
         "f9edc7df8c988888fe0b67effb1b895a7922256305da85a136f1612e11b5f479",

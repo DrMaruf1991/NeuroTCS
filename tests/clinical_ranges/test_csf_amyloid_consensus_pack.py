@@ -28,14 +28,26 @@ class TestCsfAmyloidPackStructure:
         assert len(csf_pack.rangepack.measurements) == 4
 
     def test_every_bound_is_international_consensus(self, csf_pack):
+        """Primary (diagnostic / mathematical) bounds hold the international-
+        consensus bar. v1.42.0 physiological_envelope bounds are a distinct,
+        honestly-'derived' evidence class (derived from consensus cohort
+        distributions, not a 5-body verbatim consensus) and are exempted."""
         for m in csf_pack.rangepack.measurements:
             for b in m.bounds:
+                if getattr(b, "bound_semantic", "") == "physiological_envelope":
+                    assert b.citation_strength == CitationStrength.DERIVED
+                    continue
                 assert b.citation_strength == CitationStrength.INTERNATIONAL_CONSENSUS
 
     def test_every_bound_has_5plus_bodies(self, csf_pack):
+        """Consensus bounds carry 5+ endorsing bodies; physiological_envelope
+        bounds (a derived evidence class) carry the general >=2 minimum."""
         for m in csf_pack.rangepack.measurements:
             for b in m.bounds:
-                assert len(b.citation.endorsing_bodies) >= 5
+                if getattr(b, "bound_semantic", "") == "physiological_envelope":
+                    assert len(b.citation.endorsing_bodies) >= 2
+                else:
+                    assert len(b.citation.endorsing_bodies) >= 5
 
     def test_fda_510k_url_present(self, csf_pack):
         """Lumipulse FDA 510(k) K212622 URL should appear in citations."""
@@ -91,8 +103,12 @@ class TestLumipulseRatio:
         assert r.n_flagged == 0
 
     def test_mathematically_impossible_ratio_flagged(self, csf_pack):
-        """E-2026-011 regression: only values OUTSIDE the mathematical [0, 1]
-        bound are hard violations (ratios are bounded [0,1] per K212622)."""
+        """E-2026-011 regression: values OUTSIDE the mathematical [0, 1] bound
+        are hard violations (ratios are bounded [0,1] per K212622). v1.42.0
+        adds a physiological_envelope plausible_max at 0.16 (human CSF Aβ42/40
+        lies well below 0.16); a value of 1.5 therefore trips BOTH the
+        mathematical hard_max AND the physiological envelope, while -0.01 trips
+        hard_min."""
         df = pd.DataFrame({
             "patient_id": ["P_lo", "P_hi"],
             "visit_id": ["V0", "V0"],
@@ -101,8 +117,25 @@ class TestLumipulseRatio:
             "unit": ["ratio", "ratio"],
         })
         r = audit_clinical_ranges(df, csf_pack)
-        assert r.n_flagged == 2
-        assert {f.bound_type for f in r.flags} == {"hard_min", "hard_max"}
+        assert r.n_flagged == 3
+        assert {f.bound_type for f in r.flags} == {"hard_min", "hard_max", "plausible_max"}
+
+    def test_physiologically_impossible_ratio_flagged(self, csf_pack):
+        """v1.42.0: a ratio inside the mathematical [0,1] bound but far above
+        the physiological envelope (e.g. 0.95 -- a unit/transcription error)
+        is flagged as an implausibility by the physiological_envelope
+        plausible_max, even though it passes the [0,1] hard bound."""
+        df = pd.DataFrame({
+            "patient_id": ["P_err"],
+            "visit_id": ["V0"],
+            "measurement_name": ["csf_abeta42_40_ratio_lumipulse"],
+            "value": [0.95],
+            "unit": ["ratio"],
+        })
+        r = audit_clinical_ranges(df, csf_pack)
+        envelope = [f for f in r.flags if f.bound_type == "plausible_max"]
+        assert len(envelope) == 1
+        assert envelope[0].bound_semantic == "physiological_envelope"
 
 
 class TestCsfAbeta42:

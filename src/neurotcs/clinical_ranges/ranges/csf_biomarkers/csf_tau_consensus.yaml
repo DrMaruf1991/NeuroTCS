@@ -161,6 +161,7 @@ measurements:
       - bound_type: "plausible_max"
         value: 200.0
         citation_strength: "derived"
+        bound_semantic: "physiological_envelope"
         guideline_section: "Multi-cohort empirical AD-positive envelope"
         citation:
           citation_pmid: "29626426"

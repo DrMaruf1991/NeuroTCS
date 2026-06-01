@@ -93,7 +93,7 @@ def test_pack_yaml_sha256_locked():
     """Locked golden yaml_sha256 for v1.16.0."""
     pack = load_rangepack(PACK_NAME)
     assert pack.yaml_sha256 == (
-        "eb3893444a26ae41178901445706d9dc5966480250c05b791e540db2f8afb275"
+        "6c1fc1ec6183b7d19adb687332edd7e450844a85b1238e82d2af64f989e25599"
     )
 
 

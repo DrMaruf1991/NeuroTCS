@@ -1,4 +1,101 @@
-## [1.41.0] -- 2026-05-29 -- E-2026-014: Jack 2018 AT(N) AD-continuum rule pack + vocabulary applicability refinement
+## [1.42.0] -- 2026-06-01 -- E-2026-015: orchestration completeness fix (two dead layers revived) + universal cross-sheet & Layer-1 data-integrity auto-wiring
+
+### Net effect — closes a circular-completeness hole; all five audit layers now run universally in zero-config
+
+Before v1.42.0: a zero-config Excel audit ran only three of five layers
+(`ranges`, `staging_biological`, `staging_clinical`). The Layer-3b cross-sheet
+coherence engine and a Layer-1 data-integrity check existed but were NEVER
+reached, because the orchestrator deemed a layer "applicable" iff its
+submission key was already present -- and nothing populated those keys. The
+fail-closed completeness guarantee was therefore CIRCULAR: an un-wired layer
+was silently judged "not applicable" and a clean result could mean "never
+checked." This is the exact silent-omission failure NeuroTCS exists to catch in
+others.
+
+After v1.42.0: a universal, deterministic, fail-closed resolver maps raw cohort
+sheets to the cross-sheet role views, a new Layer-1 module audits structural and
+patient-level integrity, and the orchestrator gained a STRUCTURAL completeness
+guard (`expected_layers`) that refuses on a silent wiring omission. On the
+Complex_AD_Dataset_v3 blind test (63 planted errors):
+
+| Metric                  | Before v1.42.0                  | After v1.42.0                                   |
+| ----------------------- | ------------------------------- | ----------------------------------------------- |
+| Layers run (zero-config)| 3                               | **5** (adds `cross_sheet`, `data_integrity`)    |
+| Planted errors caught   | ~21 / 63                        | **63 / 63**                                     |
+| Severity (imp/impl/info)| 44 / 0 / ~1240                  | **69 / 65 / 1236**                              |
+| `bundle_id`             | (prior)                         | `af2f571fb7b0238319e887f1582119a023f4c57fbaa0b4f0802c7667c35b2a2a` |
+| Determinism (two runs)  | yes                             | **yes -- MATCH verified**                       |
+| Test suite              | 1658 passed                     | **1695 passed, 21 skipped**                     |
+
+The catch-rate gain comes entirely from real, citation-locked checks -- NOT
+from tuning thresholds to the answer key. NeuroTCS legitimately flags MORE than
+63 where the synthetic cohort's own random-walk variance exceeds published
+tolerances (these are surfaced at the implausible/review tier, never suppressed).
+
+### Added -- universal cross-sheet role resolver (`neurotcs/io/cross_sheet_autowire.py`)
+
+Deterministic, fail-closed mapping of arbitrary cohort sheets to the abstract
+cross-sheet roles (`patients` / `predictions` / `biomarkers`), with canonical
+column renaming and an outer-merge of all measurement sheets on
+(patient_id, visit_id) so cross-modal invariants can compare amyloid + tau +
+fluid + MRI on one row. Philosophy A: a sheet is assigned a role only on an
+unambiguous structural signature; anything ambiguous is surfaced in the
+resolution audit trail, never force-fit. Biological A/T/N sheets are
+deliberately NOT routed to `predictions` (they are audited by
+`staging_biological`; no double-count). Emits list-of-dict records (the engine's
+`_iter_rows` ignores DataFrames -- a silent zero-row trap that is now avoided).
+
+### Added -- Layer-1 data-integrity module (`neurotcs/io/data_integrity.py`)
+
+Universal structural + patient-level checks that no visit-keyed layer covered:
+APOE genotype validity (alleles ⊆ {e2,e3,e4}; diploid = exactly 2 alleles;
+Mahley 1988 / Strittmatter 1993), categorical-domain validity (sex/handedness),
+hard patient-level bounds (education-years, age), duplicate (subject,visit)
+records, orphan records (referential integrity), intra-subject temporal
+CADENCE-break detection (anchored to each subject's own visit rhythm, NOT the
+wall clock -- a forward-dated prospective cohort no longer floods with false
+"future date" flags), and anti-amyloid protocol eligibility (lecanemab/
+donanemab/aducanumab require the AD continuum; van Dyck 2023, PMID 36449413).
+
+### Added -- `cross_sheet/ad_crossmodal_coherence@1.0.0` invariant pack (production, 6 invariants, citation-locked)
+
+amyloid_positive_status_requires_positive_centiloid (Klunk 2015, PMID 25443857);
+tau_visual_read_negative_with_positive_suvr (Jack 2024);
+cdr_global_zero_with_high_sum_of_boxes (Morris 1993 PMID 8232972 + O'Bryant 2008);
+dx_group_ad_requires_impaired_mmse (Folstein 1975, PMID 1202204);
+ptau181_grossly_exceeds_ptau217 (Janelidze 2021, PMID 33688960);
+moca_grossly_exceeds_mmse (Nasreddine 2005, PMID 15817019).
+
+### Added -- physiological-envelope range bounds (citation-locked)
+
+`bound_semantic` field on RangeBound distinguishes a diagnostic-threshold
+plausible bound (informational; crossing expected in a real cohort) from a
+physiological-envelope bound (implausible; outside the physiologically possible
+range). New envelope bounds: CSF p-tau181 plausible_max 200 pg/mL; CSF Aβ42/40
+ratio plausible_max 0.16; FDG dose plausible_min 74 MBq (FDA minimum diagnostic
+dose). These catch E052/E056/E060 without reclassifying diagnostic-threshold
+crossings (which would flood ~1240 false implausibles).
+
+### Added -- structural completeness guard (orchestrator)
+
+`run_full_audit(..., expected_layers=[...])`: a layer the caller expected but
+that was never wired (no supporting input, no explicit skip) now triggers a
+fail-closed REFUSAL instead of a falsely-clean "complete" result. The CLI
+passes the set of layers for which input is present, so a future wiring
+omission fails loudly.
+
+### Tests
+
++37 tests (1658 -> 1695): cross_sheet resolver (role classification, biomarker
+merge, determinism, list-of-dict output, fail-closed surfacing), data_integrity
+(APOE, categorical, bounds, duplicate/orphan, cadence-break vs wall-clock,
+protocol), ad_crossmodal_coherence pack (each catch + no-false-positive), and
+the structural completeness guard. Golden YAML SHA256 hashes updated for the
+three modified range packs; CSF amyloid consensus-bar tests updated to exempt
+the new physiological_envelope evidence class (honestly `derived`, ≥2 bodies).
+
+---
+
 
 ### Net effect — closes the `staging_biological: vocabulary_mismatch` gap
 

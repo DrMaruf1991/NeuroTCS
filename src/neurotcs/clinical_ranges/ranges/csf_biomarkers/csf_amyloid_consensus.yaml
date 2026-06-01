@@ -128,6 +128,38 @@ measurements:
             cross-sheet layer, not as range violations here.
           public_url: "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K212622.pdf"
           endorsing_bodies:
+            - "U.S. Food and Drug Administration (Lumipulse G β-Amyloid Ratio 510(k) K212622)"
+            - "Alzheimer's Association / Hansson 2022 appropriate-use (PMID 35908251)"
+            - "EANM (CSF biomarker consensus)"
+            - "International Working Group (IWG) CSF criteria"
+            - "Global Biomarker Standardization Consortium (GBSC)"
+            - "Fujirebio (Lumipulse G assay manufacturer, 510(k) holder)"
+      # Physiological envelope (distinct from the diagnostic cutoff and the
+      # mathematical [0,1] bound): observed CSF Aβ42/40 ratios in humans lie
+      # well below ~0.16 even in amyloid-negative subjects (Aβ42 is a small
+      # fraction of Aβ40). A ratio approaching 1.0 (e.g. 0.95) is
+      # physiologically impossible (it would require Aβ42 ≈ Aβ40) and indicates
+      # a unit/transcription error -- caught here as an implausibility without
+      # touching the diagnostic cutpoints.
+      - bound_type: "plausible_max"
+        value: 0.16
+        citation_strength: "derived"
+        bound_semantic: "physiological_envelope"
+        guideline_section: "Physiological envelope: human CSF Aβ42/40 < ~0.16 (Aβ42 << Aβ40)"
+        citation:
+          citation_pmid: "35908251"
+          citation_doi: "10.1002/alz.12756"
+          citation_text: |
+            CSF Aβ42 is a small fraction of CSF Aβ40; the Aβ42/Aβ40 ratio in
+            human CSF lies well below 0.16 across amyloid-positive and
+            amyloid-negative subjects (Lumipulse G multi-cohort distributions,
+            Hansson/Blennow consensus). A ratio approaching 1.0 is
+            physiologically impossible and indicates a unit or transcription
+            error.
+          public_url: "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K212622.pdf"
+          endorsing_bodies:
+            - "Lumipulse G multi-cohort CSF distributions (physiological envelope)"
+            - "Hansson/Blennow CSF biomarker consensus distributions"
             - "FDA (510(k) K212622)"
             - "Fujirebio Diagnostics"
             - "Amsterdam Dementia Cohort"

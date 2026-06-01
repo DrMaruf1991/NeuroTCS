@@ -138,17 +138,27 @@ def _tier_for_cross_sheet_flag(f: Any) -> str:
 
 
 def _tier_for_flag(flag: dict[str, Any]) -> str:
-    """Classify a range-pack flag into a severity tier (Invariant B)."""
+    """Classify a range-pack flag into a severity tier (Invariant B).
+
+    - hard bounds / invalid category -> impossible.
+    - plausible bounds -> implausible IF the bound is declared as a
+      physiological-envelope bound (bound_semantic == 'physiological_envelope'),
+      else informational (the default for diagnostic/clinical-threshold bounds,
+      whose crossing is expected in a real cohort and is not an error).
+
+    The semantic distinction is declared by the range pack (a plausible_max on a
+    concentration ceiling is an implausibility; a plausible bound at a
+    diagnostic cutpoint is informational). Absent the declaration we default to
+    informational to preserve the auditor's zero-false-alarm discipline.
+    """
     sev = str(flag.get("flag_severity", "")).lower()
     bound = str(flag.get("bound_type", "")).lower()
     if sev in ("hard", "invalid_category") or bound.startswith("hard") or "invalid" in sev:
         return TIER_IMPOSSIBLE
-    # "plausible_*" bounds that encode diagnostic/clinical thresholds are
-    # informational, not data errors; genuine physiological-range bounds are
-    # implausible. We treat plausible-bound firing as informational by default
-    # because that is the dominant (and noisiest) case, and surface the
-    # impossible tier first.
     if "plausible" in bound or sev == "plausible":
+        semantic = str(flag.get("bound_semantic", "")).lower()
+        if semantic == "physiological_envelope":
+            return TIER_IMPLAUSIBLE
         return TIER_INFORMATIONAL
     return TIER_IMPLAUSIBLE
 
@@ -158,6 +168,7 @@ def run_full_audit(
     *,
     disease_domain: str | None = "alzheimers",
     skip_layers: dict[str, str] | None = None,
+    expected_layers: list[str] | None = None,
     bootstrap_B: int = 10000,
     seed: int = 42,
 ) -> OrchestratorResult:
@@ -199,6 +210,8 @@ def run_full_audit(
         applicable.append("cross_sheet")
     if submission.get("input_contract"):
         applicable.append("input_contract")
+    if submission.get("data_integrity"):
+        applicable.append("data_integrity")
 
     # ---- run each applicable layer (or record an explicit skip) ----
     for layer in applicable:
@@ -266,7 +279,7 @@ def run_full_audit(
                         k: getattr(f, k) for k in
                         ("patient_id", "visit_id", "measurement_name",
                          "observed_value", "bound_type", "bound_value",
-                         "flag_severity")}
+                         "flag_severity", "bound_semantic")}
                     tier = _tier_for_flag(fd)
                     fd["tier"] = tier
                     severity[tier] += 1
@@ -313,11 +326,42 @@ def run_full_audit(
                          "n_warnings": len(rep.warnings)},
                 flags=fl))
 
+        elif layer == "data_integrity":
+            # Universal Layer-1 integrity flags were pre-computed by the caller
+            # (the resolver runs over raw sheets, which the orchestrator does
+            # not hold). submission["data_integrity"] is the flag list.
+            di_flags = submission["data_integrity"]
+            fl = []
+            for f in di_flags:
+                tier = f.get("tier", TIER_IMPOSSIBLE)
+                if tier not in severity:
+                    tier = TIER_IMPOSSIBLE
+                severity[tier] += 1
+                fl.append(f)
+            layers.append(LayerResult(
+                layer="data_integrity", ran=True,
+                summary={"n_flags": len(fl)},
+                flags=fl))
+
     # ---- completeness check (Invariant A) ----
     ran_layers = [layer.layer for layer in layers if layer.ran]
     skipped = {layer.layer: (layer.skipped_reason or "")
                for layer in layers if not layer.ran}
     unrecorded = [layer for layer, reason in skipped.items() if not reason]
+
+    # ---- structural completeness guard (closes the circular hole) ----
+    # Historically a layer was "applicable" iff its submission key was present;
+    # so a layer whose key was never populated (a wiring omission) was silently
+    # deemed not-applicable and the completeness check passed vacuously. The
+    # caller now declares the layers it EXPECTED to be offered (expected_layers).
+    # Any expected layer that is neither applicable nor explicitly skipped was
+    # silently dropped -> refuse. This makes a wiring omission fail loudly
+    # instead of producing a falsely-clean "complete" result.
+    silently_dropped: list[str] = []
+    if expected_layers:
+        offered = set(applicable) | set((skip_layers or {}).keys())
+        silently_dropped = [layer_name for layer_name in expected_layers
+                            if layer_name not in offered]
 
     cols_present = submission.get("columns_present", {})
     cols_consumed = submission.get("columns_consumed", {})
@@ -334,16 +378,26 @@ def run_full_audit(
         sub_audit_ids=sub_ids,
     )
 
-    if unrecorded:
+    if unrecorded or silently_dropped:
+        reason_parts = []
+        if unrecorded:
+            reason_parts.append(
+                f"applicable layer(s) {unrecorded} were skipped without a "
+                f"recorded reason")
+        if silently_dropped:
+            reason_parts.append(
+                f"expected layer(s) {silently_dropped} were never wired "
+                f"(no supporting input and no explicit skip) -- a silent "
+                f"omission, not a deliberate skip")
         return OrchestratorResult(
             orchestrator_audit_id="",
             complete=False,
             refusal_reason=(
-                f"REFUSED (fail-closed): applicable layer(s) {unrecorded} were "
-                f"skipped without a recorded reason. A NeuroTCS result must be "
-                f"complete-or-refuse: a clean result must mean 'checked and "
-                f"clean', never 'never checked'. Provide skip_layers={{layer: "
-                f"reason}} to deliberately and transparently skip a layer."),
+                "REFUSED (fail-closed): " + "; ".join(reason_parts) + ". A "
+                "NeuroTCS result must be complete-or-refuse: a clean result "
+                "must mean 'checked and clean', never 'never checked'. Provide "
+                "skip_layers={layer: reason} to deliberately and transparently "
+                "skip a layer."),
             manifest=manifest,
             layers=layers,
             severity_summary=severity,

@@ -1,0 +1,355 @@
+schema_version: "1.0.0"
+invariantpack_id: "cross_sheet/ad_crossmodal_coherence@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-06-01"
+status: "production"
+domain: "ad_crossmodal_coherence"
+framework_name: "Cross-sheet cross-modal & cross-field coherence for AD cohorts: bidirectional amyloid status/centiloid concordance, tau visual-read vs SUVR concordance, CDR global vs sum-of-boxes internal consistency, diagnostic-group vs cognitive-score consistency, and p-tau assay ordering. Each invariant is an internal-consistency (coherence) check anchored to the defining instrument or consensus criteria; none is a per-value plausibility check (that is Layer 2)."
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo International University in Tashkent (KIUT), Uzbekistan. v1.42.0 session: extends the cross-sheet coherence layer with cross-modal and cross-field invariants that complete the bidirectional and within-domain checks the ad_clinical_coherence pack did not cover. Each invariant encodes a CONTRADICTION between two recorded values (across modalities or within a scoring instrument), not a single-value range check (Layer 2). Thresholds are taken from the defining instrument (Morris 1993 CDR / O'Bryant 2008 CDR-SoB; Folstein 1975 MMSE; Klunk 2015 Centiloid; Jack 2024 biomarker ordering) and are conservative so that only clear contradictions flag."
+
+clinical_source_authority: |
+  This pack encodes Layer-3 cross-sheet COHERENCE invariants that detect
+  CONTRADICTIONS between two recorded values for the same (patient, visit) --
+  either across modalities (e.g. a categorical read vs its own quantitative
+  value) or within a single scoring instrument (e.g. CDR global vs CDR
+  sum-of-boxes). It complements ad_clinical_coherence@1.0.0, which covers the
+  forward (negative-status) direction and the longitudinal monotonicity
+  checks; this pack adds the reverse directions and the within-instrument
+  consistency checks.
+
+  Each threshold is conservative and anchored to the defining source:
+
+  1. amyloid_positive_status_requires_positive_centiloid
+     (categorical_implies_range_rowwise). Mirror of the negative-direction
+     check in ad_clinical_coherence. If amyloid_status == 'positive', the
+     centiloid must be in the amyloid-positive range. Per Klunk 2015 Centiloid
+     and AMYPAD/consensus individual-level cutpoints, CL < ~20 excludes Abeta
+     pathology; a declared-positive status with clearly negative centiloid
+     (e.g. 4 CL) is a cross-modal contradiction.
+
+  2. tau_visual_read_negative_with_positive_suvr
+     (numeric_conflict). A negative tau-PET visual read together with a
+     clearly positive neocortical SUVR is a cross-modal contradiction between
+     the qualitative read and its own quantitation. Threshold SUVR >= 1.5 is a
+     conservative neocortical-positivity level (well above typical 1.2-1.3
+     positivity cutpoints) so only clear contradictions flag. (Because the
+     engine's numeric_conflict compares two NUMERIC fields, the visual read is
+     consumed via its numeric encoding tau_visual_read_negative_flag = 1 for a
+     negative read; see notes.)
+
+  3. cdr_global_zero_with_high_sum_of_boxes
+     (numeric_conflict). CDR global and CDR sum-of-boxes are derived from the
+     SAME six-box assessment (Morris 1993). A global score of 0 (no dementia)
+     is internally inconsistent with a high sum-of-boxes. Per O'Bryant 2008,
+     CDR-SoB 0 maps to global 0; CDR-SoB >= 4.5 maps to global >= 1. A recorded
+     global == 0 with CDR-SoB >= 4.0 is an arithmetic/derivation contradiction.
+
+  4. dx_group_ad_requires_impaired_mmse
+     (value_range_conditional). A patient enrolled in the AD diagnostic group
+     with a perfect/near-perfect MMSE is internally inconsistent. Per the
+     dx-group enrollment definition and Folstein 1975 MMSE norms, an AD-group
+     patient is expected to be cognitively impaired (MMSE <= 26 conservatively;
+     a value of 30 in an AD-group patient flags). This is a dx-vs-score
+     coherence check, not an MMSE range check.
+
+  5. ptau181_grossly_exceeds_ptau217
+     (numeric_conflict). Within the established plasma p-tau assay
+     relationship, p-tau217 typically tracks at or above p-tau181 in
+     concentration/fold-change for AD pathology (Janelidze 2021; Ashton 2024).
+     A p-tau181 that grossly exceeds p-tau217 (here p-tau181 >= 2.0 with
+     p-tau217 <= 0.2 pg/mL) is an inverted/atypical ratio warranting review --
+     a within-domain cross-field inconsistency.
+
+  Primary sources:
+   - Jack CR Jr et al. 2024, PMID 38934362, DOI 10.1002/alz.13859 (biomarker
+     ordering; amyloid/tau concordance).
+   - Klunk WE et al. 2015, Alzheimers Dement 11(1):1-15 (Centiloid).
+   - Morris JC 1993, Neurology 43(11):2412-2414 (CDR).
+   - O'Bryant SE et al. 2008, Arch Neurol 65(8):1091-1095 (CDR-SoB staging).
+   - Folstein MF et al. 1975, J Psychiatr Res 12(3):189-198 (MMSE).
+   - Janelidze S et al. 2021 / Ashton NJ et al. 2024 (plasma p-tau assays).
+
+anchor_citation:
+  citation_pmid: "38934362"
+  citation_doi: "10.1002/alz.13859"
+  citation_text: >-
+    Jack CR Jr, Andrews JS, Beach TG, et al. Revised criteria for diagnosis and
+    staging of Alzheimer's disease: Alzheimer's Association Workgroup.
+    Alzheimer's Dement. 2024;20(8):5143-5169. This pack's cross-modal
+    concordance invariants follow the biomarker-categorization and
+    diagnosis sections; per-instrument thresholds additionally cite the
+    instrument's defining paper (Klunk 2015 Centiloid; Morris 1993 CDR;
+    O'Bryant 2008 CDR-SoB; Folstein 1975 MMSE).
+  public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859"
+  endorsing_bodies:
+    - "Alzheimer's Association 2024 Workgroup (Jack et al.)"
+
+notes: >-
+  CITATION-LOCKED COHERENCE, NOT PLAUSIBILITY. Every invariant compares two
+  recorded values and flags a CONTRADICTION; none asserts a single value is
+  out of range (that is Layer 2). The tau_visual_read concordance invariant
+  requires a numeric encoding of the qualitative read
+  (tau_visual_read_negative_flag); when that encoding is absent the invariant
+  self-skips with missing-field info (fail-closed), never guessing. All
+  thresholds are conservative so only clear contradictions flag, preserving
+  the auditor's zero-false-alarm discipline.
+
+invariants:
+
+  # 1 -----------------------------------------------------------------------
+  - name: "amyloid_positive_status_requires_positive_centiloid"
+    description: >-
+      If amyloid_status == 'positive', the centiloid value must be in the
+      amyloid-positive range. Per Klunk 2015 Centiloid / consensus
+      individual-level cutpoints, CL < 20 excludes Abeta pathology. A
+      declared-positive status with centiloid < 20 (e.g. 4 CL) is a
+      cross-modal contradiction between the categorical read and its own
+      quantitation.
+    sheets_required:
+      - role: biomarkers
+        required: true
+    join_keys:
+      - patient_id
+      - visit_id
+    condition:
+      type: categorical_implies_range_rowwise
+      sheet: biomarkers
+      source_field: amyloid_status
+      source_value: "positive"
+      target_field: amyloid_centiloid
+      target_range:
+        lo: 20.0
+        hi: 300.0
+    flag_severity: error
+    citation_strength: international_consensus
+    guideline_section: >-
+      Klunk WE et al. 2015 (Centiloid). Individual-level CL < 20 excludes
+      Abeta pathology; a declared-positive amyloid status with CL < 20 is a
+      cross-modal contradiction.
+    citation:
+      citation_pmid: "25443857"
+      citation_doi: "10.1016/j.jalz.2014.07.003"
+      citation_text: >-
+        Klunk WE, Koeppe RA, Price JC, et al. The Centiloid Project:
+        standardizing quantitative amyloid plaque estimation by PET.
+        Alzheimers Dement. 2015;11(1):1-15. Centiloid anchors 0 to young
+        controls and 100 to a typical AD scan; individual-level positivity
+        cutpoints fall near 20-30 CL.
+      public_url: "https://doi.org/10.1016/j.jalz.2014.07.003"
+      endorsing_bodies:
+        - "Alzheimer's Association Centiloid Working Group"
+
+  # 2 -----------------------------------------------------------------------
+  - name: "tau_visual_read_negative_with_positive_suvr"
+    description: >-
+      A negative tau-PET visual read with a clearly positive neocortical SUVR
+      (>= 1.5) is a cross-modal contradiction between the qualitative read and
+      its own quantitation. Requires the numeric encoding
+      tau_visual_read_negative_flag (1 = negative read); absent that field the
+      invariant self-skips (fail-closed).
+    sheets_required:
+      - role: biomarkers
+        required: true
+    join_keys:
+      - patient_id
+      - visit_id
+    condition:
+      type: numeric_conflict
+      source_sheet: biomarkers
+      source_field: tau_visual_read_negative_flag
+      source_threshold: 1.0
+      source_direction: ge
+      target_sheet: biomarkers
+      target_field: tau_pet_neocortical_uptake_ratio_flortaucipir
+      target_threshold: 1.5
+      target_direction: ge
+      target_unit: SUVR
+    flag_severity: warning
+    citation_strength: international_consensus
+    guideline_section: >-
+      Tau-PET reading standards: a negative visual read with a clearly
+      positive neocortical SUVR (>= 1.5, well above typical 1.2-1.3
+      positivity cutpoints) is an internal qualitative-vs-quantitative
+      contradiction (Jack 2024 biomarker categorization).
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack CR Jr et al. 2024 (PMID 38934362). Tau-PET contributes both a
+        qualitative read and a quantitative SUVR; a negative read with a
+        clearly positive SUVR is a cross-modal discordance for review.
+      public_url: "https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.13859"
+      endorsing_bodies:
+        - "Alzheimer's Association 2024 Workgroup (Jack et al.)"
+
+  # 3 -----------------------------------------------------------------------
+  - name: "cdr_global_zero_with_high_sum_of_boxes"
+    description: >-
+      CDR global and CDR sum-of-boxes derive from the SAME six-box assessment
+      (Morris 1993). A global score of 0 with a high sum-of-boxes is an
+      arithmetic/derivation contradiction. Per O'Bryant 2008, CDR-SoB 0 maps
+      to global 0 and CDR-SoB >= 4.5 maps to global >= 1; a recorded global
+      == 0 (encoded as cdr_global <= 0) with CDR-SoB >= 4.0 flags.
+    sheets_required:
+      - role: biomarkers
+        required: true
+    join_keys:
+      - patient_id
+      - visit_id
+    condition:
+      type: numeric_conflict
+      source_sheet: biomarkers
+      source_field: cdr_sob
+      source_threshold: 4.0
+      source_direction: ge
+      target_sheet: biomarkers
+      target_field: cdr_global
+      target_threshold: 0.0
+      target_direction: le
+    flag_severity: error
+    citation_strength: international_consensus
+    guideline_section: >-
+      Morris JC 1993 (CDR) + O'Bryant SE 2008 (CDR-SoB staging). Global and
+      sum-of-boxes derive from one assessment; global 0 with CDR-SoB >= 4.0 is
+      internally inconsistent.
+    citation:
+      citation_pmid: "8232972"
+      citation_doi: "10.1212/wnl.43.11.2412-a"
+      citation_text: >-
+        Morris JC. The Clinical Dementia Rating (CDR): current version and
+        scoring rules. Neurology. 1993;43(11):2412-2414. CDR global and CDR
+        sum-of-boxes are both derived from the same six rated domains;
+        O'Bryant SE et al. 2008 (Arch Neurol 65(8):1091-1095) map CDR-SoB
+        ranges to global stages (SoB 0 -> global 0; SoB 4.5+ -> global >= 1).
+      public_url: "https://doi.org/10.1212/wnl.43.11.2412-a"
+      endorsing_bodies:
+        - "Washington University Knight ADRC (CDR originating institution)"
+
+  # 4 -----------------------------------------------------------------------
+  - name: "dx_group_ad_requires_impaired_mmse"
+    description: >-
+      A patient in the AD diagnostic group with a perfect/near-perfect MMSE is
+      internally inconsistent with the enrollment definition. Per the dx-group
+      definition and Folstein 1975 MMSE norms, an AD-group patient is expected
+      to be impaired (MMSE <= 26 conservatively). A dx_group == 'AD' visit with
+      MMSE in the unimpaired range flags. This is a dx-vs-score coherence
+      check, not an MMSE range check.
+    sheets_required:
+      - role: biomarkers
+        required: true
+    join_keys:
+      - patient_id
+      - visit_id
+    condition:
+      type: value_range_conditional
+      source_sheet: biomarkers
+      source_field: dx_group
+      cases:
+        - source_value: "AD"
+          target_sheet: biomarkers
+          target_field: mmse
+          target_range:
+            lo: 0.0
+            hi: 26.0
+    flag_severity: warning
+    citation_strength: international_consensus
+    guideline_section: >-
+      Folstein MF et al. 1975 (MMSE). An AD-diagnostic-group patient is
+      expected to show cognitive impairment; MMSE in the unimpaired range
+      (> 26) for an AD-group patient is a dx-vs-score coherence contradiction.
+    citation:
+      citation_pmid: "1202204"
+      citation_doi: "10.1016/0022-3956(75)90026-6"
+      citation_text: >-
+        Folstein MF, Folstein SE, McHugh PR. "Mini-mental state". A practical
+        method for grading the cognitive state of patients for the clinician.
+        J Psychiatr Res. 1975;12(3):189-198. MMSE 0-30; lower scores indicate
+        greater impairment.
+      public_url: "https://doi.org/10.1016/0022-3956(75)90026-6"
+      endorsing_bodies:
+        - "Established clinical cognitive assessment standard (MMSE)"
+
+  # 5 -----------------------------------------------------------------------
+  - name: "ptau181_grossly_exceeds_ptau217"
+    description: >-
+      Within the established plasma p-tau assay relationship, p-tau217 tracks
+      at or above p-tau181 for AD pathology (Janelidze 2021; Ashton 2024). A
+      p-tau181 that grossly exceeds p-tau217 (p-tau181 >= 2.0 with p-tau217
+      <= 0.2 pg/mL) is an inverted/atypical ratio -- a within-domain
+      cross-field inconsistency warranting review.
+    sheets_required:
+      - role: biomarkers
+        required: true
+    join_keys:
+      - patient_id
+      - visit_id
+    condition:
+      type: numeric_conflict
+      source_sheet: biomarkers
+      source_field: plasma_ptau181_pgml
+      source_threshold: 2.0
+      source_direction: ge
+      target_sheet: biomarkers
+      target_field: plasma_ptau217_pgml
+      target_threshold: 0.2
+      target_direction: le
+      target_unit: pg/mL
+    flag_severity: warning
+    citation_strength: derived
+    guideline_section: >-
+      Janelidze S et al. 2021 / Ashton NJ et al. 2024 plasma p-tau assay
+      head-to-head studies. p-tau217 typically tracks at or above p-tau181 in
+      AD; a grossly inverted ratio (p-tau181 >> p-tau217) is atypical and
+      flags for review.
+    citation:
+      citation_pmid: "33688960"
+      citation_doi: "10.1001/jamaneurol.2021.0094"
+      citation_text: >-
+        Janelidze S, Berron D, Smith R, et al. Associations of plasma
+        phospho-tau217 with tau-PET in early Alzheimer disease. JAMA Neurol.
+        2021;78(2):149-156. p-tau217 shows strong association with AD
+        pathology; head-to-head plasma p-tau studies establish the expected
+        p-tau217 >= p-tau181 ordering for AD.
+  # 6 -----------------------------------------------------------------------
+  - name: "moca_grossly_exceeds_mmse"
+    description: >-
+      MoCA is designed to be MORE sensitive to cognitive impairment than MMSE,
+      especially in the MCI range (Nasreddine 2005). For a given patient MoCA
+      typically scores at or BELOW MMSE; a MoCA that grossly EXCEEDS a low MMSE
+      (here MoCA >= 27 with MMSE <= 20) is an atypical inversion indicating a
+      transcription/data error. Both are 0-30 scales.
+    sheets_required:
+      - role: biomarkers
+        required: true
+    join_keys:
+      - patient_id
+      - visit_id
+    condition:
+      type: numeric_conflict
+      source_sheet: biomarkers
+      source_field: moca
+      source_threshold: 27.0
+      source_direction: ge
+      target_sheet: biomarkers
+      target_field: mmse
+      target_threshold: 20.0
+      target_direction: le
+    flag_severity: warning
+    citation_strength: international_consensus
+    guideline_section: >-
+      Nasreddine ZS et al. 2005 (MoCA). MoCA is more sensitive to mild
+      impairment than MMSE and generally scores at or below MMSE for a patient;
+      a near-perfect MoCA with a clearly impaired MMSE is an atypical inversion.
+    citation:
+      citation_pmid: "15817019"
+      citation_doi: "10.1111/j.1532-5415.2005.53221.x"
+      citation_text: >-
+        Nasreddine ZS, Phillips NA, Bedirian V, et al. The Montreal Cognitive
+        Assessment, MoCA: a brief screening tool for mild cognitive impairment.
+        J Am Geriatr Soc. 2005;53(4):695-699. MoCA detects impairment MMSE
+        misses; for a patient MoCA tracks at or below MMSE.
+      public_url: "https://doi.org/10.1111/j.1532-5415.2005.53221.x"
+      endorsing_bodies:
+        - "MoCA Clinic (originating instrument)"
+

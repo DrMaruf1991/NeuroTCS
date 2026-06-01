@@ -212,6 +212,18 @@ class RangeBound(BaseModel):
         description="Section/table/figure pointer into the cited document "
                     "(e.g. 'Klunk 2015, Table 2'). At least 5 chars.",
     )
+    bound_semantic: str = Field(
+        default="diagnostic_threshold",
+        description="Meaning of a PLAUSIBLE bound (ignored for hard bounds): "
+                    "'physiological_envelope' = the value lies outside the "
+                    "physiologically plausible range for this measurement, so "
+                    "crossing it is an implausibility (implausible tier); "
+                    "'diagnostic_threshold' = the bound marks a clinical / "
+                    "diagnostic cutpoint whose crossing is expected in a real "
+                    "cohort and is informational, not an error. Defaults to "
+                    "'diagnostic_threshold' (the conservative, no-false-alarm "
+                    "choice).",
+    )
     notes: str | None = Field(
         default=None,
         description="Optional clarification (e.g. 'lower bound for adult patients').",

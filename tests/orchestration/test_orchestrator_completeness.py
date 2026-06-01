@@ -106,3 +106,33 @@ def test_severity_stratification_present():
     sub = {"clinical": _clinical_df()}
     r = run_full_audit(sub)
     assert set(r.severity_summary) == {"impossible", "implausible", "informational"}
+
+
+# --- v1.42.0: structural completeness guard (closes the circular hole) ---
+
+def test_expected_layer_silently_dropped_triggers_refusal():
+    """If the caller declares it expected a layer (e.g. cross_sheet) but that
+    layer was never wired into the submission, the audit must REFUSE -- the
+    circular-completeness hole where an un-wired layer was silently deemed
+    not-applicable."""
+    from neurotcs.orchestration.orchestrator import run_full_audit
+    # a submission with no cross_sheet key, but caller expected it
+    sub = {"data_integrity": [{"tier": "impossible", "layer": "data_integrity",
+                               "rule_id": "x", "subject_id": "P1", "visit": None,
+                               "field": "f", "observed_value": 1,
+                               "citation": None, "details": {}}]}
+    res = run_full_audit(sub, expected_layers=["data_integrity", "cross_sheet"])
+    assert not res.complete
+    assert "cross_sheet" in res.refusal_reason
+    assert "silent" in res.refusal_reason.lower()
+
+
+def test_expected_layer_present_is_complete():
+    """When every expected layer is wired, the audit completes normally."""
+    from neurotcs.orchestration.orchestrator import run_full_audit
+    sub = {"data_integrity": [{"tier": "impossible", "layer": "data_integrity",
+                               "rule_id": "x", "subject_id": "P1", "visit": None,
+                               "field": "f", "observed_value": 1,
+                               "citation": None, "details": {}}]}
+    res = run_full_audit(sub, expected_layers=["data_integrity"])
+    assert res.complete
