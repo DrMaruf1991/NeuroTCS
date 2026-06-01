@@ -436,8 +436,13 @@ admissible_transitions:
   citation:
     citation_pmid: '38934362'
     citation_doi: 10.1002/alz.13859
-    citation_text: 'Jack 2024 Table 7 §Note (verbatim): "The typical expected progression
-      trajectory is along the diagonal shaded cells, from 1A to 4-6D."'
+    citation_text: 'Jack 2024 Table 7 (paraphrase; not a verified verbatim quote):
+      the integrated clinical x biological staging matrix marks a typical expected
+      progression along the diagonal, advancing through stages 1A -> 2B -> 3C ->
+      4-6D (the "1A to 4-6D" diagonal notation and progression are confirmed
+      against the framework; the exact Table 7 caption wording was not verified
+      word-for-word against the primary source, so this is labeled a paraphrase
+      rather than a verbatim quote).'
   guideline_section: Jack 2024 §6 + Table 7 diagonal
   override_allowed: false
   notes: Diagonal advance (clinical +1, biological +1). 180-day minimum enforces stage

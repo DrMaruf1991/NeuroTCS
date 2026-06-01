@@ -1,3 +1,60 @@
+## [1.54.0] -- 2026-06-01 -- E-2026-027: verbatim-quote diligence pass (aa_2024 Sec 4.6 verified, Table 7 corrected)
+
+A pure-diligence pass on the two lower-stakes verbatim blocks in aa_2024.yaml
+that had not yet been checked word-for-word against the Jack 2024 primary
+source. No audit logic changed; v3 unchanged at 69 / 65 / 1236, 63/63;
+deterministic core byte-identical.
+
+### Sec 4.6 (moderate stage C / high stage D cutpoint) -- VERIFIED verbatim
+
+Confirmed word-for-word against the Jack 2024 primary source (Wiley
+alz-journals + PMC11350039, DOI 10.1002/alz.13859, PMID 38934362):
+"the distinction between moderate (stage C) and high (stage D) neocortical tau
+uptake could be operationalized in different ways. Methods for quantification of
+tau PET is an area of active research, and selecting the best cutpoint to
+distinguish moderate versus high uptake will be informed by upcoming research
+findings." The encoded block matches exactly; it stays labeled (verbatim) and is
+now recorded in the provenance registry as verified on 2026-06-01.
+
+### Table 7 caption -- CORRECTED (was over-claimed as verbatim)
+
+The block previously read: Jack 2024 Table 7 Note (verbatim): "The typical
+expected progression trajectory is along the diagonal shaded cells, from 1A to
+4-6D." On verification, the 1A -> 2B -> 3C -> 4-6D diagonal progression and the
+"1A to 4-6D" notation ARE corroborated against the framework (incl. Jack's own
+AAIC presentation), but the exact Table 7 caption wording ("along the diagonal
+shaded cells") could NOT be confirmed word-for-word against the primary source.
+Per the no-overclaim discipline, the citation_text is downgraded from a verbatim
+quote to an accurately-labeled PARAPHRASE of Table 7, retaining the verified
+notation and meaning. This is a documentation/metadata correction only -- the
+transition rule, severity, and audit behavior are unchanged.
+
+### Added / changed
+
+- src/neurotcs/rulepack/rules/ad/aa_2024.yaml: Table 7 citation_text relabeled
+  verbatim -> paraphrase (Sec 4.6 verbatim block unchanged, now verified).
+- src/neurotcs/provenance/__init__.py: Sec 4.6 quote added to jack_2024
+  verified_quotes (verified 2026-06-01).
+- tests/provenance/test_provenance.py (+1): locks the Table 7 correction (the
+  caption must not be reintroduced as a verbatim claim); the existing
+  verified-quotes test now also asserts the Sec 4.6 quote is present verbatim.
+
+### Tests
+
+1808 -> 1809 passed (+1). ruff clean over src/ tests/ scripts/. v3 unchanged at
+69 / 65 / 1236, 63/63; deterministic core byte-identical.
+
+### Scope note (honest)
+
+This pass covered the two named lower-stakes blocks. The load-bearing quotes
+(Sec 3, Sec 4.3, Sec 5.2; Kwong roadmap + definition; Larson) were already
+verified verbatim in prior releases. The pre-existing section-symbol characters
+elsewhere in aa_2024.yaml are unrelated cosmetic content (shipping across all
+prior green CI) and were intentionally left untouched -- not in scope for a
+verbatim-quote diligence pass.
+
+---
+
 ## [1.53.0] -- 2026-06-01 -- E-2026-026: T2N-mismatch copathology advisory + rowwise_conjunction_advisory condition type
 
 Builds the T2N-mismatch advisory that was explicitly deferred in atn_2018.yaml

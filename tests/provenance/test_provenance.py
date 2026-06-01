@@ -79,3 +79,17 @@ def test_verified_quotes_present_in_sources():
             assert _norm_quote(q) in hay, (
                 f"{key}: verified quote not found verbatim in source: {q[:60]}..."
             )
+
+
+def test_table7_note_not_claimed_verbatim():
+    """v1.54.0 diligence: the Jack 2024 Table 7 caption wording was NOT verified
+    word-for-word against the primary source (only the 1A->4-6D notation and the
+    diagonal progression are corroborated). The aa_2024 pack must therefore NOT
+    label the Table 7 cell as a verbatim quote. This locks the correction so the
+    claim cannot be silently re-upgraded to 'verbatim'."""
+    aa = (SRC / "rulepack" / "rules" / "ad" / "aa_2024.yaml").read_text()
+    # the specific Table 7 caption string must not appear as a verbatim claim
+    assert 'Table 7 \u00a7Note (verbatim)' not in aa
+    assert "diagonal shaded cells" not in aa, (
+        "Table 7 caption wording reintroduced as if verbatim; it is unverified."
+    )

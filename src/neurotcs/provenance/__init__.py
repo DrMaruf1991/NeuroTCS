@@ -84,6 +84,9 @@ REGISTRY: dict[str, VerifiedCitation] = {
             # Sec 5.2 Stage 0
             "Stage 0 represents part of the AD continuum and is defined as "
             "genetically determined AD (which includes ADAD or DSAD)",
+            # Sec 4.6 moderate(C)/high(D) cutpoint (verified verbatim 2026-06-01)
+            "the distinction between moderate (stage C) and high (stage D) "
+            "neocortical tau uptake could be operationalized in different ways.",
         ),
     ),
     "kwong_2022": VerifiedCitation(
