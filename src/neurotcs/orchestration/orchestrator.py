@@ -35,6 +35,11 @@ import pandas as pd
 
 from neurotcs.audit_core.audit import audit
 from neurotcs.audit_core.trajectory import trajectories_from_dataframe
+from neurotcs.orchestration.differential_registry import (
+    AD_COMORBIDITY,
+    NON_AD_PRIMARY,
+    classify_token,
+)
 from neurotcs.orchestration.vocabulary import (
     VocabularyMismatchError,
     select_rulepack_or_refuse,
@@ -163,6 +168,128 @@ def _tier_for_flag(flag: dict[str, Any]) -> str:
     return TIER_IMPLAUSIBLE
 
 
+def _partition_cohort_by_frame(
+    df: pd.DataFrame,
+) -> dict[str, Any]:
+    """Partition a clinical cohort per-subject into diagnostic frames.
+
+    The cohort is NOT a monolith. Each subject is classified by the tokens in
+    its ``state`` column across visits:
+
+      * ad_frame        -- every state is an AD-trajectory token (no recognized
+                           non-AD primary token, no comorbidity token). Staged
+                           normally under an AD rule pack.
+      * comorbidity     -- AD-trajectory states PLUS one or more AD_COMORBIDITY
+                           tokens (e.g. CVD, WMH). The comorbidity tokens are
+                           STRIPPED from the staged trajectory and recorded as
+                           annotations; the subject's AD states are staged
+                           normally. (Q2 decision: comorbidity stratifier on the
+                           AD axis.)
+      * mixed_primary   -- AD-trajectory states AND >=1 NON_AD_PRIMARY token
+                           (e.g. a subject recorded MCI then DLB). The AD states
+                           are staged (partial frame); non-monotonic / reversion
+                           flags for these subjects are downgraded to REVIEW tier
+                           because a non-AD component can legitimately explain a
+                           non-monotonic course. (Q1 decision.)
+      * non_ad          -- every non-trajectory token is a recognized
+                           NON_AD_PRIMARY token (DLB/FTD/VaD/PDD/NPH) and there
+                           are no AD-trajectory states. Partitioned OUT and
+                           reported as out-of-AD-scope; NOT staged (AD rules do
+                           not govern these; e.g. DLB fluctuation would
+                           false-flag).
+      * unrecognized    -- contains a token that is neither an AD-trajectory
+                           state nor a recognized registry token. Fail-closed:
+                           the subject cannot be staged or honestly partitioned,
+                           so the whole layer still refuses (never a silent pass).
+
+    A token is treated as an "AD-trajectory state" if it is NOT in the
+    differential registry (registry tokens are exactly the non-AD/comorbidity
+    set; AD vocabularies like CN/MCI/AD/EMCI/... return None from
+    classify_token). The actual AD-pack vocabulary match still happens
+    downstream via select_rulepack_or_refuse on the ad_frame partition only.
+
+    Returns a dict with keys: ad_subject_ids, comorbidity (subj -> [annotation
+    canon]), mixed_primary (subj -> [non_ad canon]), non_ad (subj -> [non_ad
+    canon]), unrecognized (subj -> [unknown tokens]), ad_states (the states for
+    the stageable AD partition, comorbidity tokens stripped). All collections
+    are deterministically ordered (subjects sorted).
+    """
+    by_subject: dict[str, list[str]] = {}
+    for sid, state in zip(df["subject_id"].tolist(), df["state"].tolist(), strict=False):
+        by_subject.setdefault(str(sid), []).append(state)
+
+    ad_subject_ids: list[str] = []
+    comorbidity: dict[str, list[str]] = {}
+    mixed_primary: dict[str, list[str]] = {}
+    non_ad: dict[str, list[str]] = {}
+    unrecognized: dict[str, list[str]] = {}
+
+    for sid in sorted(by_subject):
+        states = by_subject[sid]
+        ad_states = []          # tokens NOT in the registry (candidate AD states)
+        nonad_canons = []       # recognized NON_AD_PRIMARY canonicals
+        comorb_canons = []      # recognized AD_COMORBIDITY canonicals
+        unknown: list[str] = []  # genuinely unrecognized (handled fail-closed below)
+        for st in states:
+            entry = classify_token(st)
+            if entry is None:
+                # Not in the differential registry -> candidate AD-trajectory
+                # state (the AD-pack vocabulary check happens downstream).
+                ad_states.append(st)
+            elif entry.kind == NON_AD_PRIMARY:
+                nonad_canons.append(entry.canonical)
+            elif entry.kind == AD_COMORBIDITY:
+                comorb_canons.append(entry.canonical)
+
+        has_ad = len(ad_states) > 0
+        has_nonad = len(nonad_canons) > 0
+        has_comorb = len(comorb_canons) > 0
+
+        # Dedup canonicals deterministically (preserve first-seen order).
+        nonad_u = list(dict.fromkeys(nonad_canons))
+        comorb_u = list(dict.fromkeys(comorb_canons))
+
+        if has_ad and has_nonad:
+            mixed_primary[sid] = nonad_u
+            ad_subject_ids.append(sid)          # AD component IS staged (partial)
+            if has_comorb:
+                comorbidity[sid] = comorb_u
+        elif has_ad and has_comorb:
+            comorbidity[sid] = comorb_u
+            ad_subject_ids.append(sid)
+        elif has_ad:
+            ad_subject_ids.append(sid)
+        elif has_nonad:
+            # No AD states at all -> recognized non-AD primary subject.
+            non_ad[sid] = nonad_u
+            if has_comorb:
+                # comorbidity tokens alone on a non-AD subject are noted there
+                non_ad[sid] = nonad_u + comorb_u
+        else:
+            # Only comorbidity tokens and nothing else, or empty -> we cannot
+            # honestly stage or partition. Fail-closed.
+            unknown = [str(s) for s in states]
+            unrecognized[sid] = unknown
+
+    # Build the stageable AD partition's rows (comorbidity tokens stripped so
+    # they never enter the trajectory as a fake "state").
+    ad_set = set(ad_subject_ids)
+    mask = []
+    for sid, st in zip(df["subject_id"].tolist(), df["state"].tolist(), strict=False):
+        keep = str(sid) in ad_set and classify_token(st) is None
+        mask.append(keep)
+    ad_df = df.loc[mask].copy()
+
+    return {
+        "ad_subject_ids": ad_subject_ids,
+        "ad_df": ad_df,
+        "comorbidity": comorbidity,
+        "mixed_primary": mixed_primary,
+        "non_ad": non_ad,
+        "unrecognized": unrecognized,
+    }
+
+
 def run_full_audit(
     submission: dict[str, Any],
     *,
@@ -222,20 +349,81 @@ def run_full_audit(
 
         if layer in ("staging_clinical", "staging_biological"):
             df = submission["clinical" if layer == "staging_clinical" else "biological"]
-            states = df["state"].tolist()
+
+            # ---- per-subject diagnostic partitioning (mixed-dementia support) ----
+            # The cohort is NOT a monolith. Partition subjects so that AD-frame
+            # subjects are staged even when recognized non-AD subjects (DLB/FTD/
+            # VaD/PDD/NPH) are present in the same cohort. Only the biological
+            # axis is exempt from differential partitioning (its tokens are
+            # A/T(N) biomarker profiles, not clinical diagnoses), but the same
+            # function is safe there because biomarker tokens are not in the
+            # differential registry -> they all fall through as "AD states".
+            part = _partition_cohort_by_frame(df)
+
+            # Fail-closed: a subject carrying a token that is neither an AD
+            # state nor a recognized non-AD/comorbidity token cannot be staged
+            # OR honestly partitioned. Refuse the layer (never silently pass).
+            if part["unrecognized"]:
+                bad = "; ".join(
+                    f"{sid}: {toks}" for sid, toks in
+                    sorted(part["unrecognized"].items()))
+                layers.append(LayerResult(
+                    layer=layer, ran=False,
+                    skipped_reason=(
+                        "unrecognized_states: subject(s) carry tokens that are "
+                        "neither AD-trajectory states nor recognized non-AD "
+                        f"diagnoses [{bad}]. Add them to a rule pack or the "
+                        "differential registry.")))
+                continue
+
+            ad_df = part["ad_df"]
+            non_ad = part["non_ad"]
+            comorbidity = part["comorbidity"]
+            mixed_primary = part["mixed_primary"]
+
+            # If NO subject is AD-frame (a pure non-AD cohort), do not refuse:
+            # record the layer as ran-but-out-of-scope, reporting the recognized
+            # non-AD partition honestly. (This is the "work always" contract:
+            # the cohort is processed and reported, never hard-refused, while no
+            # meaningless AD score is emitted.)
+            if ad_df.empty:
+                layers.append(LayerResult(
+                    layer=layer, ran=True, audit_id=None,
+                    summary={
+                        "staged_ad_subjects": 0,
+                        "out_of_ad_scope_subjects": len(non_ad),
+                        "out_of_ad_scope": {k: non_ad[k] for k in sorted(non_ad)},
+                        "note": ("no AD-spectrum subjects to stage; all "
+                                 "recognized subjects are non-AD diagnoses "
+                                 "(out of AD staging scope)")},
+                    flags=[]))
+                continue
+
+            ad_states = ad_df["state"].tolist()
             try:
                 pack_name, vm = select_rulepack_or_refuse(
-                    states, disease_domain=disease_domain)
+                    ad_states, disease_domain=disease_domain)
             except VocabularyMismatchError as e:
-                # fail-closed: refuse to score this axis, but RECORD it as a
-                # skip-with-reason so the orchestrator can still finalize the
-                # other layers honestly.
                 layers.append(LayerResult(layer=layer, ran=False,
                                           skipped_reason=f"vocabulary_mismatch: {e}"))
                 continue
             lp = load_rulepack(pack_name)
+
+            # NOTE on contamination vs. partitioning (deliberate design):
+            # Tokens that are NOT recognized non-AD diagnoses (e.g. a biomarker
+            # token like 'A+T+N+' wrongly placed in a clinical column, a token
+            # from a different AD pack like 'Stage_3', or a typo) are NOT
+            # isolated here. They remain in the AD partition so the auditor
+            # FLAGS them as contamination / inadmissible -- that is a real data
+            # error a sponsor must see, not an out-of-scope subject to hide.
+            # Only registry-recognized non-AD primary subjects were partitioned
+            # out above (into `non_ad`); only registry comorbidity tokens were
+            # stripped (into `comorbidity`). vm.unmatched still reports any
+            # contaminating tokens for transparency.
+            isolated: dict[str, list[str]] = {}
+
             trajs = trajectories_from_dataframe(
-                df, patient_id_col="subject_id", visit_date_col="visit_date",
+                ad_df, patient_id_col="subject_id", visit_date_col="visit_date",
                 state_col="state", skip_invalid=False)
             res = audit(trajs, lp, bootstrap_B=bootstrap_B, seed=seed,
                         return_per_transition=True)
@@ -244,13 +432,32 @@ def run_full_audit(
             sub_ids[layer] = d["audit_id"]
             fl = []
             pt = res.per_transition
+            mixed_set = set(mixed_primary)
             for i in range(len(pt.flags)):
                 if pt.flags[i]:
-                    fl.append({"subject_id": pt.patient_ids[i],
-                               "from": pt.from_states[i], "to": pt.to_states[i],
-                               "delta_days": float(pt.delta_days[i]),
-                               "tier": TIER_IMPOSSIBLE})
-                    severity[TIER_IMPOSSIBLE] += 1
+                    sid = pt.patient_ids[i]
+                    # Q1 decision: for mixed-primary subjects, a non-AD component
+                    # (e.g. DLB fluctuation) can legitimately explain a
+                    # non-monotonic / reversion-type course, so such flags are
+                    # surfaced at REVIEW tier (informational), NOT impossible.
+                    # Genuine forward-impossible transitions are rare here and
+                    # still reported -- but conservatively at review tier for a
+                    # partial-frame subject, because AD rules only partly govern.
+                    if str(sid) in mixed_set:
+                        tier = TIER_INFORMATIONAL
+                        fl.append({"subject_id": sid,
+                                   "from": pt.from_states[i], "to": pt.to_states[i],
+                                   "delta_days": float(pt.delta_days[i]),
+                                   "tier": tier,
+                                   "partial_frame": True,
+                                   "non_ad_component": mixed_primary[str(sid)]})
+                        severity[TIER_INFORMATIONAL] += 1
+                    else:
+                        fl.append({"subject_id": sid,
+                                   "from": pt.from_states[i], "to": pt.to_states[i],
+                                   "delta_days": float(pt.delta_days[i]),
+                                   "tier": TIER_IMPOSSIBLE})
+                        severity[TIER_IMPOSSIBLE] += 1
             layers.append(LayerResult(
                 layer=layer, ran=True, audit_id=d["audit_id"],
                 summary={"pack": pack_name, "ctcs": d["metrics"]["ctcs"]["point"],
@@ -262,7 +469,18 @@ def run_full_audit(
                          "n_transitions": d["cohort"]["n_transitions"],
                          "n_flagged": d["cohort"]["n_flagged"],
                          "vocabulary_coverage": vm.coverage_fraction,
-                         "contamination_tokens": list(vm.unmatched)},
+                         "contamination_tokens": list(vm.unmatched),
+                         # mixed-dementia partition report (scope honesty):
+                         "staged_ad_subjects": len(
+                             [s for s in part["ad_subject_ids"]
+                              if s not in isolated]),
+                         "out_of_ad_scope_subjects": len(non_ad),
+                         "out_of_ad_scope": {k: non_ad[k] for k in sorted(non_ad)},
+                         "comorbidity_annotated": {k: comorbidity[k]
+                                                   for k in sorted(comorbidity)},
+                         "mixed_primary_partial_frame": {k: mixed_primary[k]
+                                                         for k in sorted(mixed_primary)},
+                         "unrecognized_isolated": isolated},
                 flags=fl))
 
         elif layer == "ranges":

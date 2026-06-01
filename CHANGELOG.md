@@ -1,4 +1,79 @@
-## [1.45.0] -- 2026-06-01 -- E-2026-018: ADNI clinical-stage rule pack (CN/SMC/EMCI/LMCI/MCI/AD)
+## [1.46.0] -- 2026-06-01 -- E-2026-019: mixed-dementia / differential-diagnosis cohort partitioning
+
+### Net effect — NeuroTCS now "works always" on real mixed cohorts instead of refusing any cohort that contains non-AD dementia
+
+Pure AD is the minority at autopsy in older cohorts; real research-hospital and
+trial cohorts routinely mix AD with dementia with Lewy bodies (DLB), FTD,
+vascular dementia (VaD), and Parkinson's disease dementia (PDD). Before
+v1.46.0 the cohort was treated as a MONOLITH: the orchestrator picked one rule
+pack for ALL subjects, and a single non-AD token (DLB/FTD/VaD) caused a
+whole-cohort vocabulary-mismatch that darkened the clinical staging layer for
+EVERY subject -- including the perfectly stageable AD subjects.
+
+After v1.46.0 the orchestrator partitions the cohort PER SUBJECT and routes each
+to the frame that legitimately governs it. The cohort is never hard-refused; it
+is partitioned, routed, annotated, and reported.
+
+### Partitioning model (external-auditor design)
+
+  * **AD-spectrum** -> staged under the matched AD pack (unchanged).
+  * **AD + comorbidity** (CVD / WMH / CAA / microbleeds) -> the comorbidity
+    token is stripped from the trajectory and recorded as an ANNOTATION; the AD
+    axis is staged normally. Vascular burden is a safety stratifier (ARIA risk),
+    not a different trajectory. (Q2 decision.)
+  * **Mixed-primary** (AD trajectory states AND a recognized non-AD token, e.g.
+    a subject recorded MCI then DLB) -> the AD component is staged (partial
+    frame); non-monotonic / reversion-type flags for these subjects are
+    surfaced at REVIEW (informational) tier, NOT impossible, because a non-AD
+    component (e.g. DLB's fluctuating cognition) can legitimately explain a
+    non-monotonic course. (Q1 decision.) The identical AD->CN transition is
+    `impossible` for a pure-AD subject but `informational/partial_frame` for a
+    mixed-primary subject.
+  * **Non-AD primary** (DLB/FTD/PPA/VaD/PDD/NPH, no AD states) -> recognized by
+    name, partitioned OUT, reported as out-of-AD-scope. NOT force-staged under
+    AD rules (which would false-flag, e.g. DLB fluctuation as inadmissible
+    reversion).
+
+### Fail-closed contract PRESERVED (and a regression caught during development)
+
+The fail-closed discipline shifts from "refuse the cohort" to "refuse to STAGE
+the subjects AD rules don't govern, while still processing and reporting
+everyone." Critically, tokens that are NOT recognized non-AD diagnoses -- a
+biomarker token like `A+T+N+` wrongly placed in a clinical column, a token from
+a different AD pack like `Stage_3`, or a typo -- are NOT partitioned out. They
+remain in the AD partition so the auditor FLAGS them as contamination (a real
+data error a sponsor must see), never hidden. (An earlier over-eager per-subject
+isolation that absorbed these was caught against the v3 blind set -- it dropped
+impossible 69->64 by hiding the planted contamination errors E015/E016 -- and
+removed. v3 is back to exactly 69/65/1236, 63/63.)
+
+### Added
+
+- src/neurotcs/orchestration/differential_registry.py -- citation-locked
+  recognition of non-AD diagnoses and AD comorbidities. Every entry carries a
+  verified primary-source PMID/DOI: DLB (McKeith 2017, PMID 28592453), bvFTD
+  (Rascovsky 2011, PMID 21810890), PPA (Gorno-Tempini 2011, PMID 21325651),
+  VaD (Sachdev 2014 VASCOG, PMID 24632990), PDD (Emre 2007, PMID 17542011),
+  NPH (Relkin 2005, PMID 16160425); comorbidities CVD (Gorelick 2011, PMID
+  21778438), WMH/STRIVE (Wardlaw 2013, PMID 23867200), CAA/Boston v2.0
+  (Greenberg 2022, PMID 35338085).
+- src/neurotcs/orchestration/orchestrator.py -- `_partition_cohort_by_frame`
+  helper + rewritten staging branch (per-subject partition; comorbidity
+  stripping; mixed-primary review-tier downgrade; honest out-of-scope reporting
+  in the layer summary: staged_ad_subjects, out_of_ad_scope,
+  comorbidity_annotated, mixed_primary_partial_frame).
+- tests/orchestration/test_mixed_dementia_partition.py (+9): registry coverage
+  and citations; mixed cohort not refused; comorbidity annotation; mixed-primary
+  review-tier downgrade; pure non-AD reported not refused; and the contamination
+  regression guard (biomarker-token-in-clinical stays flagged, not hidden).
+
+### Tests
+
+1733 -> 1742 passed (+9). ruff clean over src/ tests/ scripts/. v3 blind set
+unchanged at impossible 69 / implausible 65 / informational 1236, 63/63 caught.
+
+---
+
 
 ### Net effect — NeuroTCS now natively audits the real ADNI download vocabulary, instead of refusing it or silently dropping its sub-stages
 
