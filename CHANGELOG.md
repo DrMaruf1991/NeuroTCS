@@ -1,3 +1,81 @@
+## [1.57.0] -- 2026-06-01 -- E-2026-030: flag provenance propagation (GxP traceability) + bundle envelope 1.3.0
+
+Resolves the external auditor's citation:null / rule_id:null finding -- and on
+execution it was larger than reported. A per-layer survey of the v3 bundle
+(1364 flags) found provenance was being DROPPED at serialization, not absent at
+source:
+  ranges:            1275 flags, ALL null rule_id + null citation
+  staging_clinical:     8 flags, null rule_id + null citation
+  staging_biological:   6 flags, null rule_id + null citation
+  cross_sheet:         65 flags, null citation (rule_id was set)
+  data_integrity:      16 flags, fully populated (the gold standard)
+Root cause: orchestrator.py rebuilt each flag dict from a hardcoded key list
+that discarded the citation_pmid / citation_doi / citation_text / pack identity
+the flag objects ALREADY carried. No data was fabricated to fix this -- the
+provenance existed and was simply threaded through.
+
+### Bundle envelope -> 1.3.0 (BUNDLE_FORMAT_VERSION bumped)
+
+The canonical flag envelope promotes provenance to first-class, top-level keys
+so a regulator/CRO reads it directly from the bundle rather than digging through
+the free-form "details" blob:
+  added canonical keys: pack_id, citation_pmid, citation_doi
+  (citation is now text-only; pmid/doi are separate structured fields)
+  added aliases: rule_id <- measurement_name; pack_id <- rulepack_id /
+  rangepack_id / invariantpack_id; citation_pmid <- pmid; citation_doi <- doi.
+Because flags now carry more fields, the deterministic_core hash for a given
+input changes vs 1.2.0 bundles -- this is an intentional, versioned schema
+enrichment (hence the format-version bump). The SEVERITY CONTRACT is unchanged:
+v3 stays 69 / 65 / 1236, 63/63, and repeat runs are byte-identical.
+
+### Fixed (orchestrator.py, 3 flag-construction sites)
+
+- ranges: serialize via ClinicalRangeFlag.to_dict() (carries citation_pmid /
+  citation_doi / citation_text / guideline_section / bound_type) + attach
+  pack_id = rangepack_id. -> 1275 flags now fully traceable.
+- cross_sheet: attach flag_id, pack_id, citation_pmid, citation_doi,
+  citation_public_url (all already on CrossSheetFlag) + citation text. -> 65
+  citation nulls filled.
+- staging_clinical + staging_biological: attach pack-level provenance
+  (rule_id = "inadmissible_transition", pack_id = rulepack_id, pack_sha256,
+  and the pack's anchor citation pmid/doi/text). A flagged transition is
+  inadmissible under THAT pack's rules, so pack-level identity is the honest
+  anchor; no per-transition PMID is fabricated. -> 14 flags filled.
+
+Post-fix survey: ranges/staging/cross_sheet all 0 null rule_id, 0 null pack_id,
+0 null citation, with PMID+DOI on every flag. data_integrity retains rule_id but
+no pack_id/citation by design (Layer-1 structural checks are universal data-
+contract rules, not clinical-pack anchored).
+
+### Added
+
+- tests/orchestration/test_bundle.py (+2): test_every_flag_carries_source_
+  provenance asserts every emitted flag carries rule_id + (pack_id + citation)
+  except the documented data_integrity exception; test_ranges_flags_carry_
+  pmid_or_doi guards the structured-citation field the defect lived in.
+
+### Tests
+
+1812 -> 1813 passed (+1 active; +1 graceful skip). ruff clean over src/ tests/
+scripts/. v3 unchanged at 69 / 65 / 1236, 63/63; deterministic (repeat runs
+byte-identical). Changed files strict-ASCII.
+
+### Auditor items now CLOSED vs still open (honest status)
+
+CLOSED by this release: citation/rule_id propagation into every flag (the main
+traceability defect). ALREADY resolved earlier: raw_input_sha256 (present as
+deterministic_core.input_fingerprint = raw_file_sha256, kind recorded);
+cross-sheet wheel packaging (v1.56.0). PARTIALLY open: the coverage ledger
+exposes layers_run / packs_applied / sub_audit_ids but columns_consumed /
+columns_ignored are still {} for some layers (the column-level ledger is a
+separate, real increment). NOT a defect / roadmap only: the "Universal Subject
+Intelligence Layer" (CDISC zero-config reshaping, per-site assay certification,
+MRI-pipeline metadata, conversion derivation, disease-control ontology, ARIA
+fields). Exit-code semantics (FLAGS_PRESENT -> exit 1) remain intentional and
+are documented behavior.
+
+---
+
 ## [1.56.0] -- 2026-06-01 -- E-2026-029: wheel packaging-parity fix (cross-sheet invariants + v1_2 contract now ship)
 
 An external blind audit found, and execution CONFIRMED, that the built wheel

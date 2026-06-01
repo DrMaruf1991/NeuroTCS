@@ -57,7 +57,7 @@ from neurotcs.orchestration.orchestrator import OrchestratorResult
 
 # Envelope schema version. Bump when the bundle STRUCTURE or the canonicalization
 # rule changes, independently of the framework version.
-BUNDLE_FORMAT_VERSION = "1.2.0"
+BUNDLE_FORMAT_VERSION = "1.3.0"
 
 STATUS_CLEAN = "CLEAN"
 STATUS_FLAGS_PRESENT = "FLAGS_PRESENT"
@@ -68,9 +68,14 @@ _FLOAT_SIG_DIGITS = 12
 
 # Pinned canonical flag envelope. Every flag, from any layer, is normalized to
 # exactly these top-level keys; layer-specific data is preserved under "details".
+# v1.57.0: provenance (rule_id, pack_id, citation_pmid, citation_doi) promoted to
+# first-class canonical keys so every flag is traceable to its source rule and
+# citation directly from the bundle -- the GxP / 21 CFR Part 11 traceability bar
+# -- rather than requiring a reader to dig through the free-form "details" blob.
 _CANONICAL_FLAG_KEYS = (
     "tier", "layer", "subject_id", "visit",
-    "field", "observed_value", "rule_id", "citation",
+    "field", "observed_value", "rule_id", "pack_id",
+    "citation", "citation_pmid", "citation_doi",
 )
 # Source-key aliases each canonical field may be populated from (first hit wins).
 _FLAG_ALIASES: dict[str, tuple[str, ...]] = {
@@ -78,8 +83,12 @@ _FLAG_ALIASES: dict[str, tuple[str, ...]] = {
     "visit": ("visit", "visit_id", "visit_no"),
     "field": ("field", "measurement_name", "measure"),
     "observed_value": ("observed_value", "value", "observed"),
-    "rule_id": ("rule_id", "rule", "invariant", "invariant_id"),
-    "citation": ("citation", "citation_pmid", "pmid", "source"),
+    "rule_id": ("rule_id", "rule", "invariant", "invariant_id",
+                "measurement_name"),
+    "pack_id": ("pack_id", "rulepack_id", "rangepack_id", "invariantpack_id"),
+    "citation": ("citation", "citation_text", "source"),
+    "citation_pmid": ("citation_pmid", "pmid"),
+    "citation_doi": ("citation_doi", "doi"),
 }
 
 

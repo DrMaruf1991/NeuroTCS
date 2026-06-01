@@ -429,6 +429,20 @@ def run_full_audit(
                         return_per_transition=True)
             d = res.to_dict()
             packs_applied[f"{layer}:{pack_name}"] = d["rulepack"]["sha256"]
+            # Provenance attached to every staging transition flag: a flagged
+            # transition is inadmissible under THIS pack's transition rules, so
+            # pack-level identity + the pack's anchor citation are the honest,
+            # non-fabricated source. (We do not invent a per-transition PMID
+            # that the pack does not define for individual transitions.)
+            _anchor = lp.rulepack.anchor_citation
+            staging_prov = {
+                "rule_id": "inadmissible_transition",
+                "pack_id": lp.rulepack.rulepack_id,
+                "pack_sha256": d["rulepack"]["sha256"],
+                "citation_pmid": _anchor.citation_pmid,
+                "citation_doi": _anchor.citation_doi,
+                "citation": _anchor.citation_text,
+            }
             sub_ids[layer] = d["audit_id"]
             fl = []
             pt = res.per_transition
@@ -450,13 +464,15 @@ def run_full_audit(
                                    "delta_days": float(pt.delta_days[i]),
                                    "tier": tier,
                                    "partial_frame": True,
-                                   "non_ad_component": mixed_primary[str(sid)]})
+                                   "non_ad_component": mixed_primary[str(sid)],
+                                   **staging_prov})
                         severity[TIER_INFORMATIONAL] += 1
                     else:
                         fl.append({"subject_id": sid,
                                    "from": pt.from_states[i], "to": pt.to_states[i],
                                    "delta_days": float(pt.delta_days[i]),
-                                   "tier": TIER_IMPOSSIBLE})
+                                   "tier": TIER_IMPOSSIBLE,
+                                   **staging_prov})
                         severity[TIER_IMPOSSIBLE] += 1
             layers.append(LayerResult(
                 layer=layer, ran=True, audit_id=d["audit_id"],
@@ -501,11 +517,19 @@ def run_full_audit(
                 packs_applied[f"ranges:{pack_name}"] = rres.rangepack_sha256
                 ran_any = True
                 for f in (rres.flags or []):
-                    fd = f if isinstance(f, dict) else {
-                        k: getattr(f, k) for k in
-                        ("patient_id", "visit_id", "measurement_name",
-                         "observed_value", "bound_type", "bound_value",
-                         "flag_severity", "bound_semantic")}
+                    fd = f.to_dict() if hasattr(f, "to_dict") else (
+                        f if isinstance(f, dict) else {
+                            k: getattr(f, k) for k in
+                            ("patient_id", "visit_id", "measurement_name",
+                             "observed_value", "bound_type", "bound_value",
+                             "flag_severity", "bound_semantic",
+                             "citation_pmid", "citation_doi", "citation_text",
+                             "guideline_section")})
+                    # Provenance: pack identity + rule identity so every range
+                    # flag is traceable to its source pack and bound. The
+                    # canonical envelope aliases measurement_name -> rule_id and
+                    # citation_text -> citation; we add pack_id explicitly.
+                    fd.setdefault("pack_id", rp.rangepack.rangepack_id)
                     tier = _tier_for_flag(fd)
                     fd["tier"] = tier
                     severity[tier] += 1
@@ -528,8 +552,15 @@ def run_full_audit(
             for f in cres.flags:
                 tier = _tier_for_cross_sheet_flag(f)
                 fl.append({"invariant": f.invariant_name,
+                           "flag_id": getattr(f, "flag_id", None),
+                           "pack_id": getattr(f, "pack_id", None),
                            "join_key": f.join_key_values,
                            "reason": f.flag_reason,
+                           "citation": f.flag_reason,
+                           "citation_pmid": getattr(f, "citation_pmid", None),
+                           "citation_doi": getattr(f, "citation_doi", None),
+                           "citation_public_url": getattr(
+                               f, "citation_public_url", None),
                            "severity": getattr(f, "severity", None),
                            "tier": tier})
                 severity[tier] += 1

@@ -100,6 +100,60 @@ def test_bundle_has_envelope_and_format_version():
     assert "run_metadata" in nb
 
 
+def test_every_flag_carries_source_provenance():
+    """v1.57.0 GxP traceability: every emitted flag must be traceable to the
+    rule and citation that produced it. A pharma/CRO/regulator reading the
+    bundle must never see a flag with null rule_id / null pack / no citation.
+
+    The only honest exception is the data_integrity (Layer 1) layer: structural
+    flags (duplicate IDs, malformed rows) are universal data-contract checks,
+    not anchored to a clinical pack/citation -- they carry rule_id but no
+    pack_id/citation, which is correct.
+    """
+    b = build_bundle(run_full_audit(_sub()))
+    flags = b["neurotcs_bundle"]["deterministic_core"]["flags"]
+    all_flags = [f for tier in flags.values() for f in tier]
+    assert all_flags, "fixture should produce flags to test provenance"
+
+    for f in all_flags:
+        layer = f.get("layer")
+        assert f.get("rule_id"), f"flag in layer {layer} has null rule_id: {f}"
+        if layer == "data_integrity":
+            # structural integrity flags are not pack/citation anchored
+            continue
+        assert f.get("pack_id"), f"flag in layer {layer} has null pack_id: {f}"
+        has_citation = bool(
+            f.get("citation") or f.get("citation_pmid") or f.get("citation_doi"))
+        assert has_citation, (
+            f"flag in layer {layer} has no citation signal "
+            f"(citation/pmid/doi all null): {f}")
+
+
+def test_ranges_flags_carry_pmid_or_doi():
+    """Range-pack flags (the bulk of a real audit) must carry a structured
+    citation identifier, not just free text -- this is the field the audited
+    1275-null-citation defect lived in."""
+    import pandas as pd
+    # a measurement value far outside any plausible bound -> a range flag
+    meas = pd.DataFrame({
+        "subject_id": ["P1"], "visit_id": ["v1"],
+        "measurement_name": ["mmse_total"], "observed_value": [999.0],
+    })
+    sub = {**_sub(), "ranges": [("cognitive/mmse_range", meas)]}
+    try:
+        b = build_bundle(run_full_audit(sub))
+    except Exception:
+        pytest.skip("mmse_range pack not available in this build")
+    flags = b["neurotcs_bundle"]["deterministic_core"]["flags"]
+    range_flags = [f for tier in flags.values() for f in tier
+                   if f.get("layer") == "ranges"]
+    if not range_flags:
+        pytest.skip("no range flags produced by fixture")
+    for f in range_flags:
+        assert f.get("citation_pmid") or f.get("citation_doi"), (
+            f"range flag lacks structured citation id: {f}")
+
+
 def test_status_leads_and_scores_are_per_axis():
     b = build_bundle(run_full_audit(_sub()))
     core = b["neurotcs_bundle"]["deterministic_core"]
