@@ -173,3 +173,86 @@ class TestEndToEnd:
             assert "clinical" in sub
             assert sub["clinical"]["state"].tolist() == ["CN", "MCI", "AD"]
             assert any("CDISC" in x for x in dec)
+
+
+class TestMultiDomainJoin:
+    """v1.49: join a full SDTM folder (DM + RS + QS) into one submission."""
+
+    def _write_folder(self, d: Path):
+        # DM demographics
+        pd.DataFrame({
+            "DOMAIN": ["DM"] * 3, "USUBJID": ["001", "002", "003"],
+            "AGE": [72, 68, 81], "SEX": ["M", "F", "M"],
+            "RACE": ["WHITE", "ASIAN", "WHITE"],
+        }).to_csv(d / "dm.csv", index=False)
+        # RS diagnosis per visit (SUBJ-003 has AD->MCI, an error)
+        rs = []
+        for sid, states in {"001": ["CN", "MCI", "AD"],
+                            "002": ["CN", "MCI"],
+                            "003": ["AD", "MCI"]}.items():
+            for i, st in enumerate(states):
+                rs.append({"DOMAIN": "RS", "USUBJID": sid, "VISITNUM": i + 1,
+                           "RSDTC": f"20{18 + i}-01-01", "RSTESTCD": "DXDECOD",
+                           "RSSTRESC": st})
+        pd.DataFrame(rs).to_csv(d / "rs.csv", index=False)
+        # QS scales
+        qs = []
+        for sid in ["001", "002", "003"]:
+            for i, (mm, cdr) in enumerate([(28, 0.5), (26, 1.0)]):
+                qs.append({"DOMAIN": "QS", "USUBJID": sid, "VISITNUM": i + 1,
+                           "QSDTC": f"20{18 + i}-01-01", "QSTESTCD": "MMSE",
+                           "QSSTRESN": mm, "QSSTRESC": str(mm)})
+                qs.append({"DOMAIN": "QS", "USUBJID": sid, "VISITNUM": i + 1,
+                           "QSDTC": f"20{18 + i}-01-01", "QSTESTCD": "CDRSB",
+                           "QSSTRESN": cdr, "QSSTRESC": str(cdr)})
+        pd.DataFrame(qs).to_csv(d / "qs.csv", index=False)
+
+    def test_join_produces_all_three_sheets(self):
+        from neurotcs.io.cdisc import join_cdisc_domains
+        with tempfile.TemporaryDirectory() as d:
+            self._write_folder(Path(d))
+            sub = join_cdisc_domains(d, [])
+            assert set(sub) == {"clinical", "measurements", "demographics"}
+            assert "MMSE" in sub["measurements"].columns
+            assert "CDRSB" in sub["measurements"].columns
+            assert "age" in sub["demographics"].columns
+
+    def test_join_clinical_state_from_rs(self):
+        from neurotcs.io.cdisc import join_cdisc_domains
+        with tempfile.TemporaryDirectory() as d:
+            self._write_folder(Path(d))
+            sub = join_cdisc_domains(d, [])
+            assert sub["clinical"]["state"].tolist()[:3] == ["CN", "MCI", "AD"]
+
+    def test_join_ids_consistent_across_sheets(self):
+        from neurotcs.io.cdisc import join_cdisc_domains
+        with tempfile.TemporaryDirectory() as d:
+            self._write_folder(Path(d))
+            sub = join_cdisc_domains(d, [])
+            cl = set(sub["clinical"]["subject_id"])
+            dm = set(sub["demographics"]["subject_id"])
+            assert cl == dm  # join keys align
+
+    def test_joined_submission_drives_orchestrator(self):
+        from neurotcs.io.cdisc import join_cdisc_domains
+        from neurotcs.io.data_integrity import audit_data_integrity
+        with tempfile.TemporaryDirectory() as d:
+            self._write_folder(Path(d))
+            sub = join_cdisc_domains(d, [])
+            osub = {"clinical": sub["clinical"]}
+            di = audit_data_integrity({"demographics": sub["demographics"]})
+            if di:
+                osub["data_integrity"] = di
+            res = run_full_audit(osub, bootstrap_B=200)
+            layer = next(L for L in res.layers if L.layer == "staging_clinical")
+            flagged = {(f["subject_id"], f["from"], f["to"]) for f in layer.flags}
+            assert ("003", "AD", "MCI") in flagged
+
+    def test_join_deterministic(self):
+        from neurotcs.io.cdisc import join_cdisc_domains
+        with tempfile.TemporaryDirectory() as d:
+            self._write_folder(Path(d))
+            a = join_cdisc_domains(d, [])
+            b = join_cdisc_domains(d, [])
+            assert a["clinical"].equals(b["clinical"])
+            assert list(a["measurements"].columns) == list(b["measurements"].columns)

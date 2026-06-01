@@ -119,3 +119,62 @@ class TestProvenance:
         df = pd.DataFrame({"subject_id": ["01", "02"], "age": [1, 2]})
         _, dec = _apply(df)
         assert any("ID" in d and "subject_id" in d for d in dec)
+
+
+class TestNumericSentinelAssertion:
+    """v1.49: operator-asserted numeric missing codes (closes the loop)."""
+
+    def test_default_keeps_sentinel(self):
+        df = pd.DataFrame({"mmse": [28, -9, 30]})
+        out, _ = _apply(df)
+        assert -9 in out["mmse"].tolist()  # unchanged default behavior
+
+    def test_per_column_assertion(self):
+        df = pd.DataFrame({"mmse": [28, -9, 30], "temp": [36, -9, 37]})
+        dec: list[str] = []
+        out = apply_typed_read_contract(df, "T", dec, numeric_na_codes={"mmse": [-9]})
+        assert out["mmse"].isna().sum() == 1          # mmse -9 -> NA
+        assert -9 in out["temp"].tolist()             # temp untouched
+        assert any("asserted" in d for d in dec)
+
+    def test_wildcard_assertion(self):
+        df = pd.DataFrame({"a": [1, -999, 3], "b": [-999, 5, 6]})
+        out = apply_typed_read_contract(df, "T", [], numeric_na_codes={"*": [-999]})
+        assert out["a"].isna().sum() == 1
+        assert out["b"].isna().sum() == 1
+
+    def test_assertion_on_coerced_column(self):
+        # a string column coerced to numeric should also honor the assertion
+        df = pd.DataFrame({"score": ["1.0", "-9", "3.0"]})
+        out = apply_typed_read_contract(df, "T", [], numeric_na_codes={"score": [-9]})
+        assert out["score"].isna().sum() == 1
+
+    def test_id_columns_never_affected(self):
+        df = pd.DataFrame({"subject_id": ["-9", "007"], "age": [-9, 70]})
+        out = apply_typed_read_contract(df, "T", [], numeric_na_codes={"*": [-9]})
+        # subject_id stays string '-9' (ID protection wins), age -9 -> NA
+        assert out["subject_id"].tolist() == ["-9", "007"]
+        assert out["age"].isna().sum() == 1
+
+
+class TestIdColumnNamesHelper:
+    """v1.49: read-time ID detection so numeric IDs keep leading zeros."""
+
+    def test_detects_id_columns(self):
+        from neurotcs.io.typed_read import id_columns_from_names
+        cols = ["USUBJID", "subject_id", "AGE", "site_id", "mmse", "RID"]
+        found = set(id_columns_from_names(cols))
+        assert {"USUBJID", "subject_id", "site_id", "RID"} <= found
+        assert "AGE" not in found and "mmse" not in found
+
+    def test_numeric_id_keeps_leading_zeros_via_reader(self):
+        import tempfile
+        from pathlib import Path
+
+        from neurotcs.io.readers import read_tables
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "t.csv"
+            p.write_text("subject_id,age\n003,72\n012,68\n")
+            tables = read_tables(str(p))
+            df = next(iter(tables.values()))
+            assert df["subject_id"].tolist() == ["003", "012"]

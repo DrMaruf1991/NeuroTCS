@@ -240,8 +240,23 @@ def _read_delimited(
         if sep != ",":
             decisions.append(f"{p.name}: delimiter detected as {sep!r}")
 
-    df = pd.read_csv(io.StringIO(raw), sep=sep)
+    df = _read_csv_id_safe(raw, sep)
     return apply_typed_read_contract(df, p.name, decisions)
+
+
+def _read_csv_id_safe(raw: str, sep: str) -> pd.DataFrame:
+    """Read delimited text, forcing ID-pattern columns to string at read time so
+    a purely-numeric ID (e.g. '003') keeps its leading zeros instead of being
+    coerced to int by pandas before the typed-read contract can protect it.
+
+    The header is peeked first (zero-row read) to discover ID columns; only those
+    get dtype=str, so non-ID columns keep pandas' normal inference (which the
+    contract then makes explicit and locale-safe)."""
+    from neurotcs.io.typed_read import id_columns_from_names
+    header = pd.read_csv(io.StringIO(raw), sep=sep, nrows=0)
+    id_cols = id_columns_from_names(list(header.columns))
+    dtype = {c: str for c in id_cols} if id_cols else None
+    return pd.read_csv(io.StringIO(raw), sep=sep, dtype=dtype)
 
 
 def _decode_bytes(
@@ -520,7 +535,7 @@ def _read_bytes_as_table(
         text, _enc = _decode_bytes(data, name, encoding, decisions)
         sep = "\t" if ext == ".tsv" else _sniff_delimiter(text, name)
         return {stem: apply_typed_read_contract(
-            pd.read_csv(io.StringIO(text), sep=sep), name, decisions)}
+            _read_csv_id_safe(text, sep), name, decisions)}
     if ext in (".xlsx", ".xls"):
         sheets = pd.read_excel(io.BytesIO(data), sheet_name=None)
         return {str(k): apply_typed_read_contract(v, f"{name}:{k}", decisions)

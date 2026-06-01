@@ -189,6 +189,7 @@ def apply_typed_read_contract(
     decisions: list[str],
     *,
     na_tokens: tuple[str, ...] = _DEFAULT_NA_TOKENS,
+    numeric_na_codes: dict[str, list[float | int | str]] | None = None,
 ) -> pd.DataFrame:
     """Apply the typed-read contract to a freshly-read DataFrame.
 
@@ -196,10 +197,58 @@ def apply_typed_read_contract(
     records every decision into ``decisions``. Returns a new DataFrame; the
     input is not mutated. Downstream-safe: numeric columns still receive a
     numeric dtype.
+
+    numeric_na_codes (optional): per-column assertion that specific NUMERIC
+    codes mean "missing" -- e.g. {"mmse": [-9], "*": [-999]}. A code is applied
+    ONLY where the operator asserts it (never auto-detected): the contract
+    reports numeric sentinels by default but keeps them, because a -9 may be a
+    real value. The key "*" applies to every numeric column; a column-name key
+    (matched case-insensitively against the actual or normalized name) applies
+    to that column. Each application is surfaced in ``decisions``. Assertion runs
+    AFTER coercion, so it covers both raw-numeric and coerced-numeric columns.
     """
     na_set = frozenset(t.strip().lower() for t in na_tokens)
     out = df.copy()
     numeric_sentinels_seen: dict[str, list[str]] = {}
+
+    # Normalize the assertion map: lowercased keys, float code sets.
+    asserted: dict[str, set[float]] = {}
+    if numeric_na_codes:
+        for k, codes in numeric_na_codes.items():
+            cset: set[float] = set()
+            for c in codes:
+                try:
+                    cset.add(float(c))
+                except (ValueError, TypeError):
+                    continue
+            if cset:
+                asserted[str(k).strip().lower()] = cset
+
+    def _asserted_codes_for(col: str) -> set[float]:
+        codes: set[float] = set()
+        if "*" in asserted:
+            codes |= asserted["*"]
+        if str(col).lower() in asserted:
+            codes |= asserted[str(col).lower()]
+        if _norm(col) in asserted:
+            codes |= asserted[_norm(col)]
+        return codes
+
+    def _apply_codes(series: pd.Series, col: str) -> pd.Series:
+        codes = _asserted_codes_for(col)
+        if not codes:
+            return series
+        before = series.copy()
+        # Replace asserted numeric codes with NA (works for Int64/float64).
+        mask = series.isin(list(codes))
+        n = int(mask.sum())
+        if n:
+            series = series.mask(mask)
+            applied = sorted({float(v) for v in before[mask].dropna().tolist()})
+            decisions.append(
+                f"{name}: column {col!r} -- asserted numeric missing-code(s) "
+                f"{applied} treated as NA ({n} value(s)).")
+        return series
 
     for col in out.columns:
         s = out[col]
@@ -220,18 +269,20 @@ def apply_typed_read_contract(
             continue
 
         # 2) Already numeric from the raw read: keep, but record numeric
-        # sentinels for transparency.
+        # sentinels for transparency, then apply any asserted NA codes.
         if pd.api.types.is_numeric_dtype(s):
             sent = sorted({str(v) for v in s.dropna().tolist()
                            if _NUMERIC_SENTINEL_RE.match(str(v))})
             if sent:
                 numeric_sentinels_seen[str(col)] = sent
+            out[col] = _apply_codes(s, col)
             continue
 
         # 3) Object/string column: attempt explicit numeric coercion.
         if pd.api.types.is_object_dtype(s) or pd.api.types.is_string_dtype(s):
             ser, kind = _try_numeric_series(s, na_set)
             if ser is not None:
+                ser = _apply_codes(ser, col)
                 out[col] = ser
                 if kind == "comma":
                     decisions.append(
@@ -243,14 +294,28 @@ def apply_typed_read_contract(
             # (contains digits + separators but didn't cleanly parse).
 
     if numeric_sentinels_seen:
-        parts = "; ".join(f"{c}:{toks}" for c, toks
-                          in sorted(numeric_sentinels_seen.items()))
-        decisions.append(
-            f"{name}: numeric missing-code sentinels present and KEPT as values "
-            f"(not auto-NA) [{parts}]. Assert them explicitly to treat as "
-            "missing.")
+        # Only report sentinels that were NOT asserted away (those are handled).
+        unhandled = {c: toks for c, toks in numeric_sentinels_seen.items()
+                     if not _asserted_codes_for(c)}
+        if unhandled:
+            parts = "; ".join(f"{c}:{toks}" for c, toks
+                              in sorted(unhandled.items()))
+            decisions.append(
+                f"{name}: numeric missing-code sentinels present and KEPT as "
+                f"values (not auto-NA) [{parts}]. Assert them explicitly "
+                "(numeric_na_codes) to treat as missing.")
 
     return out
+
+
+def id_columns_from_names(columns: list[str]) -> list[str]:
+    """Return the subset of column names that match an ID pattern.
+
+    Used by the reader to pass dtype=str for these columns at read time, so a
+    purely-numeric ID (e.g. '003') keeps its leading zeros instead of being
+    coerced to int by pandas before the contract can protect it.
+    """
+    return [c for c in columns if _is_id_column(c)]
 
 
 def schema_fingerprint(df: pd.DataFrame) -> dict[str, str]:

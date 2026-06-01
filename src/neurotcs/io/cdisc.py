@@ -395,3 +395,132 @@ def read_cdisc_submission(
         chosen_df, chosen_rec, decisions, state_code=state_code)
     submission["_cdisc"] = chosen_rec  # type: ignore[assignment]
     return submission
+
+
+# --------------------------------------------------------------------------- #
+# Multi-domain join: a full SDTM/ADaM folder -> one unified NeuroTCS sheet dict
+# --------------------------------------------------------------------------- #
+
+
+def join_cdisc_domains(
+    path: str,
+    decisions: list[str] | None = None,
+    *,
+    state_code: str | None = None,
+) -> dict[str, pd.DataFrame]:
+    """Read every CDISC domain in a folder/zip and JOIN them into one unified
+    set of NeuroTCS-shaped sheets, keyed on USUBJID (+ VISITNUM).
+
+    A real SDTM submission is multiple domains, not one table:
+      * RS (or the chosen diagnosis domain) -> clinical state sheet
+        (subject_id / visit / visit_date / state).
+      * QS cognitive scales -> a wide MEASUREMENTS sheet (subject_id / visit /
+        visit_date / <SCALE columns>), suitable for range-pack auto-wiring.
+      * DM (demographics) -> a per-subject sheet (subject_id / AGE / SEX / ...),
+        suitable for the data_integrity layer.
+
+    The returned dict uses NeuroTCS-standard column names (subject_id, visit,
+    visit_date) so the EXISTING auto-wiring (audit_data_integrity, autowire_
+    ranges, cross_sheet) consumes the sheets directly -- this function does NOT
+    re-implement the audit wiring, it only normalizes each domain so the sheets
+    join on the common keys. Returned keys are the domain labels (e.g.
+    'clinical', 'measurements', 'demographics'); deterministic (domains and
+    columns sorted). Fail-closed: an ambiguous RS state code raises
+    CdiscMappingError listing the choices.
+    """
+    from neurotcs.io.readers import read_tables
+
+    decisions = decisions if decisions is not None else []
+    tables = read_tables(path, decisions=decisions)
+
+    # Recognize every table; bucket by structural role.
+    diagnosis_tables: list[tuple[str, pd.DataFrame, CdiscRecognition]] = []
+    scale_tables: list[tuple[str, pd.DataFrame, CdiscRecognition]] = []
+    demographics_tables: list[tuple[str, pd.DataFrame, CdiscRecognition]] = []
+    recognized: list[str] = []
+
+    for tname in sorted(tables):
+        df = tables[tname]
+        rec = recognize_cdisc(df)
+        if not rec.is_cdisc:
+            continue
+        recognized.append(f"{tname}({rec.model}/{rec.domain or '?'})")
+        if rec.testcd_col is None:
+            # subject-level (DM-like): demographics
+            demographics_tables.append((tname, df, rec))
+        elif rec.state_codes and not rec.measurement_codes:
+            diagnosis_tables.append((tname, df, rec))
+        elif rec.measurement_codes and not rec.state_codes:
+            scale_tables.append((tname, df, rec))
+        elif rec.state_codes and rec.measurement_codes:
+            # mixed QS carrying both a diagnosis code and scales: it can serve
+            # as both -- use it for diagnosis AND scales.
+            diagnosis_tables.append((tname, df, rec))
+            scale_tables.append((tname, df, rec))
+        else:
+            # only unknown codes: defer to fail-closed selection below.
+            diagnosis_tables.append((tname, df, rec))
+
+    if recognized:
+        decisions.append(f"CDISC join: recognized domain(s): {', '.join(recognized)}.")
+    if not (diagnosis_tables or scale_tables or demographics_tables):
+        raise CdiscMappingError(
+            "no CDISC domains found in the input (need USUBJID + a recognized "
+            "domain signature).")
+
+    out: dict[str, pd.DataFrame] = {}
+
+    # ---- clinical state (first diagnosis-bearing domain; RS preferred) ----
+    diagnosis_tables.sort(key=lambda t: (0 if (t[2].domain or "").upper() == "RS"
+                                         else 1, t[0]))
+    for tname, df, rec in diagnosis_tables:
+        norm = normalize_cdisc_to_long(df, rec, decisions, state_code=state_code)
+        if "clinical" in norm:
+            out["clinical"] = norm["clinical"]
+            decisions.append(f"CDISC join: clinical state sourced from {tname!r}.")
+            break
+
+    # ---- measurements (merge all scale domains on subject_id/visit) ----
+    measurement_frames: list[pd.DataFrame] = []
+    for _tname, df, rec in scale_tables:
+        norm = normalize_cdisc_to_long(
+            df, rec, decisions,
+            state_code=(state_code if rec.state_codes else None)
+            if rec.state_codes else None)
+        if "measurements" in norm:
+            measurement_frames.append(norm["measurements"])
+    if measurement_frames:
+        merged = measurement_frames[0]
+        for nxt in measurement_frames[1:]:
+            merged = merged.merge(
+                nxt, on=["subject_id", "visit", "visit_date"], how="outer")
+        # deterministic column order
+        keys = ["subject_id", "visit", "visit_date"]
+        rest = sorted(c for c in merged.columns if c not in keys)
+        out["measurements"] = merged[keys + rest]
+        decisions.append(
+            f"CDISC join: {len(rest)} cognitive-scale column(s) merged into a "
+            "measurements sheet.")
+
+    # ---- demographics (DM) -> per-subject sheet ----
+    for tname, df, rec in demographics_tables:
+        cols = _cols_lower(df)
+        subj = rec.subject_col
+        keep = {"subject_id": df[subj].astype(str).values}
+        for std in ("age", "sex", "race", "ethnic", "armcd", "arm",
+                    "educlvl", "education"):
+            actual = cols.get(std)
+            if actual is not None:
+                keep[std] = df[actual].values
+        if len(keep) > 1:
+            out["demographics"] = pd.DataFrame(keep)
+            decisions.append(
+                f"CDISC join: demographics sheet from {tname!r} "
+                f"({sorted(k for k in keep if k != 'subject_id')}).")
+            break
+
+    if not out:
+        raise CdiscMappingError(
+            "CDISC domains recognized but none yielded a clinical state, "
+            "measurement, or demographics sheet.")
+    return out

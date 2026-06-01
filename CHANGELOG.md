@@ -1,4 +1,81 @@
-## [1.48.0] -- 2026-06-01 -- E-2026-021: CDISC SDTM / ADaM ingestion (recognizer + normalizer)
+## [1.49.0] -- 2026-06-01 -- E-2026-022: multi-domain CDISC join + numeric-sentinel assertion + read-time ID protection
+
+This release closes two honest gaps left open after v1.48.0, plus a root fix
+discovered while building them. All three are additive; the v3 blind set is
+unchanged at 69 / 65 / 1236, 63/63.
+
+### 1. Multi-domain CDISC join (completes v1.48.0 ingestion)
+
+v1.48.0 normalized the FIRST recognized findings table. A real SDTM submission
+is several domains at once -- this joins them into one unified NeuroTCS
+submission.
+
+- `join_cdisc_domains(path, decisions, *, state_code=None)` (in
+  src/neurotcs/io/cdisc.py): reads every domain in a folder/zip, recognizes each
+  by structural role, and returns NeuroTCS-shaped sheets keyed on USUBJID
+  (+ VISITNUM):
+    * RS (preferred) / diagnosis domain -> `clinical` (subject_id / visit /
+      visit_date / state);
+    * QS cognitive scales -> a wide `measurements` sheet (scales merged on
+      subject_id / visit / visit_date), ready for range auto-wiring;
+    * DM -> a per-subject `demographics` sheet (AGE/SEX/RACE/...), ready for the
+      data_integrity layer.
+- Crucially it returns standard NeuroTCS column names so the EXISTING wiring
+  (audit_data_integrity, autowire_ranges, cross_sheet) consumes the sheets
+  directly -- the join does NOT re-implement audit logic.
+- Fail-closed: an ambiguous RS state code raises CdiscMappingError listing the
+  choices. Deterministic (domains and columns sorted).
+- Verified end-to-end: a DM+RS+QS folder joins, then the orchestrator flags both
+  an RS trajectory error (AD->MCI) AND a DM out-of-range AGE=200 from the joined
+  demographics sheet.
+
+### 2. Read-time numeric-sentinel assertion (closes the typed-read loop)
+
+The typed-read contract (v1.47) REPORTED numeric missing codes (-9 / -999) but
+kept them, because a -9 may be a real value. Operators can now ASSERT, per
+column, that specific numeric codes mean missing.
+
+- `apply_typed_read_contract(..., numeric_na_codes=...)`: e.g.
+  `{"mmse": [-9], "*": [-999]}`. Applied ONLY where asserted (never
+  auto-detected); "*" applies to all numeric columns, a column-name key to that
+  column (case-insensitive / normalized match). Runs after coercion (covers
+  raw- and coerced-numeric). ID columns are never affected. Each application is
+  surfaced in `decisions`; sentinels NOT asserted away are still reported as
+  kept. Default behavior unchanged (so v3 does not regress).
+
+### 3. Read-time ID protection (root fix found while building the join)
+
+A purely-numeric ID like "003" was coerced to int 3 by pandas at read_csv time,
+BEFORE the typed-read contract could protect it, losing leading zeros. (Real
+alphanumeric USUBJIDs such as "STUDY-01-003" were already safe -- pandas keeps
+them as strings.) Fixed at the source: the delimited reader now peeks the header,
+detects ID-pattern columns (`id_columns_from_names`), and passes dtype=str for
+exactly those columns to pd.read_csv -- so "003" stays "003" through ingestion
+and joins consistently across domains. Non-ID columns keep normal inference
+(which the contract then makes explicit and locale-safe).
+
+### Added
+
+- src/neurotcs/io/cdisc.py: `join_cdisc_domains(...)`.
+- src/neurotcs/io/typed_read.py: `numeric_na_codes` parameter on
+  `apply_typed_read_contract`; `id_columns_from_names(columns)` helper.
+- src/neurotcs/io/readers.py: `_read_csv_id_safe(...)` wired into the delimited
+  and in-memory CSV read paths.
+- tests/io/test_cdisc.py (+5): multi-domain join (three sheets, clinical from RS,
+  ID consistency, orchestrator end-to-end, determinism).
+- tests/io/test_typed_read.py (+7): numeric-sentinel assertion (default keeps,
+  per-column, wildcard, coerced column, ID columns immune); ID-name helper;
+  numeric-ID leading-zero preservation via the reader.
+
+### Tests
+
+1768 -> 1780 passed (+12). ruff clean over src/ tests/ scripts/. v3 blind set
+unchanged at 69 / 65 / 1236, 63/63 (all three changes additive / opt-in; the
+read-time ID dtype change is safe because v3 IDs are alphanumeric). Deterministic
+core byte-identical across two runs; CDISC join deterministic across runs.
+
+---
+
 
 ### Net effect — a pharma sponsor / CRO can drop a CDISC submission straight into NeuroTCS
 
