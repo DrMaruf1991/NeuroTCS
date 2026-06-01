@@ -1,0 +1,94 @@
+schema_version: "1.0.0"
+invariantpack_id: "cross_sheet/copathology_advisory@1.0.0"
+pack_version: "1.0.0"
+effective_date: "2026-06-01"
+status: "research_preview"
+domain: "copathology_advisory"
+framework_name: "Cross-sheet copathology ADVISORY pack (Jack 2024 Sec 8): the T2N-mismatch pattern. A subject who is amyloid-positive (A+, qualifies for AD per Jack 2024 Sec 3) but tau-negative (T2-) while showing neurodegeneration (N+) does NOT follow the stereotypical A+ -> T2+ -> N+ sequence; the excess neurodegeneration suggests non-AD copathology (LATE / vascular / alpha-synuclein). This is an INFORMATIONAL advisory, never an error: the subject still has AD by the Core 1 criterion. It is a cross-modal/cross-field row-local conjunction, which is why it lives in a cross-sheet invariant pack rather than the atn_2018 staging-transition pack (where it was deferred)."
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo International University in Tashkent (KIUT), Uzbekistan. v1.53.0 session: builds the T2N-mismatch advisory deferred from atn_2018.yaml (which noted 'Advisory active flagging deferred to a future cross-sheet invariant batch'). The mismatch concept is taken from Jack 2024 PMID 38934362 (open access CC BY-NC-ND 4.0), Section 8 (Figure 2, Copathology and T2N mismatch) and Section 4.3: 'N biomarkers do not always follow a stereotypical A+ to T2+ to N+ sequence. People with abnormal Core 1 biomarker(s), who, by our definition, have AD, may develop significant neurodegeneration owing primarily to copathologies.' Severity is 'info' because the subject remains on the AD continuum (A+ is sufficient for AD per Sec 3); the advisory only notes likely non-AD copathology. Status is research_preview because this is a single-guideline advisory heuristic, not an international_consensus error rule -- audit_cross_sheet() runs it only under dry_run=True."
+
+clinical_source_authority: |
+  This pack encodes ONE Layer-3 cross-sheet ADVISORY (severity info) derived
+  from Jack 2024 (Revised criteria for diagnosis and staging of Alzheimer's
+  disease, Alzheimers Dement 2024;20(8):5143-5169, DOI 10.1002/alz.13859,
+  PMID 38934362).
+
+  T2N mismatch (Jack 2024 Section 8, Figure 2; Section 4.3 sequence). The
+  canonical AD biomarker sequence is A+ -> T2+ -> N+ (amyloid precedes tau,
+  which leads to neurodegeneration). When a subject is amyloid-positive (A+,
+  and therefore has AD by the Core 1 criterion of Section 3) but tau-PET
+  negative (T2-) while neurodegeneration is present (N+), the neurodegeneration
+  is NOT explained by AD tauopathy. Jack 2024 attributes this excess
+  neurodegeneration primarily to copathologies (e.g. LATE / limbic-predominant
+  age-related TDP-43 encephalopathy, vascular disease, alpha-synuclein). This is
+  the A+T2-N+ state the atn_2018 staging pack recognizes but does not flag (it
+  is biologically admissible -- A+ qualifies for AD -- so it is not a transition
+  error); the COPATHOLOGY signal is a cross-modal row-local property, encoded
+  here as an advisory.
+
+  Why info (advisory), not error: per Section 3 a single abnormal Core 1
+  biomarker is sufficient to diagnose AD, so an A+ subject genuinely has AD --
+  the mismatch does not contradict that. The advisory adds prognostic context
+  (likely non-AD copathology), it does not invalidate any recorded value.
+
+  Why research_preview: this is a single-guideline advisory heuristic, not an
+  international-consensus error rule with multiple independent endorsing bodies.
+  audit_cross_sheet() refuses a research_preview pack unless dry_run=True, so it
+  never fires in a default production audit; an operator opts in explicitly.
+
+  NeuroTCS does not measure amyloid, tau, or neurodegeneration. It audits the
+  status VALUES another pipeline recorded for a (subject, visit) and notes the
+  mismatch pattern. Declarative; no code execution.
+
+  Vocabulary: the invariant reads three categorical status fields -- amyloid
+  status, tau status, neurodegeneration status -- using the canonical
+  positive/negative/present vocabulary. A row is evaluated only when all three
+  are present; rows missing any field are skipped (missingness is the
+  input-contract layer's concern, not this advisory's).
+
+anchor_citation:
+  citation_doi: 10.1002/alz.13859
+  citation_pmid: "38934362"
+  citation_text: "Jack CR Jr, Andrews JS, Beach TG, et al. Revised criteria for diagnosis and staging of Alzheimer's disease: Alzheimer's Association Workgroup. Alzheimers Dement 2024;20(8):5143-5169 (DOI 10.1002/alz.13859, PMID 38934362). Section 8 / Figure 2 (Copathology and T2N mismatch); Section 4.3 (A+ to T2+ to N+ stereotypical sequence). Neurodegeneration in an amyloid-positive, tau-negative subject is attributed primarily to non-AD copathology."
+  public_url: https://doi.org/10.1002/alz.13859
+  endorsing_bodies:
+  - Alzheimer's Association Workgroup (Jack 2024)
+  - National Institute on Aging (NIA-AA lineage)
+  - Jack 2024 Revised Criteria (PMID 38934362)
+
+invariants:
+- name: t2n_mismatch_copathology_advisory
+  description: "T2N mismatch (Jack 2024 Sec 8): a subject who is amyloid-positive (A+) but tau-negative (T2-) while neurodegeneration is present (N+) departs from the canonical A+ -> T2+ -> N+ sequence; the neurodegeneration likely reflects non-AD copathology (LATE / vascular / alpha-synuclein). Informational advisory only -- the subject still has AD by the Core 1 criterion (Sec 3). NeuroTCS audits the recorded status values; it does not measure the biomarkers."
+  sheets_required:
+  - role: biomarkers
+    required: true
+  join_keys:
+  - patient_id
+  - visit_id
+  condition:
+    type: rowwise_conjunction_advisory
+    sheet: biomarkers
+    predicates:
+    - field: amyloid_status
+      operator: eq
+      value: positive
+    - field: tau_status
+      operator: eq
+      value: negative
+    - field: neurodegeneration_status
+      operator: eq
+      value: present
+    advisory_message: "T2N mismatch (Jack 2024 Sec 8): amyloid-positive with tau-negative but neurodegeneration present. The subject has AD (Core 1 positive, Sec 3) but the neurodegeneration is not explained by AD tauopathy and likely reflects non-AD copathology (LATE / vascular / alpha-synuclein). Advisory only; no recorded value is contradicted."
+  flag_severity: info
+  citation_strength: international_consensus
+  guideline_section: "Jack 2024 Section 8 (Figure 2, Copathology and T2N mismatch) + Section 4.3 (A+ to T2+ to N+ stereotypical sequence). Alzheimers Dement 2024;20(8):5143-5169."
+  citation:
+    citation_doi: 10.1002/alz.13859
+    citation_pmid: "38934362"
+    citation_text: "Jack CR Jr, et al. Revised criteria for diagnosis and staging of Alzheimer's disease: Alzheimer's Association Workgroup. Alzheimers Dement 2024;20(8):5143-5169. Section 4.3 (verbatim): 'N biomarkers do not always follow a stereotypical A+ to T2+ to N+ sequence. People with abnormal Core 1 biomarker(s), who, by our definition, have AD, may develop significant neurodegeneration owing primarily to copathologies.' Section 8 / Figure 2 illustrates the T2N mismatch (abnormal amyloid PET, unremarkable tau PET insufficient to explain neurodegeneration), attributed to comorbid AD and LATE."
+    public_url: https://doi.org/10.1002/alz.13859
+    endorsing_bodies:
+    - Alzheimer's Association Workgroup (Jack 2024)
+    - National Institute on Aging (NIA-AA lineage)
+    - Jack 2024 Revised Criteria (PMID 38934362)

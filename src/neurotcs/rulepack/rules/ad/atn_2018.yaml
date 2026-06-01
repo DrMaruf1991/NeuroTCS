@@ -115,7 +115,7 @@ state_space:
     ordinal_rank: 2
 
   - name: "A+T-N+"
-    description: "Core 1 abnormal (amyloid positive), no tau, neurodegeneration present. Per Jack 2024 §8 this is the canonical T2N-mismatch pattern, indicating likely AD + non-AD copathology (e.g., LATE). Biologically still in the AD continuum (A+ qualifies for AD diagnosis per §3). Advisory active flagging deferred to a future cross-sheet invariant batch."
+    description: "Core 1 abnormal (amyloid positive), no tau, neurodegeneration present. Per Jack 2024 §8 this is the canonical T2N-mismatch pattern, indicating likely AD + non-AD copathology (e.g., LATE). Biologically still in the AD continuum (A+ qualifies for AD diagnosis per §3). Advisory flagging is implemented (v1.53.0) in the cross-sheet pack cross_sheet/copathology_advisory (rowwise_conjunction_advisory, severity info)."
     ordinal_rank: 3
 
   - name: "A+T+N-"

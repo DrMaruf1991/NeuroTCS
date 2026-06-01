@@ -1,3 +1,71 @@
+## [1.53.0] -- 2026-06-01 -- E-2026-026: T2N-mismatch copathology advisory + rowwise_conjunction_advisory condition type
+
+Builds the T2N-mismatch advisory that was explicitly deferred in atn_2018.yaml
+("Advisory active flagging deferred to a future cross-sheet invariant batch").
+The v3 blind set is unchanged at 69 / 65 / 1236, 63/63; deterministic core
+byte-identical across runs.
+
+### New cross-sheet condition type (11): rowwise_conjunction_advisory
+
+A declarative row-local conjunction: for each row of a sheet, if ALL predicates
+hold (logical AND) the row flags at the invariant's severity. Predicates are
+either categorical (eq/ne vs a string value) or numeric (ge/gt/le/lt vs a
+threshold), validated so exactly one of value/threshold is set per operator. A
+row is evaluated only when every predicate field is present and (for numeric)
+coercible; otherwise the row is skipped, never flagged on a guess. Built as a
+GENERAL, reusable type rather than a single-purpose T2N check, because cross-axis
+copathology advisories are a family (T2N today; inflammation / vascular /
+alpha-synuclein patterns share the same "N predicates on one row -> advisory"
+shape). Declarative; no code execution in the rule pack. schema.py (RowPredicate
++ RowwiseConjunctionAdvisoryCondition, added to the discriminated union),
+audit.py (_evaluate_rowwise_conjunction_advisory + flag builder + dispatch).
+
+### New rule pack: cross_sheet/copathology_advisory (Jack 2024 Sec 8)
+
+The T2N mismatch: a subject who is amyloid-positive (A+, and therefore has AD by
+the Core 1 criterion of Jack 2024 Sec 3) but tau-negative (T2-) while
+neurodegeneration is present (N+) departs from the canonical A+ -> T2+ -> N+
+sequence; the excess neurodegeneration is attributed to non-AD copathology
+(LATE / vascular / alpha-synuclein). Encoded as a single info-severity advisory:
+  - severity INFO -- never an error. A+ genuinely has AD; the advisory only adds
+    prognostic context, it does not contradict any recorded value.
+  - status research_preview -- a single-guideline advisory heuristic, not an
+    international-consensus error rule. audit_cross_sheet() refuses it in a
+    production audit unless dry_run=True, so it never fires by default; an
+    operator opts in. (Verified: production audit raises; dry_run fires.)
+The Sec 4.3 / Sec 8 source text was verified against the Jack 2024 primary
+source (Wiley, DOI 10.1002/alz.13859, PMID 38934362) before encoding -- the A+
+to T2+ to N+ sequence quote and the copathology attribution are quoted/anchored,
+not paraphrased from memory. The atn_2018.yaml A+T-N+ state description is
+updated to point at this pack (the deferral note is resolved).
+
+### Added
+
+- src/neurotcs/cross_sheet/schema.py: RowPredicate + RowwiseConjunctionAdvisory
+  Condition (condition type 11), registered in the ConditionSpec union.
+- src/neurotcs/cross_sheet/audit.py: evaluator + flag builder + dispatch.
+- src/neurotcs/cross_sheet/invariants/cross_sheet/copathology_advisory.yaml.
+- tests/cross_sheet/test_copathology_advisory.py (+7): fires only on the
+  mismatch, info severity, production refusal, missing-field skip, numeric-
+  predicate conjunction, predicate validation.
+
+### Tests
+
+1801 -> 1808 passed (+7). ruff clean over src/ tests/ scripts/. v3 blind set
+unchanged at 69 / 65 / 1236, 63/63; deterministic core byte-identical. All new
+files strict-ASCII (Windows-safe).
+
+### Scope note (honest)
+
+The advisory reads three categorical status fields (amyloid_status, tau_status,
+neurodegeneration_status) in the canonical positive/negative/present vocabulary;
+a cohort using different status encodings needs those fields mapped (same
+input-contract requirement as every other cross-sheet invariant). It is an
+ADVISORY (info), deliberately research_preview, so it is opt-in and never alters
+the impossible/implausible counts of a default audit.
+
+---
+
 ## [1.52.0] -- 2026-06-01 -- E-2026-025: long-format value auditing + provenance registry
 
 Three increments built and tested as one unit (each independently regression-

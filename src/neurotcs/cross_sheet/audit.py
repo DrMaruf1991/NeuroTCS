@@ -47,6 +47,7 @@ from neurotcs.cross_sheet.schema import (
     InvariantPackStatus,
     NumericConflictCondition,
     ReferentialIntegrityCondition,
+    RowwiseConjunctionAdvisoryCondition,
     SubfieldRankConstraintCondition,
     TrajectoryMonotonicityCondition,
     ValueRangeConditionalCondition,
@@ -267,6 +268,8 @@ def _evaluate_invariant(
         flags.extend(_evaluate_referential_integrity(invariant, cond, submission, lp))
     elif isinstance(cond, SubfieldRankConstraintCondition):
         flags.extend(_evaluate_subfield_rank_constraint(invariant, cond, submission, lp))
+    elif isinstance(cond, RowwiseConjunctionAdvisoryCondition):
+        flags.extend(_evaluate_rowwise_conjunction_advisory(invariant, cond, submission, lp))
     else:
         raise NotImplementedError(
             f"Unknown condition type for invariant {invariant.name!r}: "
@@ -1293,6 +1296,101 @@ def _make_numeric_conflict_flag(
             f"{cond.target_field}={target_val} "
             f"({cond.target_direction} {cond.target_threshold})"
         ),
+        citation_pmid=invariant.citation.citation_pmid,
+        citation_doi=invariant.citation.citation_doi,
+        citation_public_url=invariant.citation.public_url,
+    )
+
+
+def _evaluate_rowwise_conjunction_advisory(
+    invariant: CrossSheetInvariant,
+    cond: RowwiseConjunctionAdvisoryCondition,
+    submission: dict[str, Any],
+    lp: LoadedInvariantPack,
+) -> list[CrossSheetFlag]:
+    """Flag each row of cond.sheet where ALL predicates hold (logical AND).
+
+    A row is evaluated only if every predicate's field is present and, for
+    numeric predicates, coercible to float. Missing/uncoercible -> the row is
+    skipped (the conjunction cannot be established), never flagged on a guess.
+    """
+    flags: list[CrossSheetFlag] = []
+    rows = _iter_rows(submission.get(cond.sheet))
+    if not rows:
+        return flags
+
+    join_keys = invariant.join_keys or ["patient_id"]
+
+    for row in rows:
+        all_hold = True
+        for pred in cond.predicates:
+            if pred.field not in row or row.get(pred.field) is None:
+                all_hold = False
+                break
+            raw = row.get(pred.field)
+            if pred.operator in ("eq", "ne"):
+                hit = str(raw) == str(pred.value)
+                if pred.operator == "ne":
+                    hit = not hit
+                if not hit:
+                    all_hold = False
+                    break
+            else:  # numeric
+                try:
+                    val = float(raw)
+                except (TypeError, ValueError):
+                    all_hold = False
+                    break
+                if not _cmp(val, float(pred.threshold), pred.operator):
+                    all_hold = False
+                    break
+        if all_hold:
+            join_key_values = {k: row.get(k) for k in join_keys if k in row}
+            flags.append(
+                _make_rowwise_conjunction_flag(
+                    invariant=invariant, lp=lp, cond=cond,
+                    join_key_values=join_key_values, row=row,
+                )
+            )
+    return flags
+
+
+def _make_rowwise_conjunction_flag(
+    invariant: CrossSheetInvariant,
+    lp: LoadedInvariantPack,
+    cond: RowwiseConjunctionAdvisoryCondition,
+    join_key_values: dict[str, Any],
+    row: dict[str, Any],
+) -> CrossSheetFlag:
+    observed = {p.field: row.get(p.field) for p in cond.predicates}
+    payload = {
+        "yaml_sha256": lp.yaml_sha256,
+        "invariant_name": invariant.name,
+        "kind": "rowwise_conjunction_advisory",
+        "sheet": cond.sheet,
+        "predicates": [
+            {"field": p.field, "operator": p.operator,
+             "value": p.value, "threshold": p.threshold}
+            for p in cond.predicates
+        ],
+        "observed": _stringify_for_hash(observed),
+        "join_key_values": _stringify_for_hash(join_key_values),
+        "contract_version": "1.2.0",
+    }
+    cond_str = " AND ".join(
+        f"{p.field} {p.operator} "
+        f"{p.value if p.value is not None else p.threshold}"
+        for p in cond.predicates
+    )
+    return CrossSheetFlag(
+        flag_id=_derive_flag_id(payload),
+        pack_id=lp.invariantpack.invariantpack_id,
+        invariant_name=invariant.name,
+        severity=invariant.flag_severity,
+        join_key_values=dict(join_key_values),
+        observed_value=None,
+        declared_tool=None,
+        flag_reason=f"{cond.advisory_message} (matched: {cond_str})",
         citation_pmid=invariant.citation.citation_pmid,
         citation_doi=invariant.citation.citation_doi,
         citation_public_url=invariant.citation.public_url,

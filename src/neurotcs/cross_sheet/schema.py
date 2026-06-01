@@ -577,6 +577,75 @@ class SubfieldRankConstraintCondition(BaseModel):
         return self
 
 
+# --- Condition type 11: rowwise_conjunction_advisory ------------------
+
+
+class RowPredicate(BaseModel):
+    """One predicate on a single row field.
+
+    Categorical: operator 'eq'/'ne' compares the field's string value to
+    ``value`` (string). Numeric: operator 'ge'/'gt'/'le'/'lt' compares the
+    field's numeric value to ``threshold`` (float). Exactly one of ``value``
+    / ``threshold`` is set, matching the operator family.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    field: str = Field(..., min_length=1)
+    operator: Literal["eq", "ne", "ge", "gt", "le", "lt"] = Field(
+        ..., description="eq/ne for categorical; ge/gt/le/lt for numeric.")
+    value: str | None = Field(
+        default=None, description="Categorical comparison value (eq/ne).")
+    threshold: float | None = Field(
+        default=None, description="Numeric comparison threshold (ge/gt/le/lt).")
+
+    @model_validator(mode="after")
+    def _check_value_matches_operator(self) -> RowPredicate:
+        categorical = self.operator in ("eq", "ne")
+        if categorical:
+            if self.value is None or self.threshold is not None:
+                raise ValueError(
+                    f"operator {self.operator!r} is categorical: set 'value', "
+                    f"not 'threshold'.")
+        else:
+            if self.threshold is None or self.value is not None:
+                raise ValueError(
+                    f"operator {self.operator!r} is numeric: set 'threshold', "
+                    f"not 'value'.")
+        return self
+
+
+class RowwiseConjunctionAdvisoryCondition(BaseModel):
+    """If ALL `predicates` hold on a single row of `sheet`, emit a flag.
+
+    A declarative row-local conjunction: for each row, every predicate must
+    trip (logical AND) for the row to flag. Designed for cross-axis biomarker
+    ADVISORIES that are not errors -- e.g. the Jack 2024 T2N mismatch
+    (A+ AND T2- AND N+ on one visit) which indicates likely non-AD
+    copathology (LATE / vascular / alpha-synuclein) while the subject is still
+    on the AD continuum (A+ qualifies for AD per Jack 2024 sec 3). The invariant
+    that carries this condition MUST use flag_severity='info' (advisory).
+
+    A row is evaluated only when every referenced field is present and, for
+    numeric predicates, coercible to float; rows missing a field are skipped
+    (missingness is the input-contract layer's concern). Declarative; no code
+    execution.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    type: Literal["rowwise_conjunction_advisory"] = "rowwise_conjunction_advisory"
+    sheet: Literal["manifest", "predictions", "patients", "biomarkers", "attribution"] = Field(
+        default="biomarkers",
+        description="Sheet whose rows carry all predicate fields.")
+    predicates: list[RowPredicate] = Field(
+        ..., min_length=2,
+        description="All must hold on a row for it to flag (logical AND).")
+    advisory_message: str = Field(
+        ..., min_length=10,
+        description="Human-readable advisory emitted when the conjunction holds.")
+
+
 # Discriminated union for the 10 condition types
 ConditionSpec = (
     CategoricalImpliesRangeCondition
@@ -589,6 +658,7 @@ ConditionSpec = (
     | CategoricalImpliesRangeRowwiseCondition
     | ReferentialIntegrityCondition
     | SubfieldRankConstraintCondition
+    | RowwiseConjunctionAdvisoryCondition
 )
 
 
