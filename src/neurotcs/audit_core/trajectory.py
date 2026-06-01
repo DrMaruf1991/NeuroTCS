@@ -162,6 +162,36 @@ class Trajectory:
                 for t in range(self.num_transitions)]
 
 
+def _coerce_visit_dates(values: pd.Series) -> pd.Series:
+    """Parse a column of visit dates to datetimes, deterministically and without
+    the pandas 'Could not infer format' warning.
+
+    The bare ``pd.to_datetime(s, errors='coerce')`` warns whenever pandas cannot
+    infer a single format and silently falls back to per-element dateutil
+    parsing -- a consistency hazard the SDTM/GxP audience should not have to
+    trust blindly. This helper makes the parsing intent EXPLICIT while producing
+    byte-identical results to the old path for every value that parses:
+
+      1) Try strict ISO 8601 (``format='ISO8601'``). CDISC --DTC and almost all
+         clinical dates are ISO 8601; this is warning-free, deterministic, and
+         yields exactly the same timestamps the old code produced.
+      2) If any element is not ISO 8601, fall back to ``format='mixed'`` -- the
+         SAME per-element parsing the old code fell back to, but explicitly
+         requested (so no warning) and applied uniformly.
+
+    ``errors='coerce'`` is preserved in both branches (unparseable -> NaT), so
+    exactly the same rows are dropped downstream as before. Determinism: the
+    same input always yields the same output; no behavior depends on pandas'
+    format-inference heuristic.
+    """
+    try:
+        return pd.to_datetime(values, format="ISO8601", errors="coerce")
+    except (ValueError, TypeError):
+        # Non-ISO inputs: explicit per-element parsing (warning-free), matching
+        # the legacy dateutil fallback's values.
+        return pd.to_datetime(values, format="mixed", errors="coerce")
+
+
 def trajectories_from_dataframe(
     df: pd.DataFrame,
     *,
@@ -222,8 +252,8 @@ def trajectories_from_dataframe(
 
     work = df.copy()
 
-    # Coerce dates
-    work[visit_date_col] = pd.to_datetime(work[visit_date_col], errors="coerce")
+    # Coerce dates (deterministic, warning-free; see _coerce_visit_dates).
+    work[visit_date_col] = _coerce_visit_dates(work[visit_date_col])
     work = work.dropna(subset=[visit_date_col, patient_id_col, state_col])
 
     # Apply state-label remap

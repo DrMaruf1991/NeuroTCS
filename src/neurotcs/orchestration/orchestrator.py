@@ -460,7 +460,15 @@ def run_full_audit(
                         severity[TIER_IMPOSSIBLE] += 1
             layers.append(LayerResult(
                 layer=layer, ran=True, audit_id=d["audit_id"],
-                summary={"pack": pack_name, "ctcs": d["metrics"]["ctcs"]["point"],
+                summary={"pack": pack_name,
+                         # cTCS may be unavailable (e.g. no scored patients when
+                         # every trajectory is too short/flagged to score); the
+                         # metric dict then omits 'point'. Read defensively so
+                         # the audit still completes and reports the flags --
+                         # fail-closed on the score, not on the whole audit.
+                         "ctcs": d["metrics"]["ctcs"].get("point"),
+                         "ctcs_available": d["metrics"]["ctcs"].get("available",
+                                                                    True),
                          "ctcs_ci_95_low": d["metrics"]["ctcs"].get("ci_95_low"),
                          "ctcs_ci_95_high": d["metrics"]["ctcs"].get("ci_95_high"),
                          "ctcs_ci_method": d["metrics"]["ctcs"].get("ci_method"),

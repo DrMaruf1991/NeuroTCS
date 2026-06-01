@@ -337,7 +337,8 @@ def audit_data_integrity(tables: dict[str, pd.DataFrame]) -> list[dict[str, Any]
         #    dataset-internal signal of a corrupted date. We also flag dates that
         #    go backwards in visit order (impossible chronology).
         if date_col is not None and pid is not None and visit is not None:
-            parsed = pd.to_datetime(df[date_col], errors="coerce")
+            from neurotcs.audit_core.trajectory import _coerce_visit_dates
+            parsed = _coerce_visit_dates(df[date_col])
             tmp = df[[pid, visit]].copy()
             tmp["_d"] = parsed.values
             for sid, grp in tmp.dropna(subset=["_d"]).groupby(pid, sort=True):

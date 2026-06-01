@@ -741,7 +741,8 @@ def tables_to_submission(
             _require_columns(df, colmap, f"{axis} staging")
             out = df[[colmap[k] for k in _STAGING_REQUIRED]].copy()
             out.columns = list(_STAGING_REQUIRED)
-            out["visit_date"] = pd.to_datetime(out["visit_date"])
+            from neurotcs.audit_core.trajectory import _coerce_visit_dates
+            out["visit_date"] = _coerce_visit_dates(out["visit_date"])
 
         submission[axis] = out
 

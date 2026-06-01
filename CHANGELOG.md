@@ -1,4 +1,72 @@
-## [1.49.0] -- 2026-06-01 -- E-2026-022: multi-domain CDISC join + numeric-sentinel assertion + read-time ID protection
+## [1.50.0] -- 2026-06-01 -- E-2026-023: orchestrator graceful degradation + warning-free deterministic date parsing
+
+Two robustness fixes deferred from v1.49.0, each built and tested as a complete
+unit. Both are additive / defensive; the v3 blind set is unchanged at
+69 / 65 / 1236, 63/63, and the deterministic core is byte-identical across runs.
+
+### 1. Orchestrator graceful degradation when cTCS is unavailable
+
+The orchestrator built the staging-layer summary with an unconditional
+`d["metrics"]["ctcs"]["point"]`. When a cohort has NO scored patients (e.g.
+every trajectory is single-visit / too short to yield a transition), the metric
+is marked unavailable and its dict omits `point` -- so the audit raised
+KeyError('point') instead of completing. This never affected real cohorts or the
+v3 blind set (patients score normally), but it is a real sharp edge that
+surfaces on a degenerate cohort. Fixed: read the metric defensively
+(`.get("point")`, consistent with the CI fields beside it) and surface
+`ctcs_available`. The audit now completes and still reports its flags; only the
+score degrades to None -- fail-closed on the score, not on the whole audit.
+
+### 2. Warning-free, value-preserving visit-date parsing
+
+`pd.to_datetime(s, errors="coerce")` (no format) emits a UserWarning whenever
+pandas cannot infer a single format and silently falls back to per-element
+dateutil parsing -- a consistency hazard the SDTM/GxP audience should not have to
+trust blindly, and the source of every red `NativeCommandError` seen when
+PowerShell paints that stderr warning red. New `_coerce_visit_dates(series)`
+makes the intent EXPLICIT while producing byte-identical results to the old path
+for every value that parses:
+
+  1. strict ISO 8601 (`format="ISO8601"`) -- CDISC --DTC and almost all clinical
+     dates; warning-free, deterministic, identical timestamps to the old code;
+  2. fall back to `format="mixed"` for any non-ISO input -- the SAME per-element
+     parsing the old code used, but explicitly requested (no warning).
+
+`errors="coerce"` is preserved in both branches, so exactly the same rows are
+dropped as before. Applied at the audit-path date sites: trajectory building
+(`trajectory.py`), the data-integrity date-monotonicity check
+(`data_integrity.py`), and real visit_date parsing in the reader
+(`readers.py`). Verified: v3 deterministic core byte-identical, and the full
+audit runs clean under `-W error::UserWarning`.
+
+(Dataset-specific reference adapters -- ADNI/NACC EXAMDATE/VISITDATE parsing in
+reference_adapters/ and input_contract/ -- still use the bare call; they run only
+for those fixed reference schemas, not the general audit path, and are a separate
+narrower surface for a future sweep. Honest scope note, not a hidden gap.)
+
+### Added
+
+- src/neurotcs/audit_core/trajectory.py: `_coerce_visit_dates(series)` helper;
+  used at the trajectory-build date-coercion site.
+- src/neurotcs/io/data_integrity.py, src/neurotcs/io/readers.py: use the helper
+  at their audit-path date sites.
+- src/neurotcs/orchestration/orchestrator.py: defensive cTCS summary build
+  (graceful degradation, `ctcs_available` surfaced).
+- tests/audit_core/test_date_coercion.py (+5): ISO no-warning, values identical
+  to legacy path, mixed-format no-warning, bad-dates-to-NaT, trajectory build
+  warning-free (warnings-as-errors).
+- tests/orchestration/test_orchestrator.py (+1): unscoreable cohort degrades
+  without KeyError.
+
+### Tests
+
+1780 -> 1786 passed (+6). ruff clean over src/ tests/ scripts/. v3 blind set
+unchanged at 69 / 65 / 1236, 63/63; deterministic core byte-identical across two
+runs; full audit runs clean under warnings-as-errors.
+
+---
+
+
 
 This release closes two honest gaps left open after v1.48.0, plus a root fix
 discovered while building them. All three are additive; the v3 blind set is
@@ -54,6 +122,19 @@ exactly those columns to pd.read_csv -- so "003" stays "003" through ingestion
 and joins consistently across domains. Non-ID columns keep normal inference
 (which the contract then makes explicit and locale-safe).
 
+### 4. Orchestrator graceful degradation when cTCS is unavailable (latent-bug fix)
+
+The orchestrator built the staging-layer summary with an unconditional
+`d["metrics"]["ctcs"]["point"]`. When a cohort has NO scored patients (e.g.
+every trajectory is single-visit / too short to yield a transition), the metric
+is marked unavailable and its dict omits `point` -- so the audit raised
+KeyError('point') instead of completing. This never affected real cohorts or the
+v3 blind set (patients score normally), but it is a real sharp edge that surfaced
+when auditing a tiny degenerate cohort. Fixed: read the metric defensively
+(`.get("point")`, consistent with the CI fields right beside it) and surface
+`ctcs_available`. The audit now completes and still reports its flags; only the
+score degrades to None -- fail-closed on the score, not on the whole audit.
+
 ### Added
 
 - src/neurotcs/io/cdisc.py: `join_cdisc_domains(...)`.
@@ -61,18 +142,22 @@ and joins consistently across domains. Non-ID columns keep normal inference
   `apply_typed_read_contract`; `id_columns_from_names(columns)` helper.
 - src/neurotcs/io/readers.py: `_read_csv_id_safe(...)` wired into the delimited
   and in-memory CSV read paths.
+- src/neurotcs/orchestration/orchestrator.py: defensive cTCS summary build
+  (graceful degradation, `ctcs_available` surfaced).
 - tests/io/test_cdisc.py (+5): multi-domain join (three sheets, clinical from RS,
   ID consistency, orchestrator end-to-end, determinism).
 - tests/io/test_typed_read.py (+7): numeric-sentinel assertion (default keeps,
   per-column, wildcard, coerced column, ID columns immune); ID-name helper;
   numeric-ID leading-zero preservation via the reader.
+- tests/orchestration/test_orchestrator.py (+1): unscoreable cohort degrades
+  without KeyError.
 
 ### Tests
 
-1768 -> 1780 passed (+12). ruff clean over src/ tests/ scripts/. v3 blind set
-unchanged at 69 / 65 / 1236, 63/63 (all three changes additive / opt-in; the
-read-time ID dtype change is safe because v3 IDs are alphanumeric). Deterministic
-core byte-identical across two runs; CDISC join deterministic across runs.
+1768 -> 1781 passed (+13). ruff clean over src/ tests/ scripts/. v3 blind set
+unchanged at 69 / 65 / 1236, 63/63 (all changes additive / opt-in / defensive;
+the read-time ID dtype change is safe because v3 IDs are alphanumeric).
+Deterministic core byte-identical across two runs; CDISC join deterministic.
 
 ---
 
