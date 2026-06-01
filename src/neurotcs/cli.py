@@ -54,12 +54,13 @@ def _err(msg: str) -> None:
     print(f"error: {msg}", file=sys.stderr)
 
 
-def _load_tables(path: str, allow_pdf: bool) -> dict[str, Any] | None:
+def _load_tables(path: str, allow_pdf: bool,
+                 encoding: str | None = None) -> dict[str, Any] | None:
     skipped: list[str] = []
     decisions: list[str] = []
     try:
-        tables = read_tables(path, allow_pdf=allow_pdf, skipped=skipped,
-                             decisions=decisions)
+        tables = read_tables(path, allow_pdf=allow_pdf, encoding=encoding,
+                             skipped=skipped, decisions=decisions)
     except (FileNotFoundError, UnsupportedFormatError, PdfExtractionError,
             AmbiguousInputError) as e:
         _err(str(e))
@@ -77,7 +78,7 @@ def _load_tables(path: str, allow_pdf: bool) -> dict[str, Any] | None:
 # describe
 # --------------------------------------------------------------------------- #
 def cmd_describe(args: argparse.Namespace) -> int:
-    tables = _load_tables(args.file, args.allow_pdf)
+    tables = _load_tables(args.file, args.allow_pdf, args.encoding)
     if tables is None:
         return EXIT_INPUT
     desc = describe_tables(tables)
@@ -489,7 +490,7 @@ def _sheets_referenced_by_mapping(mapping: dict[str, Any]) -> set[str]:
 
 
 def cmd_audit(args: argparse.Namespace) -> int:
-    tables = _load_tables(args.file, args.allow_pdf)
+    tables = _load_tables(args.file, args.allow_pdf, args.encoding)
     range_refusals: list[str] = []
     _autowired_source_sheets: set[str] = set()
     if tables is None:
@@ -885,6 +886,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="write a mapping template to PATH")
     d.add_argument("--allow-pdf", action="store_true",
                    help="enable best-effort PDF table extraction")
+    d.add_argument("--encoding", default=None, metavar="CODEPAGE",
+                   help="assert the text encoding of delimited files (e.g. cp1251 Cyrillic, cp1252 Western European). Default: UTF-8 only; a non-UTF-8 file is refused unless this is given.")
     d.set_defaults(func=cmd_describe)
 
     a = sub.add_parser("audit", help="audit a dataset and emit a signed bundle")
@@ -899,6 +902,8 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--quiet", action="store_true", help="suppress the stdout summary")
     a.add_argument("--allow-pdf", action="store_true",
                    help="enable best-effort PDF table extraction")
+    a.add_argument("--encoding", default=None, metavar="CODEPAGE",
+                   help="assert the text encoding of delimited files (e.g. cp1251 Cyrillic, cp1252 Western European). Default: UTF-8 only; a non-UTF-8 file is refused unless this is given.")
     a.add_argument("--allow-no-dates", action="store_true",
                    help="acknowledge derived visit_date explicitly (no date column "
                         "in data): use visit ordering, suppress the per-axis NOTE. "

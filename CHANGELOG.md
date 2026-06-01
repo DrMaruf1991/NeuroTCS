@@ -1,4 +1,70 @@
-## [1.43.0] -- 2026-06-01 -- E-2026-016: universal multi-format & multi-file dataset ingestion
+## [1.44.0] -- 2026-06-01 -- E-2026-017: reader hardening -- strict global encoding contract, consistency-based delimiter, SPSS value-labels, JSON Lines
+
+### Net effect — the universal reader now refuses to silently mis-decode or mis-split any user's data, anywhere
+
+v1.43.0 added multi-format / multi-file ingestion. v1.44.0 hardens four reader
+behaviors that, on deep review, were weaker than world-class -- two were latent
+correctness bugs proven empirically:
+
+1. **Encoding (latent bug fixed).** The old ladder utf-8 -> cp1251 -> latin-1
+   NEVER refused, because cp1251 and latin-1 decode ANY byte sequence -- so a
+   Windows-1252 (cafe) file was silently decoded as Cyrillic mojibake. The old
+   code surfaced WHICH encoding it used but did not CHOOSE correctly. New
+   globally-unbiased contract: UTF-8 (with/without BOM) is self-validating and
+   auto-accepted; any non-UTF-8 file is REFUSED with an instruction to assert
+   the codepage via the new `--encoding` flag (e.g. cp1251 Cyrillic, cp1252
+   Western European, cp1250 Central European, cp1253 Greek, cp1254 Turkish).
+   No regional default is baked in -- the refusal never mis-decodes anyone's
+   data, and the override is one explicit, deterministic choice.
+
+2. **Delimiter (narrowed the guess).** Replaced csv.Sniffer with FIELD-COUNT
+   CONSISTENCY: a candidate (, ; tab |) is accepted only if it yields the same
+   field count (>= 2) on every one of the first 50 non-empty lines; a clean
+   single-column file maps to comma; anything else is refused. Fewer false
+   refusals AND fewer false accepts.
+
+3. **SPSS value-labels (latent safety gap fixed).** `pyreadstat.read_sav` now
+   uses `apply_value_formats=True`, so a coded categorical (sex 1/2) becomes its
+   LABEL (Male/Female) before the auditor sees it -- previously the auditor saw
+   raw codes and could emit false categorical_invalid flags. Stata labels are
+   auto-applied by pandas (confirmed); SAS external formats are honestly noted
+   as not-applied.
+
+4. **JSON Lines / NDJSON (clean win).** Added `.jsonl` / `.ndjson` support
+   (one record per line) -- the deterministic slice of "nested JSON". Nested
+   records are still refused.
+
+### Kept refusing (defended, not "upgraded" -- upgrading would be a regression)
+
+- OCR / scanned PDFs: probabilistic by construction; never for a clinical
+  auditor.
+- Arbitrary nested-JSON auto-flattening: every flatten choice (column naming,
+  ragged arrays) is a guess. JSONL covers the deterministic case.
+- Read-time type coercion: deliberately deferred as a SEPARATE future batch,
+  not half-done here. A safe fix requires the downstream cross_sheet /
+  data_integrity layers (which branch on is_numeric_dtype) to do explicit,
+  surfaced typed coercion -- its own test surface. Rushing it would be a partial
+  fix.
+
+### Added / changed
+
+- `read_tables(..., encoding=None)` and new `--encoding CODEPAGE` flag on both
+  `audit` and `describe`.
+- Removed the silent cp1251/latin-1 fallback; `_UTF8_ENCODINGS` is the only
+  auto path.
+- New helpers: `_read_jsonl`, `_refuse_nested`; consistency-based
+  `_sniff_delimiter`; encoding-aware `_decode_bytes`.
+
+### Tests
+
++9 net (1711 -> 1720): non-UTF-8 refusal without override, cp1251 + cp1252
+overrides, bad-codec refusal, UTF-8 BOM, semicolon/pipe/single-column delimiter
+detection, JSONL + NDJSON read, nested-JSONL refusal. The prior
+auto-cp1251 test was replaced to reflect the new strict contract. v3 CSV-folder
+path re-verified 63/63 (pandas writes UTF-8, so unaffected).
+
+---
+
 
 ### Net effect — NeuroTCS reads a whole cohort, not one accidental table, across the formats real AD cohorts ship in
 

@@ -99,20 +99,82 @@ class TestGlobAndList:
 
 class TestEncodingHonesty:
 
-    def test_cp1251_cyrillic_decoded_and_surfaced(self, tmp_path):
+    def test_non_utf8_refused_without_override(self, tmp_path):
+        # cp1251 Cyrillic bytes are NOT valid UTF-8 -> refused (no regional guess)
+        f = tmp_path / "ru.csv"
+        f.write_bytes("subject_id,state\nP1,\u043d\u043e\u0440\u043c\u0430\n".encode("cp1251"))
+        with pytest.raises(AmbiguousInputError):
+            read_tables(f)
+
+    def test_cp1251_via_encoding_override(self, tmp_path):
         f = tmp_path / "ru.csv"
         f.write_bytes("subject_id,state\nP1,\u043d\u043e\u0440\u043c\u0430\n".encode("cp1251"))
         decisions: list[str] = []
-        tables = read_tables(f, decisions=decisions)
+        tables = read_tables(f, encoding="cp1251", decisions=decisions)
         assert tables["ru"]["state"].iloc[0] == "\u043d\u043e\u0440\u043c\u0430"
-        assert any("cp1251" in d for d in decisions)
+        assert any("cp1251" in d and "user-asserted" in d for d in decisions)
+
+    def test_cp1252_western_via_override(self, tmp_path):
+        f = tmp_path / "w.csv"
+        f.write_bytes(b"name,note\nP1,caf\xe9\n")  # 0xe9 = e-acute in cp1252
+        tables = read_tables(f, encoding="cp1252")
+        assert tables["w"]["note"].iloc[0] == "caf\u00e9"
 
     def test_utf8_bom_handled(self, tmp_path):
         f = tmp_path / "b.csv"
         f.write_bytes("\ufeffsubject_id,x\nP1,1\n".encode("utf-8"))
         tables = read_tables(f)
-        # BOM stripped -> first column name is clean
         assert "subject_id" in tables["b"].columns
+
+    def test_bad_encoding_value_refused(self, tmp_path):
+        f = tmp_path / "x.csv"
+        f.write_text("a,b\n1,2\n", encoding="utf-8")
+        with pytest.raises(AmbiguousInputError):
+            read_tables(f, encoding="not-a-real-codec")
+
+
+class TestDelimiterConsistency:
+
+    def test_semicolon_delimiter(self, tmp_path):
+        f = tmp_path / "s.csv"
+        f.write_text("a;b;c\n1;2;3\n4;5;6\n")
+        decisions: list[str] = []
+        tables = read_tables(f, decisions=decisions)
+        assert list(tables["s"].columns) == ["a", "b", "c"]
+        assert any("delimiter" in d for d in decisions)
+
+    def test_pipe_delimiter(self, tmp_path):
+        f = tmp_path / "p.csv"
+        f.write_text("a|b\n1|2\n3|4\n")
+        tables = read_tables(f)
+        assert list(tables["p"].columns) == ["a", "b"]
+
+    def test_clean_single_column(self, tmp_path):
+        f = tmp_path / "one.csv"
+        f.write_text("subject_id\nP1\nP2\n")
+        tables = read_tables(f)
+        assert list(tables["one"].columns) == ["subject_id"]
+
+
+class TestJsonLines:
+
+    def test_jsonl_read(self, tmp_path):
+        f = tmp_path / "d.jsonl"
+        f.write_text('{"subject_id":"P1","visit":0}\n{"subject_id":"P2","visit":1}\n')
+        tables = read_tables(f)
+        assert tables["d"].shape == (2, 2)
+
+    def test_ndjson_read(self, tmp_path):
+        f = tmp_path / "d.ndjson"
+        f.write_text('{"subject_id":"P1"}\n{"subject_id":"P2"}\n')
+        tables = read_tables(f)
+        assert list(tables["d"]["subject_id"]) == ["P1", "P2"]
+
+    def test_nested_jsonl_refused(self, tmp_path):
+        f = tmp_path / "n.jsonl"
+        f.write_text('{"subject_id":"P1","m":{"x":1}}\n')
+        with pytest.raises(AmbiguousInputError):
+            read_tables(f)
 
 
 class TestFailClosed:
