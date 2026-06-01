@@ -1,0 +1,234 @@
+# NeuroTCS Rule Pack: Alzheimer's Disease — Jack 2018 AT(N) 8-state biomarker
+# profile (per the originating AT(N) framework: Jack 2018 PMID 29653606 and
+# Jack 2016 PMID 27371494) with Jack 2024 §3 inadmissibility of A-T+ profiles.
+#
+# Background — why this pack exists alongside the AA-2024 integrated pack:
+#   The Jack 2024 revised criteria (PMID 38934362) §7.1 explicitly retired the
+#   "(N) in parentheses" notation from CORE biomarker classification because
+#   N biomarkers are non-specific. However, the Jack 2018 A/T/N taxonomy
+#   (A+T-N-, A+T-N+, ..., A-T-N-) remains widely used in published cohort
+#   data exports — particularly ADNI-era and NACC-era staging fields. This
+#   pack encodes that vocabulary so audits of pre-2024 data formats are
+#   reachable, with Jack 2024 §3 guidance preserved for the A-T+ exclusion.
+#
+# Scope honesty per the four-layer audit model (SCOPE.md):
+#   - IN SCOPE: state-trajectory admissibility per the AD continuum.
+#   - OUT OF SCOPE in THIS BATCH: the T2N-mismatch advisory (Jack 2024 §8,
+#     A+T-N+ flags possible non-AD copathology). T2N mismatch is a
+#     cross-modal advisory, not a transition rule; it belongs in a
+#     cross-sheet invariant pack and is deferred to a future batch with
+#     its proper architectural home rather than bolted onto this staging
+#     pack. The state description on A+T-N+ documents the §8 guidance for
+#     reviewers reading the audit trail.
+
+schema_version: "1.4.0"
+rulepack_id: "ad/atn_2018@1.0.0"
+ruleset_version: "1.0.0"
+effective_date: "2026-05-29"
+status: "production"
+disease_domain: "alzheimers"
+framework_name: "Jack 2018 AT(N) 8-state biomarker profile (Jack 2016/2018 origin) with Jack 2024 §3 A-T+ inadmissibility enforced at the staging-transition level."
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo International University in Tashkent (KIUT), Uzbekistan. Verbatim transcription from Jack 2024 PMID 38934362 (open access CC BY-NC-ND 4.0) and the cited originating works (Jack 2016 PMID 27371494, Jack 2018 PMID 29653606). Inadmissibility of A-T+ states is taken verbatim from Jack 2024 §3: 'The A-T2+ biomarker profile is not consistent with a diagnosis of AD.'"
+
+clinical_source_authority: |
+  Jack 2018 AT(N) 8-state biomarker-profile taxonomy as used in published
+  AD research datasets exported prior to the Jack 2024 revision. The Jack
+  2024 revision (PMID 38934362) §3 declares A-T2+ "not consistent with a
+  diagnosis of AD" (PART or near-cutpoint measurement variation); §7.1
+  retires the (N) parentheses notation but acknowledges the legacy
+  taxonomy remains in cohort use; §8 defines the T2N-mismatch advisory.
+  Originating sources: Jack 2016 PMID 27371494 (AT(N) scheme); Jack 2018
+  PMID 29653606 (NIA-AA Research Framework); Jack 2013 PMID 23332364
+  (amyloid cascade: A precedes T; established positivity does not
+  spontaneously revert in untreated natural history). Treatment-induced
+  clearance (Jack 2024 §9 TRAC) belongs in ad/aa_2024_trac; this
+  natural-history pack does NOT encode treatment conditions.
+
+reviewers: []
+
+endorsing_bodies:
+  - "Alzheimer's Association (Jack 2024 workgroup convener; Maria C. Carrillo senior author)"
+  - "Mayo Clinic Department of Radiology (Clifford R. Jack Jr., lead author PMID 38934362 and PMID 27371494)"
+  - "National Institute on Aging (NIA, NIH; AT(N) framework co-development per Jack 2016/2018)"
+  - "U.S. Food and Drug Administration, Office of Neuroscience (Teresa Buracchio, Jack 2024 co-author)"
+  - "Washington University in St. Louis Knight ADRC (AT(N) staging implemented by protocol; Eric McDade co-author affiliation)"
+  - "Amsterdam UMC Alzheimer Center / Amsterdam Dementia Cohort (Charlotte E. Teunissen co-author affiliation)"
+  - "Lund University / Skåne University Hospital BioFINDER (Oskar Hansson co-author)"
+  - "Harvard Medical School / Mass General Brigham (Reisa Sperling co-author; A4 / AHEAD 3-45 studies)"
+
+anchor_citation:
+  citation_pmid: "38934362"
+  citation_doi: "10.1002/alz.13859"
+  citation_text: >-
+    Jack CR Jr, Andrews JS, Beach TG, Buracchio T, Dunn B, Graf A, Hansson O,
+    Ho C, Jagust W, McDade E, Molinuevo JL, Okonkwo OC, Pani L, Rafii MS,
+    Scheltens P, Siemers E, Snyder HM, Sperling R, Teunissen CE, Carrillo MC.
+    Revised criteria for diagnosis and staging of Alzheimer's disease:
+    Alzheimer's Association Workgroup. Alzheimer's & Dementia
+    2024;20(8):5143-5169. §3 declares A-T2+ not consistent with AD; §7.1
+    retires (N) parentheses notation; §8 defines T2N-mismatch advisory.
+
+# ============================================================
+# STATE SPACE — all 8 Jack 2018 AT(N) biomarker profiles
+# ============================================================
+# Vocabulary: the data column must use the literal strings below.
+# Ordinal rank: increasing severity within the AD continuum.
+#
+# 5 states ARE in the AD continuum and admissible:
+#   A-T-N-, A+T-N-, A+T-N+, A+T+N-, A+T+N+
+# 3 states are recognized vocabulary but NOT in the AD continuum:
+#   A-T-N+  -- non-AD pathology (no Core 1 abnormality; Jack 2024 §7.1)
+#   A-T+N-  -- INADMISSIBLE per Jack 2024 §3 verbatim p.5147:
+#              "The A-T2+ biomarker profile is not consistent with a
+#              diagnosis of AD."
+#   A-T+N+  -- same inadmissibility as A-T+N-, with non-specific N.
+#
+# Why include the inadmissible states in state_space:
+#   1. The pack RECOGNIZES the full Jack 2018 vocabulary (data containing
+#      these states is routed here rather than refused upstream).
+#   2. NO admissible_transitions reference the inadmissible states, so
+#      any trajectory entering or leaving A-T+N- / A-T+N+ flags as
+#      inadmissible_state with the §3 citation in the audit trail.
+#   3. The A-T-N+ state allows the audit to follow a non-AD subject
+#      across visits without refusing every row; transitions involving
+#      A-T-N+ are absent from admissible_transitions, so any movement to
+#      or from this state flags (it's not in the AD continuum).
+#   4. Pure single-state trajectories at A-T+ or A-T-N+ produce no
+#      transitions and therefore no transition-level flag. The cross-
+#      sheet invariant for ACTIVE per-row flagging is a separate
+#      architectural concern (cross-sheet engine extension needed; see
+#      CHANGELOG deferral note).
+
+state_space:
+
+  - name: "A-T-N-"
+    description: "Baseline / biomarker-negative for AD. Per Jack 2024 §3 not in the AD continuum (no Core 1 abnormality). The pack recognizes it because subjects may be observed at A-T-N- before progressing to A+T-N- (AD continuum entry)."
+    ordinal_rank: 0
+
+  - name: "A-T-N+"
+    description: "No AD core biomarker abnormality, but neurodegeneration present. Per Jack 2024 §7.1 N is non-specific; this profile suggests non-AD pathology (e.g., LATE, vascular, FTLD). Not in the AD continuum. No admissible transitions reference this state, so any trajectory crossing into or out of it flags as inadmissible_state."
+    ordinal_rank: 1
+
+  - name: "A+T-N-"
+    description: "Core 1 abnormal (amyloid positive), no tau, no neurodegeneration. Per Jack 2024 §3 this is sufficient for AD diagnosis. Maps to Jack 2024 biological stage A (Table 4, A+T2-). Initial AD continuum entry."
+    ordinal_rank: 2
+
+  - name: "A+T-N+"
+    description: "Core 1 abnormal (amyloid positive), no tau, neurodegeneration present. Per Jack 2024 §8 this is the canonical T2N-mismatch pattern, indicating likely AD + non-AD copathology (e.g., LATE). Biologically still in the AD continuum (A+ qualifies for AD diagnosis per §3). Advisory active flagging deferred to a future cross-sheet invariant batch."
+    ordinal_rank: 3
+
+  - name: "A+T+N-"
+    description: "Core 1 abnormal + tau positive, no neurodegeneration yet. Maps to Jack 2024 biological stages B/C/D (Table 4, A+T2MTL+ through A+T2HIGH+). Intermediate AD continuum."
+    ordinal_rank: 4
+
+  - name: "A+T+N+"
+    description: "Core 1 abnormal + tau positive + neurodegeneration. Maps to advanced Jack 2024 biological stage with neurodegeneration commonly accompanying tau (§4.2 figure 1 archetypical sequence). Advanced AD continuum."
+    ordinal_rank: 5
+
+  - name: "A-T+N-"
+    description: "INADMISSIBLE IN THE AD CONTINUUM per Jack 2024 §3 (verbatim p.5147): 'The A-T2+ biomarker profile is not consistent with a diagnosis of AD.' Per the paper, this corresponds to primary age-related tauopathy (PART, Crary 2014 PMID 25348065) or measurement variation near cutpoints. Pack recognizes the state for vocabulary routing; no admissible_transitions reference it, so any trajectory crossing into or out of it flags as inadmissible_state."
+    ordinal_rank: 6
+
+  - name: "A-T+N+"
+    description: "INADMISSIBLE IN THE AD CONTINUUM per Jack 2024 §3: same exclusion as A-T+N- with additional non-specific N abnormality. Pack recognizes the state for vocabulary routing; no admissible_transitions reference it, so any trajectory crossing into or out of it flags as inadmissible_state."
+    ordinal_rank: 7
+
+# ============================================================
+# ADMISSIBLE TRANSITIONS — only AD-continuum-compatible progressions
+# ============================================================
+# Per Jack 2024 §4.2 (verbatim p.5152, Figure 1A archetypical sequence):
+# "abnormal amyloid PET (A) precedes tau PET (T2), which, in turn, leads
+# to neurodegeneration (N) and clinical symptoms (C), A to T2 to N to C."
+# Per Jack 2013 amyloid-cascade (PMID 23332364): established positivity
+# does not spontaneously revert in untreated natural history. Reversals
+# (A+ -> A-, T+ -> T-, N+ -> N-) are therefore not admissible here.
+# Treatment-induced clearance (TRAC, Jack 2024 §9) belongs in the
+# separate ad/aa_2024_trac pack.
+#
+# Transitions involving A-T+N- or A-T+N+ are deliberately ABSENT per
+# Jack 2024 §3 inadmissibility -- any trajectory touching those states
+# will flag as inadmissible_state.
+
+admissible_transitions:
+
+  # ----- Entry into AD continuum (amyloid becomes positive) -----
+
+  - from_state: "A-T-N-"
+    to_state: "A+T-N-"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 §4.2 (p.5152): "abnormal amyloid PET (A) precedes tau PET
+        (T2)." A-T-N- to A+T-N- is the first step into the AD continuum
+        (amyloid becomes positive in the absence of tau and neurodegeneration).
+    guideline_section: "Jack 2024 §4.2 biological staging; Jack 2013 amyloid cascade (PMID 23332364)"
+    override_allowed: false
+    notes: "Amyloid becomes positive first; first AD continuum entry."
+
+  - from_state: "A+T-N-"
+    to_state: "A+T-N+"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 §8 (p.5160): in older adults AD commonly occurs with
+        copathologies; acquiring neurodegeneration prior to tau positivity
+        produces the T2N-mismatch state A+T-N+ "indicating the presence of
+        neurodegeneration or neuronal injury due to a disease(s) other than AD."
+    guideline_section: "Jack 2024 §8 T2N mismatch"
+    override_allowed: false
+    notes: "Copathology emerges (T2N mismatch) before tau positivity."
+
+  - from_state: "A+T-N-"
+    to_state: "A+T+N-"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 §4.2 (p.5152): "amyloid PET (A) precedes tau PET (T2),
+        which, in turn, leads to neurodegeneration (N)." A+T-N- to A+T+N- is
+        tau positivity acquired after established amyloid, before
+        neurodegeneration -- biological stage B/C onset.
+    guideline_section: "Jack 2024 §4.2, §4.3"
+    override_allowed: false
+    notes: "Tau positivity follows established amyloid positivity (cascade)."
+
+  - from_state: "A+T-N+"
+    to_state: "A+T+N+"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 §4.2, §8: in a subject already in the T2N-mismatch state
+        (A+T-N+), tau positivity acquired produces A+T+N+ (advanced AD
+        continuum with persistent copathology).
+    guideline_section: "Jack 2024 §4.2 + §8"
+    override_allowed: false
+    notes: "Tau positivity in T2N-mismatch case."
+
+  - from_state: "A+T+N-"
+    to_state: "A+T+N+"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 §4.2 (p.5152): "tau PET (T2) ... leads to neurodegeneration
+        (N) and clinical symptoms (C)." A+T+N- to A+T+N+ is acquiring
+        neurodegeneration after tau positivity -- advanced AD continuum
+        biological stage with clinical decline expected (§4.7 PET stages
+        C/D, HR 39.9 vs A-T2- reference per Ossenkoppele 2022 PMID 36302769).
+    guideline_section: "Jack 2024 §4.2, §4.6 PET staging stages C/D"
+    override_allowed: false
+    notes: "Neurodegeneration emerges after tau positivity; advanced AD."

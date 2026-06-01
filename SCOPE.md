@@ -1,6 +1,6 @@
 # NeuroTCS — Declared Audit Scope
 
-**Version:** 1.40.3
+**Version:** 1.41.0
 **Last updated:** 2026-05-29
 
 > **One-sentence scope statement (leads every report):**
@@ -60,9 +60,16 @@ omniscience.
 - Range bounds on CSF Aβ42/40 ratio, plasma p-tau217, NfL, centiloid, FDG SUVR,
   cortical thickness, eTIV, WMH (assay-calibrated — `--confirm-assays`-gated)
 - Clinical staging admissibility (CN ↔ MCI ↔ AD transitions per cited rule packs)
-- Biological staging admissibility (A/T/N transitions — once the citation-locked
-  pack is built; until then, refused with `vocabulary_mismatch`, not silently
-  filled in)
+- **Biological staging admissibility — Jack 2024 integrated taxonomy** (Stage_0,
+  Stage_1A through Stage_4-6D; covered by `ad/aa_2024@2.1.0`)
+- **Biological staging admissibility — Jack 2018 AT(N) taxonomy** (8 states
+  including all common AD-continuum profiles and the Jack 2024 §3 inadmissible
+  A-T+ profiles; covered by `ad/atn_2018@1.0.0` as of v1.41.0). Closes the
+  vocabulary_mismatch on ADNI-era and NACC-era staging exports. Jack 2024 §3
+  inadmissibility of A-T+ profiles is **actively enforced at the staging-
+  transition layer** (zero admissible transitions reference A-T+ states, so
+  any trajectory entering or leaving them flags inadmissible_state with full
+  citation context in the audit trail — not silently absorbed or refused).
 - Cross-sheet concordance (amyloid status vs CSF ratio vs PET centiloid)
 - Longitudinal monotonicity of biomarkers that have a published directional
   expectation

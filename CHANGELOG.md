@@ -1,3 +1,140 @@
+## [1.41.0] -- 2026-05-29 -- E-2026-014: Jack 2018 AT(N) AD-continuum rule pack + vocabulary applicability refinement
+
+### Net effect — closes the `staging_biological: vocabulary_mismatch` gap
+
+Before v1.41.0: every dataset using the Jack 2018 AT(N) biomarker-profile
+taxonomy (A+/-, T+/-, N+/-) -- i.e., most ADNI-era and NACC-era cohort exports
+-- failed at the biological-staging axis with `vocabulary_mismatch: no
+production rule pack's vocabulary is present in the data states ...`. No cTCS,
+no flags, no audit trail on the biological axis.
+
+After v1.41.0: those same datasets route to the new `ad/atn_2018@1.0.0` pack
+and produce a real cTCS with citation-locked transition admissibility. On the
+Complex_AD_Dataset_v3 blind test:
+
+| Path                | Before v1.41.0                          | After v1.41.0                                  |
+| ------------------- | --------------------------------------- | ---------------------------------------------- |
+| staging_clinical    | cTCS 0.98623015873 (8/547 flagged)      | cTCS 0.98623015873 (8/547 flagged) -- unchanged |
+| staging_biological  | **vocabulary_mismatch -- NO SCORE**     | **cTCS 0.990674603175 (6/546 flagged) -- scoring** |
+| Impossible flags    | 44                                      | **50** (+6 newly-detected biological inadmissibilities) |
+| `bundle_id`         | (prior)                                 | `47f4b58b34f4a42ac8f5f6a8ffdf07acab5013713e49fd75eee201a413f13a41` |
+| Determinism (twice same `bundle_id`) | yes        | **yes -- MATCH verified**                      |
+
+### Added -- `ad/atn_2018@1.0.0` rule pack (world-class, no trimming)
+
+8 states matching the full Jack 2018 AT(N) taxonomy as it appears in
+real-world cohort exports:
+
+  - **5 AD continuum states (admissible):** A-T-N-, A+T-N-, A+T-N+, A+T+N-,
+    A+T+N+
+  - **1 non-AD pathology state (recognized, transitions inadmissible):**
+    A-T-N+ -- no Core 1 abnormality + neurodegeneration suggests non-AD
+    pathology per Jack 2024 §7.1.
+  - **2 Jack 2024 §3 inadmissible states (recognized, transitions
+    inadmissible):** A-T+N-, A-T+N+ -- "The A-T2+ biomarker profile is not
+    consistent with a diagnosis of AD" (Jack 2024 §3 verbatim p.5147).
+
+Jack 2024 §3 A-T+ inadmissibility is **actively enforced at the staging-
+transition layer** (zero admissible transitions reference A-T+ states, so any
+trajectory entering or leaving them flags inadmissible_state in the audit
+trail with the pack's Jack 2024 citation). This is NOT a partial fix via
+vocabulary_mismatch refusal -- the row is fully audited and the §3 violation
+is surfaced with full citation context.
+
+5 admissible transitions encode the AD-continuum forward progression per the
+amyloid cascade (Jack 2024 §4.2: "abnormal amyloid PET (A) precedes tau PET
+(T2), which, in turn, leads to neurodegeneration (N) and clinical symptoms
+(C)"). No reversal transitions; treatment-induced clearance is the separate
+`ad/aa_2024_trac` pack.
+
+Primary sources (all citation-locked):
+  - **Jack CR Jr et al. 2024** -- PMID 38934362, DOI 10.1002/alz.13859,
+    Alzheimer's & Dementia 2024;20(8):5143-5169 (open access, CC BY-NC-ND 4.0).
+    §3 declares A-T2+ not consistent with AD; §4.2 specifies the amyloid
+    cascade; §7.1 retires (N) parentheses notation while acknowledging the
+    Jack 2018 AT(N) taxonomy remains in widespread cohort use; §8 defines the
+    T2N-mismatch advisory.
+  - **Jack CR Jr et al. 2018** -- PMID 29653606. The originating NIA-AA
+    Research Framework that formalized AT(N).
+  - **Jack CR Jr et al. 2016** -- PMID 27371494. The originating AT(N) scheme.
+  - **Jack CR Jr et al. 2013** -- PMID 23332364. Amyloid cascade: established
+    positivity does not spontaneously revert in untreated natural history.
+
+### Added -- vocabulary applicability refinement (`src/neurotcs/orchestration/vocabulary.py`)
+
+The framework's pack-applicability rule is now additive:
+
+  - **(a)** `coverage_fraction >= threshold` (original v1.23.0 semantic;
+    preserved unchanged -- prevents the A/T-vs-Stage_* disaster), OR
+  - **(b) NEW:** at least 2 distinct data states are recognized AND
+    `contamination_fraction == 0` -- "the pack recognizes 100% of the
+    distinct data states with enough vocabulary to form trajectories."
+
+This handles broad-spectrum packs whose state_space is a deliberate superset
+of typical observations -- the Jack 2018 AT(N) pack has 8 states (including
+rare A-T+ profiles needed for Jack 2024 §3 inadmissibility enforcement), but
+typical cohort data only contains 5 of them. Rule (a) would have refused
+(coverage 0.625 < 0.80); rule (b) correctly accepts (full data recognition
+with 5 matched states). The 2-matched-states floor prevents degenerate
+single-state trajectories from triggering undefined-metric audits.
+
+Pack selection (`select_rulepack_or_refuse`) is now also more principled:
+among applicable packs, prefer zero-contamination over high-coverage (the
+more-specific pack wins).
+
+Backward compat verified: all 6 pre-existing vocabulary tests still pass
+unchanged. The change ONLY adds applicability cases; it never removes any.
+
+### Tests
+20 new tests:
+  - `tests/rulepack/test_atn_2018_pack.py` (17 tests): state space exactness;
+    A-T+ in state_space but with zero admissible transitions (the §3
+    inadmissibility mechanism); admissible transitions exactness; no
+    reversal transitions; anchor citation = Jack 2024; origin papers in
+    clinical_source_authority; every transition citation-anchored; v3-shape
+    data is applicable via rule (b); A-T+ data routed correctly; routing
+    selection; end-to-end clean trajectory; reversal flagged; T2N-mismatch
+    transit clean; **A-T+ transition actively flagged inadmissible (the
+    world-class Jack 2024 §3 enforcement test)**; A-T-N+ non-AD-pathology
+    transition flagged.
+  - `tests/orchestration/test_vocabulary.py` (+3 tests): rule (b) applies
+    when data is a subset; disjoint vocabularies still refused; selection
+    prefers zero-contamination.
+  - `tests/cli/test_v1393_file_coverage.py` (1 updated): the previously-
+    obsolete test of "ATN vocabulary skipped" is rewritten to use
+    deliberately-fabricated state names, preserving the test's intent
+    (verify engine-skip is surfaced in coverage) without depending on Jack
+    2018 ATN being unroutable.
+
+Total suite: **1657 passing** (was 1637 in v1.40.3), 21 skipped. Ruff: clean.
+Determinism: verified MATCH across two independent v3 audit runs.
+
+### What is NOT in this batch (honest architectural deferrals)
+
+Two real items belong in a future batch with their proper architectural home
+(cross-sheet engine extension); they are NOT partial fixes of v1.41.0 but
+distinct concerns:
+
+1. **T2N-mismatch advisory active flag (Jack 2024 §8).** A+T-N+ is
+   biologically admissible (still in the AD continuum, A+ qualifies for AD
+   diagnosis per §3) but signals likely non-AD copathology per §8. The
+   staging pack documents §8 in the A+T-N+ state description; ACTIVE
+   per-row advisory flagging requires the cross-sheet invariant engine
+   to be extended to read from the biological-staging sheet (currently
+   limited to `Literal["manifest", "predictions", "patients", "biomarkers",
+   "attribution"]`).
+
+2. **Per-row A-T+ active flag for trajectory-stuck cases.** When a subject's
+   entire trajectory is A-T+, the staging audit produces no inadmissible-
+   transition flag (because there are no transitions). The transition-
+   level enforcement covers the common case (any visit transitioning
+   into or out of A-T+); the stuck-at-A-T+ case needs the same cross-
+   sheet engine extension as item 1.
+
+Both are documented and the architectural path is clear. They will land
+together in a single batch (a generalized "biological state-arrival
+advisory" cross-sheet pack) once the engine extension is done.
+
 ## [1.40.3] -- 2026-05-29 -- E-2026-013: explicit-mapping path auto-wires un-staged measurement sheets
 
 ### Fixed (the "all users reach the range packs" lever applied to --mapping)

@@ -70,17 +70,24 @@ def test_toc_sheet_never_listed_as_unwired(tmp_path, capsys):
 
 
 def test_skipped_layer_named_in_coverage(tmp_path, capsys):
-    """A wired biological axis whose 4-axis ATN vocabulary matches no rule pack
-    is engine-skipped -- the unified coverage line must name that skipped layer
-    (not silently drop it)."""
+    """A wired biological axis whose vocabulary matches NO production
+    rule pack is engine-skipped — the unified coverage line must name
+    that skipped layer (not silently drop it).
+
+    (v1.41.0 update: the Jack 2018 4-axis ATN vocabulary is now routable
+    via ad/atn_2018, so this test uses deliberately-fabricated state
+    names that no production pack recognizes, preserving the test's
+    original intent: verify that engine-skip is surfaced in coverage.)
+    """
     f = tmp_path / "bio.xlsx"
     with pd.ExcelWriter(f, engine="openpyxl") as xw:
         pd.DataFrame({"subject_id": ["S1"] * 3, "visit": [0, 1, 2],
-                      "clinical_state": ["CN", "MCI", "AD"]}).to_excel(
+                      "state": ["CN", "MCI", "AD"]}).to_excel(
             xw, sheet_name="AUDIT_CLINICAL", index=False)
-        # 4-axis ATN tokens -> no production biological pack matches -> skip
+        # Canonical 'state' column wires the sheet; fabricated state values
+        # match no production pack -> vocabulary skip fires.
         pd.DataFrame({"subject_id": ["S1"] * 3, "visit": [0, 1, 2],
-                      "biological_stage_ATN": ["A-T-N-", "A+T-N-", "A+T+N+"]}).to_excel(
+                      "state": ["FOO-BAR-", "FOO+BAR-", "FOO+BAR+"]}).to_excel(
             xw, sheet_name="AUDIT_BIOLOGICAL", index=False)
     main(["audit", str(f), "-o", str(tmp_path / "out"), "--allow-no-dates"])
     err = capsys.readouterr().err
