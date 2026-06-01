@@ -1,0 +1,518 @@
+# NeuroTCS Rule Pack: Alzheimer's Disease -- ADNI clinical-stage vocabulary
+# (CN / SMC / EMCI / LMCI / MCI / AD)
+# Schema: 1.4.0 | Status: PRODUCTION | NeuroTCS v1 instantiation
+#
+# WHY THIS PACK EXISTS
+# --------------------
+# The canonical ad/niaaa_2018 pack recognizes only {CN, MCI, AD}. Real ADNI
+# downloads (the IDA "Research Group" field) use a finer vocabulary:
+# CN, SMC, EMCI, LMCI, MCI, AD. Before this pack, an ADNI-2/ADNI-GO cohort
+# expressed as [CN, EMCI, LMCI, AD] was REFUSED (no production pack matched its
+# vocabulary), and [CN, SMC, EMCI, LMCI, MCI, AD] matched niaaa_2018 only by
+# dropping SMC/EMCI/LMCI as "contaminating" -- i.e. the sub-stages were
+# silently ignored. This pack closes that gap by recognizing the ADNI
+# vocabulary natively.
+#
+# CRITICAL DESIGN DECISIONS (external-auditor findings, 2026-06-01)
+# ----------------------------------------------------------------
+# 1. EMCI and LMCI are SEVERITY STRATA, not obligatory temporal stations.
+#    They are defined by degree of episodic-memory impairment on the Wechsler
+#    Memory Scale Logical Memory II (LM-II) Story A delayed recall, education-
+#    adjusted: EMCI ~= 1.0 SD below norm, LMCI ~= 1.5 SD below norm (the ADNI-1
+#    "MCI" criterion). Source: Aisen et al. 2024 ADNI Clinical Core (Alz & Dem,
+#    DOI 10.1002/alz.14167) and the ADNI-2 Procedures Manual. A subject is NOT
+#    required to pass through EMCI before LMCI. Therefore CN->LMCI (skipping
+#    EMCI) is ADMISSIBLE, not a flag. Encoding an obligatory EMCI->LMCI sequence
+#    would manufacture false flags.
+#
+# 2. REVERSION IS REAL AND COMMON. Published ADNI-2-criteria cohorts report
+#    ~31% of EMCI and ~3-5% of LMCI reverting to normal cognition by year 2
+#    (Lin et al. 2020, Alz & Dem 16:e039825; "Clinical Course of EMCI/LMCI",
+#    Front Neurol 2022, DOI 10.3389/fneur.2022.685636). Reversion transitions
+#    (EMCI->CN, LMCI->EMCI, MCI->CN, etc.) are therefore ADMISSIBLE with a short
+#    minimum interval to filter model flicker -- never inadmissible. Only
+#    dementia->normal/MCI single-step reversions are inadmissible (mirrors
+#    ad/niaaa_2018 AD->MCI / AD->CN).
+#
+# 3. SMC (Significant Memory Concern) is COGNITIVELY NORMAL on objective
+#    testing (subjective complaint only). It is modeled as a CN-adjacent state
+#    (ordinal_rank between CN and EMCI), and CN<->SMC moves are freely
+#    admissible. SMC carries only a modestly elevated progression hazard
+#    (AgeCoDe HR ~1.55 vs EMCI ~3.1, LMCI ~7.27).
+#
+# 4. This pack stages the CLINICAL axis only. APOE4 / mutation status / Down
+#    syndrome are FIXED ATTRIBUTES (audited by data_integrity, never staged).
+#    Biomarker A/T(N) states are staged by the at_biological / atn_2018 packs.
+
+schema_version: "1.4.0"
+rulepack_id: "ad/adni_clinical_stage@1.0.0"
+ruleset_version: "1.0.0"
+effective_date: "2026-06-01"
+status: "production"
+disease_domain: "alzheimers"
+framework_name: "ADNI clinical-stage staging (CN/SMC/EMCI/LMCI/MCI/AD)"
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo International University in Tashkent (KIUT), Uzbekistan"
+clinical_source_authority: >-
+  Alzheimer's Disease Neuroimaging Initiative (ADNI) clinical diagnostic
+  criteria. Primary sources: Aisen PS et al., "The Alzheimer's Disease
+  Neuroimaging Initiative Clinical Core" (Alzheimer's & Dementia 2024,
+  DOI 10.1002/alz.14167), which defines the CN / SMC / EMCI / LMCI / MCI / AD
+  groups and the Logical Memory II severity cutoffs (EMCI ~1.0 SD, LMCI ~1.5 SD
+  below education-adjusted norm); the ADNI-2 Procedures Manual; and the NIA-AA
+  2018 Research Framework (Jack et al., PMID 29653606) onto which the ADNI
+  clinical stages map. Reversion-rate evidence: Lin et al. 2020 (Alz & Dem
+  16:e039825) and "Clinical Course of EMCI and LMCI" (Front Neurol 2022,
+  DOI 10.3389/fneur.2022.685636). EMCI/LMCI are severity strata defined by a
+  single LM-II memory score, NOT obligatory temporal stages.
+reviewers: []
+
+# Endorsing bodies: ADNI consortium leadership + the institutions that defined
+# and operate the ADNI clinical diagnostic criteria this pack transcribes.
+endorsing_bodies:
+  - "Alzheimer's Disease Neuroimaging Initiative (ADNI) Clinical Core (Aisen et al. 2024, DOI 10.1002/alz.14167)"
+  - "National Institute on Aging (NIA, NIH; primary ADNI funder and steward)"
+  - "Alzheimer's Association (ADNI public-private partnership co-sponsor; alz.org)"
+  - "University of Southern California (USC) Laboratory of Neuro Imaging / LONI (ADNI coordinating center and IDA host)"
+  - "Mayo Clinic (ADNI MRI Core; NIA-AA 2018 lead authorship, PMID 29653606)"
+  - "University of California San Diego (ADNI Clinical Core coordinating site; Aisen, lead author)"
+  - "Foundation for the National Institutes of Health (FNIH; ADNI private-partner administration)"
+
+anchor_citation:
+  citation_pmid: null
+  citation_doi: "10.1002/alz.14167"
+  citation_text: >-
+    Aisen PS, Petersen RC, Donohue M, Weiner MW, et al. The Alzheimer's Disease
+    Neuroimaging Initiative Clinical Core. Alzheimer's & Dementia 2024.
+    DOI 10.1002/alz.14167. Defines the ADNI CN/SMC/EMCI/LMCI/MCI/AD diagnostic
+    groups and the Logical Memory II severity cutoffs (EMCI ~1.0 SD, LMCI ~1.5
+    SD below education-adjusted norm).
+
+state_space:
+  - name: "CN"
+    description: "Cognitively normal / unimpaired"
+    ordinal_rank: 0
+  - name: "SMC"
+    description: >-
+      Significant Memory Concern / subjective memory complaint; cognitively
+      normal on objective testing. CN-adjacent.
+    ordinal_rank: 1
+  - name: "EMCI"
+    description: >-
+      Early Mild Cognitive Impairment; episodic-memory impairment ~1.0 SD below
+      education-adjusted norm on Logical Memory II (severity stratum, not an
+      obligatory stage).
+    ordinal_rank: 2
+  - name: "LMCI"
+    description: >-
+      Late Mild Cognitive Impairment; episodic-memory impairment ~1.5 SD below
+      education-adjusted norm on Logical Memory II (more advanced severity
+      stratum).
+    ordinal_rank: 3
+  - name: "MCI"
+    description: >-
+      Mild Cognitive Impairment, unsplit (later ADNI phases merged EMCI/LMCI
+      back into a single MCI group). Spans the EMCI-LMCI severity range. Its
+      ordinal_rank (4) is a LISTING CONVENTION required by the schema's
+      unique-ascending-rank rule; it does NOT assert that unsplit MCI is more
+      severe than LMCI (the two are alternative vocabularies that rarely
+      co-occur in one cohort). ordinal_rank does not drive audit scoring;
+      transition admissibility is set explicitly below.
+    ordinal_rank: 4
+  - name: "AD"
+    description: "Alzheimer's disease dementia"
+    ordinal_rank: 5
+
+# ADMISSIBLE TRANSITIONS
+# Progression AND reversion across the CN<->SMC<->EMCI<->LMCI/MCI<->AD spectrum
+# are admissible (reversion is well-documented). Severity skips (e.g. CN->LMCI,
+# SMC->MCI) are admissible because EMCI/LMCI are strata, not obligatory stations.
+# Direct CN/SMC -> AD carries a minimum interval (mirrors niaaa_2018 CN->AD).
+admissible_transitions:
+
+  # ---- CN <-> SMC (both cognitively normal; freely reversible) ----
+  - from_state: "CN"
+    to_state: "SMC"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/alz.14167"
+      citation_text: >-
+        Aisen 2024 ADNI Clinical Core: SMC subjects are cognitively normal on
+        objective testing; CN<->SMC reflects emergence/resolution of subjective
+        memory concern, not a cognitive-status change.
+    guideline_section: "Aisen 2024, ADNI cohort definitions (SMC group)"
+    override_allowed: false
+
+  - from_state: "SMC"
+    to_state: "CN"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/alz.14167"
+      citation_text: >-
+        Aisen 2024: subjective memory concern may resolve; SMC->CN is expected
+        and admissible.
+    guideline_section: "Aisen 2024, ADNI cohort definitions (SMC group)"
+    override_allowed: false
+
+  # ---- progression into / within the MCI spectrum ----
+  - from_state: "CN"
+    to_state: "EMCI"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/alz.14167"
+      citation_text: "Aisen 2024: CN->EMCI is standard early progression."
+    guideline_section: "Aisen 2024; ADNI-2 Procedures Manual (EMCI criteria)"
+    override_allowed: false
+
+  - from_state: "SMC"
+    to_state: "EMCI"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: >-
+        SMC carries elevated progression hazard to MCI (AgeCoDe HR ~1.55);
+        SMC->EMCI is admissible progression.
+    guideline_section: "Clinical Course of EMCI/LMCI 2022, prognosis"
+    override_allowed: false
+
+  - from_state: "CN"
+    to_state: "LMCI"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/alz.14167"
+      citation_text: >-
+        EMCI and LMCI are SEVERITY STRATA defined by a single LM-II memory
+        score, not obligatory sequential stages. A subject may present
+        directly at LMCI severity; CN->LMCI is admissible (no obligatory EMCI
+        waypoint).
+    guideline_section: "Aisen 2024, LM-II severity cutoffs"
+    override_allowed: false
+
+  - from_state: "CN"
+    to_state: "MCI"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: "Jack 2018: CN->MCI is the expected early progression."
+    guideline_section: "Jack 2018, Table 4; Aisen 2024 (unsplit MCI group)"
+    override_allowed: false
+
+  - from_state: "SMC"
+    to_state: "LMCI"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/alz.14167"
+      citation_text: "EMCI/LMCI are strata; SMC->LMCI admissible (severity skip)."
+    guideline_section: "Aisen 2024, LM-II severity cutoffs"
+    override_allowed: false
+
+  - from_state: "SMC"
+    to_state: "MCI"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/alz.14167"
+      citation_text: "SMC->MCI admissible progression (unsplit MCI group)."
+    guideline_section: "Aisen 2024 (unsplit MCI group)"
+    override_allowed: false
+
+  - from_state: "EMCI"
+    to_state: "LMCI"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: >-
+        Worsening from EMCI to LMCI severity is the typical within-MCI
+        progression (LMCI shows faster cognitive decline than EMCI).
+    guideline_section: "Clinical Course of EMCI/LMCI 2022, Results"
+    override_allowed: false
+
+  # ---- progression to dementia ----
+  - from_state: "EMCI"
+    to_state: "AD"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: >-
+        AD dementia occurred in ~66% of EMCI subjects over follow-up; EMCI->AD
+        is admissible (EMCI may progress to dementia without passing an
+        explicitly-recorded LMCI visit).
+    guideline_section: "Clinical Course of EMCI/LMCI 2022, conversion"
+    override_allowed: false
+
+  - from_state: "LMCI"
+    to_state: "AD"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: >-
+        AD dementia occurred in ~83% of LMCI subjects over follow-up;
+        LMCI->AD is the expected high-rate progression.
+    guideline_section: "Clinical Course of EMCI/LMCI 2022, conversion"
+    override_allowed: false
+
+  - from_state: "MCI"
+    to_state: "AD"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: "Jack 2018: MCI->dementia is the expected trajectory."
+    guideline_section: "Jack 2018, Table 4"
+    override_allowed: false
+
+  - from_state: "CN"
+    to_state: "AD"
+    min_delta_t_days: 365.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: >-
+        Jack 2018: CN->AD traverses a prolonged preclinical phase. Direct
+        transition over short intervals is implausible (model instability).
+    guideline_section: "Jack 2018, Fig. 1"
+    override_allowed: true
+    notes: "Minimum 1-year interval rules out rapid model flipping."
+
+  - from_state: "SMC"
+    to_state: "AD"
+    min_delta_t_days: 365.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: >-
+        SMC is cognitively normal on testing; SMC->AD over a short interval is
+        implausible and mirrors the CN->AD minimum-interval constraint.
+    guideline_section: "Jack 2018, Fig. 1; Aisen 2024 SMC group"
+    override_allowed: true
+    notes: "Minimum 1-year interval (SMC is objectively normal)."
+
+  # ---- REVERSION (well-documented; admissible with short minimum interval) ----
+  - from_state: "EMCI"
+    to_state: "CN"
+    min_delta_t_days: 180.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: >-
+        ~31-33% of EMCI subjects reverted to normal cognition by year 2 (Lin
+        2020; Front Neurol 2022). EMCI->CN reversion is real and admissible;
+        180-day minimum filters model flicker.
+    guideline_section: "Clinical Course of EMCI/LMCI 2022, reversion"
+    override_allowed: false
+
+  - from_state: "EMCI"
+    to_state: "SMC"
+    min_delta_t_days: 180.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: "Partial reversion EMCI->SMC (toward subjective-only) admissible."
+    guideline_section: "Clinical Course of EMCI/LMCI 2022, reversion"
+    override_allowed: false
+
+  - from_state: "LMCI"
+    to_state: "EMCI"
+    min_delta_t_days: 180.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: >-
+        LMCI may improve to EMCI severity; ~3-5% of LMCI reverted toward normal
+        by year 2. LMCI->EMCI is admissible.
+    guideline_section: "Clinical Course of EMCI/LMCI 2022, reversion"
+    override_allowed: false
+
+  - from_state: "LMCI"
+    to_state: "CN"
+    min_delta_t_days: 180.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: "~3-5% of LMCI reverted to normal cognition by year 2; admissible."
+    guideline_section: "Clinical Course of EMCI/LMCI 2022, reversion"
+    override_allowed: false
+
+  - from_state: "MCI"
+    to_state: "CN"
+    min_delta_t_days: 180.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/dad2.70074"
+      citation_text: >-
+        Salemme 2025: MCI->CN reversion 8.7% clinical / 28.2% population.
+        Reversion is biologically real; 180-day minimum filters flicker.
+    guideline_section: "Salemme 2025, Table 3 (reversion rates)"
+    override_allowed: false
+
+  - from_state: "MCI"
+    to_state: "SMC"
+    min_delta_t_days: 180.0
+    max_delta_t_days: null
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/dad2.70074"
+      citation_text: "Partial MCI reversion toward subjective-only concern admissible."
+    guideline_section: "Salemme 2025, reversion"
+    override_allowed: false
+
+# INADMISSIBLE: only single-step reversion OUT of dementia (mirrors niaaa_2018).
+inadmissible_transitions:
+
+  - from_state: "AD"
+    to_state: "CN"
+    reason: >-
+      AD dementia is not expected to revert to cognitively normal status. Such
+      transitions strongly suggest misclassification or model instability.
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: "Jack 2018: clinical staging discussion."
+    guideline_section: "Jack 2018, clinical staging (pp. 547-549)"
+
+  - from_state: "AD"
+    to_state: "SMC"
+    reason: >-
+      AD dementia is not expected to revert to a cognitively-normal (subjective-
+      concern-only) status. Indicates misclassification.
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: "Jack 2018: clinical staging discussion."
+    guideline_section: "Jack 2018, clinical staging (pp. 547-549)"
+
+  - from_state: "AD"
+    to_state: "EMCI"
+    reason: >-
+      A single-step jump from AD dementia back to early MCI severity is not a
+      recognized course under standard care; indicates model instability.
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: "Jack 2018: clinical staging discussion."
+    guideline_section: "Jack 2018, clinical staging (pp. 547-549)"
+
+  - from_state: "AD"
+    to_state: "MCI"
+    reason: >-
+      AD dementia is not expected to revert to MCI under standard care. Apparent
+      AD->MCI flips typically reflect model instability or misclassification.
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: "Jack 2018: clinical staging discussion."
+    guideline_section: "Jack 2018, clinical staging (pp. 547-549)"
+
+  - from_state: "AD"
+    to_state: "LMCI"
+    reason: >-
+      A single-step jump from AD dementia back to late MCI severity is not a
+      recognized course under standard care; indicates model instability.
+    citation:
+      citation_pmid: "29653606"
+      citation_doi: "10.1016/j.jalz.2018.02.018"
+      citation_text: "Jack 2018: clinical staging discussion."
+    guideline_section: "Jack 2018, clinical staging (pp. 547-549)"
+
+transition_priors:
+
+  - from_state: "EMCI"
+    to_state: "AD"
+    annual_probability: 0.023
+    confidence_interval_95: [0.015, 0.04]
+    prior_type: "clinical"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: >-
+        ADNI reported annual conversion rate (ACR) to dementia of ~2.3% for
+        EMCI (Clinical Course of EMCI/LMCI 2022, citing ADNI). Lower than LMCI
+        because EMCI carries higher etiologic heterogeneity.
+
+  - from_state: "LMCI"
+    to_state: "AD"
+    annual_probability: 0.175
+    confidence_interval_95: [0.12, 0.24]
+    prior_type: "clinical"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: >-
+        ADNI reported annual conversion rate (ACR) to dementia of ~17.5% for
+        LMCI (Clinical Course of EMCI/LMCI 2022, citing ADNI).
+
+  - from_state: "EMCI"
+    to_state: "CN"
+    annual_probability: 0.16
+    confidence_interval_95: [0.10, 0.25]
+    prior_type: "clinical"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: >-
+        ~31-33% of EMCI subjects showed normal cognitive status by year 2
+        (annualized ~16%); EMCI reversion is substantially higher than LMCI.
+
+  - from_state: "LMCI"
+    to_state: "CN"
+    annual_probability: 0.025
+    confidence_interval_95: [0.015, 0.05]
+    prior_type: "clinical"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.3389/fneur.2022.685636"
+      citation_text: >-
+        ~3-5% of LMCI subjects reverted to normal cognition by year 2
+        (annualized ~2.5%); LMCI reversion is much rarer than EMCI.
+
+  - from_state: "MCI"
+    to_state: "AD"
+    annual_probability: 0.11
+    confidence_interval_95: [0.08, 0.14]
+    prior_type: "clinical"
+    citation:
+      citation_pmid: null
+      citation_doi: "10.1002/dad2.70074"
+      citation_text: "Salemme 2025: MCI->AD ACR 11% clinical settings."
+
+override_allowed_default: false
+
+notes: >-
+  ADNI clinical-stage instantiation. Recognizes the full ADNI IDA Research
+  Group vocabulary (CN/SMC/EMCI/LMCI/MCI/AD). EMCI/LMCI are SEVERITY STRATA
+  (LM-II memory-score bins), not obligatory sequential stages -- severity skips
+  and reversion are admissible; only single-step reversion OUT of AD dementia is
+  inadmissible. APOE4 / mutation / Down-syndrome are fixed attributes audited by
+  the data_integrity layer, NOT staged here; biomarker A/T(N) states are staged
+  by the at_biological / atn_2018 packs. Coexists with ad/niaaa_2018: the
+  vocabulary selector routes [CN,MCI,AD] data to niaaa_2018 and
+  [CN,SMC,EMCI,LMCI,MCI,AD] data here, by best vocabulary coverage.

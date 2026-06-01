@@ -1,4 +1,64 @@
-## [1.44.0] -- 2026-06-01 -- E-2026-017: reader hardening -- strict global encoding contract, consistency-based delimiter, SPSS value-labels, JSON Lines
+## [1.45.0] -- 2026-06-01 -- E-2026-018: ADNI clinical-stage rule pack (CN/SMC/EMCI/LMCI/MCI/AD)
+
+### Net effect — NeuroTCS now natively audits the real ADNI download vocabulary, instead of refusing it or silently dropping its sub-stages
+
+Before v1.45.0 the only clinical-stage pack was ad/niaaa_2018, which recognizes
+only {CN, MCI, AD}. Real ADNI cohorts (the IDA "Research Group" field) use a
+finer vocabulary -- CN, SMC, EMCI, LMCI, MCI, AD. Consequently:
+  * an ADNI-2/ADNI-GO cohort expressed as [CN, EMCI, LMCI, AD] was REFUSED
+    (no production pack matched its vocabulary), and
+  * [CN, SMC, EMCI, LMCI, MCI, AD] matched niaaa_2018 only by treating
+    SMC/EMCI/LMCI as "contaminating" tokens -- i.e. the sub-stages were
+    silently ignored by the staging logic.
+
+After v1.45.0, a new production pack ad/adni_clinical_stage@1.0.0 recognizes the
+full ADNI vocabulary natively. The vocabulary selector routes [CN,MCI,AD] to
+niaaa_2018 (unchanged) and [CN,SMC,EMCI,LMCI,MCI,AD] / [CN,EMCI,LMCI,AD] to the
+new pack, deterministically (pack listing is sorted; tie-break prefers zero
+contamination then highest coverage, so the 3-state cohort still prefers
+niaaa_2018 at coverage 1.0 over adni's 0.5).
+
+### External-auditor design discipline (the part that prevents false flags)
+
+A naive "add all the ADNI labels" pack would have manufactured false flags. The
+clinical literature was checked first and three traps were avoided by design:
+
+  1. **EMCI/LMCI are SEVERITY STRATA, not obligatory stages.** They are defined
+     by degree of episodic-memory impairment on Logical Memory II (EMCI ~1.0 SD,
+     LMCI ~1.5 SD below education-adjusted norm; Aisen 2024 ADNI Clinical Core,
+     DOI 10.1002/alz.14167). A subject need not pass through EMCI before LMCI, so
+     CN->LMCI (severity skip) is ADMISSIBLE -- not a flag.
+  2. **Reversion is real and common.** ~31-33% of EMCI and ~3-5% of LMCI revert
+     toward normal by year 2 (Front Neurol 2022, DOI 10.3389/fneur.2022.685636;
+     Lin 2020). EMCI->CN, LMCI->EMCI, MCI->CN etc. are ADMISSIBLE with a 180-day
+     minimum interval (filters model flicker). Only single-step reversion OUT of
+     AD dementia (AD->CN/SMC/EMCI/LMCI/MCI) is inadmissible, mirroring
+     niaaa_2018.
+  3. **Fixed attributes are not staged.** APOE4 / mutation status / Down syndrome
+     are constant lifelong attributes (data_integrity axis), and biomarker
+     A/T(N) states are staged by the at_biological / atn_2018 packs. This pack
+     stages the clinical axis only; "converter/non-converter" are derived
+     outputs, never input states.
+
+### Added
+
+- src/neurotcs/rulepack/rules/ad/adni_clinical_stage.yaml (production; 6 states,
+  20 admissible transitions, 5 inadmissible, citation-locked transition priors
+  for EMCI/LMCI/MCI conversion and reversion).
+- tests/rulepack/test_adni_clinical_stage_pack.py (+12): production-load,
+  endorsing bodies, AD-out inadmissibility, vocabulary routing (previously-
+  refused [CN,EMCI,LMCI,AD] now routes here; [CN,MCI,AD] still -> niaaa_2018),
+  and the audit-discipline locks (severity skip admissible, EMCI->CN and
+  LMCI->EMCI reversion admissible, AD->CN flagged).
+
+### Tests
+
+1720 -> 1733 passed (+12 new pack tests; +1 from the existing all-production-
+packs parametrized validators auto-picking up the new pack). ruff clean over
+src/ tests/ scripts/.
+
+---
+
 
 ### Net effect — the universal reader now refuses to silently mis-decode or mis-split any user's data, anywhere
 
