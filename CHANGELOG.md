@@ -1,4 +1,69 @@
-## [1.47.0] -- 2026-06-01 -- E-2026-020: typed-read contract (schema-on-read with provenance)
+## [1.48.0] -- 2026-06-01 -- E-2026-021: CDISC SDTM / ADaM ingestion (recognizer + normalizer)
+
+### Net effect — a pharma sponsor / CRO can drop a CDISC submission straight into NeuroTCS
+
+Sponsors and CROs hand off data in the CDISC submission format -- SDTM
+(tabulation) and ADaM (analysis-ready). NeuroTCS now RECOGNIZES that structure
+and NORMALIZES it into the long format the rest of the system already speaks
+(subject_id / visit / visit_date / state, plus a numeric measurements table),
+so a CDISC dataset flows straight through the existing typed-read contract
+(v1.47) and partitioning orchestrator (v1.46). No new audit logic -- CDISC is a
+front-end recognizer/normalizer.
+
+### Verified against primary CDISC / NCI-EVS sources (no memory; checked 2026-06-01)
+
+  * Identity/timing (stable across CT versions): USUBJID -> subject_id;
+    VISITNUM (+VISIT) -> visit; --DTC (SDTM) / ADT (ADaM) -> visit_date.
+  * Findings result quartet: SDTM --TESTCD/--ORRES/--STRESC/--STRESN;
+    ADaM PARAMCD/AVALC/AVAL. SDTM-vs-ADaM auto-detected by variable presence
+    (AVALC/PARAMCD => ADaM; --STRESC/--STRESN => SDTM).
+  * Diagnosis/classification lives in the RS domain (SDTMIG v3.3 "Disease
+    Response and Clin Classification"); cognitive scales (ADAS-Cog C100131,
+    MMSE, CDR, NPI, MoCA) are QS instruments = NUMERIC measurements.
+  * CDISC CT is versioned (current SDTM CT 2026-03-27, NCI-EVS) -- so
+    recognition is by STABLE STRUCTURAL ROLE, not fragile C-codes.
+
+### Recognition by structural role + fail-closed (no guessing)
+
+  * A code recognized as a cognitive-scale instrument -> NUMERIC measurement
+    (pivoted to a wide measurements table for range-pack auditing), NOT the
+    state axis. (Feeding MMSE scores to a staging auditor would produce a
+    meaningless cTCS -- exactly what NeuroTCS exists to prevent.)
+  * A code in the RS domain, or a recognized diagnosis/global-classification
+    code -> candidate clinical `state`.
+  * A single clean state code (and no unrecognized codes present) auto-maps and
+    is surfaced. Multiple state codes, OR any unrecognized code present, FAIL
+    CLOSED: NeuroTCS lists the available codes and requires the operator to
+    select which carries the state. Never guessed.
+
+### Scope boundary (defended)
+
+NeuroTCS recognizes CDISC structure to INGEST it; it is NOT a CDISC validator.
+No define.xml parsing, no full CT-compliance checking -- those are the job of
+dedicated tools (e.g. Pinnacle 21). The provenance says so explicitly.
+
+### Added
+
+- src/neurotcs/io/cdisc.py -- `recognize_cdisc(df)` (structure detection +
+  structural-role classification), `normalize_cdisc_to_long(df, rec, decisions,
+  state_code=None)` (transpose to NeuroTCS long format, fail-closed state
+  selection), and `read_cdisc_submission(path, ...)` (composes the universal
+  reader so encoding/format/typed-read all apply). Verified cognitive-scale
+  recognition registry; RS-domain state recognition.
+- tests/io/test_cdisc.py (+14): SDTM & ADaM recognition; structural-role
+  classification (scales->measurements, RS->state); normalization to long;
+  fail-closed (single clean auto-maps, unknown code forces selection, bad code
+  rejected); end-to-end (CDISC SDTM drives the orchestrator and an AD->MCI error
+  is flagged); read helper from CSV.
+
+### Tests
+
+1754 -> 1768 passed (+14). ruff clean over src/ tests/ scripts/. v3 blind set
+unchanged at 69 / 65 / 1236, 63/63 (CDISC is additive; the existing audit path
+is untouched). CDISC normalization deterministic across runs.
+
+---
+
 
 ### Net effect — every type decision the reader makes is now explicit, locale-independent, surfaced, and reproducible (the honest v1.44 debt, paid)
 
