@@ -1,3 +1,63 @@
+## [1.56.0] -- 2026-06-01 -- E-2026-029: wheel packaging-parity fix (cross-sheet invariants + v1_2 contract now ship)
+
+An external blind audit found, and execution CONFIRMED, that the built wheel
+shipped ZERO of the cross-sheet invariant YAML packs and omitted the v1_2
+input-contract data files, because [tool.setuptools.package-data] did not
+declare them. The editable install used in all prior development masked the
+defect: the cross-sheet loader resolves packs via Path(__file__).parent /
+"invariants", which points at the source tree under an editable install but at
+the (incomplete) installed package under a real wheel. So every release since
+the cross-sheet layer was added -- including the v1.53.0 T2N-mismatch
+copathology advisory and v1.55.0 Kurihara corroboration -- would have been
+invisible to any pip-installed user. Audit logic is unchanged; v3 unchanged at
+69 / 65 / 1236, 63/63; deterministic core byte-identical.
+
+### Fixed
+
+- pyproject.toml [tool.setuptools.package-data]: added
+  "neurotcs.cross_sheet" = ["invariants/**/*.yaml"] and
+  "neurotcs.input_contract.v1_2" = ["schemas/*.json", "SPECIFICATION.md"].
+
+Verified by building a real wheel and installing it into a clean venv:
+cross-sheet packs visible to the installed wheel went 0 -> 11 (the copathology
+advisory loads, status research_preview); v1_2 SPECIFICATION.md + manifest
+schema now ship.
+
+### Added
+
+- tests/test_packaging_parity.py (+3 active, +1 manual-skip): asserts every
+  package directory containing functional data files (*.yaml/*.json/
+  SPECIFICATION.md) is declared in package-data, plus explicit guards for
+  neurotcs.cross_sheet and every input_contract version. This is a
+  declaration-parity guard (no wheel build needed, fast) that fails if data
+  files are added to a package without a matching package-data entry --
+  directly preventing this class of broken-wheel regression. Proven to fail
+  without the fix and pass with it. (The README.md under reference_adapters is
+  intentionally treated as a doc pointer, not runtime data, so it is not
+  required to ship.)
+
+### Tests
+
+1809 -> 1812 passed (+3). ruff clean over src/ tests/ scripts/. v3 unchanged at
+69 / 65 / 1236, 63/63; deterministic core byte-identical. Changed files
+strict-ASCII.
+
+### Scope note (honest)
+
+This fixes the one real, confirmed packaging DEFECT from the external audit. The
+audit's larger "Universal Subject Intelligence Layer" proposal (CDISC long-format
+reshaping in zero-config, per-column/per-site assay certification, MRI-pipeline
+metadata mapping, conversion derivation, disease-control ontology, ARIA/safety
+fields, a multi-axis subject object) is a FEATURE ROADMAP, not a defect, and is
+deliberately NOT implemented here. Several of its "needed additions" already
+exist in the source (ADNI/MIRIAD/NACC/OASIS-3 adapters under input_contract/v1_2;
+ADNI clinical-stage staging pack CN/SMC/EMCI/LMCI/MCI/AD). The audit's other
+points (citation propagation into every flag, machine-readable consumed/refused
+coverage ledger, exit-code documentation, raw_input_sha256) are real candidate
+increments, each to be verified and built as its own batch rather than bundled in.
+
+---
+
 ## [1.55.0] -- 2026-06-01 -- E-2026-028: real-world corroborating reference for the T2N-mismatch advisory (Kurihara 2026)
 
 Documentation/provenance only -- no audit logic changed; v3 unchanged at
