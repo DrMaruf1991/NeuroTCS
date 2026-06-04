@@ -49,7 +49,7 @@ TIER_INFORMATIONAL = "informational"
 _CITE_CONTINUUM = {"citation_pmid": "29653606",
                    "citation_doi": "10.1016/j.jalz.2018.02.018"}  # Jack 2018
 _CITE_REVERSION = {"citation_pmid": "27502450",
-                   "citation_doi": ""}  # Canevelli 2016 (MCI->CN reversion)
+                   "citation_doi": "10.1016/j.jamda.2016.06.020"}  # Canevelli 2016 (MCI->CN reversion)
 
 
 @dataclass(frozen=True)

@@ -55,11 +55,25 @@ def test_dc_every_category_citation_anchored():
         assert cit.get("citation_doi"), cat
 
 
-def test_dc_kiloh_is_doi_only():
+def test_dc_kiloh_citation_verified():
+    """Kiloh 1961 carries a verified DOI and the verified PMID (14455934,
+    confirmed on the live PubMed record). It is no longer DOI-only."""
     ont = load_disease_control_ontology()
     cit = ont.citation_for("depression_cognitive")
-    assert cit["citation_doi"].startswith("10.")
-    assert cit["citation_pmid"] == ""  # no PMID fabricated
+    assert cit["citation_doi"] == "10.1111/j.1600-0447.1961.tb07367.x"
+    assert cit["citation_pmid"] == "14455934"
+
+
+def test_dc_vad_anchored_to_vascog2_2025():
+    """VaD primary anchor is the verified VasCog-2-WSO 2025 criteria; the 2014
+    VASCOG statement is retained as a legacy citation."""
+    ont = load_disease_control_ontology()
+    cit = ont.citation_for("VaD")
+    assert cit["citation_pmid"] == "40955506"
+    assert cit["citation_doi"] == "10.1001/jamaneurol.2025.3242"
+    # legacy 2014 VASCOG statement retained as a separate citation entry
+    assert "vascog_2014" in ont.citations
+    assert ont.citations["vascog_2014"]["citation_pmid"] == "24632990"
 
 
 def test_dc_recognized_carries_citation():
@@ -110,6 +124,7 @@ def test_conversion_mci_to_cn_is_plausible_not_impossible():
     f = r.flags[0]
     assert f.direction == "reversion" and f.tier == "informational"
     assert f.citation_pmid == "27502450"  # Canevelli 2016
+    assert f.citation_doi == "10.1016/j.jamda.2016.06.020"  # verified DOI
     assert r.derived_labels["S1"] == "reverter"
 
 

@@ -1,3 +1,47 @@
+## [1.62.0] -- 2026-06-01 -- E-2026-035: verified citation hardening (clean-room provenance pass)
+
+Provenance-only release: a clean-room verification pass against PubMed/CrossRef
+confirmed all 12 disease-control citations plus the Jack 2018 and Canevelli 2016
+conversion anchors are exact (no PMID/DOI discrepancies), and surfaced three
+verified upgrades. No audit logic changes -- v3 unchanged at 69/65/1236,
+deterministic, bundle format 1.4.0. Every identifier below was confirmed on a
+live PubMed/journal record; none fabricated.
+
+### Changed (citations only)
+
+- Kiloh 1961 ("pseudodementia" / depression-related cognitive impairment): PMID
+  POPULATED to 14455934. It had been encoded DOI-only on the assumption the
+  pre-MEDLINE article had no PMID; verification found a valid PubMed record
+  (PMID 14455934, "No abstract available"), so the PMID is now recorded. Kept as
+  the primary-source criteria reference (age does not disqualify a verified
+  foundational citation); DOI 10.1111/j.1600-0447.1961.tb07367.x retained.
+- Vascular dementia (VaD) primary anchor UPDATED to the VasCog-2-WSO 2025
+  criteria (VasCog-2-WSO Criteria Consortium / Sachdev PS et al., JAMA Neurol
+  2025;82(11):1103-1112; PMID 40955506, DOI 10.1001/jamaneurol.2025.3242), which
+  explicitly revises and supersedes the 2014 VASCOG statement. The 2014 statement
+  (PMID 24632990) is RETAINED as a labelled legacy citation; recognition of VaD
+  labels now reports the 2025 anchor.
+- Canevelli 2016 (MCI->CN reversion, conversion auditor): DOI ADDED
+  (10.1016/j.jamda.2016.06.020) alongside the existing PMID 27502450.
+
+### Verified, no change needed
+
+All other 11 disease-control citations (DLB, PDD, bvFTD, PPA, iNPH, TES,
+autoimmune encephalitis, mixed dementia, CBD, PSP) and the Jack 2018 continuum
+anchor were confirmed exact across PMID, DOI, title, journal, year, volume,
+issue, and pages -- including the two previously index-derived identifiers (TES
+Katz 2021 PMID 33722990; AE Graus 2016 PMID 26906964), now page-confirmed.
+
+### Tests
+
+1853 -> 1854 passed (+1 net). Updated test asserts Kiloh now carries the verified
+PMID (no longer DOI-only); new test asserts VaD is anchored to VasCog-2-WSO 2025
+with the 2014 statement retained as legacy; conversion test strengthened to
+assert the Canevelli DOI. ruff clean; default v3 unchanged at 69/65/1236;
+ontology ships in the wheel; all changed files strict-ASCII.
+
+---
+
 ## [1.61.0] -- 2026-06-01 -- E-2026-034: disease-control ontology + longitudinal conversion auditor (USIL increment 3, opt-in)
 
 Third scoped USIL increment: two coordinated, source-verifiable layers, both

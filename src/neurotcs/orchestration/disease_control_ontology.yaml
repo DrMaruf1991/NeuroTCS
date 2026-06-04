@@ -28,10 +28,13 @@ transcribed_by: >
 
 canonical_source_authority: |
   Disease-control categories and their primary consensus diagnostic criteria:
-  - Vascular cognitive disorders / vascular dementia (VaD/VCI): Sachdev et al.,
-    VASCOG statement, Alzheimer Dis Assoc Disord 2014 (DOI
-    10.1097/WAD.0000000000000034). Legacy research criteria: NINDS-AIREN (Roman
-    1993) and the AHA/ASA statement that formalized "VCI" (Gorelick 2011).
+  - Vascular cognitive disorders / vascular dementia (VaD/VCI): VasCog-2-WSO
+    Criteria Consortium (Sachdev et al.), JAMA Neurol 2025;82(11):1103-1112 (DOI
+    10.1001/jamaneurol.2025.3242), which revises and supersedes the 2014 VASCOG
+    statement (Sachdev et al., Alzheimer Dis Assoc Disord 2014, DOI
+    10.1097/WAD.0000000000000034, retained as legacy). Earlier research criteria:
+    NINDS-AIREN (Roman 1993) and the AHA/ASA statement that formalized "VCI"
+    (Gorelick 2011).
   - Dementia with Lewy bodies (DLB): McKeith et al., Fourth DLB Consortium
     consensus report, Neurology 2017 (DOI 10.1212/WNL.0000000000004058).
   - Parkinson's disease dementia (PDD): Emre et al., MDS Task Force, Mov Disord
@@ -66,12 +69,21 @@ canonical_source_authority: |
     subject_label/ad_clinical_stage ontology -- nor A/T/N biomarker notation.
 
 citations:
+  - key: "vascog2_wso_2025"
+    citation_doi: "10.1001/jamaneurol.2025.3242"
+    citation_pmid: "40955506"
+    citation_text: >
+      VasCog-2-WSO Criteria Consortium (Sachdev PS, et al.). Revised Diagnostic
+      Criteria for Vascular Cognitive Impairment and Dementia -- The VasCog-2-WSO
+      Criteria. JAMA Neurol 2025;82(11):1103-1112. Co-branded with the World
+      Stroke Organization; explicitly updates the 2014 VASCOG statement.
   - key: "vascog_2014"
     citation_doi: "10.1097/WAD.0000000000000034"
     citation_pmid: "24632990"
     citation_text: >
       Sachdev P, et al. Diagnostic criteria for vascular cognitive disorders: a
-      VASCOG statement. Alzheimer Dis Assoc Disord 2014;28(3):206-218.
+      VASCOG statement. Alzheimer Dis Assoc Disord 2014;28(3):206-218. Legacy
+      reference; superseded as primary anchor by the VasCog-2-WSO 2025 criteria.
   - key: "dlb_mckeith_2017"
     citation_doi: "10.1212/WNL.0000000000004058"
     citation_pmid: "28592453"
@@ -134,17 +146,19 @@ citations:
       The Movement Disorder Society criteria. Mov Disord 2017;32(6):853-864.
   - key: "pseudodementia_kiloh_1961"
     citation_doi: "10.1111/j.1600-0447.1961.tb07367.x"
-    citation_pmid: ""
+    citation_pmid: "14455934"
     citation_text: >
       Kiloh LG. Pseudo-dementia. Acta Psychiatr Scand 1961;37(4):336-351.
-      DOI-only (no PMID verified; predates routine MEDLINE indexing).
+      Primary source that introduced the term "pseudodementia"; the historical
+      criteria reference for depression-related cognitive impairment. PMID
+      verified on the live PubMed record (No abstract available).
 
 # canonical = internal disease-control category; abbrev = standard abbreviation;
 # synonyms = raw strings seen in datasets (matched case/space/punct-insensitive).
 groups:
   - canonical: "VaD"
     abbrev: "VaD"
-    source: "vascog_2014"
+    source: "vascog2_wso_2025"
     synonyms:
       - "vascular dementia"
       - "vascular cognitive impairment"
