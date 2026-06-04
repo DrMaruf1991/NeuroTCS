@@ -1,3 +1,59 @@
+## [1.65.0] -- 2026-06-04 -- E-2026-038: Arm B error-injection validation harness + study protocol (auditor Blocker 1, executable arm)
+
+Addresses the executable half of the external auditor's deepest finding -- the
+absence of a ground-truth validation study. Ships the validation DESIGN and
+APPARATUS; it does NOT ship or fabricate validation RESULTS (those require Arm A
+expert adjudication on DUA-gated cohort data and are explicitly future work).
+v3 default audit UNCHANGED at 69/65/1236; this release is purely additive.
+
+### Study protocol (design)
+- docs/VALIDATION_PROTOCOL.md: a STARD-style flag-validation study design that
+  confronts the auditor's kill-shot directly. Primary endpoint is flag
+  PRECISION (PPV) against blinded expert adjudication -- the honest,
+  non-tautological quantity -- NOT sensitivity-against-rules (which is 1.0 by
+  construction for a deterministic matcher). Defines the adjudication rubric
+  (data_error / correct_rare / correct_common / indeterminate), the rare-biology
+  vs encoding-limitation decomposition, sample sizing, blinding, and the SAP.
+  The document contains no empirical results and says so.
+
+### Arm B executable harness (new subpackage neurotcs.validation)
+- taxonomy.py: pre-registered realistic error taxonomy (unit_error,
+  decimal_shift, transcription_digit, sign_flip, implausible_high/low,
+  categorical_invalid) + ground-truth manifest dataclasses.
+- injector.py: writes a corrupted COPY of a CLEAN cohort with a declared number
+  of each error type at deterministic (seed-driven) coordinates; never mutates
+  the input; records a complete (subject_id, field, visit) ground-truth manifest
+  and the clean-coordinate denominator for specificity.
+- runner.py: executes the standard `neurotcs audit` CLI on the corrupted cohort
+  and returns the flags (uses the public CLI, not internal APIs).
+- scorer.py: pure detection scorer -- per-type coverage, overall coverage, and
+  specificity on clean coordinates, each with confidence intervals. Wilson score
+  interval (proportions) and exact Clopper-Pearson interval (Beta-quantile via
+  Lentz continued fraction, no SciPy dependency); both verified against
+  reference values including boundary cases.
+- CLI: `neurotcs validate-coverage <clean_cohort>` runs inject -> audit -> score
+  and prints coverage/specificity with CIs and an explicit honest-scope banner.
+
+### Honest scope (stated in code, docs, and CLI output)
+Arm B measures rule-set COVERAGE against a realistic error distribution, plus
+specificity -- NOT accuracy. For an error type that maps exactly onto an encoded
+rule, detection is 1.0 by construction; the legitimate, non-tautological output
+is what fraction of a realistic error distribution falls within the rule set's
+detectable scope. Arm B never substitutes for Arm A (flag PPV via expert
+adjudication). DUA-gated cohort data is never embedded.
+
+### Tests
+1889 -> 1909 passed (+20). tests/validation/test_validation_harness.py: Wilson
+& Clopper-Pearson against reference values and boundary cases; scorer
+coordinate-join correctness (incl. sheet-prefix and visit-type tolerance,
+false-positive-on-clean counting, per-type breakdown, honest-note presence);
+injector determinism, input-immutability, complete-manifest, value-corruption,
+and pool-exhaustion guard -- all on a synthetic in-temp cohort (no external
+data). ruff clean; default v3 unchanged at 69/65/1236; new files strict ASCII;
+neurotcs.validation auto-discovered by setuptools (ships in the wheel).
+
+---
+
 ## [1.64.0] -- 2026-06-01 -- E-2026-037: AD-only scope purge + honest endorsement provenance (external-audit findings)
 
 Addresses two external-audit findings. NeuroTCS is an Alzheimer's-disease

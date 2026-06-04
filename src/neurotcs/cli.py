@@ -1154,6 +1154,66 @@ def cmd_verify(args: argparse.Namespace) -> int:
     return EXIT_VERIFY
 
 
+def cmd_validate_coverage(args: argparse.Namespace) -> int:
+    """Arm B coverage measurement: inject a realistic error taxonomy into a
+    CLEAN cohort and report rule-set detection coverage with CIs.
+
+    HONEST: this measures COVERAGE of a realistic error distribution, not
+    accuracy, and does not substitute for Arm A expert adjudication. See
+    docs/VALIDATION_PROTOCOL.md.
+    """
+    import json as _json
+    import tempfile as _tempfile
+    from pathlib import Path as _Path
+
+    from neurotcs.validation import (
+        ErrorType,
+        InjectionSpec,
+        inject_errors,
+        run_audit_flags,
+        score_detection,
+    )
+
+    spec = InjectionSpec(counts={
+        ErrorType.IMPLAUSIBLE_HIGH: args.n_high,
+        ErrorType.UNIT_ERROR: args.n_unit,
+        ErrorType.DECIMAL_SHIFT: args.n_decimal,
+        ErrorType.SIGN_FLIP: args.n_sign,
+        ErrorType.CATEGORICAL_INVALID: args.n_categorical,
+    })
+    with _tempfile.TemporaryDirectory() as td:
+        corrupt = _Path(td) / "corrupt.xlsx"
+        try:
+            manifest = inject_errors(args.cohort, spec, args.seed, corrupt)
+        except (ValueError, FileNotFoundError) as e:
+            _err(str(e))
+            return EXIT_INPUT
+        flags = run_audit_flags(str(corrupt))
+        report = score_detection(manifest, flags)
+
+    payload = report.to_dict()
+    payload["seed"] = args.seed
+    payload["cohort"] = str(args.cohort)
+
+    cov = report.overall_coverage
+    lo, hi = report.overall_coverage_ci
+    print("NeuroTCS Arm B coverage (NOT accuracy; see VALIDATION_PROTOCOL.md)")
+    print(f"  injected: {report.total_injected}  detected: {report.total_detected}")
+    print(f"  overall coverage: {cov:.3f}  95% CI [{lo:.3f}, {hi:.3f}]")
+    sp = report.specificity
+    slo, shi = report.specificity_ci
+    print(f"  specificity (clean coords): {sp:.4f}  95% CI [{slo:.4f}, {shi:.4f}]")
+    for r in report.per_type:
+        clo, chi = r.coverage_ci
+        print(f"    {str(r.error_type):20} {r.detected:>3}/{r.injected:<3} "
+              f"coverage={r.coverage:.2f} CI[{clo:.2f},{chi:.2f}]")
+
+    if args.out:
+        _Path(args.out).write_text(_json.dumps(payload, indent=2))
+        _err(f"NOTE: coverage report written to {args.out}")
+    return EXIT_CLEAN
+
+
 # --------------------------------------------------------------------------- #
 # parser
 # --------------------------------------------------------------------------- #
@@ -1252,6 +1312,28 @@ def build_parser() -> argparse.ArgumentParser:
                    help="path to a *.bundle.json file, OR the audit output "
                         "directory (the bundle inside it is located automatically)")
     v.set_defaults(func=cmd_verify)
+
+    vc = sub.add_parser(
+        "validate-coverage",
+        help="Arm B: inject a realistic error taxonomy into a CLEAN cohort "
+             "and measure rule-set detection coverage (NOT accuracy)")
+    vc.add_argument("cohort", help="path to a CLEAN cohort workbook")
+    vc.add_argument("-o", "--out", default=None,
+                    help="path to write the coverage report JSON "
+                         "(default: stdout only)")
+    vc.add_argument("--seed", type=int, default=0,
+                    help="injection seed (determinism)")
+    vc.add_argument("--n-high", type=int, default=10,
+                    help="number of implausible_high errors to inject")
+    vc.add_argument("--n-unit", type=int, default=10,
+                    help="number of unit_error errors to inject")
+    vc.add_argument("--n-decimal", type=int, default=10,
+                    help="number of decimal_shift errors to inject")
+    vc.add_argument("--n-sign", type=int, default=5,
+                    help="number of sign_flip errors to inject")
+    vc.add_argument("--n-categorical", type=int, default=5,
+                    help="number of categorical_invalid errors to inject")
+    vc.set_defaults(func=cmd_validate_coverage)
     return p
 
 
