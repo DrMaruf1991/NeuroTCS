@@ -6,12 +6,9 @@ internationally endorsed published guidelines (NIA-AA 2018 Framework,
 AA 2024 Revised Criteria with Jack 2024 Table 7 integrated biological +
 clinical staging, AA 2024 TRAC framework for anti-Aβ therapy trajectories).
 
-**Scope note (v1.9.0+):** NeuroTCS v1.x is scope-narrowed to Alzheimer's
-disease in preparation for FDA Q-Submission (target Q1 2027). The non-AD
-rule packs that previously shipped in v1.7.x (PD/Hoehn-Yahr, MS/McDonald,
-oncology RECIST + iRECIST, stroke mRS, lung-nodule Fleischner) have been
-extracted to seed future per-disease repositories post-FDA-clearance. See
-docs/SCOPE.md for the scope-decision rationale.
+**Scope (v1.9.0+):** NeuroTCS is an Alzheimer's-disease auditing tool. It
+ships exactly the AD rule packs above; it does not contain, claim, or roadmap
+any non-AD disease packs.
 
 See docs/transcription_audit/ for per-pack YAML <-> source verification.
 

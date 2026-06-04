@@ -1,3 +1,63 @@
+## [1.64.0] -- 2026-06-01 -- E-2026-037: AD-only scope purge + honest endorsement provenance (external-audit findings)
+
+Addresses two external-audit findings. NeuroTCS is an Alzheimer's-disease
+auditing tool; this release removes every multi-disease scope claim from the
+shipped source and corrects an endorsement overclaim. Metadata/documentation
+only -- v3 default audit UNCHANGED at 69/65/1236, deterministic, format 1.4.0;
+the audit_id canonical fingerprint is provably untouched (new field is metadata).
+
+### Honest endorsement provenance (Finding: co-author affiliations listed as endorsers)
+
+The production rule packs listed Jack-2024 co-author affiliations -- including
+non-AD and commercial bodies (Michael J. Fox Foundation for Parkinson's
+Research, Takeda, Novartis) and an FDA office cited only by co-authorship -- in
+`endorsing_bodies`, conflating authorship affiliation with framework
+endorsement. Fix:
+- New schema field `source_author_affiliations: list[str]` (informational
+  provenance; explicitly NOT endorsements; excluded from the canonical
+  audit_id SHA -- proven by test).
+- Across all 6 production packs, every entry that was merely a co-author's
+  employer was MOVED to `source_author_affiliations`; entries whose basis is
+  genuine protocol adoption were REWORDED to state that basis (e.g. "AD staging
+  implemented by cohort protocol") with the co-author parenthetical removed; an
+  FDA-by-co-authorship entry was moved (FDA remains an endorser only where it
+  took an actual regulatory action, e.g. the LEQEMBI/KISUNLA approvals in the
+  TRAC pack). After the split every pack still has >=6 GENUINE endorsers, so the
+  production >=5 gate passes honestly (untouched) with zero warnings.
+- No co-author framing and no non-AD body remains in any `endorsing_bodies`
+  list (proven by new tests).
+
+### AD-only scope purge (Finding: multi-disease claims outrun the AD-only repo)
+
+Removed all forward-looking multi-disease scope/roadmap language from the
+shipped source:
+- input_contract v1_0/v1_1/v1_2 SPECIFICATION.md: `disease_domain` enum reduced
+  to `{alzheimers, custom}` (the only values the implementation accepts); the
+  "future NeuroTCS-PD/MS/Oncology/Stroke/LungNodule repositories" narrative and
+  the cardiology/oncology/pulmonology "new disease domains" rows removed.
+- rulepack/clinical_ranges/adapters package docstrings: dropped the "future
+  per-disease repositories" + PD/MS/oncology/stroke/lung-nodule enumerations;
+  stated plainly that NeuroTCS is AD-only and roadmaps no non-AD packs.
+- rulepack/schema.py: DiseaseDomain + Transition + State + clinical_source_
+  authority docstrings rewritten with AD examples (AA-2024 stages, CN<MCI<AD)
+  in place of RECIST / Hoehn-Yahr / EDSS / mRS; "future per-disease repos"
+  roadmap removed. The AD-only enum ENFORCEMENT (non-AD domains fail validation)
+  is retained -- that is correct AD-only behavior.
+- vital_signs deprecation reason: removed the "future neurotcs-cardiology repo"
+  roadmap clause.
+
+### Tests
+1869 -> 1889 passed (+20). New tests/rulepack/test_endorsement_provenance_
+honesty.py: no co-author-framed entry in any endorsing_bodies; no non-AD body
+(Michael J. Fox / Parkinson's / Takeda / Novartis) in any endorsing_bodies;
+every pack keeps >=5 genuine endorsers; moved affiliations preserved in
+source_author_affiliations; and source_author_affiliations mutation does NOT
+change the audit_id SHA. Updated the canonical-serialization partition test and
+the loader metadata comment to register the new field as metadata. ruff clean;
+default v3 unchanged at 69/65/1236; edited code files introduce no new non-ASCII.
+
+---
+
 ## [1.63.0] -- 2026-06-01 -- E-2026-036: ARIA severity recognition (vocabulary) layer + van Etten 2026 anchor (opt-in)
 
 Completes the ARIA grading capability. The NUMERIC half already shipped as the

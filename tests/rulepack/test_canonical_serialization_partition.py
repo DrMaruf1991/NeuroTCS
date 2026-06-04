@@ -36,6 +36,7 @@ METADATA_FIELDS = (
     "clinical_source_authority",
     "reviewers",
     "endorsing_bodies",
+    "source_author_affiliations",
     "anchor_citation",
     "notes",
     "override_allowed_default",

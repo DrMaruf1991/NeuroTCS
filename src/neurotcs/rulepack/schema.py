@@ -147,20 +147,15 @@ class RulePackStatus(str, Enum):
 
 
 class DiseaseDomain(str, Enum):
-    """Disease domain (v1.9.0+ scope-narrowed to AD).
+    """Disease domain (AD-only).
 
-    NeuroTCS v1.x is scope-narrowed to Alzheimer's disease in preparation for
-    FDA Q-Submission (target Q1 2027). The enum is intentionally restricted
-    to ALZHEIMERS + CUSTOM; non-AD domains that previously shipped in v1.7.x
-    have been extracted to seed future per-disease repositories. See
-    docs/SCOPE.md.
+    NeuroTCS is an Alzheimer's-disease auditing tool. The enum is restricted
+    to ALZHEIMERS + CUSTOM. See docs/SCOPE.md.
 
     ``CUSTOM`` remains so vendor-specific or unreleased Alzheimer's variants
-    (e.g., research-only sub-staging schemas) can be validated. Note: a
-    rule pack declaring a non-AD domain such as ``parkinsons`` will fail
-    validation under v1.9.0; the future per-disease repos will ship their
-    own DiseaseDomain enums or import from a shared ``neurotcs-core``
-    package once that is split out.
+    (e.g., research-only sub-staging schemas) can be validated. A rule pack
+    declaring any non-AD domain (e.g. ``parkinsons``) fails validation: this
+    tool audits Alzheimer's disease only.
     """
     ALZHEIMERS = "alzheimers"
     CUSTOM = "custom"
@@ -182,18 +177,14 @@ class AttributionType(str, Enum):
       does not state the encoded rule in the form encoded. Requires
       `inference_rationale` to be set, explaining the bridging logic.
 
-    Example clinical_inference uses:
-      - RECIST 1.1 CR -> PD with min_delta_t_days=56: Eisenhauer 2009 does
-        not state "CR -> PD requires >= 8 weeks" verbatim. The transcriber
-        applies the clinical inference that a direct CR -> PD transition
-        in a single scan is implausible given measurement noise, and
-        encodes a min interval informed by RECIST's 8-week response
-        confirmation window (§3.3.4).
-      - PD Hoehn-Yahr two-step jumps with min_delta_t_days=365: anchored
-        to the Marras 2002 systematic review's finding that natural-history
-        progression averages roughly 1 stage per 2-3 years (the review does
-        NOT publish a "Table 2 of stage-transition intervals"; the 365-day
-        floor is the transcriber's conservative clinical inference).
+    Example clinical_inference uses (from the AD packs):
+      - AA-2024 staging transitions where the encoded min interval reflects a
+        board-certified clinical inference (e.g. a conservative minimum
+        between-visit interval) informed by, but not stated verbatim in, the
+        cited guideline. Requires `inference_rationale` explaining the bridge.
+      - A transition self-downgraded from guideline_quote to clinical_inference
+        when the source table caption was not verified word-for-word -- the
+        honest verbatim-vs-inference discipline this schema enforces.
     """
     GUIDELINE_QUOTE = "guideline_quote"
     CLINICAL_INFERENCE = "clinical_inference"
@@ -207,7 +198,8 @@ class State(BaseModel):
     """One discrete clinical state in the rule pack's state space.
 
     States are ordered: position in the state_space list is meaningful for
-    ordinal scales (H&Y, EDSS, mRS, AA 2024 stages, RECIST CR<PR<SD<PD).
+    ordinal scales (e.g. AA-2024 biological stages A<B<C<D; clinical stages
+    CN<MCI<AD).
     """
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -461,9 +453,9 @@ class RulePack(BaseModel):
         ..., min_length=1, max_length=1024,
         description="The published guideline + endorsing professional society "
                     "where clinical authority resides. Example: "
-                    "'RECIST 1.1 (Eisenhauer 2009, EJC 45:228-247) - RECIST "
-                    "Working Group at EORTC; endorsed by ESMO Clinical Practice "
-                    "Guidelines for solid tumor response assessment.'"
+                    "'NIA-AA Revised Criteria (Jack 2024, Alz & Dementia, PMID "
+                    "38934362) - Alzheimer's Association workgroup; integrated "
+                    "biological + clinical AD staging.'"
     )
     reviewers: list[str] = Field(
         default_factory=list,
@@ -487,6 +479,19 @@ class RulePack(BaseModel):
                     "entries warned) for production status; optional for "
                     "research_preview and skeleton statuses. Added in "
                     "schema_version 1.4.0 per gap-check Finding A 2026-05-26."
+    )
+    source_author_affiliations: list[str] = Field(
+        default_factory=list,
+        description="Institutional affiliations of the AUTHORS of the cited "
+                    "source guideline. INFORMATIONAL PROVENANCE ONLY -- these "
+                    "are NOT endorsements of this rulepack or of NeuroTCS. A "
+                    "co-author's employer is recorded here, never in "
+                    "endorsing_bodies, so that endorsement is never overstated. "
+                    "Added per external-audit Finding (2026-06): the prior "
+                    "practice of listing co-author employers in endorsing_bodies "
+                    "conflated authorship affiliation with framework "
+                    "endorsement. Optional; informational; does not affect the "
+                    "production endorsing_bodies gate."
     )
 
     # Anchor citation for the framework as a whole

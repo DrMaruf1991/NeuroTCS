@@ -19,10 +19,9 @@ The architectural primitives are deliberately identical to rulepack:
 Schema version 1.0.0. Future schema versions will be additive (extra optional
 fields). Existing packs at schema 1.0.0 continue to load under future schemas.
 
-Per the v1.x AD-only scope (docs/SCOPE.md), the production range packs ship
-with v1.10.0 cover the measurement domains that appear in AD anti-amyloid
-trials. Non-AD range packs (e.g. PD UPDRS scores, oncology RECIST measurements)
-are deferred to the future per-disease repositories.
+Per the AD-only scope (docs/SCOPE.md), the production range packs cover the
+measurement domains that appear in AD anti-amyloid trials. NeuroTCS is an
+Alzheimer's-disease tool and does not ship or roadmap non-AD range packs.
 """
 
 from __future__ import annotations

@@ -29,7 +29,6 @@ The contract is the boundary between the AI being audited and the audit framewor
 | UCUM unit validation | New | Numeric units must conform to UCUM common subset |
 | Reference range field | New | Optional `[low, high]` per biomarker |
 | Long-format biomarker table | New | Alternative file `biomarkers.parquet` for high-cardinality cases |
-| Three new disease domains | Additive | cardiology, oncology (general), pulmonology |
 | Three new validation steps | New | Biomarker structural, UCUM, state-or-biomarker presence |
 
 **Backward compatibility:** Every valid v1.0 submission remains valid under v1.1 with no changes. The `neurotcs_contract_version` field accepts both `"1.0.0"` and `"1.1.0"`.
@@ -79,7 +78,7 @@ submission/
     "version": "string (semver)",
     "vendor": "string"
   },
-  "disease_domain": "alzheimers|parkinsons|multiple_sclerosis|glioblastoma|stroke|cardiology|oncology|pulmonology|custom",
+  "disease_domain": "alzheimers|custom",
   "rule_pack": {"id": "string", "source": "registry|inline"},
   "data_files": {
     "predictions": "string — relative path",
@@ -96,11 +95,10 @@ submission/
 
 ### 5.2 New disease domains in v1.1
 
-`cardiology`, `oncology` (general), and `pulmonology` are added to support cardiac function AI, RECIST-based tumor measurement AI, and lung-disease tracking AI.
 
 `custom` remains the escape hatch for domains not yet enumerated. Submissions using `custom` MUST provide an inline rule pack.
 
-> **v1.9.0+ implementation scope note.** The input contract v1.1 *specification* enumerates all 8 disease domains plus `custom` as a stable wire format. The NeuroTCS v1.x *implementation* of the contract only validates `alzheimers` and `custom` (see [`docs/SCOPE.md`](../../../docs/SCOPE.md)): submissions declaring other domains will fail the Pydantic-level `DiseaseDomain` enum validation under v1.9.0+. The spec retains the broader enum because future per-disease NeuroTCS repositories (NeuroTCS-PD, NeuroTCS-MS, NeuroTCS-Oncology, NeuroTCS-Stroke, NeuroTCS-LungNodule) will accept the corresponding domain value when they ship post-FDA-clearance of the AD core. This is an intentional "implementation narrower than specification" pattern.
+> **Scope note.** NeuroTCS is an Alzheimer's-disease tool. The input contract accepts `disease_domain` values `alzheimers` and `custom`; no non-AD disease domains are defined or accepted.
 
 ---
 

@@ -34,21 +34,24 @@ reviewers: []
 endorsing_bodies:
   - "Alzheimer's Association (workgroup convener; senior author Maria C. Carrillo; alz.org press release 2024-06-27)"
   - "Mayo Clinic Department of Radiology (Clifford R. Jack Jr., lead author, PMID 38934362)"
-  - "U.S. Food and Drug Administration, Office of Neuroscience (Teresa Buracchio, co-author affiliation)"
+  - "Lund University / Skåne University Hospital BioFINDER (AD biomarker staging implemented by cohort protocol)"
+  - "Washington University in St. Louis Knight ADRC (AD staging implemented by cohort protocol; DIAN-TU)"
+  - "Amsterdam UMC Alzheimer Center / Amsterdam Dementia Cohort (AD staging implemented by cohort protocol)"
+  - "ALZFORUM peer commentary on AA-2024 (Revised Again: Alzheimer's Diagnostic Criteria Get Another Makeover)"
+  - "International Working Group (IWG) on AD diagnosis (concurrent independent criteria comparison)"
+source_author_affiliations:
+  # Institutional affiliations of the cited paper's authors --
+  # informational provenance only; NOT endorsements of NeuroTCS.
   - "The Michael J. Fox Foundation for Parkinson's Research (Billy Dunn, co-author affiliation)"
   - "Banner Sun Health Research Institute, Civin Laboratory for Neuropathology (Thomas G. Beach, co-author)"
-  - "Lund University / Skåne University Hospital BioFINDER (Oskar Hansson, co-author)"
   - "University of California Berkeley, School of Public Health (William Jagust, co-author)"
-  - "Washington University in St. Louis Knight ADRC (Eric McDade, co-author; DIAN-TU)"
-  - "Amsterdam UMC Alzheimer Center / Amsterdam Dementia Cohort (Philip Scheltens, Charlotte E. Teunissen, co-authors)"
   - "Harvard Medical School / Mass General Brigham (Reisa Sperling, co-author; A4 / AHEAD 3-45 studies)"
   - "BarcelonaBeta Brain Research Center (Jose Luis Molinuevo, co-author)"
   - "Wisconsin Alzheimer's Disease Research Center, University of Wisconsin-Madison (Ozioma C. Okonkwo, co-author; WRAP)"
   - "Alzheimer's Therapeutic Research Institute, University of Southern California (Michael S. Rafii, co-author)"
   - "Takeda Pharmaceuticals (J. Scott Andrews, co-author; global evidence & outcomes affiliation)"
   - "Novartis Neuroscience Global Drug Development (Ana Graf, co-author)"
-  - "ALZFORUM peer commentary on AA-2024 (Revised Again: Alzheimer's Diagnostic Criteria Get Another Makeover)"
-  - "International Working Group (IWG) on AD diagnosis (concurrent independent criteria comparison)"
+  - "U.S. Food and Drug Administration, Office of Neuroscience (Teresa Buracchio, co-author affiliation)"
 anchor_citation:
   citation_pmid: '38934362'
   citation_doi: 10.1002/alz.13859

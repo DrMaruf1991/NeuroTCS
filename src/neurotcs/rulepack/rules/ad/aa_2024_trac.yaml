@@ -49,19 +49,22 @@ endorsing_bodies:
   - "Alzheimer's Association (workgroup convener; senior author Maria C. Carrillo)"
   - "UCSF Weill Institute for Neurosciences, Edward and Pearl Fein Memory and Aging Center (Renaud La Joie, lead author, PMID 41298245)"
   - "U.S. Food and Drug Administration (LEQEMBI accelerated approval 2023-01-06, traditional approval 2023-07-06, maintenance dosing 2025-01; KISUNLA approval 2024-07-02, modified titration label 2025-07-09)"
+  - "UC Berkeley (Centiloid amyloid-PET quantification implemented by protocol)"
+  - "Amsterdam UMC / Lund University BioFINDER (AD biomarker staging implemented by cohort protocol)"
+  - "Centiloid Working Group (TRAC uses Centiloid units; Klunk et al. 2015 referenced throughout)"
+source_author_affiliations:
+  # Institutional affiliations of the cited paper's authors --
+  # informational provenance only; NOT endorsements of NeuroTCS.
   - "Eisai / Biogen (Clarity AD trial protocol; lecanemab anti-amyloid antibody)"
   - "Eli Lilly (TRAILBLAZER-ALZ 2 trial protocol; donanemab-azbt anti-amyloid antibody)"
   - "Kirk Kerkorian School of Medicine, University of Nevada Las Vegas, Chambers-Grundy Center for Transformative Neuroscience (Jeffrey L. Cummings, co-author)"
   - "Indiana University School of Medicine Department of Neurology (Jeffrey L. Dage, co-author; Shannon L. Risacher, co-author)"
   - "UC San Diego (Douglas Galasko, co-author)"
   - "University of Pittsburgh (Milos D. Ikonomovic, Thomas K. Karikari, co-authors)"
-  - "UC Berkeley (Susan M. Landau, co-author; Centiloid)"
   - "Washington University in St. Louis (Jorge J. Llibre-Guerra, co-author)"
   - "University College London / National Hospital for Neurology and Neurosurgery (Catherine J. Mummery, co-author)"
-  - "Amsterdam UMC / Lund University BioFINDER (Rik Ossenkoppele, Ruben Smith, co-authors)"
   - "Massachusetts General Hospital / Harvard Medical School (Julie C. Price, co-author)"
   - "Yale School of Medicine (Christopher H. van Dyck, co-author)"
-  - "Centiloid Working Group (TRAC uses Centiloid units; Klunk et al. 2015 referenced throughout)"
 
 anchor_citation:
   citation_pmid: "41298245"

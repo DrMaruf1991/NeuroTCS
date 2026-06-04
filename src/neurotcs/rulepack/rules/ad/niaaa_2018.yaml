@@ -46,17 +46,20 @@ endorsing_bodies:
   - "Alzheimer's Association (workgroup co-convener; alz.org)"
   - "National Institute on Aging (NIA, NIH; workgroup co-convener)"
   - "Mayo Clinic Department of Radiology (Clifford R. Jack Jr., lead author, PMID 29653606)"
+  - "Amsterdam UMC (AD staging implemented by protocol in the Amsterdam Dementia Cohort)"
+  - "Banner Sun Health Research Institute (Eric Reiman / Pierre Tariot)"
+  - "USA Centers for Medicare & Medicaid Services (CMS; informs the IDEAS / New IDEAS amyloid PET coverage decisions, which use NIA-AA staging)"
+  - "International Working Group (IWG) on AD diagnosis (the framework is referenced and contrasted with IWG criteria in Dubois et al.)"
+source_author_affiliations:
+  # Institutional affiliations of the cited paper's authors --
+  # informational provenance only; NOT endorsements of NeuroTCS.
   - "Washington University in St. Louis Department of Neurology (David Holtzman, co-author; ADRC)"
   - "University of California Berkeley Department of Public Health and Neuroscience (William Jagust, co-author)"
   - "University of Pennsylvania Department of Medicine (co-author affiliation)"
-  - "Amsterdam UMC (Philip Scheltens, co-author; Amsterdam Dementia Cohort)"
   - "BarcelonaBeta Brain Research Center, Pasqual Maragall Foundation (Jose Luis Molinuevo, co-author)"
-  - "Banner Sun Health Research Institute (Eric Reiman / Pierre Tariot)"
   - "Harvard Medical School / Mass General Brigham (Reisa Sperling, co-author; A4 study)"
   - "Stanford University Department of Pathology (Thomas Montine, co-author)"
   - "University of Cologne Department of Psychiatry (Frank Jessen, co-author)"
-  - "USA Centers for Medicare & Medicaid Services (CMS; informs the IDEAS / New IDEAS amyloid PET coverage decisions, which use NIA-AA staging)"
-  - "International Working Group (IWG) on AD diagnosis (the framework is referenced and contrasted with IWG criteria in Dubois et al.)"
 
 anchor_citation:
   citation_pmid: "29653606"

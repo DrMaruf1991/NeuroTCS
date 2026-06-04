@@ -20,10 +20,8 @@ Shipped (in input_contract v1.0 and v1.1):
 Planned for v1.9.x+ (pending DUA, AD-only):
   - ALZ-NET adapter (Aim 6 real-world anti-amyloid; 3,600+ patients)
 
-Scope note (v1.9.0+): NeuroTCS v1.x is AD-only. Non-AD adapters (PPMI for
-PD, RIDER Lung PET-CT for oncology) that were previously listed here have
-been removed; they are roadmap items for future per-disease repositories
-post-FDA-clearance of the AD core. See docs/SCOPE.md.
+Scope (v1.9.0+): NeuroTCS is AD-only. It contains no non-AD adapters and
+roadmaps none.
 
 The AD adapters live in neurotcs.input_contract.v1_0.adapters and
 neurotcs.input_contract.v1_1.adapters; they will be re-exported here

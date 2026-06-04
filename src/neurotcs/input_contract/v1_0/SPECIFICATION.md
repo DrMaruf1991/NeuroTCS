@@ -70,7 +70,7 @@ The manifest declares what the submission contains and how it should be audited.
     "version": "string — semver of the AI system",
     "vendor": "string — organization name; 'self' if internal"
   },
-  "disease_domain": "string — one of {alzheimers, parkinsons, multiple_sclerosis, glioblastoma, stroke, custom}",
+  "disease_domain": "string — one of {alzheimers, custom}",
   "rule_pack": {
     "id": "string — registered rule pack ID, e.g. 'aa2024+trac@1.0'",
     "source": "string — 'registry' or 'inline'"
@@ -184,7 +184,7 @@ When `attribution_ref` is provided, the referenced JSON file contains per-flag a
 }
 ```
 
-This is the **only** field that requires neuroimaging-specific format. Everything else in the contract is general enough to apply to oncology, neurology, or any other longitudinal AI domain.
+This is the **only** field that requires neuroimaging-specific format. NeuroTCS is an Alzheimer's-disease tool; the contract accepts `alzheimers` and `custom`.
 
 ---
 

@@ -62,7 +62,8 @@ class LoadedRulePack:
 # empirically (v1.20.0 field-access trace; see
 # docs/design/V1_20_0_audit_id_serialization.md). ONLY these enter the
 # canonical SHA -> audit_id, so provenance/metadata changes (endorsing_bodies,
-# effective_date, schema_version, ruleset_version, rulepack_id, reviewers,
+# source_author_affiliations, effective_date, schema_version, ruleset_version,
+# rulepack_id, reviewers,
 # anchor_citation, framework_name, disease_domain, clinical_source_authority,
 # transcribed_by, status, notes, override_allowed_default) NEVER drift the
 # scientific fingerprint. Per-transition override_allowed is nested inside the

@@ -51,11 +51,14 @@ endorsing_bodies:
   - "Alzheimer's Association (Jack 2024 workgroup convener; Maria C. Carrillo senior author)"
   - "Mayo Clinic Department of Radiology (Clifford R. Jack Jr., lead author PMID 38934362 and PMID 27371494)"
   - "National Institute on Aging (NIA, NIH; AT(N) framework co-development per Jack 2016/2018)"
-  - "U.S. Food and Drug Administration, Office of Neuroscience (Teresa Buracchio, Jack 2024 co-author)"
-  - "Washington University in St. Louis Knight ADRC (AT(N) staging implemented by protocol; Eric McDade co-author affiliation)"
-  - "Amsterdam UMC Alzheimer Center / Amsterdam Dementia Cohort (Charlotte E. Teunissen co-author affiliation)"
-  - "Lund University / Skåne University Hospital BioFINDER (Oskar Hansson co-author)"
+  - "Washington University in St. Louis Knight ADRC (AT(N) staging implemented by cohort protocol)"
+  - "Amsterdam UMC Alzheimer Center / Amsterdam Dementia Cohort (AT(N) staging implemented by cohort protocol)"
+  - "Lund University / Skåne University Hospital BioFINDER (AD biomarker staging implemented by cohort protocol)"
+source_author_affiliations:
+  # Institutional affiliations of the cited paper's authors --
+  # informational provenance only; NOT endorsements of NeuroTCS.
   - "Harvard Medical School / Mass General Brigham (Reisa Sperling co-author; A4 / AHEAD 3-45 studies)"
+  - "U.S. Food and Drug Administration, Office of Neuroscience (Teresa Buracchio, Jack 2024 co-author)"
 
 anchor_citation:
   citation_pmid: "38934362"
