@@ -1,0 +1,190 @@
+schema_version: "1.0.0"
+ontology_id: "imaging_severity/aria_grade@1.0.0"
+ontology_version: "1.0.0"
+effective_date: "2026-06-01"
+status: "research_preview"
+domain: "aria_grade"
+
+description: >
+  Citation-anchored recognition ontology for Amyloid-Related Imaging
+  Abnormalities (ARIA) severity labels. Maps the free-text labels datasets use
+  for ARIA findings ("ARIA-E moderate", "moderate edema", "ARIA-H severe",
+  "severe superficial siderosis", "no ARIA", ...) to a canonical (type, grade)
+  pair on the established four-level scheme {none, mild, moderate, severe} for
+  three ARIA finding types: ARIA-E (edema/effusion), ARIA-H microhemorrhage,
+  and ARIA-H superficial siderosis.
+
+  This is the RECOGNITION (vocabulary) layer. It is the companion of the
+  numeric range pack ad/aria_safety, which audits the underlying numeric values
+  (FLAIR size in cm, microhemorrhage count, siderosis focal-area count) against
+  the verbatim FDA-label / ASNR grade boundaries. Together they form one ARIA
+  capability: this layer recognizes a label and resolves it to a canonical
+  (type, grade); the range pack validates a measured value against the
+  published cutoffs. This layer does NOT itself assign cutoffs or diagnose --
+  it only normalizes how a grade is written.
+
+  Safety properties (same discipline as the disease-control and clinical-label
+  ontologies):
+  * recognition only -- never invents a grade, never assigns a numeric cutoff;
+  * unrecognized labels pass through unchanged (never guess);
+  * an ambiguous ontology (a synonym mapping to two different (type, grade)
+    pairs) fails closed at load;
+  * macrohemorrhage is recognized as its OWN separate finding, NOT folded into
+    a mild/moderate/severe ARIA-H tier (a macrohemorrhage, intracerebral
+    hemorrhage >1 cm, is a separate disqualifying category, per the FDA labels
+    and AURs).
+
+transcribed_by: >
+  Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo
+  International University in Tashkent (KIUT), Uzbekistan. ARIA recognition
+  layer, verify-first. The four-level severity scheme and its type structure
+  are anchored to the April 2026 Alzheimer's Association ARIA workgroup update
+  (van Etten et al., Alzheimer's Dement 2026;22:e71361), which confirms that
+  each ARIA-E, ARIA-H microhemorrhage, and ARIA-H siderosis finding is graded
+  mild/moderate/severe per the lecanemab and donanemab FDA labels, and to the
+  ASNR consensus (Cogswell 2022). The numeric grade boundaries themselves live
+  in the companion range pack ad/aria_safety, sourced verbatim from the FDA
+  labels; this layer does not restate them.
+
+canonical_source_authority: |
+  ARIA terminology and the mild/moderate/severe grading structure recognized
+  here are anchored to:
+  - van Etten ES, Mahinrad S, et al. Amyloid-related imaging abnormalities
+    (ARIA) in anti-amyloid therapies for Alzheimer's disease: An update from
+    the Alzheimer's Association ARIA workgroup. Alzheimer's Dement
+    2026;22:e71361 (DOI 10.1002/alz.71361; PMID 42015334). The newest
+    (April 2026) consensus. It defines ARIA-E (edema/effusion) and ARIA-H
+    (hemorrhage: microhemorrhage and/or superficial siderosis, rarely
+    macrohemorrhage), and states that each ARIA-E, ARIA-H microhemorrhage, and
+    ARIA-H siderosis is graded mild/moderate/severe per the lecanemab and
+    donanemab FDA labels -- i.e., it confirms (does not change) the numeric
+    grading scheme. It discourages the term "spontaneous ARIA": ARIA-like
+    findings in untreated individuals should be described by the specific
+    radiologic finding, not labelled ARIA.
+  - Sperling RA, et al. Amyloid-related imaging abnormalities in
+    amyloid-modifying therapeutic trials. Alzheimers Dement 2011;7(4):367-385
+    (DOI 10.1016/j.jalz.2011.05.2351; PMID 21784348). The foundational paper
+    that introduced the ARIA / ARIA-E / ARIA-H terminology (qualitative
+    definitions only; it did not publish the numeric cutoffs).
+  - Cogswell PM, et al. ASNR detection and reporting recommendations. AJNR Am
+    J Neuroradiol 2022;43(9):E19-E35 (DOI 10.3174/ajnr.A7586; PMID 35953274).
+    The ASNR consensus reproducing the four-level grading scheme.
+
+  Numeric grade boundaries are intentionally NOT encoded here -- they are in
+  the companion range pack ad/aria_safety (verbatim FDA LEQEMBI/KISUNLA labels:
+  ARIA-E <5 / 5-10 / >10 cm; microhemorrhage <=4 / 5-9 / >=10; siderosis
+  1 / 2 / >2). This layer maps labels to canonical grades; the range pack
+  validates measured values.
+
+citations:
+  - key: "van_etten_2026"
+    citation_doi: "10.1002/alz.71361"
+    citation_pmid: "42015334"
+    citation_text: >
+      van Etten ES, Mahinrad S, et al. Amyloid-related imaging abnormalities
+      (ARIA) in anti-amyloid therapies for Alzheimer's disease: An update from
+      the Alzheimer's Association ARIA workgroup. Alzheimer's Dement
+      2026;22:e71361.
+  - key: "sperling_2011"
+    citation_doi: "10.1016/j.jalz.2011.05.2351"
+    citation_pmid: "21784348"
+    citation_text: >
+      Sperling RA, et al. Amyloid-related imaging abnormalities in
+      amyloid-modifying therapeutic trials: recommendations from the
+      Alzheimer's Association Research Roundtable Workgroup. Alzheimers Dement
+      2011;7(4):367-385. Introduced ARIA/ARIA-E/ARIA-H terminology
+      (qualitative; no numeric cutoffs).
+  - key: "cogswell_2022_asnr"
+    citation_doi: "10.3174/ajnr.A7586"
+    citation_pmid: "35953274"
+    citation_text: >
+      Cogswell PM, et al. Amyloid-related imaging abnormalities with emerging
+      Alzheimer disease therapeutics: detection and reporting recommendations
+      for clinical practice. AJNR Am J Neuroradiol 2022;43(9):E19-E35.
+
+# canonical finding types (the "type" half of the (type, grade) pair):
+#   aria_e                -> ARIA-E (edema/effusion)
+#   aria_h_microhemorrhage-> ARIA-H microhemorrhage
+#   aria_h_siderosis      -> ARIA-H superficial siderosis
+#   macrohemorrhage       -> separate disqualifying finding (NOT a graded tier)
+# canonical grades: none, mild, moderate, severe
+# Each group below lists the raw label synonyms that resolve to a (type, grade).
+
+grade_synonyms:
+  # generic grade words (used in combination with a recognized type word)
+  none: ["none", "no", "negative", "absent", "grade 0", "g0"]
+  mild: ["mild", "grade 1", "g1", "mild grade"]
+  moderate: ["moderate", "grade 2", "g2", "moderate grade"]
+  severe: ["severe", "grade 3", "g3", "severe grade"]
+
+type_synonyms:
+  aria_e:
+    - "aria-e"
+    - "aria e"
+    - "ariae"
+    - "edema"
+    - "oedema"
+    - "vasogenic edema"
+    - "vasogenic oedema"
+    - "effusion"
+    - "sulcal effusion"
+  aria_h_microhemorrhage:
+    - "aria-h microhemorrhage"
+    - "aria-h microhaemorrhage"
+    - "aria h microhemorrhage"
+    - "microhemorrhage"
+    - "microhaemorrhage"
+    - "microbleed"
+    - "cerebral microbleed"
+    - "cmb"
+  aria_h_siderosis:
+    - "aria-h siderosis"
+    - "aria h siderosis"
+    - "superficial siderosis"
+    - "cortical superficial siderosis"
+    - "siderosis"
+    - "css"
+  macrohemorrhage:
+    - "macrohemorrhage"
+    - "macrohaemorrhage"
+    - "intracerebral hemorrhage"
+    - "intracerebral haemorrhage"
+    - "ich"
+    - "lobar hemorrhage"
+    - "lobar haemorrhage"
+
+# Fully-spelled canonical labels recognized directly as (type, grade) pairs,
+# for datasets that store a single combined string. These are exact,
+# unambiguous combinations; partial/free-text strings are resolved by the
+# type+grade token logic in the recognizer.
+canonical_labels:
+  - label: "no aria"
+    type: "none"
+    grade: "none"
+  - label: "aria-e mild"
+    type: "aria_e"
+    grade: "mild"
+  - label: "aria-e moderate"
+    type: "aria_e"
+    grade: "moderate"
+  - label: "aria-e severe"
+    type: "aria_e"
+    grade: "severe"
+  - label: "aria-h microhemorrhage mild"
+    type: "aria_h_microhemorrhage"
+    grade: "mild"
+  - label: "aria-h microhemorrhage moderate"
+    type: "aria_h_microhemorrhage"
+    grade: "moderate"
+  - label: "aria-h microhemorrhage severe"
+    type: "aria_h_microhemorrhage"
+    grade: "severe"
+  - label: "aria-h siderosis mild"
+    type: "aria_h_siderosis"
+    grade: "mild"
+  - label: "aria-h siderosis moderate"
+    type: "aria_h_siderosis"
+    grade: "moderate"
+  - label: "aria-h siderosis severe"
+    type: "aria_h_siderosis"
+    grade: "severe"

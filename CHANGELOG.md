@@ -1,3 +1,53 @@
+## [1.63.0] -- 2026-06-01 -- E-2026-036: ARIA severity recognition (vocabulary) layer + van Etten 2026 anchor (opt-in)
+
+Completes the ARIA grading capability. The NUMERIC half already shipped as the
+range pack ad/aria_safety (verbatim FDA LEQEMBI/KISUNLA + ASNR Cogswell 2022
+boundaries: ARIA-E <5 / 5-10 / >10 cm; microhemorrhage <=4 / 5-9 / >=10;
+siderosis 1 / 2 / >2; baseline-microhemorrhage exclusion; APOE stratification).
+This release adds the missing VOCABULARY half: a recognition layer that maps
+free-text ARIA labels to a canonical (type, grade), so a dataset's written
+severity ("ARIA-E moderate", "severe superficial siderosis", "mild microbleed")
+resolves to the same canonical grades the range pack audits -- one coherent ARIA
+capability, no duplication of the existing numeric pack.
+
+Verify-first provenance: the numeric scheme was confirmed UNCHANGED against the
+newest consensus, the April 2026 Alzheimer's Association ARIA workgroup update
+(van Etten ES, Mahinrad S, et al., Alzheimer's Dement 2026;22:e71361; DOI
+10.1002/alz.71361; PMID 42015334), read verbatim. That paper states each ARIA-E,
+ARIA-H microhemorrhage, and ARIA-H siderosis is graded mild/moderate/severe per
+the lecanemab and donanemab FDA labels -- i.e., it confirms (does not change) the
+boundaries the range pack already encodes. van Etten 2026 is now recorded as the
+newest citation anchor on the recognition layer.
+
+### Added
+- src/neurotcs/orchestration/aria_grade_ontology.yaml: recognition ontology for
+  ARIA-E, ARIA-H microhemorrhage, ARIA-H siderosis on {none, mild, moderate,
+  severe}, plus macrohemorrhage as a SEPARATE finding (never a graded ARIA-H
+  tier, per the FDA labels / AURs). Citations: van Etten 2026 (primary anchor),
+  Sperling 2011 (terminology origin), Cogswell 2022 ASNR. Numeric boundaries are
+  intentionally NOT restated here -- they live in ad/aria_safety.
+- src/neurotcs/orchestration/aria_grade.py: recognizer (load_aria_grade_ontology,
+  recognize_aria_grades). Resolves combined labels ("ARIA-E moderate") and
+  free-text type+grade ("moderate edema", "mild microbleed"); reuses
+  label_normalization._norm_token. Safety: recognition only; a type with no
+  grade, a grade with no type, a string naming two findings, a bare ARIA-H with
+  no subtype, or conflicting grades all fail closed (never guessed); ambiguous
+  ontology fails closed at load.
+- cli.py: opt-in --recognize-aria-grades COLUMN, scanning the raw ingested
+  tables for the named ARIA label column alongside subject_id; recorded in
+  input_warnings with the ontology id/sha and per-type counts. Off by default.
+
+### Tests
+1854 -> 1869 passed (+15). New tests/orchestration/test_aria_grade_recognition.py:
+combined + free-text resolution, none-label, macrohemorrhage-as-separate-finding,
+type-without-grade / grade-without-type / non-ARIA / two-findings / bare-ARIA-H /
+conflicting-grade all not-resolved, van Etten 2026 citation attached, per-type
+partition, collision fail-closed, and a guard asserting the companion numeric
+pack ad/aria_safety is present. ruff clean; default v3 unchanged at 69/65/1236;
+ontology ships in the wheel; all new files strict-ASCII.
+
+---
+
 ## [1.62.0] -- 2026-06-01 -- E-2026-035: verified citation hardening (clean-room provenance pass)
 
 Provenance-only release: a clean-room verification pass against PubMed/CrossRef

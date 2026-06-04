@@ -935,6 +935,45 @@ def cmd_audit(args: argparse.Namespace) -> int:
                     f"conversion_audit: {_cv.n_transitions} transition(s), "
                     f"{_impl} implausible/impossible flagged (advisory)")
 
+    # v1.63.0 (opt-in, --recognize-aria-grades COLUMN): recognize ARIA severity
+    # labels from a named clinical column -> canonical (type, grade), anchored to
+    # van Etten 2026 + ASNR. Recognition only; numeric boundaries live in the
+    # ad/aria_safety range pack. Unrecognized/ambiguous labels pass through.
+    _aria_col = getattr(args, "recognize_aria_grades", None)
+    if _aria_col:
+        from neurotcs.orchestration.aria_grade import (
+            load_aria_grade_ontology,
+            recognize_aria_grades,
+        )
+        # Scan the RAW ingested tables (not the projected clinical submission,
+        # which keeps only the canonical staging columns) for the named ARIA
+        # column alongside a subject_id column.
+        _ar_pairs: list[tuple[str, str]] = []
+        for _sheet, _df in tables.items():
+            _cols = list(getattr(_df, "columns", []))
+            if _aria_col in _cols and "subject_id" in _cols:
+                _ar_pairs.extend(zip(_df["subject_id"].astype(str),
+                                     _df[_aria_col].astype(str), strict=True))
+        if _ar_pairs:
+            _ar_ont = load_aria_grade_ontology()
+            _ar = recognize_aria_grades(_ar_pairs, _ar_ont)
+            if _ar.recognized:
+                if not args.quiet:
+                    print("# ARIA grade recognition "
+                          f"(--recognize-aria-grades {_aria_col}): "
+                          f"{len(_ar.recognized)} subject(s) recognized:")
+                    for _ty, _subs in sorted(_ar.by_type.items()):
+                        print(f"  {_ty}: {len(_subs)} subject(s)")
+                _ar_summary = "; ".join(f"{t}={len(s)}"
+                                        for t, s in sorted(_ar.by_type.items()))
+                submission_warnings.append(
+                    f"aria_grade_recognition: {len(_ar.recognized)} subject(s) "
+                    f"recognized via {_ar.ontology_id} "
+                    f"(sha256 {_ar.ontology_sha256[:12]}): {_ar_summary}")
+        elif not args.quiet:
+            print(f"# ARIA grade recognition: column {_aria_col!r} (with "
+                  "subject_id) not found in any sheet; nothing recognized.")
+
     result = run_full_audit(submission, expected_layers=_expected)
 
     # v1.39.3: UNIFIED COVERAGE HONESTY. NeuroTCS must never present a confident
@@ -1194,6 +1233,18 @@ def build_parser() -> argparse.ArgumentParser:
                         "stage is flagged implausible for data-quality review. "
                         "Advisory overlay reported alongside the audit; off by "
                         "default.")
+    a.add_argument("--recognize-aria-grades", metavar="COLUMN", default=None,
+                   help="recognize Amyloid-Related Imaging Abnormalities (ARIA) "
+                        "severity labels from the named column of the clinical "
+                        "table and resolve each to a canonical (type, grade) on "
+                        "the {none, mild, moderate, severe} scheme for ARIA-E, "
+                        "ARIA-H microhemorrhage, and ARIA-H siderosis "
+                        "(macrohemorrhage recognized as a separate finding). "
+                        "Anchored to the 2026 Alzheimer's Association ARIA "
+                        "workgroup update (van Etten 2026) + ASNR consensus. "
+                        "Recognition only; the numeric grade boundaries live in "
+                        "the ad/aria_safety range pack. Unrecognized/ambiguous "
+                        "labels pass through (never guessed). Off by default.")
     a.set_defaults(func=cmd_audit)
 
     v = sub.add_parser("verify", help="re-verify a signed bundle")
