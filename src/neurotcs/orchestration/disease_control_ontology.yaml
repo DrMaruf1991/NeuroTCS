@@ -1,0 +1,270 @@
+schema_version: "1.0.0"
+ontology_id: "subject_label/disease_control@1.0.0"
+ontology_version: "1.0.0"
+effective_date: "2026-06-01"
+status: "research_preview"
+domain: "disease_control"
+
+description: >
+  Citation-anchored recognition ontology for NON-Alzheimer's dementias and
+  dementia mimics (disease-control / differential-diagnosis groups). Each group
+  maps the raw labels study datasets use ("vascular dementia", "DLB", "Lewy
+  body dementia", "bvFTD", ...) to a canonical disease-control category anchored
+  to its primary consensus diagnostic-criteria publication. Its purpose is
+  SCOPE-HONEST PARTITIONING: a subject whose clinical label is a recognized
+  non-AD dementia is flagged as out-of-AD-scope so it is not silently forced
+  through the Alzheimer's clinical-stage vocabulary. It NEVER relabels a subject
+  to an AD stage, and it never diagnoses -- it only recognizes which published
+  non-AD category a label refers to. Unrecognized labels pass through unchanged.
+
+transcribed_by: >
+  Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo
+  International University in Tashkent (KIUT), Uzbekistan. USIL increment 3: a
+  scoped, verify-first disease-control recognition layer. Every category is
+  anchored to its primary consensus criteria publication, with DOI/PMID verified
+  before encoding (PMIDs confirmed against PubMed/journal pages or a verification
+  pass; the single pre-MEDLINE source, Kiloh 1961, is encoded DOI-only because no
+  PMID could be verified -- no identifier is fabricated).
+
+canonical_source_authority: |
+  Disease-control categories and their primary consensus diagnostic criteria:
+  - Vascular cognitive disorders / vascular dementia (VaD/VCI): Sachdev et al.,
+    VASCOG statement, Alzheimer Dis Assoc Disord 2014 (DOI
+    10.1097/WAD.0000000000000034). Legacy research criteria: NINDS-AIREN (Roman
+    1993) and the AHA/ASA statement that formalized "VCI" (Gorelick 2011).
+  - Dementia with Lewy bodies (DLB): McKeith et al., Fourth DLB Consortium
+    consensus report, Neurology 2017 (DOI 10.1212/WNL.0000000000004058).
+  - Parkinson's disease dementia (PDD): Emre et al., MDS Task Force, Mov Disord
+    2007 (DOI 10.1002/mds.21507).
+  - Behavioral-variant frontotemporal dementia (bvFTD): Rascovsky et al., Brain
+    2011 (DOI 10.1093/brain/awr179).
+  - Primary progressive aphasia (PPA): Gorno-Tempini et al., Neurology 2011 (DOI
+    10.1212/WNL.0b013e31821103e6).
+  - Idiopathic normal pressure hydrocephalus (iNPH): Relkin et al., INPH
+    Guidelines Part II, Neurosurgery 2005 (DOI 10.1227/01.neu.0000168185.29659.c5).
+  - Traumatic encephalopathy syndrome (TES; clinical syndrome associated with
+    TBI/CTE): Katz et al., NINDS consensus criteria, Neurology 2021 (DOI
+    10.1212/WNL.0000000000011850).
+  - Autoimmune encephalitis (AE): Graus et al., Lancet Neurol 2016 (DOI
+    10.1016/S1474-4422(15)00401-9).
+  - Mixed dementia: Schneider et al., Neurology 2007 (DOI
+    10.1212/01.wnl.0000271090.28148.24) as epidemiologic anchor.
+  - Corticobasal degeneration / syndrome (CBD/CBS): Armstrong et al., Neurology
+    2013 (DOI 10.1212/WNL.0b013e31827f0fd1).
+  - Progressive supranuclear palsy (PSP): Hoglinger et al., MDS-PSP criteria,
+    Mov Disord 2017 (DOI 10.1002/mds.26987).
+  - Depression-related cognitive impairment ("pseudodementia"): Kiloh, Acta
+    Psychiatr Scand 1961 (DOI 10.1111/j.1600-0447.1961.tb07367.x). DOI-only: no
+    PMID verified (the article predates routine MEDLINE indexing). The term
+    "pseudodementia" is increasingly deprecated in favor of "cognitive
+    impairment of depression"; both are recognized here.
+
+  Scope limits encoded by omission:
+  - This ontology RECOGNIZES non-AD categories; it does not stage them, grade
+    them, or assert a diagnosis. It exists so AD-staging coverage stays honest.
+  - It does not map AD clinical-stage labels (CN/MCI/AD) -- that is the separate
+    subject_label/ad_clinical_stage ontology -- nor A/T/N biomarker notation.
+
+citations:
+  - key: "vascog_2014"
+    citation_doi: "10.1097/WAD.0000000000000034"
+    citation_pmid: "24632990"
+    citation_text: >
+      Sachdev P, et al. Diagnostic criteria for vascular cognitive disorders: a
+      VASCOG statement. Alzheimer Dis Assoc Disord 2014;28(3):206-218.
+  - key: "dlb_mckeith_2017"
+    citation_doi: "10.1212/WNL.0000000000004058"
+    citation_pmid: "28592453"
+    citation_text: >
+      McKeith IG, et al. Diagnosis and management of dementia with Lewy bodies:
+      Fourth consensus report of the DLB Consortium. Neurology 2017;89(1):88-100.
+  - key: "pdd_emre_2007"
+    citation_doi: "10.1002/mds.21507"
+    citation_pmid: "17542011"
+    citation_text: >
+      Emre M, et al. Clinical diagnostic criteria for dementia associated with
+      Parkinson's disease. Mov Disord 2007;22(12):1689-1707.
+  - key: "bvftd_rascovsky_2011"
+    citation_doi: "10.1093/brain/awr179"
+    citation_pmid: "21810890"
+    citation_text: >
+      Rascovsky K, et al. Sensitivity of revised diagnostic criteria for the
+      behavioural variant of frontotemporal dementia. Brain 2011;134(9):2456-2477.
+  - key: "ppa_gornotempini_2011"
+    citation_doi: "10.1212/WNL.0b013e31821103e6"
+    citation_pmid: "21325651"
+    citation_text: >
+      Gorno-Tempini ML, et al. Classification of primary progressive aphasia and
+      its variants. Neurology 2011;76(11):1006-1014.
+  - key: "inph_relkin_2005"
+    citation_doi: "10.1227/01.neu.0000168185.29659.c5"
+    citation_pmid: "16160425"
+    citation_text: >
+      Relkin N, et al. Diagnosing idiopathic normal-pressure hydrocephalus.
+      Neurosurgery 2005;57(3 Suppl):S4-S16 (INPH Guidelines, Part II).
+  - key: "tes_katz_2021"
+    citation_doi: "10.1212/WNL.0000000000011850"
+    citation_pmid: "33722990"
+    citation_text: >
+      Katz DI, et al. NINDS consensus diagnostic criteria for traumatic
+      encephalopathy syndrome. Neurology 2021;96(18):848-863.
+  - key: "ae_graus_2016"
+    citation_doi: "10.1016/S1474-4422(15)00401-9"
+    citation_pmid: "26906964"
+    citation_text: >
+      Graus F, et al. A clinical approach to diagnosis of autoimmune
+      encephalitis. Lancet Neurol 2016;15(4):391-404.
+  - key: "mixed_schneider_2007"
+    citation_doi: "10.1212/01.wnl.0000271090.28148.24"
+    citation_pmid: "17568013"
+    citation_text: >
+      Schneider JA, et al. Mixed brain pathologies account for most dementia
+      cases in community-dwelling older persons. Neurology 2007;69(24):2197-2204.
+  - key: "cbd_armstrong_2013"
+    citation_doi: "10.1212/WNL.0b013e31827f0fd1"
+    citation_pmid: "23359374"
+    citation_text: >
+      Armstrong MJ, et al. Criteria for the diagnosis of corticobasal
+      degeneration. Neurology 2013;80(5):496-503.
+  - key: "psp_hoglinger_2017"
+    citation_doi: "10.1002/mds.26987"
+    citation_pmid: "28467028"
+    citation_text: >
+      Hoglinger GU, et al. Clinical diagnosis of progressive supranuclear palsy:
+      The Movement Disorder Society criteria. Mov Disord 2017;32(6):853-864.
+  - key: "pseudodementia_kiloh_1961"
+    citation_doi: "10.1111/j.1600-0447.1961.tb07367.x"
+    citation_pmid: ""
+    citation_text: >
+      Kiloh LG. Pseudo-dementia. Acta Psychiatr Scand 1961;37(4):336-351.
+      DOI-only (no PMID verified; predates routine MEDLINE indexing).
+
+# canonical = internal disease-control category; abbrev = standard abbreviation;
+# synonyms = raw strings seen in datasets (matched case/space/punct-insensitive).
+groups:
+  - canonical: "VaD"
+    abbrev: "VaD"
+    source: "vascog_2014"
+    synonyms:
+      - "vascular dementia"
+      - "vascular cognitive impairment"
+      - "vascular cognitive disorder"
+      - "VCI"
+      - "VCD"
+      - "subcortical ischemic vascular dementia"
+      - "subcortical vascular dementia"
+
+  - canonical: "DLB"
+    abbrev: "DLB"
+    source: "dlb_mckeith_2017"
+    synonyms:
+      - "dementia with lewy bodies"
+      - "lewy body dementia"
+      - "lewy body disease"
+      - "LBD"
+
+  - canonical: "PDD"
+    abbrev: "PDD"
+    source: "pdd_emre_2007"
+    synonyms:
+      - "parkinson disease dementia"
+      - "parkinsons disease dementia"
+      - "parkinson's disease dementia"
+      - "dementia associated with parkinson disease"
+      - "PD dementia"
+      - "PD-D"
+
+  - canonical: "bvFTD"
+    abbrev: "bvFTD"
+    source: "bvftd_rascovsky_2011"
+    synonyms:
+      - "behavioral variant frontotemporal dementia"
+      - "behavioural variant frontotemporal dementia"
+      - "frontotemporal dementia"
+      - "frontotemporal lobar degeneration"
+      - "FTD"
+      - "FTLD"
+      - "picks disease"
+      - "pick disease"
+
+  - canonical: "PPA"
+    abbrev: "PPA"
+    source: "ppa_gornotempini_2011"
+    synonyms:
+      - "primary progressive aphasia"
+      - "progressive nonfluent aphasia"
+      - "progressive non-fluent aphasia"
+      - "nonfluent variant primary progressive aphasia"
+      - "semantic dementia"
+      - "semantic variant primary progressive aphasia"
+      - "logopenic variant primary progressive aphasia"
+      - "nfvPPA"
+      - "svPPA"
+      - "lvPPA"
+      - "PNFA"
+
+  - canonical: "iNPH"
+    abbrev: "iNPH"
+    source: "inph_relkin_2005"
+    synonyms:
+      - "idiopathic normal pressure hydrocephalus"
+      - "normal pressure hydrocephalus"
+      - "NPH"
+
+  - canonical: "TES"
+    abbrev: "TES"
+    source: "tes_katz_2021"
+    synonyms:
+      - "traumatic encephalopathy syndrome"
+      - "traumatic brain injury related cognitive impairment"
+      - "TBI related cognitive impairment"
+      - "dementia pugilistica"
+      # NOTE: "CTE" is the NEUROPATHOLOGICAL entity, not the clinical syndrome;
+      # it is intentionally NOT listed as a clinical-label synonym of TES.
+
+  - canonical: "autoimmune_encephalitis"
+    abbrev: "AE"
+    source: "ae_graus_2016"
+    synonyms:
+      - "autoimmune encephalitis"
+      - "limbic encephalitis"
+      - "autoimmune dementia"
+      - "anti-nmdar encephalitis"
+      - "nmda receptor encephalitis"
+
+  - canonical: "mixed_dementia"
+    abbrev: "mixed"
+    source: "mixed_schneider_2007"
+    synonyms:
+      - "mixed dementia"
+      - "mixed ad vad"
+      - "mixed alzheimer vascular dementia"
+      - "mixed vascular alzheimer dementia"
+      - "mixed pathology dementia"
+      - "MVAD"
+
+  - canonical: "CBD"
+    abbrev: "CBD"
+    source: "cbd_armstrong_2013"
+    synonyms:
+      - "corticobasal degeneration"
+      - "corticobasal syndrome"
+      - "CBS"
+
+  - canonical: "PSP"
+    abbrev: "PSP"
+    source: "psp_hoglinger_2017"
+    synonyms:
+      - "progressive supranuclear palsy"
+      - "steele richardson olszewski syndrome"
+      - "PSP-RS"
+      - "richardson syndrome"
+
+  - canonical: "depression_cognitive"
+    abbrev: "depression"
+    source: "pseudodementia_kiloh_1961"
+    synonyms:
+      - "pseudodementia"
+      - "depressive pseudodementia"
+      - "depression related cognitive impairment"
+      - "cognitive impairment of depression"

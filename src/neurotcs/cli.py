@@ -876,6 +876,65 @@ def cmd_audit(args: argparse.Namespace) -> int:
     submission["columns_refused"] = _ledger["columns_refused"]
     submission["columns_unwired"] = _ledger["columns_unwired"]
 
+    # v1.61.0 (opt-in, --partition-disease-controls): recognize non-AD dementia /
+    # mimic labels and record those subjects as out-of-AD-scope (scope-honest),
+    # citation-anchored. Recognition only; never relabels to an AD stage.
+    if getattr(args, "partition_disease_controls", False):
+        from neurotcs.orchestration.disease_control import (
+            load_disease_control_ontology,
+            recognize_disease_controls,
+        )
+        _clin_dc = submission.get("clinical")
+        if _clin_dc is not None and "state" in getattr(_clin_dc, "columns", []):
+            _dc_ont = load_disease_control_ontology()
+            _pairs = list(zip(_clin_dc["subject_id"].astype(str),
+                              _clin_dc["state"].astype(str), strict=True))
+            _dc = recognize_disease_controls(_pairs, _dc_ont)
+            if _dc.recognized:
+                if not args.quiet:
+                    print("# disease-control partition "
+                          "(--partition-disease-controls): non-AD subjects "
+                          "recorded out-of-AD-scope:")
+                    for _cat, _subs in sorted(_dc.by_category.items()):
+                        print(f"  {_cat}: {len(_subs)} subject(s)")
+                _summary = "; ".join(f"{c}={len(s)}"
+                                     for c, s in sorted(_dc.by_category.items()))
+                submission_warnings.append(
+                    f"disease_control_partition: {len(_dc.recognized)} subject(s) "
+                    f"recognized as non-AD via {_dc.ontology_id} "
+                    f"(sha256 {_dc.ontology_sha256[:12]}): {_summary}")
+
+    # v1.61.0 (opt-in, --audit-conversions): advisory longitudinal conversion /
+    # reversion audit over the canonical clinical-stage sequence.
+    _conversion_result = None
+    if getattr(args, "audit_conversions", False):
+        from neurotcs.orchestration.conversion_audit import audit_conversions
+        _clin_cv = submission.get("clinical")
+        if _clin_cv is not None and {"subject_id", "visit", "state"} <= set(
+                getattr(_clin_cv, "columns", [])):
+            _rows = list(zip(_clin_cv["subject_id"].astype(str),
+                             _clin_cv["visit"],
+                             _clin_cv["state"].astype(str), strict=True))
+            _conversion_result = audit_conversions(_rows)
+            _cv = _conversion_result
+            if _cv.flags:
+                if not args.quiet:
+                    print("# conversion audit (--audit-conversions): "
+                          f"{_cv.n_transitions} transition(s), severity "
+                          f"impossible {_cv.severity_counts.get('impossible', 0)} "
+                          f"/ implausible {_cv.severity_counts.get('implausible', 0)} "
+                          f"/ informational "
+                          f"{_cv.severity_counts.get('informational', 0)}")
+                    for _f in _cv.flags:
+                        if _f.tier in ("impossible", "implausible"):
+                            print(f"  [{_f.tier}] {_f.subject_id}: "
+                                  f"{_f.from_state}->{_f.to_state} ({_f.reason})")
+                _impl = sum(1 for _f in _cv.flags
+                            if _f.tier in ("impossible", "implausible"))
+                submission_warnings.append(
+                    f"conversion_audit: {_cv.n_transitions} transition(s), "
+                    f"{_impl} implausible/impossible flagged (advisory)")
+
     result = run_full_audit(submission, expected_layers=_expected)
 
     # v1.39.3: UNIFIED COVERAGE HONESTY. NeuroTCS must never present a confident
@@ -1117,6 +1176,24 @@ def build_parser() -> argparse.ArgumentParser:
                         "distinct categories; unrecognized tokens pass through "
                         "unchanged (still surface as contamination). Every "
                         "substitution is recorded in the bundle.")
+    a.add_argument("--partition-disease-controls", action="store_true",
+                   help="recognize non-AD dementia / mimic labels (vascular "
+                        "dementia, DLB, PDD, bvFTD, PPA, iNPH, TES, autoimmune "
+                        "encephalitis, mixed dementia, CBD, PSP, depression-"
+                        "related cognitive impairment) via the citation-anchored "
+                        "disease-control ontology, and record those subjects as "
+                        "out-of-AD-scope (scope-honest) rather than forcing them "
+                        "through AD staging. Recognition only -- never relabels "
+                        "to an AD stage; unrecognized labels pass through. Off by "
+                        "default; recorded in the bundle.")
+    a.add_argument("--audit-conversions", action="store_true",
+                   help="audit longitudinal clinical-stage conversions/reversions "
+                        "(CN<SMC<EMCI<LMCI<MCI<AD). Forward progression is "
+                        "expected; MCI->CN reversion is flagged as plausible "
+                        "(documented, never rejected); AD reverting to a milder "
+                        "stage is flagged implausible for data-quality review. "
+                        "Advisory overlay reported alongside the audit; off by "
+                        "default.")
     a.set_defaults(func=cmd_audit)
 
     v = sub.add_parser("verify", help="re-verify a signed bundle")

@@ -1,3 +1,77 @@
+## [1.61.0] -- 2026-06-01 -- E-2026-034: disease-control ontology + longitudinal conversion auditor (USIL increment 3, opt-in)
+
+Third scoped USIL increment: two coordinated, source-verifiable layers, both
+opt-in (default OFF -> v3 unchanged 69/65/1236, deterministic, format 1.4.0).
+
+### (A) Disease-control / differential-diagnosis recognition ontology
+
+A citation-anchored recognizer for NON-AD dementias and mimics so AD-staging
+coverage stays scope-honest: a subject labelled with a recognized non-AD
+condition is recorded as out-of-AD-scope rather than silently forced through the
+Alzheimer's clinical-stage vocabulary. Recognition only -- never relabels to an
+AD stage, never diagnoses; unrecognized labels pass through (never guess);
+ambiguous ontology fails closed at load.
+
+Categories (each anchored to its primary consensus criteria, DOI/PMID verified
+before encoding): VaD (Sachdev 2014 VASCOG, PMID 24632990), DLB (McKeith 2017,
+PMID 28592453), PDD (Emre 2007, PMID 17542011), bvFTD (Rascovsky 2011, PMID
+21810890), PPA (Gorno-Tempini 2011, PMID 21325651), iNPH (Relkin 2005, PMID
+16160425), TES (Katz 2021, PMID 33722990), autoimmune encephalitis (Graus 2016,
+PMID 26906964), mixed dementia (Schneider 2007, PMID 17568013), CBD (Armstrong
+2013, PMID 23359374), PSP (Hoglinger 2017 MDS-PSP, PMID 28467028), and
+depression-related cognitive impairment (Kiloh 1961, DOI 10.1111/j.1600-0447.
+1961.tb07367.x -- encoded DOI-ONLY because no PMID could be verified; no
+identifier fabricated). "CTE" is intentionally NOT a clinical-label synonym of
+TES (CTE is the neuropathological entity).
+
+- src/neurotcs/orchestration/disease_control_ontology.yaml (new data file)
+- src/neurotcs/orchestration/disease_control.py (recognizer; reuses
+  label_normalization._norm_token to avoid duplicating matching logic)
+- cli.py: opt-in --partition-disease-controls; recognized subjects recorded in
+  input_warnings with the citation; never relabeled.
+
+### (B) Longitudinal conversion / reversion auditor
+
+Derives diagnostic conversion across the canonical clinical-stage sequence
+(CN<SMC<EMCI<LMCI<MCI<AD) per subject and classifies each transition into a
+plausibility tier grounded in the literature:
+  forward (CN->MCI->AD)        -> informational (expected continuum; Jack 2018,
+                                  PMID 29653606)
+  MCI->CN reversion            -> informational/PLAUSIBLE (documented; Canevelli
+                                  2016 PMID 27502450 pooled ~18%) -- flagged for
+                                  awareness, NEVER rejected, NEVER "impossible"
+  within-MCI-band (LMCI->EMCI) -> informational (graded staging noise)
+  AD -> milder stage           -> implausible (no accepted model for AD-dementia
+                                  reverting; data-quality review)
+Non-canonical labels or single-visit subjects produce NO flag (never guess).
+pMCI/sMCI are window-dependent operational labels (Moradi 2015), so the auditor
+audits the OBSERVED direction rather than hardcoding a conversion window. It is
+an advisory overlay (reported in stderr + input_warnings); it does NOT mutate
+the deterministic flag pipeline or bundle envelope.
+
+- src/neurotcs/orchestration/conversion_audit.py (new)
+- cli.py: opt-in --audit-conversions
+
+### Deferred (still roadmap -- need a real dataset/calibration source, not faked)
+
+CDISC long-format zero-config reshaping, per-site/per-column assay certification,
+MRI-pipeline metadata mapping, new cohort adapters, ARIA grading pack. Building
+these without a representative artifact would require fabricating conventions/
+bounds, so they remain explicitly deferred to their own verify-first batches.
+
+### Tests
+
+1837 -> 1853 passed (+16). New
+tests/orchestration/test_disease_control_and_conversion.py: ontology collision-
+free + canonical set + citation-anchored + Kiloh DOI-only; recognizer partitions
+known non-AD and passes through AD/unknown; conversion forward=info, MCI->CN
+plausible (not impossible), AD->CN/AD->MCI implausible, within-band info,
+single-visit/non-canonical no flag, stable/mixed derived labels. ruff clean;
+default v3 unchanged at 69/65/1236; both ontology files ship in the wheel; all
+new files strict-ASCII.
+
+---
+
 ## [1.60.0] -- 2026-06-01 -- E-2026-033: biological A/T/N notation synonym layer (USIL increment 2, opt-in)
 
 The biological mirror of the v1.59.0 clinical-stage synonym layer, and the
