@@ -27,7 +27,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
-import pyreadr
+
+# pyreadr (R .rda reader) is imported lazily inside the CLI entrypoint that
+# actually reads .rda files, so importing this module -- and the smoke tests
+# that import it -- never requires the optional R-reader dependency.
 
 COHORT_SALT = "adni_demo_2026"  # in production: random per-cohort secret
 
@@ -252,6 +255,7 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     print(f"Loading DXSUM from {args.dxsum}...")
+    import pyreadr  # lazy: only needed when actually reading .rda files
     dxsum = pyreadr.read_r(args.dxsum)["DXSUM"]
     print(f"  {len(dxsum):,} raw DXSUM rows")
 

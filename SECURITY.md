@@ -1,12 +1,24 @@
 # Security Policy
 
+## Scope and status
+
+NeuroTCS is a **research instrument**, not an FDA-cleared/CE-marked medical
+device, and not for clinical use. See [`docs/SCOPE.md`](docs/SCOPE.md) Regulatory
+status for the full positioning. This document is a vulnerability-reporting
+policy; it is not a deployment-security architecture or a regulatory compliance
+package, and none is claimed.
+
 ## Supported versions
+
+The single source of truth for the current version is `pyproject.toml`
+(`project.version`) and `src/neurotcs/__init__.py` (`__version__`); a test
+asserts every documented version string matches it. Security fixes are applied
+to the latest released minor series.
 
 | Version | Supported |
 |---------|-----------|
-| 1.1.x   | ✅        |
-| 1.0.x   | ⚠️ legacy, embedded in 1.1 |
-| < 1.0   | ❌        |
+| 1.67.x (latest) | Yes |
+| < 1.67  | No -- upgrade to the latest release |
 
 ## Reporting a vulnerability
 

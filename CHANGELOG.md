@@ -1,3 +1,51 @@
+## [1.67.0] -- 2026-06-04 -- E-2026-040: Version single-source-of-truth + drift guard, pyreadr optional, claims-bounding (real-world-readiness audit)
+
+Responds to the external "Real-World Readiness Audit". Closes the concrete
+in-repo findings; honestly classifies the rest (out-of-scope-for-a-research-
+instrument vs genuine future work) without fabricating any compliance artifact.
+Default v3 audit UNCHANGED at 69/65/1236; audit_id fingerprints untouched.
+
+### Version single source of truth + drift guard (audit D19)
+The audit found four conflicting version strings (pyproject 1.66 vs README badge
+1.33.1 vs SECURITY 1.1.x vs CITATION 1.17). Unified everything to the canonical
+`pyproject.toml` version: README version badge, README "current as of" prose,
+README BibTeX `version`, CITATION.cff `version`, and SECURITY.md supported-
+versions table. Added `tests/test_version_consistency.py` (6 tests) asserting
+every documented version string matches `pyproject.toml`, so this drift can
+never silently recur. Historical version mentions (CHANGELOG, scope-history
+prose) are intentionally not guarded -- they are immutable record.
+
+### pyreadr made optional + lazy (audit blocker #2: collection failure)
+The audit's headline blocker was a full-suite collection failure
+(`ModuleNotFoundError: pyreadr`) on a base install. Root-caused and fixed:
+- `pyreadr` moved from core `dependencies` to a new optional extra
+  `radni` (R/ADNI .rda reader), since it is only used by the optional ADNI
+  reference-adapter CLIs, not by core auditing.
+- `import pyreadr` in `reference_adapters/adni_categorical_submission.py` and
+  `adni_volumetric_submission.py` made lazy (moved into the CLI functions that
+  call `read_r`), so importing the modules -- and the smoke tests that import
+  them -- never requires pyreadr. Verified: both modules import with pyreadr
+  blocked.
+
+### Claims-bounding (audit H)
+README "the strongest cross-cohort evidence to date" reworded to an evidence-
+bounded within-tested-cohort statement, explicitly not a comparative claim.
+SECURITY.md gains a research-instrument scope note linking SCOPE Regulatory
+status.
+
+### Honest audit-response map (audit blockers 1-24)
+New `docs/AUDIT_RESPONSE_REALWORLD.md` classifies every one of the 24 audit
+blockers as CLOSED / BY-DESIGN / OUT-OF-SCOPE / FUTURE-WORK, with disposition.
+No item is dismissed; none is fabricated. It states plainly that the deepest
+item (adjudicated detection-performance study) has shipped design + apparatus
+but its empirical result requires a cohort and clinicians and is not simulated.
+
+### Tests
+1909 -> 1915 passed (+6 version-consistency guard). ruff clean; default v3
+unchanged at 69/65/1236; edits add no new non-ASCII.
+
+---
+
 ## [1.66.0] -- 2026-06-04 -- E-2026-039: Documentation honesty pass -- AD-only consistency, reproducibility refresh, regulatory status (auditor Blockers 4 + 5)
 
 Closes the two lightest external-audit items and repairs a documentation

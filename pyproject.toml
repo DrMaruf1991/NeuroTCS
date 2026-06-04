@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurotcs"
-version = "1.66.0"
+version = "1.67.0"
 description = "Citation-locked, fail-closed longitudinal medical AI audit framework (NeuroTCS / temporalmetric)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -38,7 +38,6 @@ dependencies = [
     "openpyxl>=3.1",
     "reportlab>=4.0",
     "jsonschema>=4.0",
-    "pyreadr>=0.4.7",
     "numpy>=1.24",
     "scipy>=1.11",
 ]
@@ -46,6 +45,11 @@ dependencies = [
 [project.optional-dependencies]
 spss = [
     "pyreadstat>=1.2",
+]
+radni = [
+    # R .rda reader, needed ONLY for the optional ADNI reference-adapter CLIs
+    # (neurotcs.reference_adapters.adni_*). Core auditing does not require it.
+    "pyreadr>=0.4.7",
 ]
 pdf = [
     "pdfplumber>=0.10",

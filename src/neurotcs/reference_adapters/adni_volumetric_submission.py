@@ -32,7 +32,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
-import pyreadr
+
+# pyreadr (R .rda reader) is imported lazily inside the CLI entrypoint that
+# actually reads .rda files, so importing this module -- and the smoke tests
+# that import it -- never requires the optional R-reader dependency.
 
 COHORT_SALT = "adni_demo_2026"
 
@@ -56,6 +59,7 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     print(f"Loading FreeSurfer data from {args.ucsffsx7}...")
+    import pyreadr  # lazy: only needed when actually reading .rda files
     fsdf = pyreadr.read_r(args.ucsffsx7)["UCSFFSX7"]
     fsdf = fsdf.dropna(subset=["RID", "VISCODE2", "ST29SV"])
     fsdf["EXAMDATE"] = pd.to_datetime(fsdf["EXAMDATE"], errors="coerce")

@@ -5,7 +5,7 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.33.1](https://img.shields.io/badge/version-1.33.1-success.svg)](CHANGELOG.md)
+[![Version 1.67.0](https://img.shields.io/badge/version-1.67.0-success.svg)](CHANGELOG.md)
 [![Tests 1909](https://img.shields.io/badge/tests-1909%20passed-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7_FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
@@ -27,7 +27,7 @@ Five locked audit invariants reproduce byte-exactly across N=5 cold reruns, nump
 
 Each cohort also locks an `audit_id_v2` (C6 collision-resistant variant). See `tests/audit_core/test_real_*.py` for full locked-invariant constants, and [`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md) Section A for full audit_ids and methodology.
 
-The cTCS metric generalises across institution, decade, recruitment criteria, AND staging instrument. Three of the four cohorts use CDR-anchored staging; MIRIAD uses MMSE-anchored staging. The 4-cohort agreement at ≤0.01 ΔcTCS is the strongest cross-cohort evidence to date that the framework measures what it claims to measure.
+The cTCS metric generalises across institution, decade, recruitment criteria, AND staging instrument. Three of the four cohorts use CDR-anchored staging; MIRIAD uses MMSE-anchored staging. The 4-cohort agreement at ≤0.01 ΔcTCS is, in these tested cohorts, strong cross-cohort evidence that the framework measures what it claims to measure. (This is a within-tested-cohort observation, not a comparative claim against other tools or the wider literature.)
 
 ## What's in this repo
 
@@ -107,7 +107,7 @@ export NEUROTCS_MIRIAD_DIR=/path/to/MIRIAD_directory
 python -m pytest tests/ -q
 ```
 
-The test count is environment-dependent: **1909 passed / 23 skipped** without cohort env vars (cohort tests skip; current as of v1.65.0). With all four cohort env vars pointing at valid files, the cohort tests additionally execute and pass; the exact pass count is cohort-version-dependent. Both outcomes are correct behavior.
+The test count is environment-dependent: **1909 passed / 23 skipped** without cohort env vars (cohort tests skip; current as of v1.67.0). With all four cohort env vars pointing at valid files, the cohort tests additionally execute and pass; the exact pass count is cohort-version-dependent. Both outcomes are correct behavior.
 
 ### Rule pack only
 
@@ -193,7 +193,7 @@ The canonical spec is [`docs/spec/temporalmetric_v1.7_FINAL.md`](docs/spec/tempo
 @software{salokhiddinov2026neurotcs,
   author    = {Salokhiddinov, Marufjon},
   title     = {NeuroTCS: Citation-locked, fail-closed longitudinal medical AI audit framework},
-  version   = {1.20.0},
+  version   = {1.67.0},
   year      = {2026},
   url       = {https://github.com/DrMaruf1991/NeuroTCS},
   note      = {temporalmetric v1.7 FINAL specification, 3 AD production rule packs, four-cohort triangulation lock; v1.9.0+ AD-only scope}
