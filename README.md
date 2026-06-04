@@ -6,7 +6,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Version 1.33.1](https://img.shields.io/badge/version-1.33.1-success.svg)](CHANGELOG.md)
-[![Tests 1437](https://img.shields.io/badge/tests-1437%20passed-success.svg)](tests/)
+[![Tests 1909](https://img.shields.io/badge/tests-1909%20passed-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7_FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
@@ -54,7 +54,7 @@ Plus five methodological modules (all shipped in v1.7.0+, all with tests):
 
 ## Rule packs shipped
 
-NeuroTCS v1.x is scope-narrowed to **Alzheimer's disease** in preparation for FDA Q-Submission (target Q1 2027). The 3 AD rule packs encode the dominant diagnostic and trajectory frameworks. See [docs/SCOPE.md](docs/SCOPE.md) for the scope-decision rationale; non-AD packs that previously shipped in v1.7.x (PD/Hoehn-Yahr, MS/McDonald, oncology RECIST + iRECIST, stroke mRS, lung-nodule Fleischner) have been extracted to seed future per-disease repositories post-FDA-clearance.
+NeuroTCS is an **Alzheimer's-disease** auditing tool. The 3 AD rule packs encode the dominant diagnostic and trajectory frameworks. See [docs/SCOPE.md](docs/SCOPE.md) for the scope rationale and regulatory status. Non-AD packs that previously shipped in v1.7.x (PD/Hoehn-Yahr, MS/McDonald, oncology RECIST + iRECIST, stroke mRS, lung-nodule Fleischner) were extracted at v1.9.0 and are preserved as archival history only; NeuroTCS does not roadmap non-AD coverage.
 
 | Pack | Disease | Anchor publication | PMID | Transitions |
 |---|---|---|---|---|
@@ -90,7 +90,7 @@ git clone https://github.com/DrMaruf1991/NeuroTCS.git
 cd NeuroTCS
 pip install -e .
 
-# Framework-only tests (no cohort data required) — expect 1437 passed, 13 skipped (v1.33.1)
+# Tests (no cohort data required) -- expect 1909 passed, 23 skipped (v1.65.0)
 python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_adni_audit.py \
     --ignore=tests/audit_core/test_real_oasis3_audit.py \
@@ -99,7 +99,7 @@ python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_miriad_fairness_audit.py \
     --ignore=tests/audit_core/test_four_cohort_triangulation.py
 
-# Full suite with cohort data (set env vars first; expect 1437+cohort tests passed, cohort-version-dependent)
+# Full suite with cohort data (set env vars first; expect 1909+cohort tests passed, cohort-version-dependent)
 export NEUROTCS_OASIS3_CDR=/path/to/OASIS3_UDSb4_cdr.csv
 export NEUROTCS_ADNI_DXSUM_RDA=/path/to/ADNIMERGE2/data/DXSUM.rda
 export NEUROTCS_NACC_CSV=/path/to/investigator_nacc73_slim.csv
@@ -107,7 +107,7 @@ export NEUROTCS_MIRIAD_DIR=/path/to/MIRIAD_directory
 python -m pytest tests/ -q
 ```
 
-The test count is environment-dependent: **1437 passed / 13 skipped** without cohort env vars (cohort tests skip; current as of v1.33.1). With all four cohort env vars pointing at valid files, the cohort tests additionally execute and pass; the exact pass count is cohort-version-dependent. Both outcomes are correct behavior.
+The test count is environment-dependent: **1909 passed / 23 skipped** without cohort env vars (cohort tests skip; current as of v1.65.0). With all four cohort env vars pointing at valid files, the cohort tests additionally execute and pass; the exact pass count is cohort-version-dependent. Both outcomes are correct behavior.
 
 ### Rule pack only
 
@@ -181,11 +181,11 @@ The canonical spec is [`docs/spec/temporalmetric_v1.7_FINAL.md`](docs/spec/tempo
 
 - **v1.8.0** (May 2026) — Four-cohort triangulation lock + ADNI canonical source. ✅ shipped.
 - **v1.8.1** (May 2026) — Documentation, test hygiene, CI matrix, reference-adapter reorganization, citation backfill. ✅ shipped.
-- **v1.9.0** (May 2026) — **AD-only scope contraction**: non-AD rule packs (PD, MS, oncology, stroke, lung nodule) extracted to seed future per-disease repositories post-FDA-clearance. ✅ shipped.
+- **v1.9.0** (May 2026) — **AD-only scope contraction**: non-AD rule packs (PD, MS, oncology, stroke, lung nodule) extracted; preserved as archival history only. ✅ shipped.
 - **v1.9.x** (Q3 2026) — Piece 5 (FHIR output) + Piece 7 (validation harness) + cohort-specific transition priors.
 - **W22 (~Sept 2026)** — Nature Medicine submission with AD validation across ADNI + OASIS-3 + NACC + MIRIAD.
 - **Oct 2026** — ASFNR Newport Beach workshop demo.
-- **Q1 2027** — FDA Q-Submission with v1.0.0 release.
+- **Aspirational (not a commitment):** a future FDA Q-Submission and v1.0.0 release. NeuroTCS is currently a research instrument and is not FDA-cleared; see [docs/SCOPE.md](docs/SCOPE.md) Regulatory status.
 
 ## Citation
 

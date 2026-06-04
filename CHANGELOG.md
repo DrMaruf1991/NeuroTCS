@@ -1,3 +1,54 @@
+## [1.66.0] -- 2026-06-04 -- E-2026-039: Documentation honesty pass -- AD-only consistency, reproducibility refresh, regulatory status (auditor Blockers 4 + 5)
+
+Closes the two lightest external-audit items and repairs a documentation
+inconsistency left over from the v1.64.0 scope purge. Documentation only: no
+code, schema, rule pack, or audit behavior changed. Default v3 audit UNCHANGED
+at 69/65/1236; full suite 1909 passed; audit_id fingerprints untouched.
+
+### AD-only consistency repair (completes v1.64.0)
+The v1.64.0 purge removed multi-disease "future per-disease repositories"
+roadmap language from code and input-contract specs but missed several docs.
+This release finishes the job so the repository is internally consistent:
+- docs/SCOPE.md: removed the "future NeuroTCS-PD/MS/Oncology/Stroke/LungNodule
+  repositories after FDA clearance" roadmap from the FAQ, rationale, scope-
+  expansion, preserved-material table, and version markers. NeuroTCS is AD-only
+  and roadmaps no non-AD coverage; extracted packs are archival history only.
+- README.md: rule-packs section and roadmap reworded to archival-only; removed
+  "in preparation for FDA Q-Submission" as a current claim.
+- docs/spec/temporalmetric_v1.7_FINAL.md: scope-override notice + subtitle
+  updated to archival-only (the historical multi-disease body is retained as
+  labeled historical record, not a roadmap).
+- docs/datasheet/ad_neurotcs_datasheet.md: MS-extraction note reworded to
+  archival-only.
+
+### Reproducibility refresh (Blocker 4)
+docs/reproducibility/ad_neurotcs_reproducibility.md already documented the
+cohort-level invariant (cTCS=0.9946, audit_id d344ec1a), the env-var-gated
+real-cohort tests, and DUA-compliant checksum handling -- the auditor's "not
+reproducible from the zip" finding is in fact correct DUA governance, already
+documented. This release refreshes the stale test counts (400 passed/4 skipped
+-> 1909 passed/23 skipped) and cross-links the new flag-validation protocol and
+the executable Arm B coverage harness. README test counts and badge refreshed
+(1437 -> 1909).
+
+### Regulatory status (Blocker 5)
+docs/SCOPE.md gains a "Regulatory status" section stating plainly that NeuroTCS
+is a research instrument, NOT an FDA-cleared/CE-marked device and not for
+clinical use; that NO GxP / 21 CFR Part 11 package (IQ/OQ/PQ, validated
+e-records, QMS dossier) is claimed or exists; what a regulatory pathway would
+require if ever pursued (intended-use statement, ISO 13485 QMS, ISO 14971 risk
+management, IEC 62304 lifecycle, IQ/OQ/PQ, Part 11 audit-trail, and the clinical
+validation package per VALIDATION_PROTOCOL.md); and that any FDA mention is an
+aspiration, not a current claim or commitment. A fabricated GxP package was
+deliberately NOT produced -- a fake compliance dossier would be worse than none.
+
+### Tests
+1909 passed, 23 skipped (unchanged; doc-only release). Existing tests/docs/
+structure tests continue to pass. ruff clean; default v3 unchanged at
+69/65/1236; edited docs add no new non-ASCII.
+
+---
+
 ## [1.65.0] -- 2026-06-04 -- E-2026-038: Arm B error-injection validation harness + study protocol (auditor Blocker 1, executable arm)
 
 Addresses the executable half of the external auditor's deepest finding -- the

@@ -763,8 +763,8 @@ evidence; others reflect last-known project status.
 - **Citation PMID debt — RESOLVED.** All production rule packs carry
   `citation_pmid` (zero `pmid_pending` flags remain). The TRAC pack
   (`ad/aa_2024_trac`) carries PMID 41298245 (La Joie 2025, DOI
-  10.1002/alz.70997). McDonald 2024 (MS) is out of scope — MS was extracted
-  to a future per-disease repository in v1.9.0 (see docs/SCOPE.md).
+  10.1002/alz.70997). McDonald 2024 (MS) is out of scope -- MS was extracted
+  at v1.9.0 and preserved as archival history only (see docs/SCOPE.md).
 
 ## G — NACC DUA acknowledgments (new in v1.8)
 

@@ -26,9 +26,9 @@ The Layer Contract that all layers adhere to is documented at [`docs/clinical_ra
 | What cohorts are audited under the four-cohort triangulation lock? | ADNI, OASIS-3, NACC, MIRIAD (plus MIRIAD test-retest) — all AD, Layer 1 only |
 | Will Parkinson's, MS, oncology, stroke, or lung-nodule rule packs be added in v1.x? | No |
 | What if I have a non-AD rule pack? | The schema (`DiseaseDomain` enum) accepts only `alzheimers` and `custom`; non-AD packs will fail validation |
-| Where did the non-AD rule packs go? | Extracted at v1.9.0 to seed future per-disease repos (see [v1.9.0 CHANGELOG entry](../CHANGELOG.md#190--2026-05-24)). Recoverable from git history at tag v1.8.1 or from the offline archive `NeuroTCS-non-AD-extracted-v1.8.1.zip` |
-| When will non-AD coverage return? | Each disease will get its own repository (`NeuroTCS-PD`, `NeuroTCS-MS`, `NeuroTCS-Oncology`, `NeuroTCS-Stroke`, `NeuroTCS-LungNodule`) **after** the AD core achieves FDA clearance (target Q1 2027) |
-| What about Aim 5 multi-disease portability (in the v1.7 spec)? | Deferred to future per-disease repos; the v1.7 spec retains the description as historical design intent but flags it as out-of-scope for v1.x via a top-of-document override notice |
+| Where did the non-AD rule packs go? | Extracted at v1.9.0 (see [v1.9.0 CHANGELOG entry](../CHANGELOG.md#190--2026-05-24)). They are recoverable from git history at tag v1.8.1 or from the offline archive `NeuroTCS-non-AD-extracted-v1.8.1.zip`. NeuroTCS itself is and remains Alzheimer's-disease only; it does not roadmap non-AD coverage. |
+| Will non-AD coverage return to NeuroTCS? | No. NeuroTCS is an Alzheimer's-disease tool. The historical extracted packs are preserved as archival seed material only; whether any separate non-AD project is ever built is outside NeuroTCS's scope and is not a commitment of this repository. |
+| What about Aim 5 multi-disease portability (in the v1.7 spec)? | Out of scope for NeuroTCS. The v1.7 spec retains the description as historical design intent only, flagged out-of-scope via a top-of-document override notice. |
 
 ## Why this scope decision
 
@@ -36,9 +36,9 @@ NeuroTCS was originally designed as a multi-disease platform. As of v1.8.x, the 
 
 The decision to scope-narrow to AD for v1.x was made on 2026-05-24 by Dr. Marufjon Salokhiddinov (NeuroTCS lead). The reasons:
 
-1. **FDA clarity.** A regulator examining the Q-Submission Q1 2027 will see a tight, cohesive AD audit framework rather than a sprawling multi-disease library where 5 of 8 packs lack cohort runs.
+1. **Cohesion.** A single-disease scope yields a tight, cohesive AD audit framework rather than a sprawling multi-disease library where most packs would lack cohort runs. Should any regulatory pathway be pursued, a focused AD tool is the cleaner subject; that is an aspiration, not a current claim or commitment (see Regulatory status below).
 2. **Substantive validation.** The AD validation surface is empirically demonstrated; non-AD packs are unvalidated. Shipping them mixed together blurs the distinction.
-3. **Future modularity.** Each disease eventually deserves its own framework repo with its own cohort adapters, DUAs, and clinical-specialist review process — exactly the pattern of FHIR profiles or SNOMED extensions. The v1.x AD-focused product is the foundation; the per-disease repos extend it after FDA clearance.
+3. **Cohesion and validation focus.** A single-disease framework keeps the validation surface, cohort adapters, and clinical-specialist review focused on Alzheimer's disease. NeuroTCS does not attempt to be a multi-disease library; that focus is a deliberate design choice, not a staging area for other diseases.
 
 ## What was preserved
 
@@ -50,15 +50,15 @@ The decision to scope-narrow to AD for v1.x was made on 2026-05-24 by Dr. Marufj
 
 | Removed | Path in v1.8.1 | Replacement / where it went |
 |---|---|---|
-| PD/Hoehn-Yahr rule pack | `src/neurotcs/rulepack/rules/pd/hoehn_yahr.yaml` | `NeuroTCS-non-AD-extracted-v1.8.1.zip:parkinsons/`; future `NeuroTCS-PD` repo |
-| MS/McDonald 2024 rule pack | `src/neurotcs/rulepack/rules/ms/mcdonald_2024.yaml` | Same archive `multiple_sclerosis/`; future `NeuroTCS-MS` |
-| Oncology RECIST 1.1 + iRECIST | `src/neurotcs/rulepack/rules/oncology/` | Same archive `oncology/`; future `NeuroTCS-Oncology` |
-| Stroke mRS follow-up | `src/neurotcs/rulepack/rules/stroke/mrs_followup.yaml` | Same archive `stroke/`; future `NeuroTCS-Stroke` |
-| Lung-nodule Fleischner 2017 | `src/neurotcs/rulepack/rules/lung_nodule/fleischner_2017.yaml` | Same archive `lung_nodule/`; future `NeuroTCS-LungNodule` |
+| PD/Hoehn-Yahr rule pack | `src/neurotcs/rulepack/rules/pd/hoehn_yahr.yaml` | `NeuroTCS-non-AD-extracted-v1.8.1.zip:parkinsons/` (archival only) |
+| MS/McDonald 2024 rule pack | `src/neurotcs/rulepack/rules/ms/mcdonald_2024.yaml` | Same archive `multiple_sclerosis/` (archival only) |
+| Oncology RECIST 1.1 + iRECIST | `src/neurotcs/rulepack/rules/oncology/` | Same archive `oncology/` (archival only) |
+| Stroke mRS follow-up | `src/neurotcs/rulepack/rules/stroke/mrs_followup.yaml` | Same archive `stroke/` (archival only) |
+| Lung-nodule Fleischner 2017 | `src/neurotcs/rulepack/rules/lung_nodule/fleischner_2017.yaml` | Same archive `lung_nodule/` (archival only) |
 | 6 transcription audit docs | `docs/transcription_audit/{pd_hoehn_yahr,ms_mcdonald_2024,oncology_recist_1_1,oncology_irecist,stroke_mrs_followup,lung_nodule_fleischner_2017}.md` | Same archive per-disease subdirs |
-| `DiseaseDomain` enum non-AD values | `src/neurotcs/rulepack/schema.py` (`PARKINSONS`, `MULTIPLE_SCLEROSIS`, `GLIOBLASTOMA`, `STROKE`, `CARDIOLOGY`, `ONCOLOGY`, `PULMONOLOGY`) | Future repos will ship their own enums or import from `neurotcs-core` |
-| 6 non-AD-specific tests | `tests/rulepack/test_rulepack.py` (`test_pd_behaviors`, `test_ms_relapse_remission`, `test_recist_bidirectional_with_confirmation`, `test_irecist_pseudoprogression`, `test_stroke_recovery_and_death`, `test_fleischner_growth_and_shrinkage`) | Will be re-implemented in each future per-disease repo |
-| PPMI + RIDER from `__planned__` adapters | `src/neurotcs/adapters/__init__.py` | Deferred to future per-disease repos |
+| `DiseaseDomain` enum non-AD values | `src/neurotcs/rulepack/schema.py` (`PARKINSONS`, `MULTIPLE_SCLEROSIS`, `GLIOBLASTOMA`, `STROKE`, `CARDIOLOGY`, `ONCOLOGY`, `PULMONOLOGY`) | Removed; not part of NeuroTCS (archival history only) |
+| 6 non-AD-specific tests | `tests/rulepack/test_rulepack.py` (`test_pd_behaviors`, `test_ms_relapse_remission`, `test_recist_bidirectional_with_confirmation`, `test_irecist_pseudoprogression`, `test_stroke_recovery_and_death`, `test_fleischner_growth_and_shrinkage`) | Preserved in git history only (archival) |
+| PPMI + RIDER from `__planned__` adapters | `src/neurotcs/adapters/__init__.py` | Removed; archival history only |
 
 ## What was NOT touched
 
@@ -67,21 +67,50 @@ The decision to scope-narrow to AD for v1.x was made on 2026-05-24 by Dr. Marufj
 - The 5 locked audit_id values (OASIS-3 `92df5429...`, ADNI `7a973f7b...`, NACC `58329c65...`, MIRIAD `abda26cb...`, MIRIAD test-retest `80430399...`) — verified byte-exact under v1.9.0.
 - Historical CHANGELOG and ERRATA entries that describe the non-AD work in v1.7.x and v1.8.x — these remain as historical record.
 
-## When this scope expands
+## Scope permanence
 
-The v1.x AD-only scope is in effect through:
-
-1. v1.0.0 release at FDA Q-Submission (target Q1 2027)
-2. FDA Q-Submission response and any iteration
-3. FDA 510(k) or De Novo authorization, whichever the regulatory pathway determines
-
-After FDA clearance of the AD core, future per-disease repositories will be launched independently using the v1.8.1 git history + offline archive as seed material. Each will go through its own validation, DUA filing, and clinical-specialist review independent of NeuroTCS-AD.
+NeuroTCS is an Alzheimer's-disease tool, and the AD-only scope is not a
+temporary staging state pending a multi-disease expansion. The repository makes
+no commitment to add non-AD disease coverage. Any regulatory pathway NeuroTCS
+might pursue (see the Regulatory status section below) concerns the AD tool
+itself; it is not a gate that "unlocks" other diseases inside this repository.
 
 ## Version markers
 
 - v1.8.1 — last release with non-AD rule packs (tag `v1.8.1`, commit `d2865af`)
-- **v1.9.0 — first AD-only release (this version)**
-- v1.0.0 — FDA-cleared AD release (target Q1 2027, reserved)
+- **v1.9.0 — first AD-only release**
+
+## Regulatory status
+
+This section states NeuroTCS's regulatory positioning plainly, so no reader
+overstates what the tool is today.
+
+- **NeuroTCS is a research instrument.** It is not an FDA-cleared or
+  CE-marked medical device, and it is not authorized for clinical use. It is a
+  reproducibility and data-quality auditing tool for longitudinal AD research
+  and trial data. Its outputs are cohort-level audit flags, not diagnoses,
+  treatment recommendations, or per-patient clinical determinations.
+- **No GxP / 21 CFR Part 11 package is claimed.** NeuroTCS does not ship an
+  Installation/Operational/Performance Qualification (IQ/OQ/PQ) package, a
+  validated electronic-records/electronic-signatures implementation, or a
+  formal quality-management-system (QMS) dossier. None of those artifacts
+  currently exist, and the tool should not be represented as GxP-compliant or
+  Part 11-compliant.
+- **What a regulatory pathway would require (if ever pursued).** Positioning
+  NeuroTCS as software in a regulated workflow would require, at minimum: a
+  defined intended-use / indications-for-use statement at device granularity; a
+  QMS (e.g., ISO 13485) with design controls; risk management (ISO 14971); a
+  software lifecycle process (IEC 62304); IQ/OQ/PQ qualification of each
+  deployment; a Part 11-conformant audit-trail and access-control
+  implementation if used for GxP records; and a clinical validation package
+  including the ground-truth flag-precision study designed in
+  [`VALIDATION_PROTOCOL.md`](VALIDATION_PROTOCOL.md). These are substantial,
+  separate bodies of work; this repository does not assert any of them are
+  complete.
+- **Honest aspiration vs. claim.** Any mention elsewhere of a future FDA
+  submission is an aspiration, not a current status, milestone, or commitment.
+  Nothing in this repository should be read as evidence of clearance,
+  submission, or regulatory engagement.
 
 ## See also
 

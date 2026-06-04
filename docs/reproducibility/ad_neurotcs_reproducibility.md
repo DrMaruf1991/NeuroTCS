@@ -49,8 +49,8 @@ different hash.
 
 | Run | Expected outcome |
 |---|---|
-| `pytest tests/ -q` on this version, no env vars | **400 passed, 4 skipped** |
-| `pytest tests/ -q` with `NEUROTCS_MIRIAD_DIR` pointing at the canonical CSVs | **404 passed, 0 skipped** (the two skips become asserting tests) |
+| `pytest tests/ -q` on this version, no env vars | **1909 passed, 23 skipped** |
+| `pytest tests/ -q` with `NEUROTCS_MIRIAD_DIR` pointing at the canonical CSVs | (the MIRIAD-gated skips become asserting tests when NEUROTCS_MIRIAD_DIR is set) |
 | Same command run twice consecutively | identical outcome both times (double-test rule) |
 
 The 2 skips are real-MIRIAD locked-invariant tests that engage only when
@@ -182,7 +182,7 @@ modified or the wrong tag was checked out. Do NOT proceed.
 
 ```bash
 pytest tests/ -q
-# Expected (no env vars): 400 passed, 4 skipped
+# Expected (no env vars): 1909 passed, 23 skipped
 ```
 
 Run it a SECOND time to confirm reproducibility:
@@ -320,7 +320,7 @@ redistribute any of these.
 - ✅ Code identity: rule-pack SHA-256 hashes.
 - ✅ Environment identity: Python + package version pins.
 - ✅ Audit-pipeline identity: seed, bootstrap_B, CI method, prior_type.
-- ✅ Test-suite identity: 400 passed, 4 skipped (or 404 passed, 0
+- ✅ Test-suite identity: 1909 passed, 23 skipped (or fewer skips when gated cohort env vars are set, 0
   skipped with MIRIAD CSVs present).
 - ✅ Locked audit_ids for MIRIAD longitudinal and test-retest.
 - ✅ Cross-platform CSV-checksum command using only stdlib /
@@ -362,7 +362,7 @@ checklist in order:
 
 1. **Rule-pack SHA mismatch (Step 3.2)?** You have a modified rule
    pack. Re-clone the tag.
-2. **`pytest` not at 400 passed + 4 skipped (Step 3.3)?** Your
+2. **`pytest` not at 1909 passed + 23 skipped (Step 3.3)?** Your
    environment has a dependency at a different version. Re-install
    from `requirements.lock`.
 3. **Cohort CSV SHA-256 mismatch (Step 3.4)?** You have a different
@@ -394,3 +394,12 @@ Companion documents:
 - `docs/validation/ad_fairness_audit.md` — FUTURE-AI Panel B.4.4 validation.
 - `docs/reproducibility/blind_validation_protocol.md` — blind-validation
   protocol for collaborators with their own cohorts (AD-lock Step 2.5).
+- `docs/VALIDATION_PROTOCOL.md` — flag-validation study design (Arm A expert
+  adjudication for flag precision/PPV; Arm B error-injection coverage). The
+  honest answer to "what fraction of flags are true data errors": a study
+  design, not yet a result.
+- `neurotcs validate-coverage <clean_cohort>` — the executable Arm B harness
+  (`neurotcs.validation`): injects a realistic error taxonomy into a clean
+  cohort and reports rule-set detection coverage and specificity with
+  confidence intervals. Measures coverage, not accuracy; never embeds
+  DUA-gated data.
