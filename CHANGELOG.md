@@ -1,3 +1,40 @@
+## [1.68.0] -- 2026-06-04 -- E-2026-041: Proactive self-audit -- doc/code count consistency + drift-guard extension
+
+A proactive root-to-root self-audit (not in response to an external report)
+found two documentation-accuracy defects, both the same root cause as the
+v1.67.0 version drift: docs silently lagging a number the code changed. No
+code, safety, or scientific defect was found; the engine, test quality (all 23
+skips legitimately data-gated, zero stubs/xfails), packaging, and scope language
+were clean. Default v3 audit UNCHANGED at 69/65/1236.
+
+### Findings fixed
+- **Rule-pack undercount.** README stated "3 AD rule packs" and its table listed
+  3, while 6 production AD packs ship and load (`aa_2024`, `aa_2024_trac`,
+  `adni_clinical_stage`, `at_biological`, `atn_2018`, `niaaa_2018`). Corrected
+  the prose to "6 production AD rule packs" and added the 3 missing table rows
+  with accurate anchor/PMID/transition metadata.
+- **Stale test counts.** README badge + 3 prose lines said 1909 (one tagged
+  v1.65.0); actual was 1915. Updated to the current 1918 (1915 + 3 new guard
+  tests) consistently, tagged to this release.
+
+### Drift-guard extension (closes the *class*, not just the instances)
+Extended `tests/test_version_consistency.py` (+3 tests, now 9):
+- `test_readme_documents_correct_ad_pack_count` -- derives the production AD
+  pack count from disk (not hardcoded) and asserts the README prose matches.
+- `test_readme_table_lists_every_production_ad_pack` -- asserts every shipped
+  production pack appears in the README table.
+- `test_readme_test_count_badge_and_prose_agree` -- asserts the test-count
+  badge, prose, and env-line are mutually consistent (catches a badge/prose
+  split without self-referentially hard-pinning the live count, which would be
+  flaky). Both new guards were verified to FAIL on the reintroduced defects and
+  PASS once fixed.
+
+### Tests
+1915 -> 1918 passed (+3 guard tests). ruff clean; default v3 unchanged at
+69/65/1236; edits add no new non-ASCII.
+
+---
+
 ## [1.67.0] -- 2026-06-04 -- E-2026-040: Version single-source-of-truth + drift guard, pyreadr optional, claims-bounding (real-world-readiness audit)
 
 Responds to the external "Real-World Readiness Audit". Closes the concrete

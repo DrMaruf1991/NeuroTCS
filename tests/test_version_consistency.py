@@ -80,3 +80,67 @@ def test_security_latest_supported_matches_minor():
         f"SECURITY.md does not reference current minor {minor}.x / {CANON}")
     # And it must NOT still advertise a stale pre-current minor as "latest".
     assert "1.1.x" not in sec, "SECURITY.md still lists stale 1.1.x as supported"
+
+
+# --------------------------------------------------------------------------- #
+# Documentation-count drift guards (added v1.68.0 after a proactive self-audit
+# found README documenting "3 AD rule packs" while 6 ship, and a test-count
+# badge of 1909 while 1915 pass). These guard the *class* of defect -- docs
+# silently lagging a number -- not just the instances.
+# --------------------------------------------------------------------------- #
+def _production_ad_pack_count() -> int:
+    """Derive the number of production AD rule packs from disk (not hardcoded)."""
+    from neurotcs.rulepack.loader import load_rulepack
+    ad_dir = _ROOT / "src" / "neurotcs" / "rulepack" / "rules" / "ad"
+    count = 0
+    for yaml_path in sorted(ad_dir.glob("*.yaml")):
+        pid = "ad/" + yaml_path.stem
+        if load_rulepack(pid).is_production:
+            count += 1
+    return count
+
+
+def test_readme_documents_correct_ad_pack_count():
+    """README's '<N> production AD rule packs' prose must match reality."""
+    n = _production_ad_pack_count()
+    readme = (_ROOT / "README.md").read_text(encoding="utf-8")
+    # Accept either digit or small-number word for the count in the scope prose.
+    words = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five",
+             6: "six", 7: "seven", 8: "eight"}
+    pattern = rf"\b({n}|{words.get(n, n)}) (production )?AD rule packs?\b"
+    assert re.search(pattern, readme), (
+        f"README does not state the correct AD rule-pack count "
+        f"({n} production packs ship); update the scope prose.")
+
+
+def test_readme_table_lists_every_production_ad_pack():
+    """Every shipped production AD pack must appear in the README pack table."""
+    from neurotcs.rulepack.loader import load_rulepack
+    ad_dir = _ROOT / "src" / "neurotcs" / "rulepack" / "rules" / "ad"
+    readme = (_ROOT / "README.md").read_text(encoding="utf-8")
+    missing = []
+    for yaml_path in sorted(ad_dir.glob("*.yaml")):
+        pid = "ad/" + yaml_path.stem
+        if not load_rulepack(pid).is_production:
+            continue
+        # the table references packs as `ad/<name>@<ver>`; require the id stem
+        if f"ad/{yaml_path.stem}" not in readme:
+            missing.append(pid)
+    assert not missing, (
+        f"README pack table omits production packs: {missing}")
+
+
+def test_readme_test_count_badge_and_prose_agree():
+    """The README test-count badge and the 'expect N passed' prose must agree
+    with each other (internal consistency), so a badge/prose split like the
+    1909-vs-1915 drift cannot recur silently. The exact live count is not
+    hard-pinned here (that would be self-referential and flaky); this asserts
+    the documented numbers are mutually consistent."""
+    readme = (_ROOT / "README.md").read_text(encoding="utf-8")
+    badge = re.findall(r"badge/tests-(\d+)%20passed", readme)
+    prose = re.findall(r"expect (\d+)(?:\+cohort)? (?:passed|tests passed)", readme)
+    env_line = re.findall(r"\*\*(\d+) passed / \d+ skipped\*\*", readme)
+    documented = set(badge) | set(prose) | set(env_line)
+    assert documented, "no documented test counts found in README"
+    assert len(documented) == 1, (
+        f"README test counts disagree across badge/prose/env-line: {documented}")

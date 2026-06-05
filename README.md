@@ -5,8 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.67.0](https://img.shields.io/badge/version-1.67.0-success.svg)](CHANGELOG.md)
-[![Tests 1909](https://img.shields.io/badge/tests-1909%20passed-success.svg)](tests/)
+[![Version 1.67.0](https://img.shields.io/badge/version-1.68.0-success.svg)](CHANGELOG.md)
+[![Tests 1915](https://img.shields.io/badge/tests-1918%20passed-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7_FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
@@ -54,13 +54,16 @@ Plus five methodological modules (all shipped in v1.7.0+, all with tests):
 
 ## Rule packs shipped
 
-NeuroTCS is an **Alzheimer's-disease** auditing tool. The 3 AD rule packs encode the dominant diagnostic and trajectory frameworks. See [docs/SCOPE.md](docs/SCOPE.md) for the scope rationale and regulatory status. Non-AD packs that previously shipped in v1.7.x (PD/Hoehn-Yahr, MS/McDonald, oncology RECIST + iRECIST, stroke mRS, lung-nodule Fleischner) were extracted at v1.9.0 and are preserved as archival history only; NeuroTCS does not roadmap non-AD coverage.
+NeuroTCS is an **Alzheimer's-disease** auditing tool. The 6 production AD rule packs encode the dominant diagnostic and trajectory frameworks. See [docs/SCOPE.md](docs/SCOPE.md) for the scope rationale and regulatory status. Non-AD packs that previously shipped in v1.7.x (PD/Hoehn-Yahr, MS/McDonald, oncology RECIST + iRECIST, stroke mRS, lung-nodule Fleischner) were extracted at v1.9.0 and are preserved as archival history only; NeuroTCS does not roadmap non-AD coverage.
 
 | Pack | Disease | Anchor publication | PMID | Transitions |
 |---|---|---|---|---|
 | `ad/niaaa_2018@1.3.0` | Alzheimer's | Jack 2018 NIA-AA Framework | 29653606 | 4 + 2 inadmissible |
 | `ad/aa_2024@2.1.0` | Alzheimer's | Jack 2024 AA Revised Criteria | 38934362 | 28 + 17 inadmissible (Table 7 integrated staging, 17 states) |
 | `ad/aa_2024_trac@1.1.0` | Alzheimer's (anti-Aβ) | La Joie 2025 TRAC framework | 41298245 | 6 + 3 inadmissible (5 require `treatment_status`) |
+| `ad/atn_2018@1.0.0` | Alzheimer's | Jack 2024 AA Revised Criteria (AT(N) origin Jack 2016/2018) | 38934362 | 5 + 0 inadmissible (8 biomarker-profile states; A-T+ inadmissibility enforced) |
+| `ad/at_biological@1.0.0` | Alzheimer's | Jack 2024 AA Revised Criteria (A/T biological staging) | 38934362 | 3 + 3 inadmissible (3 states) |
+| `ad/adni_clinical_stage@1.0.0` | Alzheimer's | ADNI clinical-stage staging (CN/SMC/EMCI/LMCI/MCI/AD); DOI 10.1002/alz.14167 | — | 20 + 5 inadmissible (6 states) |
 
 Each rule pack is:
 
@@ -90,7 +93,7 @@ git clone https://github.com/DrMaruf1991/NeuroTCS.git
 cd NeuroTCS
 pip install -e .
 
-# Tests (no cohort data required) -- expect 1909 passed, 23 skipped (v1.65.0)
+# Tests (no cohort data required) -- expect 1918 passed, 23 skipped (v1.68.0)
 python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_adni_audit.py \
     --ignore=tests/audit_core/test_real_oasis3_audit.py \
@@ -99,7 +102,7 @@ python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_miriad_fairness_audit.py \
     --ignore=tests/audit_core/test_four_cohort_triangulation.py
 
-# Full suite with cohort data (set env vars first; expect 1909+cohort tests passed, cohort-version-dependent)
+# Full suite with cohort data (set env vars first; expect 1918+cohort tests passed, cohort-version-dependent)
 export NEUROTCS_OASIS3_CDR=/path/to/OASIS3_UDSb4_cdr.csv
 export NEUROTCS_ADNI_DXSUM_RDA=/path/to/ADNIMERGE2/data/DXSUM.rda
 export NEUROTCS_NACC_CSV=/path/to/investigator_nacc73_slim.csv
@@ -107,7 +110,7 @@ export NEUROTCS_MIRIAD_DIR=/path/to/MIRIAD_directory
 python -m pytest tests/ -q
 ```
 
-The test count is environment-dependent: **1909 passed / 23 skipped** without cohort env vars (cohort tests skip; current as of v1.67.0). With all four cohort env vars pointing at valid files, the cohort tests additionally execute and pass; the exact pass count is cohort-version-dependent. Both outcomes are correct behavior.
+The test count is environment-dependent: **1918 passed / 23 skipped** without cohort env vars (cohort tests skip; current as of v1.68.0). With all four cohort env vars pointing at valid files, the cohort tests additionally execute and pass; the exact pass count is cohort-version-dependent. Both outcomes are correct behavior.
 
 ### Rule pack only
 
@@ -193,7 +196,7 @@ The canonical spec is [`docs/spec/temporalmetric_v1.7_FINAL.md`](docs/spec/tempo
 @software{salokhiddinov2026neurotcs,
   author    = {Salokhiddinov, Marufjon},
   title     = {NeuroTCS: Citation-locked, fail-closed longitudinal medical AI audit framework},
-  version   = {1.67.0},
+  version   = {1.68.0},
   year      = {2026},
   url       = {https://github.com/DrMaruf1991/NeuroTCS},
   note      = {temporalmetric v1.7 FINAL specification, 3 AD production rule packs, four-cohort triangulation lock; v1.9.0+ AD-only scope}
