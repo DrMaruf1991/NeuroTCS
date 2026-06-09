@@ -650,7 +650,8 @@ def test_real_adni_audit_end_to_end():
         return
     import warnings
     warnings.filterwarnings("ignore")
-    import pyreadr
+    import pytest
+    pyreadr = pytest.importorskip("pyreadr")
     dx = pyreadr.read_r(str(dxsum))["DXSUM"]
     dx = dx[dx["DIAGNOSIS"].isin(["CN", "MCI", "Dementia"])].copy()
     trajectories = trajectories_from_dataframe(

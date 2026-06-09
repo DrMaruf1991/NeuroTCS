@@ -245,7 +245,8 @@ def test_real_world_adni_adapter():
     """
     import os
 
-    import pyreadr
+    import pytest
+    pyreadr = pytest.importorskip("pyreadr")
     adni_env = os.environ.get("NEUROTCS_ADNI_DXSUM_RDA")
     adni_path = Path(adni_env) if adni_env else None
     if adni_path is None or not adni_path.exists():

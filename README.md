@@ -5,8 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.67.0](https://img.shields.io/badge/version-1.68.0-success.svg)](CHANGELOG.md)
-[![Tests 1915](https://img.shields.io/badge/tests-1918%20passed-success.svg)](tests/)
+[![Version 1.67.0](https://img.shields.io/badge/version-1.69.0-success.svg)](CHANGELOG.md)
+[![Tests 1915](https://img.shields.io/badge/tests-1920%20passed-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7_FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions against internationally endorsed published clinical guidelines. It answers the question regulators, hospitals, and trialists ask first: *does this AI model's visit-to-visit prediction trajectory obey the clinical biology it claims to predict?*
@@ -15,7 +15,7 @@ The framework is anchored on Dr. Marufjon Salokhiddinov's ASNR 2026 presentation
 
 ## Hallmark result — four-cohort triangulation lock
 
-Five locked audit invariants reproduce byte-exactly across N=5 cold reruns, numpy 2.0.2↔2.4.4, pyreadr 0.5.0↔0.5.6, on Linux and Windows. Max pairwise ΔcTCS = 0.009206 (ADNI vs MIRIAD), all 6 pairwise comparisons ≤ 0.01 world-class threshold.
+Five locked audit invariants reproduce byte-exactly across N=5 cold reruns, numpy 2.0.2↔2.4.4, pyreadr 0.5.0↔0.5.6, on Linux and Windows. Max pairwise ΔcTCS = 0.009206 (ADNI vs MIRIAD), all 6 pairwise comparisons within our pre-specified <=0.01 threshold.
 
 | Cohort | n_scored / n_total | Transitions | Flagged | cTCS | audit_id |
 |---|---:|---:|---:|---:|---|
@@ -93,7 +93,7 @@ git clone https://github.com/DrMaruf1991/NeuroTCS.git
 cd NeuroTCS
 pip install -e .
 
-# Tests (no cohort data required) -- expect 1918 passed, 23 skipped (v1.68.0)
+# Tests (no cohort data required) -- expect 1920 passed, 26 skipped (v1.69.0; base install)
 python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_adni_audit.py \
     --ignore=tests/audit_core/test_real_oasis3_audit.py \
@@ -102,7 +102,7 @@ python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_miriad_fairness_audit.py \
     --ignore=tests/audit_core/test_four_cohort_triangulation.py
 
-# Full suite with cohort data (set env vars first; expect 1918+cohort tests passed, cohort-version-dependent)
+# Full suite with cohort data (set env vars first; expect 1920+cohort tests passed, cohort-version-dependent)
 export NEUROTCS_OASIS3_CDR=/path/to/OASIS3_UDSb4_cdr.csv
 export NEUROTCS_ADNI_DXSUM_RDA=/path/to/ADNIMERGE2/data/DXSUM.rda
 export NEUROTCS_NACC_CSV=/path/to/investigator_nacc73_slim.csv
@@ -110,7 +110,7 @@ export NEUROTCS_MIRIAD_DIR=/path/to/MIRIAD_directory
 python -m pytest tests/ -q
 ```
 
-The test count is environment-dependent: **1918 passed / 23 skipped** without cohort env vars (cohort tests skip; current as of v1.68.0). With all four cohort env vars pointing at valid files, the cohort tests additionally execute and pass; the exact pass count is cohort-version-dependent. Both outcomes are correct behavior.
+The test count is environment-dependent: **1920 passed / 26 skipped** on a base install without cohort env vars (cohort tests + optional-dependency tests skip; current as of v1.69.0). Installing the optional `[radni]` extra engages 3 more tests (1923 passed / 23 skipped). With all four cohort env vars pointing at valid files, the cohort tests additionally execute and pass; the exact pass count is cohort-version-dependent. Both outcomes are correct behavior.
 
 ### Rule pack only
 
@@ -196,7 +196,7 @@ The canonical spec is [`docs/spec/temporalmetric_v1.7_FINAL.md`](docs/spec/tempo
 @software{salokhiddinov2026neurotcs,
   author    = {Salokhiddinov, Marufjon},
   title     = {NeuroTCS: Citation-locked, fail-closed longitudinal medical AI audit framework},
-  version   = {1.68.0},
+  version   = {1.69.0},
   year      = {2026},
   url       = {https://github.com/DrMaruf1991/NeuroTCS},
   note      = {temporalmetric v1.7 FINAL specification, 3 AD production rule packs, four-cohort triangulation lock; v1.9.0+ AD-only scope}

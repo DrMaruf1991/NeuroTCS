@@ -1,3 +1,53 @@
+## [1.69.0] -- 2026-06-09 -- E-2026-042: Release engineering -- reproducible build, quickstart, release/DOI process, clean-install fix, release-readiness guard
+
+Prepares NeuroTCS for clean distribution as a research instrument (private repo;
+versioned wheels via GitHub Releases; no public PyPI), and completes the v1.67.0
+optional-dependency fix after a fresh-machine install revealed it was partial.
+Additive + documentation + test hygiene; no audit behavior change. Default v3
+audit UNCHANGED at 69/65/1236.
+
+### Clean-install fix (completes v1.67.0)
+v1.67.0 made `pyreadr` optional and lazy in the source modules, but FOUR tests
+still bare-imported `pyreadr` before their skip logic, so on a base install
+without the optional `radni` extra they CRASHED instead of skipping. (They
+passed only by luck on machines that happened to have pyreadr.) Fixed all four
+(`test_v1_0.py`, `test_v1_1.py` x2, `test_audit_core.py`) to use
+`pytest.importorskip("pyreadr")` so they skip cleanly when the extra is absent.
+Verified: with pyreadr blocked, these now skip rather than error.
+
+### Reproducible build (verified)
+`python -m build` produces a wheel + sdist verified to (a) contain all package
+data -- 6 AD rule packs, 45 clinical-range YAMLs, the validation subpackage --
+and (b) install clean in a fresh virtualenv and run standalone outside the
+source tree. Closes the packaging concern at the built-artifact level.
+
+### New-user quickstart (docs/QUICKSTART.md) + release process (docs/RELEASING.md)
+Quickstart: install -> describe -> first audit -> verify -> interpret-flags,
+every command verified, leading with the honest scope banner and the explicit
+caveat that a flag is not automatically a data error. Releasing: pre-flight
+gate, single-source version bump, build, fresh-venv install check (bash +
+PowerShell), tag/push, GitHub Release with attached artifacts, Zenodo DOI via
+CITATION.cff, and an explicit honest-scope note.
+
+### Claims-bounding
+"world-class threshold" label on the <=0.01 pairwise-deltacTCS figure (README +
+SCOPE.md) reworded to "our pre-specified <=0.01 threshold".
+
+### Release-readiness + import-hygiene guards (tests/test_version_consistency.py)
++5 tests: QUICKSTART/RELEASING exist; QUICKSTART uses the real package name and
+scope banner; documented `neurotcs[<extra>]` extras and the `neurotcs` console
+entry point are declared in pyproject; and -- closing the class of the
+clean-install bug -- a static guard that FAILS if any test bare-imports an
+optional dependency (pyreadr/pyreadstat) outside `pytest.importorskip` or
+try/except ImportError. Verified to catch a reintroduced bare import.
+
+### Tests
+1918 -> base install 1920 passed / 26 skipped; with optional `[radni]` extra
+1923 passed / 23 skipped. ruff clean; default v3 unchanged at 69/65/1236; new
+files strict ASCII; built wheel verified self-contained and fresh-venv-installable.
+
+---
+
 ## [1.68.0] -- 2026-06-04 -- E-2026-041: Proactive self-audit -- doc/code count consistency + drift-guard extension
 
 A proactive root-to-root self-audit (not in response to an external report)

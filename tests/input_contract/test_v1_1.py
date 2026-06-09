@@ -513,7 +513,8 @@ def test_real_adni_clinical():
     """
     import os
 
-    import pyreadr
+    import pytest
+    pyreadr = pytest.importorskip("pyreadr")
     adni_env = os.environ.get("NEUROTCS_ADNI_DXSUM_RDA")
     adni = Path(adni_env) if adni_env else None
     if adni is None or not adni.exists():
@@ -590,7 +591,8 @@ def test_real_adni_volumetric():
     """
     import os
 
-    import pyreadr
+    import pytest
+    pyreadr = pytest.importorskip("pyreadr")
     fs_env = os.environ.get("NEUROTCS_ADNI_UCSFFSX7_RDA")
     dx_env = os.environ.get("NEUROTCS_ADNI_DXSUM_RDA")
     fs = Path(fs_env) if fs_env else None

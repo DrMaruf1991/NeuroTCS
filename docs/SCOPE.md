@@ -32,7 +32,7 @@ The Layer Contract that all layers adhere to is documented at [`docs/clinical_ra
 
 ## Why this scope decision
 
-NeuroTCS was originally designed as a multi-disease platform. As of v1.8.x, the AD validation surface had achieved byte-exact four-cohort triangulation (OASIS-3 cTCS = 0.994191, ADNI = 0.994575, NACC = 0.991502, MIRIAD = 0.985369, all 6 pairwise ΔcTCS ≤ 0.01 — the world-class threshold), while the 5 non-AD rule packs were citation-locked transcriptions but had no cohort runs and no DUAs filed.
+NeuroTCS was originally designed as a multi-disease platform. As of v1.8.x, the AD validation surface had achieved byte-exact four-cohort triangulation (OASIS-3 cTCS = 0.994191, ADNI = 0.994575, NACC = 0.991502, MIRIAD = 0.985369, all 6 pairwise deltacTCS <=0.01 -- our pre-specified threshold), while the 5 non-AD rule packs were citation-locked transcriptions but had no cohort runs and no DUAs filed.
 
 The decision to scope-narrow to AD for v1.x was made on 2026-05-24 by Dr. Marufjon Salokhiddinov (NeuroTCS lead). The reasons:
 

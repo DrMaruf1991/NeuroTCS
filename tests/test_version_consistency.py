@@ -144,3 +144,88 @@ def test_readme_test_count_badge_and_prose_agree():
     assert documented, "no documented test counts found in README"
     assert len(documented) == 1, (
         f"README test counts disagree across badge/prose/env-line: {documented}")
+
+
+# --------------------------------------------------------------------------- #
+# Release-readiness guards (added v1.69.0). Keep the release docs and the build
+# configuration mutually consistent so a release can't ship with a doc that
+# references a package name, extra, or entrypoint that does not exist.
+# --------------------------------------------------------------------------- #
+def _pyproject_text() -> str:
+    return (_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+
+
+def test_quickstart_doc_exists_and_uses_real_package_name():
+    qs = _ROOT / "docs" / "QUICKSTART.md"
+    assert qs.exists(), "docs/QUICKSTART.md missing (release deliverable)"
+    text = qs.read_text(encoding="utf-8")
+    assert "pip install neurotcs" in text or "neurotcs-" in text, (
+        "QUICKSTART must show the real install command")
+    # the honest scope banner must be present (no silent overclaim)
+    assert "research instrument" in text.lower()
+    assert "not" in text.lower() and "clinical" in text.lower()
+
+
+def test_releasing_doc_exists():
+    assert (_ROOT / "docs" / "RELEASING.md").exists(), (
+        "docs/RELEASING.md missing (release process deliverable)")
+
+
+def test_documented_optional_extras_exist_in_pyproject():
+    """Any `neurotcs[<extra>]` referenced in the quickstart must be a real
+    optional-dependency extra in pyproject.toml."""
+    qs = (_ROOT / "docs" / "QUICKSTART.md").read_text(encoding="utf-8")
+    referenced = set(re.findall(r"neurotcs\[([a-z0-9_]+)\]", qs))
+    pyproject = _pyproject_text()
+    declared = set(re.findall(r"^([a-z0-9_]+)\s*=\s*\[", pyproject, re.MULTILINE))
+    missing = referenced - declared
+    assert not missing, (
+        f"QUICKSTART references undeclared extras {missing}; "
+        f"declared extras are {declared}")
+
+
+def test_console_entrypoint_declared():
+    """The `neurotcs` CLI documented in the quickstart must be a real
+    console-script entry point."""
+    pyproject = _pyproject_text()
+    assert "neurotcs =" in pyproject and "cli:main" in pyproject, (
+        "neurotcs console-script entry point not declared in pyproject.toml")
+
+
+# --------------------------------------------------------------------------- #
+# Optional-dependency import hygiene (added v1.69.0 after a clean-machine
+# install revealed 3 tests bare-importing pyreadr before their skip logic,
+# crashing instead of skipping when the optional `radni` extra was absent).
+# Tests may use an optional dependency only via pytest.importorskip or inside a
+# try/except ImportError -- never a bare top-of-function `import <optional>`
+# that runs before the skip guard.
+# --------------------------------------------------------------------------- #
+def test_no_bare_optional_dependency_import_in_tests():
+    import ast
+
+    tests_dir = _ROOT / "tests"
+    optional_mods = {"pyreadr", "pyreadstat"}
+    offenders = []
+
+    for py in tests_dir.rglob("test_*.py"):
+        # utf-8-sig tolerates a leading BOM (some files carry one on Windows)
+        src = py.read_text(encoding="utf-8-sig")
+        # Collect line numbers that are inside a try-block, so try/except
+        # ImportError guarded imports are allowed.
+        tree = ast.parse(src, filename=str(py))
+        guarded_lines = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Try):
+                for stmt in ast.walk(node):
+                    if hasattr(stmt, "lineno"):
+                        guarded_lines.add(stmt.lineno)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name in optional_mods and node.lineno not in guarded_lines:
+                        offenders.append(f"{py.relative_to(_ROOT)}:{node.lineno} "
+                                         f"bare import {alias.name}")
+    assert not offenders, (
+        "Optional dependencies must be imported via pytest.importorskip or "
+        "inside try/except ImportError, never bare (they crash on a clean "
+        "install without the optional extra):\n  " + "\n  ".join(offenders))
