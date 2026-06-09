@@ -1,0 +1,552 @@
+# NeuroTCS Rule Pack: Alzheimer's Disease -- NIA-AA 2024 numeric CLINICAL staging
+# (clinical/cognitive severity stages 0-6, Jack et al. 2024 Table 6)
+# Schema: 1.4.0 | Status: PRODUCTION | NeuroTCS v1 instantiation
+#
+# WHY THIS PACK EXISTS
+# --------------------
+# The NIA-AA 2024 revised criteria (Jack et al. 2024) introduce a numeric
+# clinical staging scheme (stages 0-6) for individuals on the AD continuum.
+# Real datasets encoded against this standard carry clinical_stage as the
+# integers 0..6, which no prior NeuroTCS clinical pack recognized (they key off
+# the labeled CN/MCI/AD or CN/SMC/EMCI/LMCI/MCI/AD vocabularies). Such a cohort
+# therefore failed the clinical axis with vocabulary_mismatch. This pack
+# recognizes the NIA-AA 2024 numeric clinical scheme natively.
+#
+# STATE SPACE (verbatim-anchored to Jack 2024 Table 6, "Clinical staging for
+# individuals on the Alzheimer's disease continuum"; PMID 38934362, DOI 10.1002/alz.13859):
+#   0  Asymptomatic, deterministic gene (ADAD/DSAD), biomarker-negative.
+#   1  Asymptomatic, biomarker evidence only (preclinical).
+#   2  Transitional decline (subtle, still normal-range, independent).
+#   3  Cognitive impairment with early functional impact (~MCI).
+#   4  Dementia, mild functional impairment.
+#   5  Dementia, moderate functional impairment.
+#   6  Dementia, severe functional impairment.
+# Jack 2024 notes the numeric stages 1-6 closely resemble the Global
+# Deterioration Scale and the FDA early-AD trial staging; stage 2 is an explicit
+# transitional stage. (Down syndrome caveat: individuals with DS may not be fully
+# independent even at stage 0 due to baseline intellectual disability -- decline
+# from the individual's own baseline is then the more appropriate indicator.)
+#
+# CRITICAL DESIGN DECISIONS (the part that prevents false flags)
+# --------------------------------------------------------------
+# 1. TRANSITION ADMISSIBILITY, NOT A STRICT MONOTONIC RULE. Jack 2024 specifies
+#    the state space and the expected forward direction (1->2->3->4-6 along the
+#    integrated diagonal) but does NOT declare every backward step an error.
+#    Pre-dementia reversion is real (e.g. documented MCI->normal reversion), so
+#    reversion WITHIN the pre-dementia range (stages 0-3) is ADMISSIBLE and is
+#    never flagged. Encoding a strict monotonic 0->6 rule would manufacture false
+#    flags on valid reversions.
+# 2. INADMISSIBLE = REGRESSION OUT OF DEMENTIA. A transition FROM a dementia
+#    stage (4, 5, or 6) to any strictly lower stage is inadmissible: established
+#    AD dementia is not expected to revert to a milder stage or to normal under
+#    standard natural history. This mirrors the AD->MCI / AD->CN inadmissibility
+#    in ad/niaaa_2018 and ad/adni_clinical_stage, expressed on the numeric axis.
+# 3. NO RATE LOGIC. This pack carries NO fast-progression / stages-per-interval
+#    rule. Jack 2024 gives no numeric floor on time-to-advance, so any such
+#    cutpoint would be an invented threshold. Biological-axis rate/ordering
+#    concerns belong to the biological staging path, not this clinical pack.
+# 4. CLINICAL AXIS ONLY. Biological A/T/N staging (and any TRAC treatment-
+#    clearance carve-out) is a SEPARATE axis (at_biological / atn_2018 / TRAC),
+#    with different rules; it is deliberately not conflated here.
+
+schema_version: "1.4.0"
+rulepack_id: "ad/niaaa_2024_clinical_numeric@1.0.0"
+ruleset_version: "1.0.0"
+effective_date: "2026-06-09"
+status: "production"
+disease_domain: "alzheimers"
+framework_name: "NIA-AA 2024 numeric clinical staging (stages 0-6, Jack 2024 Table 6)"
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo International University in Tashkent (KIUT), Uzbekistan"
+clinical_source_authority: >-
+  NIA-AA 2024 revised criteria for diagnosis and staging of Alzheimer's disease.
+  Primary source: Jack CR Jr, Andrews JS, Beach TG, et al. "Revised criteria for
+  diagnosis and staging of Alzheimer's disease: Alzheimer's Association
+  Workgroup." Alzheimer's & Dementia 2024;20(8):5143-5169. PMID 38934362;
+  DOI 10.1002/alz.13859. Table 6 defines the numeric clinical staging (stages 0-6) for
+  individuals on the AD continuum used by this pack.
+reviewers: []
+
+endorsing_bodies:
+  - "Alzheimer's Association (AA) Workgroup (Jack et al. 2024 revised criteria authors; alz.org)"
+  - "National Institute on Aging (NIA, NIH; NIA-AA criteria co-convener)"
+  - "Mayo Clinic (lead authorship, Jack CR Jr; PMID 38934362)"
+  - "Alzheimer's & Dementia (Journal of the Alzheimer's Association; peer-reviewed publication venue, DOI 10.1002/alz.13859)"
+  - "U.S. Food and Drug Administration (FDA early-AD trial staging guidance that the numeric 1-6 scheme resembles, per Jack 2024 Table 6 discussion)"
+  - "National Institute on Aging-Alzheimer's Association (NIA-AA) framework lineage (2011, 2018, 2024)"
+
+anchor_citation:
+  citation_pmid: "38934362"
+  citation_doi: "10.1002/alz.13859"
+  citation_text: >-
+    Jack CR Jr, Andrews JS, Beach TG, et al. Revised criteria for diagnosis and
+    staging of Alzheimer's disease: Alzheimer's Association Workgroup. Alzheimer's
+    & Dementia 2024;20(8):5143-5169. PMID 38934362; DOI 10.1002/alz.13859. Table 6 defines the
+    numeric clinical staging (0-6) for individuals on the AD continuum.
+
+state_space:
+  - name: "0"
+    description: >-
+      Asymptomatic, deterministic gene. Genetically determined AD (ADAD/DSAD) in a biomarker-negative, clinically asymptomatic individual.
+    ordinal_rank: 0
+  - name: "1"
+    description: >-
+      Asymptomatic, biomarker evidence only (preclinical AD). Cognition within expected range, no decline from baseline.
+    ordinal_rank: 1
+  - name: "2"
+    description: >-
+      Transitional decline. Subtle objective and/or subjective cognitive decline or neurobehavioral change from baseline, still within normal range and fully functionally independent.
+    ordinal_rank: 2
+  - name: "3"
+    description: >-
+      Cognitive impairment with early functional impact. Performance in the impaired range; independent but complex (instrumental) activities take measurably more effort. Resembles MCI.
+    ordinal_rank: 3
+  - name: "4"
+    description: >-
+      Dementia, mild functional impairment. Instrumental activities of daily living affected; still independent in basic ADLs.
+    ordinal_rank: 4
+  - name: "5"
+    description: >-
+      Dementia, moderate functional impairment. Basic activities of daily living require assistance.
+    ordinal_rank: 5
+  - name: "6"
+    description: >-
+      Dementia, severe functional impairment. Complete dependence for basic activities of daily living.
+    ordinal_rank: 6
+
+admissible_transitions:
+  - from_state: "0"
+    to_state: "1"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 0 to a more advanced stage 1 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "0"
+    to_state: "2"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 0 to a more advanced stage 2 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "0"
+    to_state: "3"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 0 to a more advanced stage 3 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "0"
+    to_state: "4"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 0 to a more advanced stage 4 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "0"
+    to_state: "5"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 0 to a more advanced stage 5 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "0"
+    to_state: "6"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 0 to a more advanced stage 6 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "1"
+    to_state: "0"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: reversion within the pre-dementia range (stage 1 to stage 0) is admissible; pre-dementia cognitive status can improve and is not treated as an error.
+    guideline_section: "Jack 2024 Table 6 (pre-dementia reversion)"
+  - from_state: "1"
+    to_state: "2"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 1 to a more advanced stage 2 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "1"
+    to_state: "3"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 1 to a more advanced stage 3 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "1"
+    to_state: "4"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 1 to a more advanced stage 4 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "1"
+    to_state: "5"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 1 to a more advanced stage 5 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "1"
+    to_state: "6"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 1 to a more advanced stage 6 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "2"
+    to_state: "0"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: reversion within the pre-dementia range (stage 2 to stage 0) is admissible; pre-dementia cognitive status can improve and is not treated as an error.
+    guideline_section: "Jack 2024 Table 6 (pre-dementia reversion)"
+  - from_state: "2"
+    to_state: "1"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: reversion within the pre-dementia range (stage 2 to stage 1) is admissible; pre-dementia cognitive status can improve and is not treated as an error.
+    guideline_section: "Jack 2024 Table 6 (pre-dementia reversion)"
+  - from_state: "2"
+    to_state: "3"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 2 to a more advanced stage 3 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "2"
+    to_state: "4"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 2 to a more advanced stage 4 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "2"
+    to_state: "5"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 2 to a more advanced stage 5 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "2"
+    to_state: "6"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 2 to a more advanced stage 6 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "3"
+    to_state: "0"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: reversion within the pre-dementia range (stage 3 to stage 0) is admissible; pre-dementia cognitive status can improve and is not treated as an error.
+    guideline_section: "Jack 2024 Table 6 (pre-dementia reversion)"
+  - from_state: "3"
+    to_state: "1"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: reversion within the pre-dementia range (stage 3 to stage 1) is admissible; pre-dementia cognitive status can improve and is not treated as an error.
+    guideline_section: "Jack 2024 Table 6 (pre-dementia reversion)"
+  - from_state: "3"
+    to_state: "2"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: reversion within the pre-dementia range (stage 3 to stage 2) is admissible; pre-dementia cognitive status can improve and is not treated as an error.
+    guideline_section: "Jack 2024 Table 6 (pre-dementia reversion)"
+  - from_state: "3"
+    to_state: "4"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 3 to a more advanced stage 4 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "3"
+    to_state: "5"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 3 to a more advanced stage 5 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "3"
+    to_state: "6"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 3 to a more advanced stage 6 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "4"
+    to_state: "5"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 4 to a more advanced stage 5 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "4"
+    to_state: "6"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 4 to a more advanced stage 6 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+  - from_state: "5"
+    to_state: "6"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: forward clinical progression from stage 5 to a more advanced stage 6 is the expected direction along the AD continuum.
+    guideline_section: "Jack 2024 Table 6 (forward progression)"
+
+inadmissible_transitions:
+  - from_state: "4"
+    to_state: "0"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 4 (dementia) to a strictly milder stage 0 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "4"
+    to_state: "1"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 4 (dementia) to a strictly milder stage 1 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "4"
+    to_state: "2"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 4 (dementia) to a strictly milder stage 2 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "4"
+    to_state: "3"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 4 (dementia) to a strictly milder stage 3 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "5"
+    to_state: "0"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 5 (dementia) to a strictly milder stage 0 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "5"
+    to_state: "1"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 5 (dementia) to a strictly milder stage 1 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "5"
+    to_state: "2"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 5 (dementia) to a strictly milder stage 2 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "5"
+    to_state: "3"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 5 (dementia) to a strictly milder stage 3 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "5"
+    to_state: "4"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 5 (dementia) to a strictly milder stage 4 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "6"
+    to_state: "0"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 6 (dementia) to a strictly milder stage 0 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "6"
+    to_state: "1"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 6 (dementia) to a strictly milder stage 1 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "6"
+    to_state: "2"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 6 (dementia) to a strictly milder stage 2 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "6"
+    to_state: "3"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 6 (dementia) to a strictly milder stage 3 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "6"
+    to_state: "4"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 6 (dementia) to a strictly milder stage 4 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+  - from_state: "6"
+    to_state: "5"
+    reason: >-
+      Regression OUT of dementia: a transition from clinical stage 6 (dementia) to a strictly milder stage 5 is not an expected course of established AD dementia under standard natural history, and indicates misclassification or model instability.
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
+    guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+
+transition_priors: []
+
+override_allowed_default: false
+
+notes: >-
+  Clinical-axis staging for the NIA-AA 2024 numeric scheme (Jack 2024 Table 6).
+  Inadmissibility is restricted to regression OUT of dementia (stages 4/5/6 to a
+  strictly lower stage); all forward progression and all pre-dementia reversion
+  (within stages 0-3) are admissible. This pack carries no rate / fast-
+  progression logic (Jack 2024 specifies no numeric time floor). Biological A/T/N
+  staging and any TRAC treatment-clearance carve-out are handled on the separate
+  biological axis, not here.

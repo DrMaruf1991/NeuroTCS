@@ -1,3 +1,47 @@
+## [1.70.0] -- 2026-06-09 -- E-2026-043: NIA-AA 2024 numeric clinical staging pack (stages 0-6, Jack 2024 Table 6)
+
+Adds a production rule pack for the NIA-AA 2024 numeric clinical staging scheme
+(Jack et al. 2024 Table 6), so cohorts that encode clinical_stage as the
+integers 0-6 audit on the clinical axis natively instead of failing with
+vocabulary_mismatch. Verify-first against the primary source; additive (a new
+pack, no engine change). Default v3 audit UNCHANGED at 69/65/1236.
+
+### New pack: ad/niaaa_2024_clinical_numeric@1.0.0 (production)
+- States 0-6, descriptions anchored verbatim to Jack 2024 Table 6 ("Clinical
+  staging for individuals on the Alzheimer's disease continuum"; PMID 38934362,
+  DOI 10.1002/alz.13859), including the stage-0 deterministic-gene case and the
+  Down-syndrome baseline caveat. Primary source verified before encoding.
+- Transition admissibility (the part that prevents false flags):
+  * INADMISSIBLE = regression OUT of dementia: any transition from a dementia
+    stage (4/5/6) to a strictly lower stage (15 transitions). Mirrors the
+    AD->MCI / AD->CN inadmissibility of the label-based packs, on the numeric
+    axis.
+  * ADMISSIBLE = all forward progression (incl. into dementia) AND all
+    pre-dementia reversion within stages 0-3 (27 transitions). Pre-dementia
+    reversion is NOT flagged -- a strict-monotonic rule would manufacture false
+    positives, the trap this pack is designed to avoid.
+- NO rate / fast-progression logic. Jack 2024 specifies no numeric time floor
+  to advance, so any such cutpoint would be an invented threshold. Biological-
+  axis ordering/monotonicity (and any TRAC carve-out) is a separate axis, not
+  conflated here.
+
+### Why
+A real NIA-AA-2024-staged trial cohort (clinical_stage = 0..6) previously
+fail-closed-skipped staging_clinical (vocabulary_mismatch: numeric codes matched
+no production pack). This pack closes that gap natively, with no hand-mapping and
+no information loss.
+
+### Tests
+1920 -> base install 1930 passed / 26 skipped; with optional [radni] extra
+1933 passed / 23 skipped. New tests/rulepack/test_niaaa_2024_clinical_numeric_pack.py
+(9) proves BOTH halves independently of any dataset: dementia regression
+inadmissible; pre-dementia reversion admissible-and-never-flagged; forward and
+into-dementia progression admissible; no rate logic; every transition citation-
+anchored. README pack count 6 -> 7 (drift guards updated). ruff clean; default
+v3 unchanged at 69/65/1236; new files strict ASCII.
+
+---
+
 ## [1.69.0] -- 2026-06-09 -- E-2026-042: Release engineering -- reproducible build, quickstart, release/DOI process, clean-install fix, release-readiness guard
 
 Prepares NeuroTCS for clean distribution as a research instrument (private repo;
