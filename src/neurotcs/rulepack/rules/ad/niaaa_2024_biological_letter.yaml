@@ -1,0 +1,271 @@
+# NeuroTCS Rule Pack: Alzheimer's Disease -- NIA-AA 2024 BIOLOGICAL letter staging
+# (A/B/C/D PET-based biological stages, Jack et al. 2024)
+# Schema: 1.4.0 | Status: PRODUCTION | NeuroTCS v1 instantiation
+#
+# WHY THIS PACK EXISTS
+# --------------------
+# The NIA-AA 2024 revised criteria (Jack et al. 2024) define four PET-based
+# BIOLOGICAL stages among amyloid-positive (A+) individuals, by the magnitude
+# and topography of tau-PET uptake:
+#   A  A+ (amyloid positivity; no significant tau aggregation)
+#   B  A+/T2MTL+  (medial-temporal tau)
+#   C  A+/T2MOD+  (moderate neocortical tau)
+#   D  A+/T2HIGH+ (high neocortical tau)
+# Datasets that encode biological_stage as the letters A/B/C/D had no matching
+# production pack: the existing ad/at_biological pack uses the A-T-/A+T-/A+T+
+# notation, NOT these letters. Such a cohort therefore could not have its
+# biological axis audited. This pack recognizes the A/B/C/D letter scale
+# natively. It is a SEPARATE axis from the numeric clinical staging
+# (ad/niaaa_2024_clinical_numeric); the two share no transition logic.
+#
+# STATE SPACE (anchored to Jack 2024; PMID 38934362, DOI 10.1002/alz.13859):
+#   ordinal A < B < C < D by increasing tau-PET spread in A+ individuals.
+# Verified against Jack 2024 and the AA-2024 validation literature
+# (Neurology 2025, DOI 10.1212/WNL.0000000000213675: "stage A (A+), stage B
+# (A+/T2MTL+), stage C (A+/T2MOD+), stage D (A+/T2HIGH+)").
+#
+# CRITICAL DESIGN DECISIONS
+# -------------------------
+# 1. MONOTONIC FORWARD PROGRESSION. Forward steps (A->B->C->D, including skips)
+#    and same-stage persistence are admissible. The biological stage reflects
+#    accumulating tau burden, expected to be non-decreasing under natural
+#    history.
+# 2. BACKWARD STEP = INADMISSIBLE BY DEFAULT. Any later visit whose letter is
+#    strictly below the prior visit's letter (B->A, C->B, C->A, D->C, D->B,
+#    D->A; single- or multi-step) is inadmissible -- UNLESS the TRAC carve-out
+#    (below) applies. Flag is on the LATER (regressing) visit.
+# 3. TRAC CARVE-OUT (the single most load-bearing rule). Treatment-Related
+#    Amyloid Clearance (La Joie 2025, DOI 10.1002/alz.70997): under anti-amyloid
+#    therapy, biomarker REVERSAL is a VALID treatment effect, not an error.
+#    Each backward transition therefore carries
+#      required_conditions: {treatment_status: ["TRAC"]}
+#      conditions_evaluated_at: "to_visit"
+#    so a backward step is admissible ONLY when the regressing (later) visit
+#    itself carries treatment_status == "TRAC". This is ROW-LOCAL to the
+#    regressing visit (not subject-global). INPUT-CONTRACT NOTE: the engine's
+#    per-visit context channel is the field `treatment_status`; to exercise this
+#    carve-out, the dataset's TRAC column (e.g. `trac_status`) must be wired as
+#    the trajectory's treatment_status_col with the literal value "TRAC".
+# 4. BLANK / A- ROWS DO NOT PARTICIPATE. Rows whose biological_stage is blank
+#    (not on the A+ staging pathway) are skipped by the trajectory builder and
+#    are neither staged nor flagged here.
+# 5. NO RATE LOGIC. No fast-progression / time-floor rule (Jack 2024 gives no
+#    numeric time floor to advance a biological stage; such a cutpoint would be
+#    invented). Ordering/monotonicity is the only longitudinal constraint.
+
+schema_version: "1.4.0"
+rulepack_id: "ad/niaaa_2024_biological_letter@1.0.0"
+ruleset_version: "1.0.0"
+effective_date: "2026-06-09"
+status: "production"
+disease_domain: "alzheimers"
+framework_name: "NIA-AA 2024 biological letter staging (A/B/C/D PET-based, Jack 2024)"
+
+transcribed_by: "Salokhiddinov M, MD PhD, ESOR-BRACCO-ESNR Neuroimaging Fellow, Kimyo International University in Tashkent (KIUT), Uzbekistan"
+clinical_source_authority: >-
+  NIA-AA 2024 revised criteria for diagnosis and staging of Alzheimer's disease
+  (Jack CR Jr et al., Alzheimer's & Dementia 2024;20(8):5143-5169; PMID 38934362,
+  DOI 10.1002/alz.13859), PET-based biological staging (A/B/C/D). TRAC carve-out per La Joie
+  et al. 2025 (Treatment-Related Amyloid Clearance; DOI 10.1002/alz.70997).
+reviewers: []
+
+endorsing_bodies:
+  - "Alzheimer's Association (AA) Workgroup (Jack et al. 2024 revised criteria authors; alz.org)"
+  - "National Institute on Aging (NIA, NIH; NIA-AA criteria co-convener)"
+  - "Mayo Clinic (lead authorship, Jack CR Jr; PMID 38934362)"
+  - "Alzheimer's & Dementia (Journal of the Alzheimer's Association; DOI 10.1002/alz.13859)"
+  - "U.S. / international AA-2024 biological-staging validation literature (e.g. Neurology 2025, DOI 10.1212/WNL.0000000000213675; operationalizes A/B/C/D tau-PET stages)"
+  - "La Joie et al. 2025, Treatment-Related Amyloid Clearance (TRAC) framework (DOI 10.1002/alz.70997; basis of the treatment carve-out)"
+
+anchor_citation:
+  citation_pmid: "38934362"
+  citation_doi: "10.1002/alz.13859"
+  citation_text: >-
+    Jack CR Jr, Andrews JS, Beach TG, et al. Revised criteria for diagnosis and
+    staging of Alzheimer's disease: Alzheimer's Association Workgroup. Alzheimer's
+    & Dementia 2024;20(8):5143-5169. PMID 38934362; DOI 10.1002/alz.13859. Defines the PET-based
+    biological stages A (A+), B (A+/T2MTL+), C (A+/T2MOD+), D (A+/T2HIGH+).
+
+state_space:
+  - name: "A"
+    description: >-
+      Amyloid positivity (A+). Initial biological stage: abnormal amyloid PET / Core-1 biomarker without significant tau-PET aggregation.
+    ordinal_rank: 0
+  - name: "B"
+    description: >-
+      A+ with medial-temporal tau (A+/T2MTL+). Tau-PET positivity confined to the medial temporal region.
+    ordinal_rank: 1
+  - name: "C"
+    description: >-
+      A+ with moderate neocortical tau (A+/T2MOD+). Tau-PET shows moderate neocortical uptake.
+    ordinal_rank: 2
+  - name: "D"
+    description: >-
+      A+ with high neocortical tau (A+/T2HIGH+). Tau-PET shows high neocortical uptake (most advanced biological stage).
+    ordinal_rank: 3
+
+admissible_transitions:
+  - from_state: "A"
+    to_state: "B"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024: forward biological progression from stage A to B reflects increasing tau-PET burden/spread in amyloid-positive individuals; expected direction.
+    guideline_section: "Jack 2024 biological staging (forward progression)"
+  - from_state: "A"
+    to_state: "C"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024: forward biological progression from stage A to C reflects increasing tau-PET burden/spread in amyloid-positive individuals; expected direction.
+    guideline_section: "Jack 2024 biological staging (forward progression)"
+  - from_state: "A"
+    to_state: "D"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024: forward biological progression from stage A to D reflects increasing tau-PET burden/spread in amyloid-positive individuals; expected direction.
+    guideline_section: "Jack 2024 biological staging (forward progression)"
+  - from_state: "B"
+    to_state: "C"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024: forward biological progression from stage B to C reflects increasing tau-PET burden/spread in amyloid-positive individuals; expected direction.
+    guideline_section: "Jack 2024 biological staging (forward progression)"
+  - from_state: "B"
+    to_state: "D"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024: forward biological progression from stage B to D reflects increasing tau-PET burden/spread in amyloid-positive individuals; expected direction.
+    guideline_section: "Jack 2024 biological staging (forward progression)"
+  - from_state: "C"
+    to_state: "D"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.13859"
+      citation_text: >-
+        Jack 2024: forward biological progression from stage C to D reflects increasing tau-PET burden/spread in amyloid-positive individuals; expected direction.
+    guideline_section: "Jack 2024 biological staging (forward progression)"
+  - from_state: "B"
+    to_state: "A"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    required_conditions:
+      treatment_status:
+        - "TRAC"
+    conditions_evaluated_at: "to_visit"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
+    guideline_section: "La Joie 2025 TRAC carve-out; Jack 2024 biological staging"
+  - from_state: "C"
+    to_state: "A"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    required_conditions:
+      treatment_status:
+        - "TRAC"
+    conditions_evaluated_at: "to_visit"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
+    guideline_section: "La Joie 2025 TRAC carve-out; Jack 2024 biological staging"
+  - from_state: "C"
+    to_state: "B"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    required_conditions:
+      treatment_status:
+        - "TRAC"
+    conditions_evaluated_at: "to_visit"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
+    guideline_section: "La Joie 2025 TRAC carve-out; Jack 2024 biological staging"
+  - from_state: "D"
+    to_state: "A"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    required_conditions:
+      treatment_status:
+        - "TRAC"
+    conditions_evaluated_at: "to_visit"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
+    guideline_section: "La Joie 2025 TRAC carve-out; Jack 2024 biological staging"
+  - from_state: "D"
+    to_state: "B"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    required_conditions:
+      treatment_status:
+        - "TRAC"
+    conditions_evaluated_at: "to_visit"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
+    guideline_section: "La Joie 2025 TRAC carve-out; Jack 2024 biological staging"
+  - from_state: "D"
+    to_state: "C"
+    min_delta_t_days: null
+    max_delta_t_days: null
+    required_conditions:
+      treatment_status:
+        - "TRAC"
+    conditions_evaluated_at: "to_visit"
+    citation:
+      citation_pmid: "38934362"
+      citation_doi: "10.1002/alz.70997"
+      citation_text: >-
+        La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
+    guideline_section: "La Joie 2025 TRAC carve-out; Jack 2024 biological staging"
+
+inadmissible_transitions: []
+
+transition_priors: []
+
+override_allowed_default: false
+
+notes: >-
+  Biological-axis letter staging (A/B/C/D) for the NIA-AA 2024 PET-based scheme.
+  Forward progression and same-stage persistence are admissible. Each BACKWARD
+  letter step is encoded as a TRAC-gated admissible transition
+  (required_conditions: treatment_status == "TRAC", conditions_evaluated_at:
+  to_visit): admitted ONLY when the regressing (later) visit carries TRAC
+  (treatment-related amyloid clearance, La Joie 2025); otherwise the engine
+  fails closed and flags it. This row-local carve-out matches "any backward step
+  is an error unless that row is TRAC." Blank / A- (off-pathway) rows do not
+  participate. No rate/fast-progression logic. SEPARATE axis from
+  ad/niaaa_2024_clinical_numeric; shares no transition logic. INPUT CONTRACT:
+  wire the dataset's TRAC column as the trajectory treatment_status_col with
+  literal value "TRAC" to exercise the carve-out.

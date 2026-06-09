@@ -263,6 +263,12 @@ _COL_SYN_STATE_BIOLOGICAL = (
     ("atn_stage", 95), ("stage_atn", 95), ("atn_profile", 92),
     ("biological_status", 90), ("atn", 70), ("stage", 55), ("state", 50),
 )
+# v1.71.0: per-visit treatment / TRAC column (drives the biological TRAC carve-out).
+# Explicit names only -- never a broad match, so unrelated cohorts are untouched.
+_COL_SYN_TREATMENT = (
+    ("trac_status", 100), ("treatment_status", 95), ("trac", 80),
+    ("treatment_arm_status", 75),
+)
 
 
 def _is_toc_sheet(name: str, info: dict[str, Any]) -> bool:
@@ -319,7 +325,7 @@ def _build_axis_spec(sheet: str, info: dict[str, Any], axis: str) -> dict[str, A
     derived dates that preserve visit order."""
     cols = list(info.get("columns", []))
     state_syns = _COL_SYN_STATE_BIOLOGICAL if axis == "biological" else _COL_SYN_STATE_CLINICAL
-    return {
+    spec = {
         "sheet": sheet,
         "subject_id": _best_column(cols, _COL_SYN_SUBJECT_ID, "subject_id"),
         "visit":      _best_column(cols, _COL_SYN_VISIT, "visit"),
@@ -328,6 +334,51 @@ def _build_axis_spec(sheet: str, info: dict[str, Any], axis: str) -> dict[str, A
                                    return_none_on_miss=True),
         "state":      _best_column(cols, state_syns, "state"),
     }
+    # v1.71.0: on the biological axis, also wire a per-visit treatment / TRAC
+    # column if one is present, so tables_to_submission retains it and the
+    # staging layer can apply the TRAC carve-out. Optional and additive: absent
+    # column => key absent => unchanged behavior.
+    if axis == "biological":
+        _tx = _best_column(cols, _COL_SYN_TREATMENT, "treatment_status",
+                           return_none_on_miss=True)
+        if _tx is not None:
+            spec["treatment_status"] = _tx
+    return spec
+
+
+def _detect_treatment_status_col(submission: dict[str, Any]) -> str | None:
+    """Return the per-visit treatment column name to thread to the staging layer.
+
+    By v1.71.0 design, `tables_to_submission` already retains a recognized
+    treatment column on the staging frame as the literal column
+    ``treatment_status`` (wired by the biological axis spec). This helper looks
+    for that retained column on the staging frames and, when present, normalizes
+    its values so that markers denoting treatment-related amyloid clearance read
+    as the literal ``"TRAC"`` the biological-letter pack matches on (all other
+    values pass through unchanged, so untreated rows still fail the carve-out and
+    a genuine regression is flagged). Returns ``"treatment_status"`` if wired,
+    else ``None`` (=> unchanged behavior).
+    """
+    import pandas as _pd
+
+    _trac_markers = {"trac", "full_trac", "partial_trac"}
+    for _axis in ("biological", "clinical"):
+        _frame = submission.get(_axis)
+        if not isinstance(_frame, _pd.DataFrame):
+            continue
+        if "treatment_status" not in _frame.columns:
+            continue
+        _vals = _frame["treatment_status"].astype(str)
+        _is_trac = _vals.str.strip().str.lower().isin(_trac_markers)
+        if not _is_trac.any():
+            # Column present but no TRAC marker: still thread it (a future TRAC
+            # row would be honored), but no normalization needed.
+            return "treatment_status"
+        _frame = _frame.copy()
+        _frame["treatment_status"] = _vals.where(~_is_trac, "TRAC")
+        submission[_axis] = _frame
+        return "treatment_status"
+    return None
 
 
 def _scaffold_mapping(desc: dict[str, Any]) -> dict[str, Any]:
@@ -377,21 +428,48 @@ def _scaffold_mapping(desc: dict[str, Any]) -> dict[str, Any]:
     mapping: dict[str, Any] = {"_detected": desc}
     auto_routed: list[str] = []
 
-    # 2. Pick best sheet per axis (avoid double-assignment of the same sheet)
+    # 2. Pick best sheet per axis. Normally we avoid double-assignment of the
+    #    same sheet (two physical sheets, one per axis). EXCEPTION (v1.71.0): a
+    #    single sheet that carries BOTH a recognizable clinical state column AND
+    #    a distinct recognizable biological state column (e.g. a one-CSV trial
+    #    export with both `clinical_stage` and `biological_stage`) may serve both
+    #    axes -- otherwise the biological axis could never auto-engage on a
+    #    single-sheet file. We only allow the re-use when the two axes resolve to
+    #    DIFFERENT state columns (so we never stage the same column twice).
     chosen_sheets: set[str] = set()
+    axis_state_col: dict[str, str | None] = {}
     for axis in ("clinical", "biological"):
         ranked = sorted(candidates[axis], reverse=True)  # (score, name, info)
         for score, name, info in ranked:
+            spec = _build_axis_spec(name, info, axis)
+            this_state = spec.get("state")
             if name in chosen_sheets:
-                continue
-            mapping[axis] = _build_axis_spec(name, info, axis)
+                # Sheet already used by the other axis. Allow dual-axis use only
+                # if this axis resolves to a DIFFERENT, real (non-FILL) state
+                # column than the one already taken on that sheet.
+                other_states = {
+                    axis_state_col[a]
+                    for a in axis_state_col
+                    if mapping.get(a, {}).get("sheet") == name
+                }
+                is_real = isinstance(this_state, str) and not this_state.startswith("<FILL")
+                if not (is_real and this_state not in other_states):
+                    continue
+            mapping[axis] = spec
+            axis_state_col[axis] = this_state
             chosen_sheets.add(name)
             auto_routed.append(f"{axis}<-{name} (score {score})")
             break
 
     # 3. If neither axis got a name-pattern match, fall back to the first non-TOC
-    #    sheet that ACTUALLY has recognizable staging fields (item 4 guard) as
-    #    clinical. If no such sheet exists, leave <FILL:sheet>.
+    #    sheet that ACTUALLY has recognizable staging fields (item 4 guard). A
+    #    generically-named single sheet (e.g. a one-CSV trial export named
+    #    "Trial_Dataset") scores 0 for both axis NAME patterns, so it reaches
+    #    here. v1.71.0: assign BOTH axes from that sheet when it carries a real
+    #    (non-FILL) clinical state column AND a distinct real biological state
+    #    column -- otherwise the biological axis could never auto-engage on such
+    #    a file. Clinical alone remains the behavior when only one is present
+    #    (byte-identical to pre-v1.71 for single-axis files).
     if not auto_routed:
         fallback = next(
             ((n, i) for n, i in non_toc_sheets
@@ -400,8 +478,27 @@ def _scaffold_mapping(desc: dict[str, Any]) -> dict[str, Any]:
         )
         if fallback is not None:
             name, info = fallback
-            mapping["clinical"] = _build_axis_spec(name, info, "clinical")
-            auto_routed.append(f"clinical<-{name} (fallback: no name match found)")
+            clin_spec = _build_axis_spec(name, info, "clinical")
+            bio_spec = _build_axis_spec(name, info, "biological")
+            clin_state = clin_spec.get("state")
+            bio_state = bio_spec.get("state")
+            clin_real = isinstance(clin_state, str) and not clin_state.startswith("<FILL")
+            bio_real = isinstance(bio_state, str) and not bio_state.startswith("<FILL")
+            if clin_real:
+                mapping["clinical"] = clin_spec
+                auto_routed.append(f"clinical<-{name} (fallback: no name match found)")
+                # only add biological if it resolves to a DIFFERENT real column
+                if bio_real and bio_state != clin_state:
+                    mapping["biological"] = bio_spec
+                    auto_routed.append(
+                        f"biological<-{name} (fallback: distinct biological state column)")
+            elif bio_real:
+                # biological-only single sheet (no clinical state column)
+                mapping["biological"] = bio_spec
+                auto_routed.append(f"biological<-{name} (fallback: no name match found)")
+            else:
+                mapping["clinical"] = _build_axis_spec(name, info, "clinical")
+                auto_routed.append(f"clinical<-{name} (fallback: no name match found)")
         else:
             mapping["clinical"] = {
                 "sheet": "<FILL:sheet>",
@@ -707,6 +804,21 @@ def cmd_audit(args: argparse.Namespace) -> int:
     except (ValueError, KeyError) as e:
         _err(f"mapping does not match the data: {e}")
         return EXIT_INPUT
+
+    # v1.71.0: detect a per-visit TREATMENT / TRAC column and expose it as
+    # submission["treatment_status_col"] so the staging layer can carry per-visit
+    # treatment context (schema v1.2+ conditional admissibility, e.g. the TRAC
+    # carve-out on ad/niaaa_2024_biological_letter: a backward biological-stage
+    # step is admissible only on a row whose treatment context == "TRAC").
+    # Detection is conservative and additive: if no such column is present, the
+    # key is absent and behavior is byte-identical to before. The engine context
+    # channel is the literal field `treatment_status`; rows whose value is the
+    # TRAC marker are normalized to the literal "TRAC" the pack matches on, all
+    # other values pass through unchanged (so untreated rows fail the carve-out
+    # and a genuine regression is still flagged).
+    _tx_col = _detect_treatment_status_col(submission)
+    if _tx_col is not None:
+        submission["treatment_status_col"] = _tx_col
 
     # v1.59.0 (opt-in, --normalize-labels): map raw clinical-stage labels to the
     # canonical CN/SMC/EMCI/LMCI/MCI/AD vocabulary via the citation-anchored

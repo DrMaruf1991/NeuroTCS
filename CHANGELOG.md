@@ -1,3 +1,69 @@
+## [1.71.0] -- 2026-06-09 -- E-2026-044: NIA-AA 2024 biological letter staging (A/B/C/D) with TRAC carve-out + biological-axis end-to-end on single-sheet files
+
+Adds a production rule pack for the NIA-AA 2024 PET-based BIOLOGICAL staging
+letters (A/B/C/D), with the Treatment-Related Amyloid Clearance (TRAC) carve-out,
+and the engine wiring so a single-sheet cohort that carries both a clinical and a
+biological state column audits BOTH axes natively. Verify-first against the
+primary sources. Default v3 audit UNCHANGED at 69/65/1236.
+
+### New pack: ad/niaaa_2024_biological_letter@1.0.0 (production)
+- States A < B < C < D, anchored to Jack 2024 PET-based biological staging
+  (A=A+, B=A+/T2MTL+, C=A+/T2MOD+, D=A+/T2HIGH+; PMID 38934362, DOI
+  10.1002/alz.13859), verified against the AA-2024 validation literature.
+- Forward progression (incl. skips) and same-stage persistence admissible.
+- Every BACKWARD letter step (B->A, C->A, C->B, D->A, D->B, D->C) is encoded as
+  a TRAC-gated admissible transition: required_conditions
+  {treatment_status: ["TRAC"]} evaluated at to_visit. A backward step is
+  admitted ONLY when the regressing (later) visit carries TRAC (treatment-
+  related amyloid clearance, La Joie 2025, DOI 10.1002/alz.70997); otherwise the
+  engine fails closed and flags it. Carve-out is row-local to the regressing
+  visit. No rate / fast-progression logic (no invented time floor).
+- Separate axis from ad/niaaa_2024_clinical_numeric; shares no transition logic.
+
+### Engine: biological axis end-to-end on single-sheet files (additive, guarded)
+A one-CSV trial export with both `clinical_stage` (numeric 0-6) and
+`biological_stage` (A/B/C/D) previously engaged only the clinical axis: the
+auto-mapper assigned the single sheet to one axis, and the per-visit treatment
+column was projected away. This release wires the biological axis end-to-end:
+- Mapper (`_scaffold_mapping`): a single generically-named sheet carrying BOTH a
+  real clinical state column AND a distinct real biological state column now maps
+  both axes (to different columns). Single-axis files are byte-identical to
+  before.
+- Biological axis spec carries an optional per-visit treatment column
+  (`treatment_status`) when a TRAC/treatment column is recognized.
+- `tables_to_submission`: optionally retains the named treatment column on the
+  staging frame (previously projected to subject/visit/date/state only). Absent
+  => unchanged.
+- CLI `_detect_treatment_status_col`: normalizes TRAC markers to the literal
+  "TRAC" the pack matches on and exposes `submission["treatment_status_col"]`.
+- Orchestrator: threads `treatment_status_col` into the staging trajectory build
+  ONLY when present, so cohorts without treatment data are unchanged (no context
+  => conditional transitions fail closed, the correct unchanged behavior).
+Pack selection remains fully vocabulary-driven: A/B/C/D auto-selects the new pack
+exactly as numeric 0-6 selected the clinical pack in v1.70.0.
+
+### Why
+A real NIA-AA-2024-staged trial cohort encodes biological_stage as A/B/C/D with a
+per-visit TRAC column; the existing at_biological pack uses A-T-/A+T-/A+T+
+notation, so the biological axis could not engage. This closes that gap natively,
+with the TRAC carve-out that distinguishes a genuine biological-stage regression
+(flag) from valid treatment-related amyloid clearance (do not flag).
+
+### Tests
+1933 -> base install 1947 passed / 26 skipped; with optional [radni] extra 1950
+passed / 23 skipped. New tests/rulepack/test_niaaa_2024_biological_letter_pack.py
+(11) proves BOTH branches independently of any dataset, including the carve-out
+branch a real file cannot exercise (backward step landing on a TRAC row is
+admissible; row-local to the regressing visit; untreated backward step flagged;
+forward unconditional; no rate logic). New
+tests/orchestration/test_biological_axis_single_sheet.py (5) proves the single-
+sheet dual-axis mapping, treatment-column retention through submission, and the
+full pipeline flagging untreated regression while NOT flagging a TRAC-row
+regression. README pack count 7 -> 8 (drift guards updated). ruff clean; default
+v3 audit verified UNCHANGED at 69/65/1236; new files strict ASCII.
+
+---
+
 ## [1.70.0] -- 2026-06-09 -- E-2026-043: NIA-AA 2024 numeric clinical staging pack (stages 0-6, Jack 2024 Table 6)
 
 Adds a production rule pack for the NIA-AA 2024 numeric clinical staging scheme

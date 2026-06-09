@@ -719,6 +719,14 @@ def tables_to_submission(
                     f"point at a real column."
                 )
             df_local = df[[sid_col, v_col, spec["state"]]].copy()
+            # v1.71.0: optionally retain a per-visit treatment column so the
+            # staging layer can carry treatment context (TRAC carve-out). Only
+            # when the spec names a real `treatment_status` column present in the
+            # sheet; otherwise behavior is unchanged.
+            _tx = spec.get("treatment_status")
+            _tx_present = isinstance(_tx, str) and _tx in df.columns
+            if _tx_present:
+                df_local["treatment_status"] = df[_tx].to_numpy()
             df_local = df_local.sort_values(by=[sid_col, v_col]).reset_index(drop=True)
             # Vectorized derivation: 2000-01-01 + 365 days per visit index per subject.
             # Use vector math (no lambda) so the closure-capture warning B023 doesn't fire.
@@ -726,8 +734,11 @@ def tables_to_submission(
             df_local["_derived_visit_date"] = (
                 pd.Timestamp("2000-01-01") + pd.to_timedelta(visit_index * 365, unit="D")
             )
-            out = df_local[[sid_col, v_col, "_derived_visit_date", spec["state"]]].copy()
+            _cols = [sid_col, v_col, "_derived_visit_date", spec["state"]]
+            out = df_local[_cols].copy()
             out.columns = list(_STAGING_REQUIRED)
+            if _tx_present:
+                out["treatment_status"] = df_local["treatment_status"].to_numpy()
             out["visit_date"] = pd.to_datetime(out["visit_date"])
             warnings.append(
                 f"{axis}: sheet '{sheet}' has no usable visit_date column; dates "
@@ -741,6 +752,10 @@ def tables_to_submission(
             _require_columns(df, colmap, f"{axis} staging")
             out = df[[colmap[k] for k in _STAGING_REQUIRED]].copy()
             out.columns = list(_STAGING_REQUIRED)
+            # v1.71.0: optionally retain a per-visit treatment column (TRAC).
+            _tx = spec.get("treatment_status")
+            if isinstance(_tx, str) and _tx in df.columns:
+                out["treatment_status"] = df[_tx].to_numpy()
             from neurotcs.audit_core.trajectory import _coerce_visit_dates
             out["visit_date"] = _coerce_visit_dates(out["visit_date"])
 

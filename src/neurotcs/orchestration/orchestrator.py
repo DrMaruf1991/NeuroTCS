@@ -426,9 +426,22 @@ def run_full_audit(
             # contaminating tokens for transparency.
             isolated: dict[str, list[str]] = {}
 
+            # Per-visit treatment context (schema v1.2+ conditional admissibility,
+            # e.g. the TRAC carve-out on the biological-letter pack). We thread a
+            # treatment column into the trajectory ONLY when one is present in the
+            # partition, so cohorts without treatment data are byte-identical to
+            # before (no context => conditional transitions fail closed, which is
+            # the correct, unchanged behavior for non-treatment cohorts). The
+            # column is taken from the submission mapping's optional
+            # `treatment_status_col` (set by the mapper when a TRAC/treatment
+            # column is recognized); falls back to None.
+            _tx_col = submission.get("treatment_status_col")
+            if not (isinstance(_tx_col, str) and _tx_col in ad_df.columns):
+                _tx_col = None
             trajs = trajectories_from_dataframe(
                 ad_df, patient_id_col="subject_id", visit_date_col="visit_date",
-                state_col="state", skip_invalid=False)
+                state_col="state", treatment_status_col=_tx_col,
+                skip_invalid=False)
             res = audit(trajs, lp, bootstrap_B=bootstrap_B, seed=seed,
                         return_per_transition=True)
             d = res.to_dict()
