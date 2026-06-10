@@ -85,6 +85,39 @@ def test_orchestrator_completes_with_recorded_skip():
     assert r.manifest.layers_skipped["staging_biological"]
 
 
+def _unmappable_clinical_df():
+    # State labels that match NO rule pack -> engine-forced vocabulary_mismatch.
+    return pd.DataFrame({
+        "subject_id": ["P1", "P1", "P2", "P2"],
+        "visit": [0, 1, 0, 1],
+        "visit_date": pd.to_datetime([
+            "2020-01-01", "2021-01-01", "2020-01-01", "2021-01-01"]),
+        "state": ["Sunny", "Cloudy", "Rainy", "Sunny"],
+    })
+
+
+def test_orchestrator_refuses_when_forced_skip_and_nothing_scored():
+    # The primary axis could not be matched to any pack (vocabulary_mismatch)
+    # and there is nothing else to audit -> the result must NOT be certified
+    # clean; it must refuse (a clean result would mean 'never checked').
+    sub = {"clinical": _unmappable_clinical_df()}
+    r = run_full_audit(sub)
+    assert r.complete is False
+    assert r.orchestrator_audit_id == ""
+    assert "vocabulary_mismatch" in (r.refusal_reason or "")
+
+
+def test_orchestrator_completes_when_forced_skip_but_other_axis_scored():
+    # staging_clinical is force-skipped (unmappable), but a valid biological
+    # axis DOES score -> the file WAS audited; the skip is recorded in coverage
+    # and the result stands (not refused).
+    sub = {"clinical": _unmappable_clinical_df(), "biological": _biological_df()}
+    r = run_full_audit(sub)
+    assert r.complete is True
+    assert "staging_clinical" in r.manifest.layers_skipped
+    assert "staging_biological" in r.manifest.layers_run
+
+
 def test_biological_axis_auto_selects_at_pack_not_artifact():
     sub = {"biological": _biological_df()}
     r = run_full_audit(sub)

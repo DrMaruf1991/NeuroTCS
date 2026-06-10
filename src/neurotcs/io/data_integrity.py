@@ -428,6 +428,36 @@ def audit_data_integrity(tables: dict[str, pd.DataFrame]) -> list[dict[str, Any]
         #    ordering check rather than guess order from a code string. The
         #    cadence check below is order-free (it sorts by date) so it still
         #    runs and still catches gross corrupted dates.
+        # 5b) malformed visit_date: a value that is PRESENT but does not parse
+        #    to a valid calendar date (e.g. "not-a-date", impossible month
+        #    "2024-13-01"). Without this check such values were silently coerced
+        #    to NaT and dropped downstream, and an all-malformed file could
+        #    return CLEAN -- a fail-OPEN defect for a fail-closed auditor. We
+        #    flag the malformed value rather than drop it. A BLANK/missing date
+        #    is NOT malformed (that is the legitimate --allow-no-dates case) and
+        #    is deliberately not flagged here.
+        if date_col is not None:
+            from neurotcs.audit_core.trajectory import _coerce_visit_dates
+            raw = df[date_col]
+            parsed_md = _coerce_visit_dates(raw)
+            present = raw.notna() & (raw.astype(str).str.strip() != "") & \
+                (~raw.astype(str).str.strip().str.lower().isin(
+                    ["nan", "nat", "none", "null"]))
+            malformed_mask = present & parsed_md.isna()
+            for idx in df.index[malformed_mask]:
+                sid = df.at[idx, pid] if pid else None
+                vis = df.at[idx, visit] if visit else None
+                bad = df.at[idx, date_col]
+                flags.append(_flag(
+                    TIER_IMPOSSIBLE, sid, vis, f"{name}:{date_col}", bad,
+                    "malformed_visit_date",
+                    f"Sheet '{name}': visit_date value '{bad}' is present but is "
+                    f"not a valid calendar date; it cannot be ordered and must "
+                    f"not be silently dropped.",
+                    citation="Data-integrity axiom: a present date must be a "
+                             "valid, parseable calendar date (fail-closed; "
+                             "malformed dates are flagged, not discarded)."))
+
         if date_col is not None and pid is not None and visit is not None:
             from neurotcs.audit_core.trajectory import _coerce_visit_dates
             parsed = _coerce_visit_dates(df[date_col])

@@ -174,8 +174,9 @@ def test_explicit_mapping_autowires_unstaged_sheets(tmp_path, capsys):
     wb.remove(wb.active)
     ws = wb.create_sheet("clinical")
     ws.append(["subject_id", "visit", "visit_date", "state"])
+    _states = ["CN", "MCI", "AD"]
     for i in range(3):
-        ws.append([f"S{i:03d}", i, f"2024-0{i+1}-01", "MCI"])
+        ws.append([f"S{i:03d}", i, f"2024-0{i+1}-01", _states[i]])
     ws2 = wb.create_sheet("CG")
     ws2.append(["subject_id", "visit", "mmse", "cdr_sob"])
     ws2.append(["S000", 0, 28, 0.5])
@@ -210,8 +211,9 @@ def test_explicit_mapping_refuses_assay_columns_failclosed(tmp_path, capsys):
     wb.remove(wb.active)
     ws = wb.create_sheet("clinical")
     ws.append(["subject_id", "visit", "visit_date", "state"])
+    _states = ["CN", "MCI", "AD"]
     for i in range(3):
-        ws.append([f"S{i:03d}", i, f"2024-0{i+1}-01", "MCI"])
+        ws.append([f"S{i:03d}", i, f"2024-0{i+1}-01", _states[i]])
     ws2 = wb.create_sheet("FL")
     ws2.append(["subject_id", "visit", "plasma_ptau217_pgml"])
     ws2.append(["S000", 0, 0.5])
@@ -245,8 +247,9 @@ def test_explicit_mapping_with_confirm_assays_audits_assay_packs(tmp_path, capsy
     wb.remove(wb.active)
     ws = wb.create_sheet("clinical")
     ws.append(["subject_id", "visit", "visit_date", "state"])
+    _states = ["CN", "MCI", "AD"]
     for i in range(3):
-        ws.append([f"S{i:03d}", i, f"2024-0{i+1}-01", "MCI"])
+        ws.append([f"S{i:03d}", i, f"2024-0{i+1}-01", _states[i]])
     ws2 = wb.create_sheet("FL")
     ws2.append(["subject_id", "visit", "plasma_ptau217_pgml"])
     ws2.append(["S000", 0, 0.5])

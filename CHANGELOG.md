@@ -1,4 +1,50 @@
-## [1.73.0] -- 2026-06-10 -- E-2026-046: zero-install file support -- R + SPSS readers promoted to core
+## [1.74.0] -- 2026-06-10 -- E-2026-047: fail-closed hardening -- malformed dates, honest CLEAN status, natural visit-order derivation, citation prune
+
+Closes three independently-confirmed FAIL-OPEN defects surfaced by an external
+adversarial audit, plus removes one unverifiable prose citation. These are
+correctness/safety fixes for a tool whose identity is fail-closed. Default v3
+audit UNCHANGED at 69/65/1236.
+
+### Fixed (Critical): malformed dates no longer silently dropped -> CLEAN
+- A present-but-unparseable visit_date (e.g. "not-a-date", impossible month
+  "2024-13-01") was coerced to NaT and dropped before staging, and a file of
+  such rows could return status CLEAN / exit 0 -- a fail-OPEN hole. The
+  data-integrity layer now flags each malformed value as `malformed_visit_date`
+  (impossible tier); such a file now returns FLAGS_PRESENT / exit 1. A
+  BLANK/missing date is NOT malformed (the legitimate --allow-no-dates case) and
+  is deliberately not flagged.
+
+### Fixed (High): no false CLEAN when the primary axis was never audited
+- When a staging/cross-sheet axis was force-skipped because the data matched no
+  rule pack (vocabulary_mismatch) AND nothing substantive was scored, the run
+  previously reported CLEAN / exit 0 with only a stderr COVERAGE note -- a user
+  could read CLEAN as "audited and safe." The orchestrator now treats an
+  engine-forced skip of a primary axis as INCOMPLETE_REFUSED / exit 3 ("checked
+  nothing" is not "clean"). A skip the operator explicitly requested via
+  skip_layers, or a forced skip where another axis / range pack DID score,
+  still completes normally (the skip is recorded transparently in coverage).
+
+### Fixed (High): no-date visit-order derivation is natural, not lexical
+- Under --allow-no-dates, derived dates are built from visit ordering by sorting
+  the visit column. A lexical sort mis-orders unpadded codes ('m12' before 'm6',
+  'v10' before 'v2'), corrupting the derived chronology. Ordering now uses a
+  general natural-sort key (numeric chunks compared numerically; no hardcoded
+  clinical vocabulary), so m6 < m12 < m24 and v2 < v10.
+
+### Changed: removed one unverifiable prose citation
+- atn_2018.yaml carried a bare "Ossenkoppele 2022 PMID 36302769" with an
+  "HR 39.9" figure inside a prose citation_text (NOT a structured resolver
+  field). The PMID could not be independently resolved and the HR did not match
+  the obvious 2022 source, so the unverifiable PMID + specific figure were
+  removed; the rule's authoritative structured citation (Jack 2024,
+  PMID 38934362 / DOI 10.1002/alz.13859) and the staging logic are unchanged.
+
+### Tests
+- +6 regression tests: malformed-date flag/blank-not-flagged (3), natural visit
+  ordering (1), forced-skip refuses-when-nothing-scored / completes-when-other-
+  axis-scored (2). Full suite green; v3 invariant 69/65/1236 unchanged.
+
+
 
 Makes every real clinical *data* format read out of the box from a plain
 `pip install neurotcs`, so a user never hits an install wall for a cohort file.

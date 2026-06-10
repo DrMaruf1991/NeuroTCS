@@ -29,6 +29,7 @@ from __future__ import annotations
 import csv as _csv
 import gzip
 import io
+import re
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -83,6 +84,39 @@ _UTF8_ENCODINGS = ("utf-8-sig", "utf-8")
 # Filenames that are obviously not data -- skipped (and reported) in a folder/zip.
 _NON_DATA_NAME_TOKENS = ("readme", "license", "licence", "changelog", "notes",
                          "manifest", "dictionary", "datadictionary", "codebook")
+
+_NAT_CHUNK_RE = re.compile(r"(\d+)")
+
+
+def _natural_sort_key(value: Any) -> tuple:
+    """Natural-order sort key for a visit label.
+
+    When dates are DERIVED from visit ordering (the --allow-no-dates path), the
+    derived order must reflect visit *number*, not lexical string order. A plain
+    string sort puts 'm12' before 'm6' (because '1' < '6') and 'v10' before
+    'v2' -- corrupting the derived chronology and any downstream ordering.
+
+    This key splits the label into alternating non-numeric / numeric chunks and
+    compares numeric chunks numerically:  'm6' -> ('m', 6); 'm12' -> ('m', 12)
+    so m6 < m12; 'v2' < 'v10'; 'week_12' > 'week_2'. It is a GENERAL algorithm
+    (no hardcoded clinical vocabulary), consistent with NeuroTCS's no-hardcoded-
+    data philosophy. Non-numeric labels fall back to case-folded string order,
+    so 'bl'/'sc'/'baseline' still sort deterministically (typically before
+    month codes, matching the common 'baseline then months' convention).
+
+    Deterministic: pure function of the input value.
+    """
+    s = "" if value is None else str(value)
+    parts = _NAT_CHUNK_RE.split(s)
+    # parts alternates [text, number, text, number, ...]; map numbers to int,
+    # text to a (0, casefolded) tuple so int vs str never compare across types.
+    key: list = []
+    for i, part in enumerate(parts):
+        if i % 2 == 1:  # numeric chunk
+            key.append((1, int(part)))
+        elif part != "":
+            key.append((0, part.casefold()))
+    return tuple(key)
 
 
 def read_tables(
@@ -735,7 +769,16 @@ def tables_to_submission(
             _tx_present = isinstance(_tx, str) and _tx in df.columns
             if _tx_present:
                 df_local["treatment_status"] = df[_tx].to_numpy()
-            df_local = df_local.sort_values(by=[sid_col, v_col]).reset_index(drop=True)
+            # Sort by (subject_id, NATURAL visit order). A plain lexical sort on
+            # the visit code mis-orders unpadded codes ('m12' before 'm6',
+            # 'v10' before 'v2'); the natural key compares embedded numbers
+            # numerically so the derived chronology matches true visit number.
+            # pandas sorts a column of (comparable) tuples lexicographically.
+            df_local = df_local.assign(_nat_key=df_local[v_col].map(_natural_sort_key))
+            df_local = (df_local.sort_values(by=[sid_col, "_nat_key"],
+                                             kind="stable")
+                        .drop(columns="_nat_key")
+                        .reset_index(drop=True))
             # Vectorized derivation: 2000-01-01 + 365 days per visit index per subject.
             # Use vector math (no lambda) so the closure-capture warning B023 doesn't fire.
             visit_index = df_local.groupby(sid_col, sort=False).cumcount()

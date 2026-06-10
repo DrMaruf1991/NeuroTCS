@@ -176,6 +176,46 @@ class TestTemporalOrdering:
         assert not any(f["rule_id"] == "temporal_ordering" for f in flags)
 
 
+class TestMalformedVisitDate:
+    """A present-but-unparseable visit_date must FAIL CLOSED (flagged
+    impossible), not be silently coerced to NaT and dropped. A blank/missing
+    date is NOT malformed (legitimate --allow-no-dates) and must not flag.
+    """
+
+    def test_malformed_dates_are_flagged(self):
+        df = pd.DataFrame({
+            "subject_id": ["S1", "S1", "S1"],
+            "visit": ["bl", "m06", "m12"],
+            "visit_date": ["2010-01-01", "not-a-date", "2024-13-01"],
+            "clinical_state": ["CN", "MCI", "AD"],
+        })
+        flags = audit_data_integrity({"sheet": df})
+        md = [f for f in flags if f["rule_id"] == "malformed_visit_date"]
+        assert len(md) == 2
+        bad = {str(f["observed_value"]) for f in md}
+        assert bad == {"not-a-date", "2024-13-01"}
+
+    def test_blank_dates_are_not_flagged(self):
+        df = pd.DataFrame({
+            "subject_id": ["S1", "S1"],
+            "visit": ["bl", "m06"],
+            "visit_date": ["2010-01-01", ""],
+            "clinical_state": ["CN", "MCI"],
+        })
+        flags = audit_data_integrity({"sheet": df})
+        assert not any(f["rule_id"] == "malformed_visit_date" for f in flags)
+
+    def test_all_valid_dates_no_malformed_flag(self):
+        df = pd.DataFrame({
+            "subject_id": ["S1", "S1"],
+            "visit": ["bl", "m06"],
+            "visit_date": ["2010-01-01", "2010-07-01"],
+            "clinical_state": ["CN", "MCI"],
+        })
+        flags = audit_data_integrity({"sheet": df})
+        assert not any(f["rule_id"] == "malformed_visit_date" for f in flags)
+
+
 class TestProtocolEligibility:
 
     def test_cn_on_anti_amyloid_flagged(self):

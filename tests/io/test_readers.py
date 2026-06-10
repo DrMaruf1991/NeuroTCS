@@ -80,6 +80,17 @@ def test_unknown_format_raises(tmp_path):
         read_tables(f)
 
 
+def test_natural_sort_key_orders_visit_codes_numerically():
+    # Derived-date visit ordering must be NATURAL, not lexical: m6 < m12 < m24,
+    # v2 < v10. A lexical sort would wrongly place m12 before m6.
+    from neurotcs.io.readers import _natural_sort_key
+    codes = ["m12", "m6", "bl", "m24", "v2", "v10"]
+    ordered = sorted(codes, key=_natural_sort_key)
+    assert ordered.index("m6") < ordered.index("m12") < ordered.index("m24")
+    assert ordered.index("v2") < ordered.index("v10")
+    assert _natural_sort_key("m6") < _natural_sort_key("m12")
+
+
 def test_rda_extension_recognized(tmp_path):
     # R data packages (e.g. ADNIMERGE2) ship '.rda' files; '.rda' is the same
     # format as '.rdata' and must be read directly (no manual conversion).
@@ -185,3 +196,22 @@ def test_end_to_end_read_then_audit(tmp_path):
     bundle = build_bundle(result)
     assert verify_bundle(bundle) is True
     assert "staging_clinical" in result.manifest.layers_run
+
+
+def test_derived_dates_preserve_natural_visit_order(tmp_path):
+    """End-to-end: a file with unpadded visit codes and no date column derives
+    dates that preserve bl<m6<m12<m24, yielding a valid forward trajectory."""
+    import pandas as pd
+    df = pd.DataFrame({
+        "subject_id": ["P1", "P1", "P1", "P1"],
+        "visit": ["bl", "m6", "m12", "m24"],
+        "clinical_state": ["CN", "CN", "MCI", "AD"],
+    })
+    sub = tables_to_submission({"s": df}, {
+        "clinical": {"sheet": "s", "subject_id": "subject_id",
+                     "visit": "visit", "state": "clinical_state"},
+    })
+    # the clinical staging frame must carry visits in natural order
+    staged = sub["clinical"]
+    visits = list(staged["visit"])
+    assert visits == ["bl", "m6", "m12", "m24"], visits

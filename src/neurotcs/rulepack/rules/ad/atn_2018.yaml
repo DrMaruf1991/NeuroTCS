@@ -231,7 +231,7 @@ admissible_transitions:
         (N) and clinical symptoms (C)." A+T+N- to A+T+N+ is acquiring
         neurodegeneration after tau positivity -- advanced AD continuum
         biological stage with clinical decline expected (§4.7 PET stages
-        C/D, HR 39.9 vs A-T2- reference per Ossenkoppele 2022 PMID 36302769).
+        C/D).
     guideline_section: "Jack 2024 §4.2, §4.6 PET staging stages C/D"
     override_allowed: false
     notes: "Neurodegeneration emerges after tau positivity; advanced AD."

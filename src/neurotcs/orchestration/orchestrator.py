@@ -623,6 +623,41 @@ def run_full_audit(
                for layer in layers if not layer.ran}
     unrecorded = [layer for layer, reason in skipped.items() if not reason]
 
+    # ---- forced-skip guard (Invariant A, refinement) ----
+    # A layer skipped because the engine could NOT match the data to any pack
+    # (vocabulary_mismatch) was *attempted and refused* -- the auditor tried to
+    # check that axis and could not. That is fundamentally different from a skip
+    # the operator explicitly requested via skip_layers (a deliberate, informed
+    # omission). For a primary axis (staging_* / cross_sheet), an engine-forced
+    # skip means that axis was NEVER actually audited, so a "clean" result would
+    # mean "never checked" -- exactly what complete-or-refuse forbids. We refuse
+    # rather than report CLEAN. (Operator-requested skips remain complete: the
+    # operator owns that decision and it is recorded transparently.)
+    _user_skips = set((skip_layers or {}).keys())
+    forced_skips = [
+        layer for layer, reason in skipped.items()
+        if reason.startswith("vocabulary_mismatch")
+        and layer not in _user_skips
+        and (layer.startswith("staging") or layer == "cross_sheet")
+    ]
+    # A forced skip only makes the WHOLE result uncertifiable when NOTHING else
+    # was actually audited. If other layers ran (e.g. range packs on measurement
+    # sheets, or a sibling staging axis), the file WAS audited -- the skipped
+    # axis is recorded transparently in coverage and the result stands. We only
+    # refuse-on-forced-skip when ran_layers is empty (the engine was handed data
+    # whose primary axis it could not match and there was nothing else to do).
+    # 'Substantive' scoring layers = staging axes and range-pack audits: the
+    # layers that actually examine the user's data values / trajectory. The
+    # always-on data_integrity layer and a vacuous cross_sheet pass do NOT count
+    # as 'the primary axis was audited', so they must not satisfy the
+    # 'something was audited' test below.
+    scored_layers = [
+        layer.layer for layer in layers
+        if layer.ran and (layer.layer.startswith("staging")
+                          or layer.layer == "ranges")
+    ]
+    refuse_forced = bool(forced_skips) and not scored_layers
+
     # ---- structural completeness guard (closes the circular hole) ----
     # Historically a layer was "applicable" iff its submission key was present;
     # so a layer whose key was never populated (a wiring omission) was silently
@@ -656,7 +691,7 @@ def run_full_audit(
         sub_audit_ids=sub_ids,
     )
 
-    if unrecorded or silently_dropped:
+    if unrecorded or silently_dropped or refuse_forced:
         reason_parts = []
         if unrecorded:
             reason_parts.append(
@@ -667,6 +702,14 @@ def run_full_audit(
                 f"expected layer(s) {silently_dropped} were never wired "
                 f"(no supporting input and no explicit skip) -- a silent "
                 f"omission, not a deliberate skip")
+        if refuse_forced:
+            reason_parts.append(
+                f"primary axis/axes {forced_skips} could not be audited "
+                f"(vocabulary_mismatch: the data's state labels matched no "
+                f"rule pack) -- that axis was attempted and refused, so the "
+                f"result cannot be certified clean; re-run with a matching "
+                f"rule pack / label normalization, or pass "
+                f"skip_layers={{layer: reason}} to deliberately skip it")
         return OrchestratorResult(
             orchestrator_audit_id="",
             complete=False,
