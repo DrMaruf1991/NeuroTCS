@@ -174,7 +174,7 @@ admissible_transitions:
         - "TRAC"
     conditions_evaluated_at: "to_visit"
     citation:
-      citation_pmid: "38934362"
+      citation_pmid: "41298245"
       citation_doi: "10.1002/alz.70997"
       citation_text: >-
         La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
@@ -188,7 +188,7 @@ admissible_transitions:
         - "TRAC"
     conditions_evaluated_at: "to_visit"
     citation:
-      citation_pmid: "38934362"
+      citation_pmid: "41298245"
       citation_doi: "10.1002/alz.70997"
       citation_text: >-
         La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
@@ -202,7 +202,7 @@ admissible_transitions:
         - "TRAC"
     conditions_evaluated_at: "to_visit"
     citation:
-      citation_pmid: "38934362"
+      citation_pmid: "41298245"
       citation_doi: "10.1002/alz.70997"
       citation_text: >-
         La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
@@ -216,7 +216,7 @@ admissible_transitions:
         - "TRAC"
     conditions_evaluated_at: "to_visit"
     citation:
-      citation_pmid: "38934362"
+      citation_pmid: "41298245"
       citation_doi: "10.1002/alz.70997"
       citation_text: >-
         La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
@@ -230,7 +230,7 @@ admissible_transitions:
         - "TRAC"
     conditions_evaluated_at: "to_visit"
     citation:
-      citation_pmid: "38934362"
+      citation_pmid: "41298245"
       citation_doi: "10.1002/alz.70997"
       citation_text: >-
         La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).
@@ -244,7 +244,7 @@ admissible_transitions:
         - "TRAC"
     conditions_evaluated_at: "to_visit"
     citation:
-      citation_pmid: "38934362"
+      citation_pmid: "41298245"
       citation_doi: "10.1002/alz.70997"
       citation_text: >-
         La Joie 2025 (TRAC): under anti-amyloid therapy, treatment-related amyloid clearance makes a backward biological-stage movement a VALID treatment effect; admissible only when the regressing (to) visit carries treatment_status == TRAC. Absent TRAC, this backward step is not admitted and is flagged (Jack 2024 biological staging is otherwise monotonic in tau-PET burden).

@@ -1,4 +1,58 @@
-## [1.76.0] -- 2026-06-10 -- E-2026-049: citation-verifier gate fail-open fix
+## [1.77.0] -- 2026-06-10 -- E-2026-050: citation defect fix (TRAC PMID) + verifier precision overhaul
+
+The v1.76.0 gate fix let the networked citation verifier finally fail on a
+mismatch. Its first real run surfaced ONE genuine defect (amid hundreds of
+false positives from the comparator). This release fixes the real defect AND
+rebuilds the comparator so a clean run is genuinely clean. Default v3 audit
+UNCHANGED at 69/65/1236.
+
+### Fixed (High): wrong PMID on the TRAC carve-out transitions
+- In `niaaa_2024_biological_letter.yaml`, the six TRAC carve-out transitions
+  (B->A, C->A, C->B, D->A, D->B, D->C) carried `citation_pmid: "38934362"`
+  (Jack 2024, the revised-criteria paper) glued to the correct La Joie 2025 TRAC
+  DOI `10.1002/alz.70997`. The PMID had been copy-pasted from the forward
+  transitions. Corrected to La Joie 2025's verified PMID **41298245** (PubMed:
+  Alzheimer's & Dementia 2025;21(11):e70997, DOI 10.1002/alz.70997). The DOI,
+  citation_text, and guideline_section were already correct. This is a genuine
+  Hayden-class wrong-identifier defect -- the kind the verifier exists to catch.
+
+### Fixed: verifier comparator precision (eliminated ~340 false positives)
+- The verifier compared resolver metadata against the YAML `citation_text`, but
+  that text is a RULE-JUSTIFICATION paraphrase, not a bibliographic claim -- it
+  often omits the journal/author, so "resolved journal absent from paraphrase"
+  was reported as a mismatch. One real run produced ~340 such false positives,
+  which would mask the rare real defect. The comparator now uses CROSS-RESOLVER
+  AGREEMENT as the authoritative check: when a citation carries both a PMID and
+  a DOI, Crossref (from the DOI) and PubMed (from the PMID) must resolve to the
+  same paper (title, journal, first author, and the DOI PubMed reports for that
+  PMID). Disagreement = the identifiers point to different papers = a defect.
+- Journal normalization now decodes HTML entities (Crossref returns
+  "Alzheimer's &amp; Dementia") and strips ampersands, and tolerates
+  full-vs-abbreviated forms ("Alzheimers Dement" vs "Alzheimer's & Dementia"),
+  so correct citations no longer false-flag.
+- The Marras-class text check is retained but only fires when the text
+  EXPLICITLY names a journal that conflicts with the resolved one (never on a
+  paraphrase that omits it).
+- The "PMID didn't resolve but DOI did -> wrong PMID" rule now defers judgment
+  until PubMed proves reachable in the run, so a PubMed outage no longer flags
+  every PMID as wrong. Summary accounting fixed (the old formula could print a
+  negative "Resolved successfully"); now reports citations-with-identifier,
+  resolved, allowlisted, unresolved, refs-flagged, and field-level mismatches.
+- Exit 2 ("could not verify") now triggers when NEITHER resolver was reachable
+  (true outage), not on a miscount.
+- Allowlisted the OSF pre-registration DOI 10.17605/OSF.IO/TP9QV (OSF DOIs are
+  minted by DataCite, not Crossref, so the Crossref resolver cannot see them).
+
+### Tests
+- +4 comparator-precision regression tests (entity-encoded journal NOT flagged;
+  wrong-PMID-glued-to-DOI IS flagged; paraphrase-without-journal NOT flagged;
+  Marras-class text-names-conflicting-journal IS flagged). Updated the exit-1
+  test to use a genuine cross-resolver defect. Full suite green (1979 passed);
+  v3 invariant 69/65/1236 unchanged; offline structural scan over 196 citations
+  passes. The networked run should now return exit 0 (clean) on the corrected
+  rule packs -- to be confirmed on a networked machine.
+
+
 
 Fixes a FAIL-OPEN bug in the tool that is supposed to guarantee citation
 integrity. Default v3 audit UNCHANGED at 69/65/1236.

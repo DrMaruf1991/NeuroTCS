@@ -78,6 +78,7 @@ Exit codes
 
 from __future__ import annotations
 
+import html
 import json
 import re
 import sys
@@ -127,6 +128,11 @@ ALLOWLIST_DOI: dict[str, str] = {
     # itself has been verified via Nature Aging metadata in v1.7.0.
     "10.1038/s43587-024-00686-z": (
         "Hansson & Jack 2024 — Nature Aging editorial; verified manually."
+    ),
+    "10.17605/OSF.IO/TP9QV": (
+        "NeuroTCS OSF pre-registration — OSF registration DOIs are minted by "
+        "DataCite, not Crossref, so the Crossref resolver cannot see them. "
+        "Verified manually at https://doi.org/10.17605/OSF.IO/TP9QV ."
     ),
 }
 ALLOWLIST_PMID: dict[str, str] = {}
@@ -415,59 +421,24 @@ def resolve_eutils(pmid: str) -> ResolverRecord | None:
 def _normalize_journal(name: str | None) -> str | None:
     if name is None:
         return None
-    return re.sub(r"[\s,.()\[\]:;'’`]+", "", name).lower()
+    # Crossref returns HTML-entity-encoded names ("Alzheimer's &amp; Dementia").
+    # Decode first, then strip the ampersand and all punctuation so that
+    # "Alzheimer's & Dementia", "Alzheimer's &amp; Dementia", and the PubMed
+    # abbreviation "Alzheimers Dement" all normalize to comparable tokens.
+    decoded = html.unescape(name)
+    return re.sub(r"[\s,.()\[\]:;'’`&/-]+", "", decoded).lower()
 
 
-def _journal_consistent(yaml_text: str, resolved_journal: str | None) -> bool:
-    """Return True if the resolved journal appears (case/whitespace-insensitive)
-    in the YAML/Markdown text, OR if there's no journal mentioned to compare."""
-    if not resolved_journal:
+def _journal_tokens_match(a: str | None, b: str | None) -> bool:
+    """True if two normalized journal names refer to the same journal, tolerant
+    of full-vs-abbreviated forms (one being a prefix/substring of the other,
+    e.g. 'alzheimersdement' vs 'alzheimersdementia')."""
+    na, nb = _normalize_journal(a), _normalize_journal(b)
+    if not na or not nb:
+        return True  # nothing to contradict
+    if na == nb or na in nb or nb in na:
         return True
-    norm_text = _normalize_journal(yaml_text)
-    norm_journal = _normalize_journal(resolved_journal) or ""
-
-    # Direct match
-    if norm_journal and norm_journal in norm_text:
-        return True
-
-    # Tolerate common short-form / long-form journal name variants. The
-    # resolver may return "Alzheimers Dement" while the YAML cites the
-    # paper as "Alzheimer's & Dementia" — these should be treated as
-    # consistent for hygiene purposes.
-    aliases = {
-        "alzheimers": ["alzheimer", "alzheimerdementia", "alzheimerdement"],
-        "alzheimersdementia": [
-            "alzheimerdement", "alzdem", "alzheimerdementia",
-        ],
-        "archneurol": ["archivesofneurology", "archivesofneurol"],
-        "archivesofneurology": ["archneurol"],
-        "frontdigithealth": ["frontiersindigitalhealth"],
-        "natmed": ["naturemedicine"],
-        "natrevneurol": ["naturereviewsneurology"],
-        "movementdisorders": ["movdisord"],
-        "movdisord": ["movementdisorders"],
-        "jamcollradiol": [
-            "journalofamericancollegeofradiology", "jacr", "jamcollradiol",
-        ],
-        "alzheimersdementiadiagnassessdismonit": [
-            "alzheimersdementiadiagnassdismonit", "alzheimersdadm",
-            "alzdem", "alzheimerdementia",
-        ],
-    }
-    for k, vs in aliases.items():
-        if norm_journal in (k, *vs) and any(
-            (alt in norm_text) for alt in (k, *vs)
-        ):
-            return True
     return False
-
-
-def _author_consistent(yaml_text: str, resolved_authors: list[str]) -> bool:
-    """First-author surname should appear in the YAML text."""
-    if not resolved_authors:
-        return True  # nothing to compare
-    first = resolved_authors[0]
-    return first.lower() in yaml_text.lower()
 
 
 def find_mismatches(
@@ -475,6 +446,25 @@ def find_mismatches(
     cr: ResolverRecord | None,
     eu: ResolverRecord | None,
 ) -> list[Mismatch]:
+    """Detect genuine citation defects.
+
+    DESIGN (v1.77.0): the AUTHORITATIVE check is cross-resolver agreement. When a
+    citation carries BOTH a PMID and a DOI, Crossref (from the DOI) and PubMed
+    (from the PMID) must resolve to the SAME paper -- their title, journal, and
+    first author must agree. If they disagree, the PMID and DOI point to two
+    different papers (a Hayden/Marras-class wrong-identifier defect). This is the
+    check that has real signal and zero false positives, because it compares two
+    authoritative records, not a record against a rule paraphrase.
+
+    The earlier approach compared resolved metadata against the YAML
+    `citation_text`, but that text is a RULE JUSTIFICATION paraphrase, not a
+    bibliographic claim -- it frequently does not restate the journal or author,
+    so "resolved journal absent from paraphrase" is not a contradiction. That
+    produced hundreds of false positives that would mask the rare real defect.
+    We therefore only flag a text/metadata contradiction when the text NAMES a
+    journal that genuinely conflicts with the resolved one (Marras-class), via
+    `_journal_tokens_match` (entity-decoded, abbreviation-tolerant).
+    """
     out: list[Mismatch] = []
 
     def claim(field_name: str, claim_value: str, resolved_value: str):
@@ -488,44 +478,68 @@ def find_mismatches(
             resolved_value=resolved_value,
         ))
 
-    if cr is not None:
-        if not _journal_consistent(ref.context, cr.journal):
-            claim(
-                "journal", f"(YAML/MD text) {ref.context[:120]}",
-                f"Crossref says: {cr.journal!r}",
-            )
-        if not _author_consistent(ref.context, cr.authors_last_names):
-            claim(
-                "first_author",
-                f"(YAML/MD text) {ref.context[:120]}",
-                f"Crossref first author: {cr.authors_last_names[:3]}",
-            )
-    if eu is not None:
-        if not _journal_consistent(ref.context, eu.journal):
-            claim(
-                "journal",
-                f"(YAML/MD text) {ref.context[:120]}",
-                f"PubMed says: {eu.journal!r}",
-            )
-        if not _author_consistent(ref.context, eu.authors_last_names):
-            claim(
-                "first_author",
-                f"(YAML/MD text) {ref.context[:120]}",
-                f"PubMed first author: {eu.authors_last_names[:3]}",
-            )
-
-    # Cross-resolver agreement: if both Crossref and PubMed return data
-    # but their titles disagree by more than a small edit, that's a
-    # Hayden-class red flag.
+    # ---- Authoritative: cross-resolver agreement (both identifiers present) ----
     if cr is not None and eu is not None:
-        if cr.title and eu.title:
-            if not _titles_similar(cr.title, eu.title):
-                claim(
-                    "title",
-                    f"Crossref title: {cr.title!r}",
-                    f"PubMed title: {eu.title!r}",
-                )
+        if cr.title and eu.title and not _titles_similar(cr.title, eu.title):
+            claim("title (PMID vs DOI point to different papers)",
+                  f"Crossref/DOI title: {cr.title!r}",
+                  f"PubMed/PMID title: {eu.title!r}")
+        if not _journal_tokens_match(cr.journal, eu.journal):
+            claim("journal (PMID vs DOI disagree)",
+                  f"Crossref/DOI journal: {cr.journal!r}",
+                  f"PubMed/PMID journal: {eu.journal!r}")
+        if (cr.authors_last_names and eu.authors_last_names
+                and cr.authors_last_names[0].lower()
+                != eu.authors_last_names[0].lower()):
+            claim("first_author (PMID vs DOI disagree)",
+                  f"Crossref/DOI first author: {cr.authors_last_names[0]!r}",
+                  f"PubMed/PMID first author: {eu.authors_last_names[0]!r}")
+        # Cross-check the DOI PubMed reports for this PMID against the cited DOI.
+        if eu.doi and ref.doi and _normalize_doi(eu.doi) != _normalize_doi(ref.doi):
+            claim("doi (PubMed reports a different DOI for this PMID)",
+                  f"cited DOI: {ref.doi!r}",
+                  f"PubMed/PMID reports DOI: {eu.doi!r}")
+
+    # ---- Marras-class: text explicitly NAMES a journal that contradicts ----
+    # Only fire when the text contains a recognizable journal phrase that does
+    # not match the resolved journal -- never on a paraphrase that omits it.
+    resolved_journal = (cr.journal if cr else None) or (eu.journal if eu else None)
+    named = _explicit_journal_in_text(ref.context)
+    if resolved_journal and named and not _journal_tokens_match(named,
+                                                                resolved_journal):
+        claim("journal (text names a conflicting journal)",
+              f"text names: {named!r}",
+              f"resolver says: {resolved_journal!r}")
+
     return out
+
+
+# Journal phrases we recognize when EXPLICITLY written in citation text. Used
+# only for the Marras-class contradiction check (text names journal X but the
+# identifier resolves to journal Y). Absence of any of these means the text is a
+# paraphrase with no journal claim -- not a contradiction.
+_KNOWN_JOURNAL_PHRASES = (
+    "alzheimer's & dementia", "alzheimers dement", "alz & dem", "alz dem",
+    "nature medicine", "nat med", "nature reviews neurology", "nat rev neurol",
+    "movement disorders", "mov disord", "archives of neurology", "arch neurol",
+    "statistics in medicine", "stat med", "biometrics", "frontiers in neurology",
+    "front neurol", "nature health", "nat health", "frontiers in digital health",
+    "journal of the american college of radiology", "jacr",
+)
+
+
+def _explicit_journal_in_text(text: str) -> str | None:
+    """Return a journal name only if the text explicitly contains a recognized
+    journal phrase; otherwise None (the text makes no journal claim)."""
+    low = html.unescape(text or "").lower()
+    for phrase in _KNOWN_JOURNAL_PHRASES:
+        if phrase in low:
+            return phrase
+    return None
+
+
+def _normalize_doi(doi: str | None) -> str:
+    return (doi or "").strip().lower().rstrip(".,;)")
 
 
 def _titles_similar(a: str, b: str) -> bool:
@@ -610,8 +624,21 @@ def main(argv: list[str]) -> int:
     mismatches: list[Mismatch] = []
     allowlisted = 0
     unresolvable = 0
+    refs_with_identifier = 0
+    refs_resolved = 0  # at least one identifier resolved
+    pubmed_reachable = False
+    crossref_reachable = False
+    # PMIDs that failed to resolve while their DOI DID -- only a defect if
+    # PubMed proved reachable elsewhere (else it's an outage, not a wrong PMID).
+    suspicious_pmid_refs: list[CitationRef] = []
 
     for ref in refs:
+        has_identifier = bool(
+            (ref.doi and ref.doi not in ALLOWLIST_DOI)
+            or (ref.pmid and ref.pmid not in ALLOWLIST_PMID))
+        if has_identifier:
+            refs_with_identifier += 1
+        resolved_this_ref = False
         # ----- DOI resolution -----
         cr_record: ResolverRecord | None = None
         if ref.doi:
@@ -628,7 +655,10 @@ def main(argv: list[str]) -> int:
                         cr_record.__dict__ if cr_record is not None else None
                     )
                     time.sleep(RATE_LIMIT_SECONDS)
-                if cr_record is None and ref.doi not in ALLOWLIST_DOI:
+                if cr_record is not None:
+                    crossref_reachable = True
+                    resolved_this_ref = True
+                elif ref.doi not in ALLOWLIST_DOI:
                     print(f"  WARN: DOI not resolved (Crossref): {ref.doi!r} "
                           f"({ref.file_path.name})")
                     unresolvable += 1
@@ -649,44 +679,58 @@ def main(argv: list[str]) -> int:
                         eu_record.__dict__ if eu_record is not None else None
                     )
                     time.sleep(RATE_LIMIT_SECONDS)
-                if eu_record is None:
-                    # An unresolvable PMID could mean (a) the PMID is wrong,
-                    # or (b) PubMed EUtils is unreachable (sandbox, outage).
-                    # If the DOI ALSO didn't resolve, that's a network issue,
-                    # not a citation defect — treat as unresolved warning.
-                    # If the DOI DID resolve, that's a strong signal the
-                    # PMID is wrong (real paper at that DOI; cite says a
-                    # different PMID). In that case it IS a defect.
+                if eu_record is not None:
+                    pubmed_reachable = True
+                    resolved_this_ref = True
+                else:
+                    # Unresolved PMID: defer judgment. If PubMed proves
+                    # reachable elsewhere in this run, a PMID that still won't
+                    # resolve while its DOI did is a likely wrong-PMID defect.
+                    # If PubMed was never reachable, this is an outage.
                     if cr_record is not None:
-                        print(f"  FAIL: PMID not resolved (PubMed) but DOI did: "
-                              f"{ref.pmid!r} ({ref.file_path.name}) — likely "
-                              f"wrong PMID")
-                        mismatches.append(Mismatch(
-                            file_path=ref.file_path,
-                            line=ref.line,
-                            pmid=ref.pmid,
-                            doi=ref.doi,
-                            field_name="pmid_resolution",
-                            yaml_claim=ref.pmid,
-                            resolved_value="(PMID does not resolve; DOI does)",
-                        ))
+                        suspicious_pmid_refs.append(ref)
                     else:
                         print(f"  WARN: PMID not resolved (PubMed): "
                               f"{ref.pmid!r} ({ref.file_path.name}) — "
                               f"network may be down")
 
-        # ----- Compare YAML text against resolved metadata -----
+        if resolved_this_ref:
+            refs_resolved += 1
+        # ----- Cross-resolver + Marras-class checks -----
         if cr_record or eu_record:
             mismatches.extend(find_mismatches(ref, cr_record, eu_record))
 
     _save_cache(cache)
 
+    # Adjudicate deferred PMIDs: a PMID that didn't resolve while its DOI did is
+    # a wrong-PMID defect ONLY if PubMed proved reachable in this run. Otherwise
+    # PubMed was down and it's an outage warning, not a citation defect.
+    for ref in suspicious_pmid_refs:
+        if pubmed_reachable:
+            print(f"  FAIL: PMID not resolved (PubMed) but DOI did: "
+                  f"{ref.pmid!r} ({ref.file_path.name}) — likely wrong PMID")
+            mismatches.append(Mismatch(
+                file_path=ref.file_path, line=ref.line,
+                pmid=ref.pmid, doi=ref.doi,
+                field_name="pmid_resolution",
+                yaml_claim=ref.pmid or "",
+                resolved_value="(PMID does not resolve though its DOI does)"))
+        else:
+            unresolvable += 1
+            print(f"  WARN: PMID not resolved (PubMed): {ref.pmid!r} "
+                  f"({ref.file_path.name}) — PubMed appears unreachable")
+
+    _save_cache(cache)
+
+    # Distinct refs flagged (a ref may produce several field-level mismatches).
+    flagged_refs = {(m.file_path, m.line, m.pmid, m.doi) for m in mismatches}
     print()
-    print(f"  Resolved successfully       : "
-          f"{len(refs) - unresolvable - len(mismatches)}")
+    print(f"  Citations with identifier   : {refs_with_identifier}")
+    print(f"  Resolved successfully       : {refs_resolved}")
     print(f"  Allowlisted (known-good)    : {allowlisted}")
     print(f"  Unresolved (network/index)  : {unresolvable}")
-    print(f"  Mismatches detected         : {len(mismatches)}")
+    print(f"  Refs flagged                : {len(flagged_refs)}")
+    print(f"  Field-level mismatches      : {len(mismatches)}")
 
     if mismatches:
         print()
@@ -707,20 +751,15 @@ def main(argv: list[str]) -> int:
     # Exit 2 = "could not verify" (network/index outage left citations
     # unresolved). Per the docstring contract this is NOT the same as "verified
     # clean": treating a total outage as success would be fail-open (nothing was
-    # actually checked). We return 2 when EVERY network-resolvable citation went
-    # unresolved (a clear outage) so the signal is honest; the CI job runs this
-    # with continue-on-error so a transient outage surfaces as a soft red check
-    # rather than blocking a PR. A partial outage still returns 0 (the resolved
-    # subset was checked and matched), with the unresolved count printed above.
-    resolvable = sum(1 for r in refs
-                     if (r.doi and r.doi not in ALLOWLIST_DOI)
-                     or (r.pmid and r.pmid not in ALLOWLIST_PMID))
-    if resolvable > 0 and unresolvable >= resolvable:
+    # actually checked). We return 2 when neither resolver was reachable at all
+    # (a clear outage). A partial outage still returns 0 (the resolved subset was
+    # checked and matched), with the unresolved count printed above.
+    if refs_with_identifier > 0 and not (crossref_reachable or pubmed_reachable):
         print()
         print("=== COULD NOT VERIFY ===")
-        print(f"All {unresolvable} network-resolvable citation(s) failed to "
-              f"resolve -- this is an outage/sandbox signal, not a clean pass. "
-              f"Re-run with network access to actually verify.")
+        print("Neither Crossref nor PubMed was reachable -- this is an "
+              "outage/sandbox signal, not a clean pass. Re-run with network "
+              "access to actually verify.")
         return 2
 
     return 0
