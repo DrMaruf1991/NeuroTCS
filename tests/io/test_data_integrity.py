@@ -121,6 +121,61 @@ class TestTemporalCadence:
         assert not any(f["rule_id"] == "temporal_impossible" for f in flags)
 
 
+class TestTemporalOrdering:
+    """The backwards-in-time ordering check must only fire when a TRUSTWORTHY
+    numeric visit ordinal exists. Non-numeric visit CODES (ADNI sc/bl/m06/4_sc)
+    must NOT be lexically sorted and flagged (that produced thousands of false
+    positives on real ADNI DXSUM data). A real numeric ordinal must still catch
+    a genuine backwards date.
+    """
+
+    def test_nonnumeric_visit_codes_do_not_flag_ordering(self):
+        # ADNI-style visit codes; dates are monotonic in true visit order but do
+        # NOT sort chronologically as strings ('4_sc' < 'bl' < 'm06' < 'sc').
+        df = pd.DataFrame({
+            "RID": ["1", "1", "1", "1"],
+            "VISCODE2": ["sc", "bl", "m06", "4_sc"],
+            "EXAMDATE": ["2010-01-01", "2010-02-01", "2010-08-01", "2023-07-25"],
+            "clinical_state": ["CN", "CN", "MCI", "AD"],
+        })
+        flags = audit_data_integrity({"DXSUM": df})
+        assert not any(f["rule_id"] == "temporal_ordering" for f in flags)
+
+    def test_numeric_ordinal_still_catches_backwards_date(self):
+        # VISITNUM is a clean numeric ordinal; visit 3's date precedes visit 2.
+        df = pd.DataFrame({
+            "RID": ["1", "1", "1"],
+            "VISITNUM": [1, 2, 3],
+            "EXAMDATE": ["2010-01-01", "2010-08-01", "2010-03-01"],
+            "clinical_state": ["CN", "CN", "CN"],
+        })
+        flags = audit_data_integrity({"DXSUM": df})
+        to = [f for f in flags if f["rule_id"] == "temporal_ordering"]
+        assert to and to[0]["subject_id"] == "1"
+
+    def test_numeric_string_ordinal_is_trusted(self):
+        # Visit column stored as numeric STRINGS ("1","2","3") is still a valid
+        # ordinal; a backwards date must be caught.
+        df = pd.DataFrame({
+            "RID": ["1", "1", "1"],
+            "visit": ["1", "2", "3"],
+            "visit_date": ["2010-01-01", "2010-08-01", "2010-03-01"],
+            "clinical_state": ["CN", "CN", "CN"],
+        })
+        flags = audit_data_integrity({"DX": df})
+        assert any(f["rule_id"] == "temporal_ordering" for f in flags)
+
+    def test_monotonic_numeric_ordinal_not_flagged(self):
+        df = pd.DataFrame({
+            "RID": ["1", "1", "1"],
+            "VISITNUM": [1, 2, 3],
+            "EXAMDATE": ["2010-01-01", "2010-08-01", "2011-01-01"],
+            "clinical_state": ["CN", "CN", "CN"],
+        })
+        flags = audit_data_integrity({"DXSUM": df})
+        assert not any(f["rule_id"] == "temporal_ordering" for f in flags)
+
+
 class TestProtocolEligibility:
 
     def test_cn_on_anti_amyloid_flagged(self):

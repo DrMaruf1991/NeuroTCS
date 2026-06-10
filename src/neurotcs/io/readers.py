@@ -57,7 +57,8 @@ SUPPORTED_TABULAR = (".csv", ".tsv", ".txt", ".xlsx", ".xls", ".parquet",
 # Statistical formats real cohorts ship in. R works out of the box (pyreadr is a
 # core dependency); SAS/Stata use pandas' built-in readers; SPSS needs the
 # optional pyreadstat library (gated).
-SUPPORTED_STATISTICAL = (".sas7bdat", ".dta", ".sav", ".zsav", ".rds", ".rdata")
+SUPPORTED_STATISTICAL = (".sas7bdat", ".dta", ".sav", ".zsav", ".rds", ".rdata",
+                         ".rda")
 # Compressed single files (one table inside) and archives (a multi-file cohort).
 SUPPORTED_COMPRESSED = (".gz",)
 SUPPORTED_ARCHIVE = (".zip",)
@@ -93,7 +94,7 @@ def read_tables(
 
     `path` may be:
       * a single file (.csv/.tsv/.txt/.xlsx/.xls/.parquet/.json/.jsonl/.ndjson/
-        .sas7bdat/.dta/.sav/.rds/.rdata/.pdf/.gz),
+        .sas7bdat/.dta/.sav/.rds/.rdata/.rda/.pdf/.gz),
       * a DIRECTORY -- every supported tabular file inside becomes a table,
       * a GLOB string (e.g. "cohort/*.csv"),
       * a ZIP archive -- every supported member becomes a table,
@@ -411,13 +412,16 @@ def _read_statistical(
         df, _meta = pyreadstat.read_sav(str(p), apply_value_formats=True)
         decisions.append(f"{p.name}: read SPSS; value labels applied.")
         return df
-    if ext in (".rds", ".rdata"):
+    if ext in (".rds", ".rdata", ".rda"):
         try:
-            import pyreadr  # core dependency
+            import pyreadr  # optional dependency (the 'radni' extra)
         except ImportError as e:  # pragma: no cover
             raise UnsupportedFormatError(
-                "Reading R data needs the 'pyreadr' package (a declared NeuroTCS "
-                "dependency). Install it with: pip install pyreadr."
+                "Reading R data (.rds/.rdata/.rda) needs the 'pyreadr' package. "
+                "Install it with: pip install 'neurotcs[radni]'  (or: pip "
+                "install pyreadr) -- or export your data to CSV/Excel. (NeuroTCS "
+                "does not auto-install: a clinical auditor reads deterministically "
+                "or refuses.)"
             ) from e
         result = pyreadr.read_r(str(p))
         if not result:

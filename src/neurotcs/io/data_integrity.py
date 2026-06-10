@@ -232,6 +232,42 @@ def _flag(tier: str, subject_id: Any, visit: Any, field: str,
 # --------------------------------------------------------------------------- #
 
 
+def _numeric_visit_order(series: pd.Series) -> pd.Series | None:
+    """Return a per-row numeric visit ordinal IFF the visit column can be
+    trusted to encode chronological order numerically; else None.
+
+    The temporal-ordering check ("dates must not go backwards in visit order")
+    is only meaningful when we can establish the intended visit order WITHOUT
+    looking at the dates themselves. A purely numeric visit key (e.g. CDISC
+    VISITNUM 1,2,3; a month index 0,6,12) gives that order directly.
+
+    A non-numeric visit CODE (ADNI 'sc','bl','m06','m12','m24','4_sc'; CDISC
+    'SCREENING','BASELINE','WEEK 12') does NOT sort chronologically as a string
+    ('4_sc' < 'bl' < 'm06' < 'sc' lexically, which is not visit time). Sorting
+    such codes lexically and then asserting monotonic dates produces massive
+    false positives (real dates, wrong assumed order). Fail-closed: if we cannot
+    derive a trustworthy numeric order, we return None and the caller SKIPS the
+    ordering check rather than guessing an order from an arbitrary code string.
+
+    Determinism: pure function of the input values.
+    """
+    # Whole column already numeric -> use as-is.
+    if pd.api.types.is_numeric_dtype(series):
+        coerced = pd.to_numeric(series, errors="coerce")
+        return coerced if coerced.notna().any() else None
+    # Object/string column: only trust it if EVERY non-null value is a clean
+    # number (e.g. "1","2","12" or "0.0"). A single non-numeric code (e.g. "bl",
+    # "m06", "sc") means the column is a label scheme, not an ordinal -> refuse.
+    non_null = series.dropna()
+    if non_null.empty:
+        return None
+    coerced = pd.to_numeric(non_null, errors="coerce")
+    if coerced.isna().any():
+        return None  # at least one value is a non-numeric code -> not an ordinal
+    # All values are numeric strings -> safe to use as an ordinal.
+    return pd.to_numeric(series, errors="coerce")
+
+
 def audit_data_integrity(tables: dict[str, pd.DataFrame]) -> list[dict[str, Any]]:
     """Run universal Layer-1 data-integrity checks over all raw sheets.
 
@@ -380,30 +416,49 @@ def audit_data_integrity(tables: dict[str, pd.DataFrame]) -> list[dict[str, Any]
         #    the wrong anchor and would flood false positives). Instead we flag a
         #    visit whose gap from the subject's OWN prior visit is a gross
         #    outlier versus that subject's established cadence -- the
-        #    dataset-internal signal of a corrupted date. We also flag dates that
-        #    go backwards in visit order (impossible chronology).
+        #    dataset-internal signal of a corrupted date.
+        #
+        #    The backwards-in-time ORDERING check is only run when we can
+        #    establish the intended visit order from a TRUSTWORTHY NUMERIC visit
+        #    ordinal (VISITNUM, a month index, etc.). A non-numeric visit CODE
+        #    ('sc','bl','m06','4_sc', 'SCREENING'...) does NOT sort
+        #    chronologically as a string, so lexically sorting it and asserting
+        #    monotonic dates produces massive false positives (real dates, wrong
+        #    assumed order). Fail-closed: no trustworthy ordinal -> SKIP the
+        #    ordering check rather than guess order from a code string. The
+        #    cadence check below is order-free (it sorts by date) so it still
+        #    runs and still catches gross corrupted dates.
         if date_col is not None and pid is not None and visit is not None:
             from neurotcs.audit_core.trajectory import _coerce_visit_dates
             parsed = _coerce_visit_dates(df[date_col])
             tmp = df[[pid, visit]].copy()
             tmp["_d"] = parsed.values
+            vorder = _numeric_visit_order(df[visit])
+            tmp["_vo"] = vorder.values if vorder is not None else None
             for sid, grp in tmp.dropna(subset=["_d"]).groupby(pid, sort=True):
-                g = grp.sort_values(visit).reset_index(drop=True)
-                # backwards-in-time (ordering) check
-                prev = None
-                for _, r in g.iterrows():
-                    if prev is not None and r["_d"] < prev:
-                        flags.append(_flag(
-                            TIER_IMPOSSIBLE, sid, r[visit], f"{name}:{date_col}",
-                            str(r["_d"].date()), "temporal_ordering",
-                            f"Sheet '{name}': subject {sid} visit {r[visit]} date "
-                            f"{r['_d'].date()} precedes an earlier visit; visit "
-                            f"dates must be non-decreasing in visit order.",
-                            citation="Data-integrity axiom: monotonic visit chronology."))
-                    prev = r["_d"] if prev is None else max(prev, r["_d"])
-                # cadence-break check: need >=3 inter-visit gaps to establish a
-                # baseline cadence to compare against (fail-closed: too few
-                # visits -> no cadence claim -> no flag).
+                # ---- backwards-in-time (ordering) check ----
+                # Only when a trustworthy numeric visit ordinal exists for this
+                # subject's rows; otherwise we cannot assert an order and skip.
+                if vorder is not None and grp["_vo"].notna().all() \
+                        and grp["_vo"].nunique() == len(grp):
+                    go = grp.sort_values("_vo").reset_index(drop=True)
+                    prev = None
+                    for _, r in go.iterrows():
+                        if prev is not None and r["_d"] < prev:
+                            flags.append(_flag(
+                                TIER_IMPOSSIBLE, sid, r[visit], f"{name}:{date_col}",
+                                str(r["_d"].date()), "temporal_ordering",
+                                f"Sheet '{name}': subject {sid} visit {r[visit]} date "
+                                f"{r['_d'].date()} precedes an earlier visit; visit "
+                                f"dates must be non-decreasing in numeric visit order.",
+                                citation="Data-integrity axiom: monotonic visit chronology "
+                                         "(checked only against a numeric visit ordinal)."))
+                        prev = r["_d"] if prev is None else max(prev, r["_d"])
+                # ---- cadence-break check (order-free: sort by date) ----
+                # need >=3 inter-visit gaps to establish a baseline cadence to
+                # compare against (fail-closed: too few visits -> no cadence
+                # claim -> no flag).
+                g = grp.sort_values("_d").reset_index(drop=True)
                 gaps = g["_d"].diff().dropna().dt.days.tolist()
                 if len(gaps) >= 3:
                     prior_gaps = gaps[:-1]

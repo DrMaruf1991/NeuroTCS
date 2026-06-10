@@ -80,6 +80,37 @@ def test_unknown_format_raises(tmp_path):
         read_tables(f)
 
 
+def test_rda_extension_recognized(tmp_path):
+    # R data packages (e.g. ADNIMERGE2) ship '.rda' files; '.rda' is the same
+    # format as '.rdata' and must be read directly (no manual conversion).
+    pyreadr = pytest.importorskip("pyreadr")
+    df = pd.DataFrame({"RID": ["1", "2"], "DIAGNOSIS": ["CN", "MCI"]})
+    f = tmp_path / "DXSUM.rda"
+    pyreadr.write_rdata(str(f), df, df_name="DXSUM")
+    tables = read_tables(f)
+    assert tables, ".rda should be read, not rejected as unsupported"
+    got = next(iter(tables.values()))
+    assert list(got.columns) == ["RID", "DIAGNOSIS"]
+
+
+def test_rda_without_pyreadr_gives_actionable_error(tmp_path, monkeypatch):
+    # When pyreadr is absent, the error must name the exact install command.
+    import builtins
+    real_import = builtins.__import__
+
+    def fake_import(name, *a, **k):
+        if name == "pyreadr":
+            raise ImportError("no pyreadr")
+        return real_import(name, *a, **k)
+
+    f = tmp_path / "DXSUM.rda"
+    f.write_bytes(b"fake")
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    with pytest.raises(UnsupportedFormatError) as ei:
+        read_tables(f)
+    assert "radni" in str(ei.value) or "pyreadr" in str(ei.value)
+
+
 def test_missing_file_raises():
     with pytest.raises(FileNotFoundError):
         read_tables("/no/such/file.csv")

@@ -1,4 +1,44 @@
-## [1.71.0] -- 2026-06-09 -- E-2026-044: NIA-AA 2024 biological letter staging (A/B/C/D) with TRAC carve-out + biological-axis end-to-end on single-sheet files
+## [1.72.0] -- 2026-06-10 -- E-2026-045: real-world robustness -- visit-ordinal-aware temporal ordering + native .rda support
+
+Real-data hardening surfaced by a full-cohort ADNI DXSUM audit. Two false-
+positive / friction sources removed at root cause, with no change to detection
+where it is valid. Default v3 audit UNCHANGED at 69/65/1236.
+
+### Fixed: temporal_ordering false positives on non-numeric visit codes
+- The data-integrity backwards-in-time check previously sorted each subject's
+  visits by the raw visit-code STRING (e.g. ADNI 'sc','bl','m06','m12','4_sc')
+  and then asserted monotonic dates. Visit-code strings do NOT sort
+  chronologically ('4_sc' < 'bl' < 'm06' < 'sc' lexically), so real, correct
+  dates were flagged as "preceding an earlier visit" -- ~5,287 false positives
+  on a full ADNI DXSUM cohort (15,881 rows), entirely artifacts of the lexical
+  sort.
+- Fix: the ordering check now runs ONLY when a TRUSTWORTHY NUMERIC visit ordinal
+  exists (a numeric visit column such as VISITNUM, or visit values that are all
+  clean numeric strings). When the visit key is an arbitrary code scheme, the
+  check fails closed and is SKIPPED (it does not guess order from a code
+  string). The order-free cadence-break check (sorted by date) still runs and
+  still catches gross corrupted dates. A genuine backwards date under a real
+  numeric ordinal is still flagged.
+- New tests: tests/io/test_data_integrity.py::TestTemporalOrdering (4 tests)
+  prove both halves -- codes do not flag, numeric ordinals still catch.
+
+### Fixed: '.rda' R files now read natively (no manual conversion)
+- R data packages (e.g. ADNIMERGE2) ship '.rda' files; '.rda' is the same
+  format as '.rdata'. The reader previously recognized only '.rds'/'.rdata' and
+  rejected '.rda' as unsupported, forcing a manual pyreadr conversion. '.rda' is
+  now a recognized R extension handled by the existing pyreadr path.
+- The missing-pyreadr error message now names the exact install command
+  (`pip install 'neurotcs[radni]'`) and the misleading "declared dependency"
+  wording is corrected (pyreadr is the optional `[radni]` extra).
+- New tests: a '.rda' round-trip (skipped without pyreadr) and an actionable-
+  error test when pyreadr is absent.
+
+### Notes
+- The same ADNI DXSUM run confirmed the staging axis on real data: cTCS 0.9946
+  over 12,006 diagnosis transitions (matching the locked ADNI invariant), with
+  65 diagnosis reversions correctly flagged as candidates for review.
+
+
 
 Adds a production rule pack for the NIA-AA 2024 PET-based BIOLOGICAL staging
 letters (A/B/C/D), with the Treatment-Related Amyloid Clearance (TRAC) carve-out,
