@@ -1,4 +1,36 @@
-## [1.72.0] -- 2026-06-10 -- E-2026-045: real-world robustness -- visit-ordinal-aware temporal ordering + native .rda support
+## [1.73.0] -- 2026-06-10 -- E-2026-046: zero-install file support -- R + SPSS readers promoted to core
+
+Makes every real clinical *data* format read out of the box from a plain
+`pip install neurotcs`, so a user never hits an install wall for a cohort file.
+Default v3 audit UNCHANGED at 69/65/1236.
+
+### Changed: statistical-format readers ship in core
+- `pyreadr` (R: .rds/.rdata/.rda, e.g. the ADNIMERGE2 package) and `pyreadstat`
+  (SPSS: .sav/.zsav, with value labels applied) are now CORE dependencies.
+  Previously they were optional extras, so a user auditing R or SPSS data hit an
+  ImportError and had to install an extra first. Now those formats just work.
+- SAS (.sas7bdat) and Stata (.dta) already read via pandas' built-in readers;
+  CSV/TSV/Excel/Parquet/JSON were always core. So all tabular + statistical
+  cohort formats now read with no extra install.
+- The `[radni]` and `[spss]` extras are retained as backward-compatible aliases
+  (existing `pip install neurotcs[radni]` instructions keep working; they just
+  re-pin a core dep).
+- The ImportError messages for R/SPSS are kept ONLY as rare-platform fallbacks
+  (if a binary wheel failed to install) and now say so, rather than implying the
+  package must be installed separately. The misleading "pyreadr is a core
+  dependency" comment that contradicted the optional-extra packaging is fixed.
+
+### Kept optional BY DESIGN: PDF
+- PDF table extraction stays an opt-in extra (`[pdf]`) and behind the explicit
+  allow-pdf safety flag. A clinical auditor must not silently infer table
+  structure from a PDF; bundling the package would not remove that gate, so it
+  remains optional. This is a deliberate safety boundary, not an oversight.
+
+### Tests
+- The optional-dependency import guard now policies only `pdfplumber`
+  (pyreadr/pyreadstat are core). Full suite green; v3 invariant unchanged.
+
+
 
 Real-data hardening surfaced by a full-cohort ADNI DXSUM audit. Two false-
 positive / friction sources removed at root cause, with no change to detection

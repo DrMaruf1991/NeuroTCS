@@ -199,12 +199,16 @@ def test_console_entrypoint_declared():
 # Tests may use an optional dependency only via pytest.importorskip or inside a
 # try/except ImportError -- never a bare top-of-function `import <optional>`
 # that runs before the skip guard.
+#
+# As of v1.73.0, pyreadr (R) and pyreadstat (SPSS) are CORE dependencies, so
+# they are no longer policed here. pdfplumber stays optional (PDF is a gated
+# opt-in by design) and remains guarded.
 # --------------------------------------------------------------------------- #
 def test_no_bare_optional_dependency_import_in_tests():
     import ast
 
     tests_dir = _ROOT / "tests"
-    optional_mods = {"pyreadr", "pyreadstat"}
+    optional_mods = {"pdfplumber"}
     offenders = []
 
     for py in tests_dir.rglob("test_*.py"):

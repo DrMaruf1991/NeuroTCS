@@ -54,9 +54,12 @@ class AmbiguousInputError(ValueError):
 # Structured tabular formats read deterministically without an optional library.
 SUPPORTED_TABULAR = (".csv", ".tsv", ".txt", ".xlsx", ".xls", ".parquet",
                      ".json", ".jsonl", ".ndjson")
-# Statistical formats real cohorts ship in. R works out of the box (pyreadr is a
-# core dependency); SAS/Stata use pandas' built-in readers; SPSS needs the
-# optional pyreadstat library (gated).
+# Statistical formats real cohorts ship in. As of v1.73.0 ALL of these read out
+# of the box from a plain `pip install neurotcs`: SAS (.sas7bdat) and Stata
+# (.dta) use pandas' built-in readers; R (.rds/.rdata/.rda) uses pyreadr and
+# SPSS (.sav/.zsav) uses pyreadstat -- both now CORE dependencies. The
+# ImportError fallbacks below remain only for the rare platform where a binary
+# wheel failed to install.
 SUPPORTED_STATISTICAL = (".sas7bdat", ".dta", ".sav", ".zsav", ".rds", ".rdata",
                          ".rda")
 # Compressed single files (one table inside) and archives (a multi-file cohort).
@@ -398,13 +401,14 @@ def _read_statistical(
         return pd.read_stata(p)
     if ext in (".sav", ".zsav"):
         try:
-            import pyreadstat  # optional dependency
+            import pyreadstat  # core dependency (rare-platform wheel fallback below)
         except ImportError as e:
             raise UnsupportedFormatError(
-                "Reading SPSS (.sav) needs the 'pyreadstat' package. Install it "
-                "with: pip install pyreadstat -- or export your data to CSV/Excel. "
-                "(NeuroTCS does not auto-install: a clinical auditor reads "
-                "deterministically or refuses.)"
+                "Reading SPSS (.sav/.zsav) uses 'pyreadstat', a core NeuroTCS "
+                "dependency that normally installs automatically. Its binary "
+                "wheel appears to be missing on this platform; reinstall with "
+                "pip install --force-reinstall pyreadstat -- or export your data "
+                "to CSV/Excel."
             ) from e
         # apply_value_formats=True maps coded categoricals to their LABELS (e.g.
         # sex 1/2 -> 'Male'/'Female') so the auditor sees meaningful values, not
@@ -414,14 +418,14 @@ def _read_statistical(
         return df
     if ext in (".rds", ".rdata", ".rda"):
         try:
-            import pyreadr  # optional dependency (the 'radni' extra)
+            import pyreadr  # core dependency (rare-platform wheel fallback below)
         except ImportError as e:  # pragma: no cover
             raise UnsupportedFormatError(
-                "Reading R data (.rds/.rdata/.rda) needs the 'pyreadr' package. "
-                "Install it with: pip install 'neurotcs[radni]'  (or: pip "
-                "install pyreadr) -- or export your data to CSV/Excel. (NeuroTCS "
-                "does not auto-install: a clinical auditor reads deterministically "
-                "or refuses.)"
+                "Reading R data (.rds/.rdata/.rda) uses 'pyreadr', a core "
+                "NeuroTCS dependency that normally installs automatically. Its "
+                "binary wheel appears to be missing on this platform; reinstall "
+                "with pip install --force-reinstall pyreadr -- or export your "
+                "data to CSV/Excel."
             ) from e
         result = pyreadr.read_r(str(p))
         if not result:

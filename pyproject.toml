@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurotcs"
-version = "1.72.0"
+version = "1.73.0"
 description = "Citation-locked, fail-closed longitudinal medical AI audit framework (NeuroTCS / temporalmetric)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -40,18 +40,33 @@ dependencies = [
     "jsonschema>=4.0",
     "numpy>=1.24",
     "scipy>=1.11",
+    # Statistical-format readers promoted to core (v1.73.0) so real clinical
+    # cohort files work out of the box with a plain `pip install neurotcs`:
+    #   pyreadr    -> R data (.rds/.rdata/.rda), e.g. the ADNIMERGE2 package
+    #   pyreadstat -> SPSS (.sav/.zsav) with value labels applied
+    # Both ship binary wheels for the common platforms. SAS (.sas7bdat) and
+    # Stata (.dta) already use pandas' built-in readers. PDF stays an opt-in
+    # extra by design (table extraction is gated behind an explicit safety
+    # flag, not just a package).
+    "pyreadr>=0.4.7",
+    "pyreadstat>=1.2",
 ]
 
 [project.optional-dependencies]
+# 'spss' and 'radni' are retained as BACKWARD-COMPATIBLE ALIASES: as of v1.73.0
+# their packages (pyreadstat, pyreadr) ship in core, so `pip install neurotcs`
+# already reads SPSS and R data. Existing instructions like
+# `pip install neurotcs[radni]` keep working (they just re-pin a core dep).
 spss = [
     "pyreadstat>=1.2",
 ]
 radni = [
-    # R .rda reader, needed ONLY for the optional ADNI reference-adapter CLIs
-    # (neurotcs.reference_adapters.adni_*). Core auditing does not require it.
     "pyreadr>=0.4.7",
 ]
 pdf = [
+    # PDF table extraction is an explicit opt-in (gated behind an allow-pdf
+    # safety flag, not just this package): a clinical auditor must not silently
+    # infer table structure from a PDF. Kept optional by design.
     "pdfplumber>=0.10",
 ]
 formats = [
