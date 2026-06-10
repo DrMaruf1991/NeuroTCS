@@ -1,4 +1,53 @@
-## [1.74.0] -- 2026-06-10 -- E-2026-047: fail-closed hardening -- malformed dates, honest CLEAN status, natural visit-order derivation, citation prune
+## [1.75.0] -- 2026-06-10 -- E-2026-048: supply-chain & input hardening -- archive-bomb guardrails, SBOM, lockfile, type-baseline
+
+Hardening pass closing the remaining code-level items from the external audits
+(archive resource-exhaustion, SBOM/lockfile reproducibility, type safety).
+Default v3 audit UNCHANGED at 69/65/1236.
+
+### Added: archive / compressed-input bomb guardrails (Audit F13)
+- The zip and gzip readers previously read members fully into memory with no
+  size bound, so a decompression bomb (small compressed -> gigabytes
+  decompressed) could exhaust memory before any audit ran. Added fail-closed
+  limits, all overridable via env for trusted large inputs:
+    * per-member / per-stream decompressed cap (MAX_DECOMPRESSED_BYTES, 2 GiB)
+    * compression-ratio cap for zip members (MAX_COMPRESSION_RATIO, 200x)
+    * total-decompressed cap across a zip (MAX_TOTAL_DECOMPRESSED_BYTES, 4 GiB)
+    * member-count cap (MAX_ARCHIVE_MEMBERS, 10000)
+  Limits are checked against the zip central-directory metadata BEFORE
+  materializing bytes, AND enforced again by a hard-capped read (defends a
+  spoofed declared size). New ArchiveLimitError (exported from neurotcs.io).
+  Normal archives read unchanged. +6 regression tests (ratio/member/size/gzip
+  bombs blocked; normal zip+gzip read).
+
+### Added: Software Bill of Materials (SBOM) generator
+- scripts/ci/generate_sbom.py emits a CycloneDX 1.6 SBOM scoped to NeuroTCS's
+  OWN locked dependency closure (31 components from requirements.lock), not a
+  freeze of the ambient environment. Deterministic; +3 tests. Pair with a
+  networked pip-audit step (CI) to close the CVE-scan gap.
+
+### Fixed: stale lockfile (Audit)
+- requirements.lock previously referenced an old version/test count. Regenerated
+  for v1.75.0 against the CANONICAL reproducibility pin set (the versions that
+  produce the locked audit_ids: pandas 3.0.2 / numpy 2.4.4 / scipy 1.17.1 /
+  ruff 0.15.13 / pytest 9.0.3, plus the verified transitive runtime closure).
+  Scoped to NeuroTCS only -- a clean install pulls exactly this set.
+
+### Fixed: type-safety (mypy on Python 3.12)
+- Ran mypy on the project's target Python (3.12) and fixed the high-severity
+  findings that indicate real runtime risk: a None-dereference invariant cluster
+  in the orchestrator (made explicit with an assertion), a vocabulary return
+  narrowed to non-None, a wrong autowire_ranges return annotation (declared a
+  4-tuple, returns 5), and missing list annotations in cdisc. 16 of 31 findings
+  resolved; the ~15 remaining (flag-type union refinements and float()-on-
+  Optional guards) are documented as an advisory baseline in [tool.mypy] and
+  tracked for a focused typing pass -- they do not affect runtime behavior.
+- mypy added to the [dev] extra; [tool.mypy] config records the baseline.
+
+### Tests
+- +9 regression tests (6 archive-bomb, 3 SBOM). Full suite green (1971 passed);
+  v3 invariant 69/65/1236 unchanged.
+
+
 
 Closes three independently-confirmed FAIL-OPEN defects surfaced by an external
 adversarial audit, plus removes one unverifiable prose citation. These are

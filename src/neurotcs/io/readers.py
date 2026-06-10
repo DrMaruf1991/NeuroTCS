@@ -52,6 +52,43 @@ class AmbiguousInputError(ValueError):
     or encoding) -- the reader refuses rather than guess into a clinical result."""
 
 
+class ArchiveLimitError(ValueError):
+    """Raised when a compressed input exceeds a safety limit (decompressed size,
+    compression ratio, or member count). A clinical auditor must fail closed on
+    a potential decompression bomb rather than exhaust memory mid-run."""
+
+
+# ---- archive / compressed-input safety limits (v1.75.0) --------------------- #
+# A small compressed file can expand to gigabytes (a "zip/gzip bomb"), exhausting
+# memory before any audit runs. These bounds make the readers fail CLOSED with a
+# clear ArchiveLimitError instead of OOM-crashing. They are generous for real
+# clinical cohorts (a 2 GB decompressed table is far beyond any realistic CSV)
+# yet decisively reject a bomb. Overridable via env for unusual legitimate cases.
+def _env_int(name: str, default: int) -> int:
+    import os
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        v = int(raw)
+        return v if v > 0 else default
+    except (TypeError, ValueError):
+        return default
+
+
+# Max decompressed bytes for a SINGLE member/stream (default 2 GiB).
+MAX_DECOMPRESSED_BYTES = _env_int("NEUROTCS_MAX_DECOMPRESSED_BYTES", 2 * 1024**3)
+# Max decompressed:compressed ratio for a zip member (default 200x). Real text
+# tables compress ~5-20x; 200x is a safe ceiling that still rejects bombs.
+MAX_COMPRESSION_RATIO = _env_int("NEUROTCS_MAX_COMPRESSION_RATIO", 200)
+# Max total decompressed bytes across ALL zip members (default 4 GiB).
+MAX_TOTAL_DECOMPRESSED_BYTES = _env_int(
+    "NEUROTCS_MAX_TOTAL_DECOMPRESSED_BYTES", 4 * 1024**3)
+# Max number of members NeuroTCS will enumerate in a single archive (default
+# 10000) -- guards against a "zip of many tiny files" amplification.
+MAX_ARCHIVE_MEMBERS = _env_int("NEUROTCS_MAX_ARCHIVE_MEMBERS", 10000)
+
+
 # Structured tabular formats read deterministically without an optional library.
 SUPPORTED_TABULAR = (".csv", ".tsv", ".txt", ".xlsx", ".xls", ".parquet",
                      ".json", ".jsonl", ".ndjson")
@@ -525,6 +562,19 @@ def _read_directory(
     return tables
 
 
+def _read_capped(fh, limit: int, what: str) -> bytes:
+    """Read from a binary stream up to `limit` bytes; if MORE remains, fail
+    closed with ArchiveLimitError. Reads limit+1 so we can detect overflow
+    without materializing an unbounded amount of memory."""
+    data = fh.read(limit + 1)
+    if len(data) > limit:
+        raise ArchiveLimitError(
+            f"{what}: decompressed stream exceeds the {limit}-byte safety "
+            f"limit (possible decompression bomb). Raise "
+            f"NEUROTCS_MAX_DECOMPRESSED_BYTES only for a trusted large file.")
+    return data
+
+
 def _read_zip(
     p: Path, *, allow_pdf: bool, encoding: str | None,
     skipped: list[str], decisions: list[str]
@@ -532,15 +582,47 @@ def _read_zip(
     tables: dict[str, pd.DataFrame] = {}
     read_any = False
     with zipfile.ZipFile(p) as zf:
-        for info in sorted(zf.infolist(), key=lambda i: i.filename):
+        infos = zf.infolist()
+        if len(infos) > MAX_ARCHIVE_MEMBERS:
+            raise ArchiveLimitError(
+                f"archive '{p.name}' has {len(infos)} members, exceeding the "
+                f"{MAX_ARCHIVE_MEMBERS}-member safety limit (possible "
+                f"amplification bomb).")
+        total_uncompressed = 0
+        for info in sorted(infos, key=lambda i: i.filename):
             if info.is_dir():
                 continue
             name = info.filename
             if _is_noise_name(name) or not _readable_member(name):
                 skipped.append(name)
                 continue
-            # Extract member to a temp buffer and dispatch by suffix.
-            data = zf.read(info)
+            # Fail closed on a decompression bomb BEFORE materializing bytes:
+            # the central-directory metadata declares file_size/compress_size,
+            # so we can reject an over-large or over-compressed member without
+            # reading it. (file_size can be spoofed, so we ALSO cap the actual
+            # read below via _read_capped.)
+            if info.file_size > MAX_DECOMPRESSED_BYTES:
+                raise ArchiveLimitError(
+                    f"archive '{p.name}' member '{name}' declares "
+                    f"{info.file_size} decompressed bytes, exceeding the "
+                    f"{MAX_DECOMPRESSED_BYTES}-byte limit (possible bomb).")
+            if info.compress_size > 0:
+                ratio = info.file_size / info.compress_size
+                if ratio > MAX_COMPRESSION_RATIO:
+                    raise ArchiveLimitError(
+                        f"archive '{p.name}' member '{name}' has compression "
+                        f"ratio {ratio:.0f}x, exceeding the "
+                        f"{MAX_COMPRESSION_RATIO}x limit (possible bomb).")
+            total_uncompressed += info.file_size
+            if total_uncompressed > MAX_TOTAL_DECOMPRESSED_BYTES:
+                raise ArchiveLimitError(
+                    f"archive '{p.name}' decompresses to more than "
+                    f"{MAX_TOTAL_DECOMPRESSED_BYTES} total bytes across members "
+                    f"(possible bomb).")
+            # Read with a hard cap as well (defends against a spoofed file_size).
+            with zf.open(info) as member_fh:
+                data = _read_capped(member_fh, MAX_DECOMPRESSED_BYTES,
+                                    f"archive '{p.name}' member '{name}'")
             part = _read_bytes_as_table(data, name, allow_pdf=allow_pdf,
                                        encoding=encoding, decisions=decisions)
             _merge_unique(tables, part)
@@ -560,7 +642,7 @@ def _read_gz(
 ) -> dict[str, pd.DataFrame]:
     inner = Path(p.stem)  # e.g. "amyloid.csv.gz" -> "amyloid.csv"
     with gzip.open(p, "rb") as fh:
-        data = fh.read()
+        data = _read_capped(fh, MAX_DECOMPRESSED_BYTES, f"gzip '{p.name}'")
     decisions.append(f"{p.name}: decompressed gzip -> {inner.name}")
     return _read_bytes_as_table(data, inner.name, allow_pdf=False,
                                encoding=encoding, decisions=decisions)

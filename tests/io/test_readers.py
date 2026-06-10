@@ -215,3 +215,75 @@ def test_derived_dates_preserve_natural_visit_order(tmp_path):
     staged = sub["clinical"]
     visits = list(staged["visit"])
     assert visits == ["bl", "m6", "m12", "m24"], visits
+
+
+class TestArchiveBombGuardrails:
+    """Compressed inputs must fail CLOSED on decompression-bomb patterns
+    (oversize member, excessive ratio, too many members, oversize gzip stream)
+    rather than exhaust memory. Normal archives must still read. Limits are
+    patched in place (no module reload) so no state leaks to sibling tests."""
+
+    def _csv(self):
+        return (b"subject_id,visit,visit_date,clinical_state\n"
+                b"S1,bl,2010-01-01,CN\nS1,m06,2010-07-01,MCI\n")
+
+    def test_normal_zip_reads(self, tmp_path):
+        import zipfile
+        z = tmp_path / "ok.zip"
+        with zipfile.ZipFile(z, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("cohort.csv", self._csv())
+        tables = read_tables(z)
+        assert next(iter(tables.values())).shape == (2, 4)
+
+    def test_normal_gzip_reads(self, tmp_path):
+        import gzip
+        g = tmp_path / "cohort.csv.gz"
+        with gzip.open(g, "wb") as f:
+            f.write(self._csv())
+        tables = read_tables(g)
+        assert next(iter(tables.values())).shape == (2, 4)
+
+    def test_zip_ratio_bomb_blocked(self, tmp_path, monkeypatch):
+        import zipfile
+
+        import neurotcs.io.readers as R
+        monkeypatch.setattr(R, "MAX_COMPRESSION_RATIO", 50)
+        z = tmp_path / "ratio.zip"
+        with zipfile.ZipFile(z, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+            zf.writestr("big.csv", b"A" * 5_000_000)  # ~1000x ratio
+        with pytest.raises(R.ArchiveLimitError):
+            read_tables(z)
+
+    def test_zip_member_count_bomb_blocked(self, tmp_path, monkeypatch):
+        import zipfile
+
+        import neurotcs.io.readers as R
+        monkeypatch.setattr(R, "MAX_ARCHIVE_MEMBERS", 5)
+        z = tmp_path / "many.zip"
+        with zipfile.ZipFile(z, "w") as zf:
+            for i in range(20):
+                zf.writestr(f"f{i}.csv", self._csv())
+        with pytest.raises(R.ArchiveLimitError):
+            read_tables(z)
+
+    def test_zip_oversize_member_blocked(self, tmp_path, monkeypatch):
+        import zipfile
+
+        import neurotcs.io.readers as R
+        monkeypatch.setattr(R, "MAX_DECOMPRESSED_BYTES", 1_000_000)
+        z = tmp_path / "size.zip"
+        with zipfile.ZipFile(z, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("big.csv", b"A" * 5_000_000)
+        with pytest.raises(R.ArchiveLimitError):
+            read_tables(z)
+
+    def test_gzip_oversize_stream_blocked(self, tmp_path, monkeypatch):
+        import gzip
+
+        import neurotcs.io.readers as R
+        monkeypatch.setattr(R, "MAX_DECOMPRESSED_BYTES", 1_000_000)
+        g = tmp_path / "bomb.csv.gz"
+        with gzip.open(g, "wb") as f:
+            f.write(b"A" * 5_000_000)
+        with pytest.raises(R.ArchiveLimitError):
+            read_tables(g)

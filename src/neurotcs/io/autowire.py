@@ -242,8 +242,10 @@ def autowire_ranges(
     tables: dict[str, pd.DataFrame],
     already_wired_sheets: set[str],
     confirm_assays: bool = False,
-) -> tuple[list[dict[str, Any]], dict[str, pd.DataFrame], list[str], list[str]]:
-    """Return (ranges_specs, extra_long_tables, decisions, refusals).
+) -> tuple[list[dict[str, Any]], dict[str, pd.DataFrame], list[str], list[str],
+           set[str]]:
+    """Return (ranges_specs, extra_long_tables, decisions, refusals,
+    wired_source_sheets).
 
     For each sheet NOT already wired to staging, resolve its value columns to
     production pack measurements. Columns that resolve cleanly (name + unit) are

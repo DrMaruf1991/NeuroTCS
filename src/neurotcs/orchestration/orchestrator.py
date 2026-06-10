@@ -463,6 +463,9 @@ def run_full_audit(
             sub_ids[layer] = d["audit_id"]
             fl = []
             pt = res.per_transition
+            assert pt is not None, (
+                "invariant: per_transition is populated whenever a staging "
+                "layer ran (this branch only executes for a staged result)")
             mixed_set = set(mixed_primary)
             for i in range(len(pt.flags)):
                 if pt.flags[i]:

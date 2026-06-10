@@ -216,7 +216,9 @@ def recognize_cdisc(df: pd.DataFrame) -> CdiscRecognition:
               else None)
 
     codes = tuple(sorted({str(v) for v in df[code_col].dropna().tolist()}))
-    state_c, meas_c, unk_c = [], [], []
+    state_c: list[str] = []
+    meas_c: list[str] = []
+    unk_c: list[str] = []
     for c in codes:
         # RS domain is itself a strong "state" signal regardless of code token.
         role = _classify_code(c)

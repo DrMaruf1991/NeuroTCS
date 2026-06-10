@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurotcs"
-version = "1.74.0"
+version = "1.75.0"
 description = "Citation-locked, fail-closed longitudinal medical AI audit framework (NeuroTCS / temporalmetric)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -77,6 +77,7 @@ dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
     "ruff>=0.1.0",
+    "mypy>=1.8",
 ]
 fhir = [
     "fhir.resources>=7.0",
@@ -118,3 +119,16 @@ ignore = ["E501", "B008"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short"
+
+[tool.mypy]
+# Type-checking is ADVISORY (not yet a blocking CI gate). As of v1.75.0 mypy
+# runs clean of the high-severity classes that indicate runtime bugs (None
+# dereferences, wrong return-arity, missing annotations -- all fixed). A small
+# baseline of ~15 lower-risk findings remains (flag-type union refinements and
+# float()-on-Optional guards in cross_sheet/cli/conversion paths); these are
+# tracked for a focused typing pass and do not affect runtime behavior (the full
+# test suite and the v3 invariant are the behavioral guarantee). Run locally
+# with: python -m mypy src/neurotcs --ignore-missing-imports
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = true

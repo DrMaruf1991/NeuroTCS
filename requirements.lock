@@ -1,58 +1,63 @@
-# NeuroTCS v1.8.1 — locked dependency versions
-# ================================================
+# NeuroTCS v1.74.0 -- locked dependency versions
+# Python: 3.12.x (project target; verified on 3.12.3)
+# Generated: 2026-06-10
 #
-# These are the EXACT versions used to produce the four-cohort triangulation
-# locked invariants (audit_ids and cTCS values) in docs/datasheet/ad_neurotcs_datasheet.md
-# Section A. An external collaborator wanting to verify those invariants
-# bit-exactly should install these versions, NOT the floors in pyproject.toml.
+# SCOPE: this lockfile pins ONLY NeuroTCS's own dependency closure (core runtime
+# + its actual transitive deps + the dev/CI toolchain). It is intentionally NOT
+# a freeze of a shared/global environment -- a clean `pip install neurotcs`
+# resolves exactly the runtime set below and nothing else. Versions are the
+# resolved versions observed on the maintainer's machine (pip freeze 2026-06-10);
+# the runtime closure was verified with importlib.metadata.requires().
 #
-# Python: 3.12.3 (Ubuntu 24.04 stock build, GCC 13.3.0)
-# Generated:  2026-05-23 (v1.8.0 lock — four-cohort triangulation)
-# Updated:    2026-05-24 (v1.8.1 — documentation, test hygiene, no dep changes)
+# To regenerate canonically WITH HASHES (recommended for a release artifact):
+#   pip install pip-tools
+#   pip-compile --generate-hashes --extra dev -o requirements.lock pyproject.toml
 #
-# Verified pytest counts (the count depends on whether cohort env vars are set):
-#   397 passed = framework-only (no NEUROTCS_* env vars set; cohort tests skip)
-#   404 passed = full suite (all four NEUROTCS_* env vars set + files exist)
-# Both outcomes are correct behavior. v1.8.0 framework count was 407 due to
-# a hardcoded fallback path that v1.8.1 removed (Issue 5+14+20).
-#
-# v1.8.0 → v1.8.1 changes:
-#   - same pinned versions (no dependency bumps; verified compatibility)
-#   - documentation, test hygiene, CI matrix, reference_adapters reorganization
-#   - audit invariants UNCHANGED — all 5 cohorts byte-exact under v1.8.1
-#
-# Usage:
-#     pip install -r requirements.lock --break-system-packages
-#     pip install -e .
-#     # framework-only (expect 397 passed):
-#     pytest tests/ -q
-#     # full suite (expect 404 passed):
-#     NEUROTCS_MIRIAD_DIR=<path> NEUROTCS_NACC_CSV=<path> \
-#     NEUROTCS_ADNI_DXSUM_RDA=<path> NEUROTCS_OASIS3_CDR=<path> \
-#     pytest tests/ -q
-#
-# Floor versions live in pyproject.toml; floors are what NeuroTCS DECLARES as
-# minimum compatible. Pins below are what NeuroTCS was TESTED with. The pins
-# are the canonical reproducible environment for verifying locked invariants.
-
-# Core data + schema stack
+# ============================================================================
+# CORE RUNTIME (pyproject [project].dependencies)
+# ============================================================================
 pydantic==2.13.4
 PyYAML==6.0.3
 pandas==3.0.2
 pyarrow==24.0.0
+openpyxl==3.1.5
+reportlab==4.5.1
 jsonschema==4.26.0
-pyreadr==0.5.6
-
-# Numeric stack
 numpy==2.4.4
 scipy==1.17.1
-
-# Test + lint
+pyreadr==0.5.6
+pyreadstat==1.3.5
+#
+# ---- transitive runtime closure (verified via importlib.metadata) ----
+pydantic_core==2.46.4
+annotated-types==0.7.0
+typing_extensions==4.15.0
+typing-inspection==0.4.2
+python-dateutil==2.9.0.post0
+tzdata==2026.2
+six==1.17.0
+et_xmlfile==2.0.0            # openpyxl
+pillow==12.2.0               # reportlab
+charset-normalizer==3.4.7    # pyreadstat
+narwhals==2.16.0             # pyreadr
+jsonschema-specifications==2025.9.1
+referencing==0.37.0
+rpds-py==2026.5.1
+attrs==26.1.0
+#
+# ============================================================================
+# DEV / CI TOOLCHAIN (pyproject [dev] extra)
+# ============================================================================
 pytest==9.0.3
 ruff==0.15.13
-
-# NOTE: pytest-cov and fhir.resources are declared in pyproject.toml but are
-# optional for verifying invariants. They are NOT pinned here because the
-# AD-lock test suite does not require them. An external collaborator running
-# just the verification pipeline can omit them; a developer extending the
-# package should install them per pyproject.toml.
+build==1.5.0
+#
+# ============================================================================
+# SUPPLY-CHAIN / SBOM TOOLING (CI release gate only -- not a runtime dep)
+# ============================================================================
+pip_audit==2.10.0
+cyclonedx-python-lib==11.6.0
+#
+# OPTIONAL EXTRAS (install on demand, NOT part of the core lock):
+#   PDF input  : pip install 'neurotcs[pdf]'   (pdfplumber; gated by allow-pdf)
+#   FHIR input : pip install 'neurotcs[fhir]'  (fhir.resources)

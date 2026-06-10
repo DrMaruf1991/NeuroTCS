@@ -11,6 +11,7 @@ Fail-closed by design (the NeuroTCS contract):
 """
 from neurotcs.io.readers import (  # noqa: F401
     AmbiguousInputError,
+    ArchiveLimitError,
     PdfExtractionError,
     UnsupportedFormatError,
     describe_tables,
@@ -25,4 +26,5 @@ __all__ = [
     "UnsupportedFormatError",
     "PdfExtractionError",
     "AmbiguousInputError",
+    "ArchiveLimitError",
 ]

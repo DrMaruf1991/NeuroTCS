@@ -190,4 +190,5 @@ def select_rulepack_or_refuse(
             f"staging score on mismatched vocabulary (fail-closed: a coherence "
             f"score on non-matching vocabulary is not a meaningful number)."
         )
+    assert best_name is not None  # guaranteed: set together with best_match above
     return best_name, best_match
