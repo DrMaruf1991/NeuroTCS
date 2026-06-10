@@ -1,4 +1,37 @@
-## [1.77.0] -- 2026-06-10 -- E-2026-050: citation defect fix (TRAC PMID) + verifier precision overhaul
+## [1.77.1] -- 2026-06-10 -- E-2026-051: verifier normalization fixes (multi-word surnames, journal abbreviations)
+
+The v1.77.0 networked run dropped false positives from ~340 to 18 and the TRAC
+defect was confirmed fixed. The residual 18 were all FALSE POSITIVES from two
+normalization gaps in the v1.77.0 comparator (not citation defects). This patch
+closes both so a networked run returns exit 0 on the (correct) rule packs.
+Default v3 audit UNCHANGED at 69/65/1236.
+
+### Fixed: PubMed multi-word surname extraction
+- The EUtils author parser took the first whitespace token as the surname
+  ("La Joie R" -> "La", "van Dyck CH" -> "van"), so the cross-resolver
+  first-author check flagged La Joie 2025 (Crossref "La Joie" vs PubMed "La")
+  on all six corrected TRAC transitions plus the TRAC anchor -- though the
+  citation is correct. The parser now drops only the trailing initials token
+  (all-uppercase) and keeps the full multi-word surname. The first-author
+  comparison is also prefix-tolerant.
+
+### Fixed: journal abbreviation matching
+- The journal comparator only did substring containment, so PubMed/Crossref
+  abbreviation pairs ("Statistics in Medicine" vs "Stat Med", "Nature Medicine"
+  vs "Nat Med", "Frontiers in Neurology" vs "Front Neurol", "Alzheimer's &
+  Dementia" vs "alz & dem"/"Alzheimers Dement", "Nature Health" vs "nat health")
+  false-flagged. Matching now aligns names word-by-word after dropping
+  stop-words and stray 1-char fragments (the "s" from a split possessive), each
+  abbreviated word required to prefix its counterpart, plus an explicit
+  acronym alias map (e.g. JACR). Genuine journal conflicts still reject.
+
+### Tests
+- +3 regression tests (journal abbreviation pairs match; genuine conflict still
+  rejected; multi-word PubMed surname not flagged). Full suite green (1982
+  passed); v3 invariant 69/65/1236 unchanged; offline structural scan clean.
+  Expected networked result on the corrected packs: exit 0 (to be confirmed).
+
+
 
 The v1.76.0 gate fix let the networked citation verifier finally fail on a
 mismatch. Its first real run surfaced ONE genuine defect (amid hundreds of

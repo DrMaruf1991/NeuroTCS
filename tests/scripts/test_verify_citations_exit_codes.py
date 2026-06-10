@@ -174,3 +174,49 @@ class TestComparatorPrecision:
             title="t", year=2002, first_page="1",
             authors_last_names=["Someone"])
         assert len(mod.find_mismatches(ref, None, eu)) >= 1
+
+
+class TestJournalAndAuthorNormalization:
+    """v1.77.x: two comparator bugs surfaced on the first real networked run --
+    multi-word PubMed surnames ('La Joie R' -> only 'La') and journal
+    abbreviation pairs ('Statistics in Medicine' vs 'Stat Med') -- both
+    false-flagged correct citations. Lock the fixes."""
+
+    def _mod(self):
+        return _load()
+
+    def test_journal_abbreviation_pairs_match(self):
+        mod = self._mod()
+        m = mod._journal_tokens_match
+        assert m("Statistics in Medicine", "Stat Med")
+        assert m("Nature Medicine", "Nat Med")
+        assert m("Frontiers in Neurology", "Front Neurol")
+        assert m("Nature Health", "Nat Health")
+        assert m("Alzheimer's &amp; Dementia", "alz & dem")
+        assert m("Alzheimer's & Dementia", "Alzheimers Dement")
+
+    def test_genuine_journal_conflict_still_rejected(self):
+        mod = self._mod()
+        m = mod._journal_tokens_match
+        assert not m("Movement Disorders", "Archives of Neurology")
+        assert not m("Nature Medicine", "Statistics in Medicine")
+        assert not m("Alzheimer's & Dementia", "Nature Medicine")
+
+    def test_multiword_pubmed_surname_not_flagged(self):
+        """La Joie (Crossref) vs PubMed 'La Joie R' must agree, not 'La'."""
+        mod = self._mod()
+        P = mod.PROJECT_ROOT
+        ref = mod.CitationRef(
+            file_path=P / "trac.yaml", line=0, pmid="41298245",
+            doi="10.1002/alz.70997", context="La Joie 2025 (TRAC)")
+        cr = mod.ResolverRecord(
+            source="crossref", pmid=None, doi="10.1002/alz.70997",
+            journal="Alzheimer's &amp; Dementia",
+            title="Treatment-related amyloid clearance (TRAC)", year=2025,
+            first_page="e70997", authors_last_names=["La Joie", "Cummings"])
+        eu = mod.ResolverRecord(
+            source="eutils", pmid="41298245", doi="10.1002/alz.70997",
+            journal="Alzheimers Dement",
+            title="Treatment-related amyloid clearance (TRAC)", year=2025,
+            first_page="e70997", authors_last_names=["La Joie", "Cummings"])
+        assert mod.find_mismatches(ref, cr, eu) == []

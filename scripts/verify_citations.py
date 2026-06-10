@@ -397,9 +397,17 @@ def resolve_eutils(pmid: str) -> ResolverRecord | None:
     if authors_el is not None:
         for a in authors_el.findall("./Item[@Name='Author']"):
             if a.text:
-                # PubMed author format: "Marras C", "Chen Y" — take the
-                # surname part (first whitespace-separated token).
-                surname = a.text.strip().split()[0]
+                # PubMed author format is "<surname> <initials>", and the
+                # surname may be multi-word ("La Joie R", "van Dyck CH"). The
+                # trailing token is the initials block (all-uppercase, no
+                # lowercase letters); the surname is everything before it. Drop
+                # only that trailing initials token so multi-word surnames are
+                # preserved (a naive split()[0] would yield just "La"/"van").
+                parts = a.text.strip().split()
+                if len(parts) > 1 and parts[-1].isupper() and parts[-1].isalpha():
+                    surname = " ".join(parts[:-1])
+                else:
+                    surname = parts[0] if parts else ""
                 authors.append(surname)
     return ResolverRecord(
         source="eutils",
@@ -429,16 +437,56 @@ def _normalize_journal(name: str | None) -> str | None:
     return re.sub(r"[\s,.()\[\]:;'’`&/-]+", "", decoded).lower()
 
 
+def _journal_words(name: str | None) -> list[str]:
+    """Lowercase word tokens of a journal name, HTML-decoded, with punctuation
+    and common stop-words removed (PubMed abbreviations drop in/of/the/and/&)."""
+    if not name:
+        return []
+    decoded = html.unescape(name).lower()
+    raw = re.split(r"[\s,.()\[\]:;'’`&/-]+", decoded)
+    stop = {"in", "of", "the", "and", "for", "a", "an", "on", "", "journal", "s"}
+    # Drop stop-words and stray 1-char fragments (e.g. the "s" left from a split
+    # possessive "Alzheimer's" -> ["alzheimer","s"]); they are never meaningful
+    # journal-name words and would break word-count alignment.
+    return [w for w in raw if w and len(w) > 1 and w not in stop]
+
+
 def _journal_tokens_match(a: str | None, b: str | None) -> bool:
-    """True if two normalized journal names refer to the same journal, tolerant
-    of full-vs-abbreviated forms (one being a prefix/substring of the other,
-    e.g. 'alzheimersdement' vs 'alzheimersdementia')."""
-    na, nb = _normalize_journal(a), _normalize_journal(b)
+    """True if two journal names refer to the same journal, tolerant of the
+    full-vs-abbreviated forms PubMed/Crossref disagree on
+    ("Statistics in Medicine" vs "Stat Med", "Nature Medicine" vs "Nat Med",
+    "Alzheimer's & Dementia" vs "Alzheimers Dement"). Strategy: drop stop-words,
+    then require that the shorter (abbreviated) word list aligns with the longer
+    one word-by-word, each abbreviated word being a prefix of its counterpart."""
+    na = re.sub(r"[\s,.()\[\]:;'’`&/-]+", "", html.unescape(a or "")).lower()
+    nb = re.sub(r"[\s,.()\[\]:;'’`&/-]+", "", html.unescape(b or "")).lower()
     if not na or not nb:
         return True  # nothing to contradict
     if na == nb or na in nb or nb in na:
         return True
-    return False
+    # Per-word abbreviation alignment.
+    wa, wb = _journal_words(a), _journal_words(b)
+    if not wa or not wb:
+        return True
+    # Acronym/initialism aliases: a few journals abbreviate as initialisms
+    # (e.g. "JACR" for Journal of the American College of Radiology), which
+    # word-by-word prefixing cannot align. Resolve these explicitly.
+    acronyms = {
+        "jacr": "american college radiology",
+    }
+    for short, expansion in acronyms.items():
+        sa = "".join(wa) if len(wa) == 1 else None
+        sb = "".join(wb) if len(wb) == 1 else None
+        exp = set(expansion.split())
+        if sa == short and exp.issubset(set(wb)):
+            return True
+        if sb == short and exp.issubset(set(wa)):
+            return True
+    short, long = (wa, wb) if len(wa) <= len(wb) else (wb, wa)
+    if len(short) != len(long):
+        return False
+    return all(long[i].startswith(short[i]) or short[i].startswith(long[i])
+               for i in range(len(short)))
 
 
 def find_mismatches(
@@ -488,12 +536,17 @@ def find_mismatches(
             claim("journal (PMID vs DOI disagree)",
                   f"Crossref/DOI journal: {cr.journal!r}",
                   f"PubMed/PMID journal: {eu.journal!r}")
-        if (cr.authors_last_names and eu.authors_last_names
-                and cr.authors_last_names[0].lower()
-                != eu.authors_last_names[0].lower()):
-            claim("first_author (PMID vs DOI disagree)",
-                  f"Crossref/DOI first author: {cr.authors_last_names[0]!r}",
-                  f"PubMed/PMID first author: {eu.authors_last_names[0]!r}")
+        if cr.authors_last_names and eu.authors_last_names:
+            a0 = cr.authors_last_names[0].lower().strip()
+            b0 = eu.authors_last_names[0].lower().strip()
+            # Tolerate residual formatting differences (one a prefix of the
+            # other, e.g. a truncated initials artifact) -- a genuine
+            # wrong-identifier defect shows entirely different surnames.
+            if a0 and b0 and not (a0 == b0 or a0.startswith(b0)
+                                  or b0.startswith(a0)):
+                claim("first_author (PMID vs DOI disagree)",
+                      f"Crossref/DOI first author: {cr.authors_last_names[0]!r}",
+                      f"PubMed/PMID first author: {eu.authors_last_names[0]!r}")
         # Cross-check the DOI PubMed reports for this PMID against the cited DOI.
         if eu.doi and ref.doi and _normalize_doi(eu.doi) != _normalize_doi(ref.doi):
             claim("doi (PubMed reports a different DOI for this PMID)",
