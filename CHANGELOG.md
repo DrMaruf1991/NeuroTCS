@@ -1,4 +1,35 @@
-## [1.75.0] -- 2026-06-10 -- E-2026-048: supply-chain & input hardening -- archive-bomb guardrails, SBOM, lockfile, type-baseline
+## [1.76.0] -- 2026-06-10 -- E-2026-049: citation-verifier gate fail-open fix
+
+Fixes a FAIL-OPEN bug in the tool that is supposed to guarantee citation
+integrity. Default v3 audit UNCHANGED at 69/65/1236.
+
+### Fixed (High): scripts/verify_citations.py could never fail on a mismatch
+- The networked citation verifier (resolves every PMID via PubMed EUtils and
+  every DOI via Crossref, then cross-checks journal/author/title) returned exit
+  0 even when it DETECTED a mismatch -- it printed the defect but the function
+  `return 0` in both branches. Its own docstring promises exit 1 on mismatch to
+  fail the build, so the CI gate meant to stop a Marras/Hayden-class citation
+  defect (a real paper at a wrong PMID/DOI) could never go red: a wrong
+  identifier would ship with CI green. Now a detected mismatch returns 1.
+- Also implemented the docstring's exit-2 contract: when EVERY network-
+  resolvable citation fails to resolve (a total outage), the script returns 2
+  ("could not verify" -- not the same as "verified clean"), so a network outage
+  can no longer masquerade as a clean pass. A partial outage still returns 0
+  for the resolved-and-matched subset, with the unresolved count printed.
+- The CI job runs this with continue-on-error, so a transient PubMed/Crossref
+  outage surfaces as a soft red check rather than blocking a PR; a genuine
+  mismatch is a hard signal reviewers must address.
+
+### Tests
+- +4 regression tests (tests/scripts/test_verify_citations_exit_codes.py) lock
+  the exit-code contract: mismatch -> 1, clean -> 0, total outage -> 2,
+  offline -> 0. The fail-open cannot silently recur. Full suite green (1975
+  passed); v3 invariant 69/65/1236 unchanged. Offline structural scan over all
+  196 citations (148 PMIDs / 187 DOIs) passes; the rule-by-rule NETWORK
+  resolution must be run on a networked machine (`python scripts/verify_citations.py`)
+  to confirm every identifier resolves to the claimed paper.
+
+
 
 Hardening pass closing the remaining code-level items from the external audits
 (archive resource-exhaustion, SBOM/lockfile reproducibility, type safety).

@@ -17,8 +17,8 @@ to the latest released minor series.
 
 | Version | Supported |
 |---------|-----------|
-| 1.75.x (latest) | Yes |
-| < 1.75  | No -- upgrade to the latest release |
+| 1.76.x (latest) | Yes |
+| < 1.76  | No -- upgrade to the latest release |
 
 ## Reporting a vulnerability
 

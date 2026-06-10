@@ -698,7 +698,30 @@ def main(argv: list[str]) -> int:
             print(f"  field          : {m.field_name}")
             print(f"  YAML/MD claim  : {m.yaml_claim}")
             print(f"  resolved value : {m.resolved_value}")
-        return 0
+        # Honor the documented exit-code contract: at least one mismatch FAILS
+        # the build (exit 1). Returning 0 here was a fail-OPEN bug -- the very
+        # gate meant to stop a Marras/Hayden-class citation defect could never
+        # go red, so a wrong PMID/DOI would ship with CI green.
+        return 1
+
+    # Exit 2 = "could not verify" (network/index outage left citations
+    # unresolved). Per the docstring contract this is NOT the same as "verified
+    # clean": treating a total outage as success would be fail-open (nothing was
+    # actually checked). We return 2 when EVERY network-resolvable citation went
+    # unresolved (a clear outage) so the signal is honest; the CI job runs this
+    # with continue-on-error so a transient outage surfaces as a soft red check
+    # rather than blocking a PR. A partial outage still returns 0 (the resolved
+    # subset was checked and matched), with the unresolved count printed above.
+    resolvable = sum(1 for r in refs
+                     if (r.doi and r.doi not in ALLOWLIST_DOI)
+                     or (r.pmid and r.pmid not in ALLOWLIST_PMID))
+    if resolvable > 0 and unresolvable >= resolvable:
+        print()
+        print("=== COULD NOT VERIFY ===")
+        print(f"All {unresolvable} network-resolvable citation(s) failed to "
+              f"resolve -- this is an outage/sandbox signal, not a clean pass. "
+              f"Re-run with network access to actually verify.")
+        return 2
 
     return 0
 
