@@ -1,0 +1,86 @@
+name: supply-chain
+
+# Supply-chain assurance for NeuroTCS:
+#   1. pip-audit  -- scans the LOCKED dependency closure against the PyPI/OSV
+#      advisory database for known CVEs (the "CVE scan in CI" item).
+#   2. SBOM       -- regenerates the CycloneDX SBOM from the lockfile and
+#      uploads it as a build artifact (scripts/ci/generate_sbom.py).
+#   3. citations  -- runs the citation verifier. Networked resolution against
+#      PubMed/Crossref is best-effort (continue-on-error) so a registry outage
+#      doesn't block a PR; the OFFLINE structural scan is a hard gate.
+#
+# pip-audit runs weekly on a schedule too, so a CVE disclosed after merge is
+# still surfaced against the shipped lockfile.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC -- catch newly disclosed CVEs
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  cve-audit:
+    name: pip-audit (CVE scan of locked deps)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pip-audit==2.10.0
+      # Audit the lockfile directly (does not require installing the project).
+      # A known vulnerability fails the job, surfacing the advisory + fix version.
+      - name: Audit locked dependencies
+        run: pip-audit --strict --requirement requirements.lock
+
+  sbom:
+    name: SBOM (CycloneDX from lockfile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install --no-deps -e .
+      - name: Generate SBOM
+        run: python scripts/ci/generate_sbom.py --lock requirements.lock --out neurotcs_sbom.json
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: neurotcs-sbom
+          path: neurotcs_sbom.json
+
+  citations:
+    name: citation verifier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+          python -m pip install --no-deps -e .
+      # Hard gate: structural well-formedness of every PMID/DOI (offline).
+      - name: Citation structural scan (offline, hard gate)
+        run: python scripts/verify_citations.py --offline
+      # Soft gate: live resolution against PubMed/Crossref. continue-on-error so
+      # a registry outage doesn't block the PR; a genuine mismatch still shows as
+      # a red (non-blocking) check for a human to act on. Exit 2 = could-not-
+      # verify (outage), exit 1 = real mismatch.
+      - name: Citation network resolution (best-effort)
+        continue-on-error: true
+        run: python scripts/verify_citations.py

@@ -1,0 +1,25 @@
+# Keep the Docker build context minimal and reproducible -- exclude local
+# caches, build artifacts, and developer cruft that would bust the layer cache
+# or leak machine-specific state into the image.
+.git
+.github
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.env
+.coverage
+htmlcov/
+*.rda
+*.sav
+*.xlsx
+# Local notebooks / scratch
+*.ipynb
+.DS_Store
