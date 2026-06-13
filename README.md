@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Version 1.77.1](https://img.shields.io/badge/version-1.77.1-success.svg)](CHANGELOG.md)
 [![Tests 1915](https://img.shields.io/badge/tests-1982%20passed-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7_FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
@@ -13,9 +13,9 @@ NeuroTCS audits the temporal coherence of longitudinal medical AI predictions ag
 
 The framework is anchored on Dr. Marufjon Salokhiddinov's ASNR 2026 presentation (Austin, May 2026) and the temporalmetric v1.7 FINAL technical specification.
 
-## Hallmark result — four-cohort triangulation lock
+## Hallmark result вЂ” four-cohort triangulation lock
 
-Five locked audit invariants reproduce byte-exactly across N=5 cold reruns, numpy 2.0.2↔2.4.4, pyreadr 0.5.0↔0.5.6, on Linux and Windows. Max pairwise ΔcTCS = 0.009206 (ADNI vs MIRIAD), all 6 pairwise comparisons within our pre-specified <=0.01 threshold.
+Five locked audit invariants reproduce byte-exactly across N=5 cold reruns, numpy 2.0.2в†”2.4.4, pyreadr 0.5.0в†”0.5.6, on Linux and Windows. Max pairwise О”cTCS = 0.009206 (ADNI vs MIRIAD), all 6 pairwise comparisons within our pre-specified <=0.01 threshold.
 
 | Cohort | n_scored / n_total | Transitions | Flagged | cTCS | audit_id |
 |---|---:|---:|---:|---:|---|
@@ -27,30 +27,30 @@ Five locked audit invariants reproduce byte-exactly across N=5 cold reruns, nump
 
 Each cohort also locks an `audit_id_v2` (C6 collision-resistant variant). See `tests/audit_core/test_real_*.py` for full locked-invariant constants, and [`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md) Section A for full audit_ids and methodology.
 
-The cTCS metric generalises across institution, decade, recruitment criteria, AND staging instrument. Three of the four cohorts use CDR-anchored staging; MIRIAD uses MMSE-anchored staging. The 4-cohort agreement at ≤0.01 ΔcTCS is, in these tested cohorts, strong cross-cohort evidence that the framework measures what it claims to measure. (This is a within-tested-cohort observation, not a comparative claim against other tools or the wider literature.)
+The cTCS metric generalises across institution, decade, recruitment criteria, AND staging instrument. Three of the four cohorts use CDR-anchored staging; MIRIAD uses MMSE-anchored staging. The 4-cohort agreement at в‰¤0.01 О”cTCS is, in these tested cohorts, strong cross-cohort evidence that the framework measures what it claims to measure. (This is a within-tested-cohort observation, not a comparative claim against other tools or the wider literature.)
 
 ## What's in this repo
 
-NeuroTCS is the umbrella for seven engineering pieces plus five v1.7.0 methodological modules. Pieces 1–4 + 6 are production-shipped; Pieces 5 and 7 are roadmap items planned for v1.9.x (importing them raises a helpful `ImportError` pointing to the roadmap).
+NeuroTCS is the umbrella for seven engineering pieces plus five v1.7.0 methodological modules. Pieces 1вЂ“4 + 6 are production-shipped; Pieces 5 and 7 are roadmap items planned for v1.9.x (importing them raises a helpful `ImportError` pointing to the roadmap).
 
 | Piece | Subpackage | Status | Description |
 |---|---|---|---|
-| 1 | `neurotcs.input_contract.v1_0` | ✅ shipped | Categorical input contract (8-step validation, fail-closed) |
-| 2 | `neurotcs.input_contract.v1_1` | ✅ shipped | Continuous-biomarker contract with UCUM unit enforcement |
-| 3 | `neurotcs.rulepack` | ✅ shipped | **3 production AD rule packs** (NIA-AA 2018, AA 2024, AA 2024 TRAC) |
-| 4 | `neurotcs.audit_core` | ✅ shipped | cTCS / pTCS / uTCS engine + cluster bootstrap + BCa + Huber |
-| 5 | `neurotcs.output_schema` | 🗺️ roadmap v1.9.x | FHIR Observation emitter (importing raises ImportError) |
-| 6a | `neurotcs.input_contract.v1_1.adapters` | ✅ shipped | OASIS-3, ADNI (canonical R-format), NACC, MIRIAD trajectory loaders |
-| 6b | `neurotcs.reference_adapters` | ✅ shipped | Reference submission-builders for vendor onboarding (ADNI categorical + volumetric) |
-| 7 | `neurotcs.validation_harness` | 🗺️ roadmap v1.9.x | Synthetic-trajectory self-tests (importing raises ImportError) |
+| 1 | `neurotcs.input_contract.v1_0` | вњ… shipped | Categorical input contract (8-step validation, fail-closed) |
+| 2 | `neurotcs.input_contract.v1_1` | вњ… shipped | Continuous-biomarker contract with UCUM unit enforcement |
+| 3 | `neurotcs.rulepack` | вњ… shipped | **3 production AD rule packs** (NIA-AA 2018, AA 2024, AA 2024 TRAC) |
+| 4 | `neurotcs.audit_core` | вњ… shipped | cTCS / pTCS / uTCS engine + cluster bootstrap + BCa + Huber |
+| 5 | `neurotcs.output_schema` | рџ—єпёЏ roadmap v1.9.x | FHIR Observation emitter (importing raises ImportError) |
+| 6a | `neurotcs.input_contract.v1_1.adapters` | вњ… shipped | OASIS-3, ADNI (canonical R-format), NACC, MIRIAD trajectory loaders |
+| 6b | `neurotcs.reference_adapters` | вњ… shipped | Reference submission-builders for vendor onboarding (ADNI categorical + volumetric) |
+| 7 | `neurotcs.validation_harness` | рџ—єпёЏ roadmap v1.9.x | Synthetic-trajectory self-tests (importing raises ImportError) |
 
 Plus five methodological modules (all shipped in v1.7.0+, all with tests):
 
-- `neurotcs.sample_size` — external-validation precision per Riley 2024
-- `neurotcs.fairness` — FUTURE-AI Fairness + Robustness panels per Lekadir 2025 BMJ
-- `neurotcs.silent_deployment` — Kwong 2022 silent-trial methodology
-- `neurotcs.scanner_factorial` — Scanner × vendor × interval factorial robustness
-- `neurotcs.threshold_derivation` — Larson 2025 empirical operational thresholds
+- `neurotcs.sample_size` вЂ” external-validation precision per Riley 2024
+- `neurotcs.fairness` вЂ” FUTURE-AI Fairness + Robustness panels per Lekadir 2025 BMJ
+- `neurotcs.silent_deployment` вЂ” Kwong 2022 silent-trial methodology
+- `neurotcs.scanner_factorial` вЂ” Scanner Г— vendor Г— interval factorial robustness
+- `neurotcs.threshold_derivation` вЂ” Larson 2025 empirical operational thresholds
 
 ## Rule packs shipped
 
@@ -60,33 +60,33 @@ NeuroTCS is an **Alzheimer's-disease** auditing tool. The 8 production AD rule p
 |---|---|---|---|---|
 | `ad/niaaa_2018@1.3.0` | Alzheimer's | Jack 2018 NIA-AA Framework | 29653606 | 4 + 2 inadmissible |
 | `ad/aa_2024@2.1.0` | Alzheimer's | Jack 2024 AA Revised Criteria | 38934362 | 28 + 17 inadmissible (Table 7 integrated staging, 17 states) |
-| `ad/aa_2024_trac@1.1.0` | Alzheimer's (anti-Aβ) | La Joie 2025 TRAC framework | 41298245 | 6 + 3 inadmissible (5 require `treatment_status`) |
+| `ad/aa_2024_trac@1.1.0` | Alzheimer's (anti-AОІ) | La Joie 2025 TRAC framework | 41298245 | 6 + 3 inadmissible (5 require `treatment_status`) |
 | `ad/atn_2018@1.0.0` | Alzheimer's | Jack 2024 AA Revised Criteria (AT(N) origin Jack 2016/2018) | 38934362 | 5 + 0 inadmissible (8 biomarker-profile states; A-T+ inadmissibility enforced) |
 | `ad/at_biological@1.0.0` | Alzheimer's | Jack 2024 AA Revised Criteria (A/T biological staging) | 38934362 | 3 + 3 inadmissible (3 states) |
-| `ad/adni_clinical_stage@1.0.0` | Alzheimer's | ADNI clinical-stage staging (CN/SMC/EMCI/LMCI/MCI/AD); DOI 10.1002/alz.14167 | — | 20 + 5 inadmissible (6 states) |
+| `ad/adni_clinical_stage@1.0.0` | Alzheimer's | ADNI clinical-stage staging (CN/SMC/EMCI/LMCI/MCI/AD); DOI 10.1002/alz.14167 | вЂ” | 20 + 5 inadmissible (6 states) |
 | `ad/niaaa_2024_clinical_numeric@1.0.0` | Alzheimer's | NIA-AA 2024 numeric clinical staging (stages 0-6, Jack 2024 Table 6) | 38934362 | 27 + 15 inadmissible (7 states; dementia-regression inadmissible) |
 | `ad/niaaa_2024_biological_letter@1.0.0` | Alzheimer's | NIA-AA 2024 biological letter staging (A/B/C/D PET-based, Jack 2024) | 38934362 | 12 admissible (6 backward TRAC-gated; 4 states; backward step inadmissible unless TRAC) |
 
 Each rule pack is:
 
-- **Citation-locked** — every transition requires `citation_pmid` or `citation_doi` AND `guideline_section` (exact section/table/figure pointer).
-- **Version-stamped** — canonical JSON SHA-256 hash computed at load time.
-- **Fail-closed** — Pydantic v2 strict mode rejects unknown fields, missing citations, inconsistent state spaces.
+- **Citation-locked** вЂ” every transition requires `citation_pmid` or `citation_doi` AND `guideline_section` (exact section/table/figure pointer).
+- **Version-stamped** вЂ” canonical JSON SHA-256 hash computed at load time.
+- **Fail-closed** вЂ” Pydantic v2 strict mode rejects unknown fields, missing citations, inconsistent state spaces.
 
-**Schema v1.3.0** adds backward-compatible support for **context-conditional admissibility** (the TRAC pack uses this to encode that A+ → A− amyloid clearance is admissible *only* under anti-Aβ therapy) and `attribution_type` (clinical_inference vs guideline_quote, per ERRATA E-2026-003).
+**Schema v1.3.0** adds backward-compatible support for **context-conditional admissibility** (the TRAC pack uses this to encode that A+ в†’ Aв€’ amyloid clearance is admissible *only* under anti-AОІ therapy) and `attribution_type` (clinical_inference vs guideline_quote, per ERRATA E-2026-003).
 
 ## Authority model
 
 NeuroTCS rule packs do NOT require disease-specialist co-authorship to be authoritative. They require provenance to internationally endorsed published guidelines. The schema makes this explicit:
 
-- `clinical_source_authority` — names the peer-reviewed publication + endorsing professional society where clinical authority resides.
-- `transcribed_by` — names the board-certified physician who attests the YAML faithfully encodes the cited guideline.
-- `guideline_section` per transition — exact pointer so any reviewer can verify the transcription.
-- `reviewers` — additive specialist sign-off (non-blocking).
+- `clinical_source_authority` вЂ” names the peer-reviewed publication + endorsing professional society where clinical authority resides.
+- `transcribed_by` вЂ” names the board-certified physician who attests the YAML faithfully encodes the cited guideline.
+- `guideline_section` per transition вЂ” exact pointer so any reviewer can verify the transcription.
+- `reviewers` вЂ” additive specialist sign-off (non-blocking).
 
 This mirrors how FHIR / SNOMED / LOINC terminology encodings work. Authority lives in the cited publication, not in a co-author's signature.
 
-See [`docs/transcription_audit/`](docs/transcription_audit/) for side-by-side YAML ↔ source-paragraph audits.
+See [`docs/transcription_audit/`](docs/transcription_audit/) for side-by-side YAML в†” source-paragraph audits.
 
 ## Quick start
 
@@ -121,7 +121,7 @@ from neurotcs import load_rulepack
 
 pack = load_rulepack("ad/niaaa_2018")
 ok, rule = pack.rulepack.is_admissible("CN", "AD", delta_t_days=200)
-print(ok)  # False — CN->AD requires >=365 days (Jack 2018)
+print(ok)  # False вЂ” CN->AD requires >=365 days (Jack 2018)
 ```
 
 ### Full audit pipeline (canonical pattern)
@@ -163,9 +163,9 @@ neurotcs-audit audit \
 
 For third-party reviewers (FDA technical staff, pharma diligence, academic peer reviewers, hospital AI governance):
 
-- **v2 canonical protocol**: [`docs/reviewer_package/reviewer_verification_prompt.md`](docs/reviewer_package/reviewer_verification_prompt.md) — 8-step manual reproduction (~90 min). Produces signed YAML attestation.
-- **Cursor IDE prompt**: [`docs/reviewer_package/cursor_verification_prompt.md`](docs/reviewer_package/cursor_verification_prompt.md) — AI-guided execution (~30 min).
-- **Colab notebook**: [`docs/reviewer_package/NeuroTCS_v1.8.0_Reviewer_Verification.ipynb`](docs/reviewer_package/NeuroTCS_v1.8.0_Reviewer_Verification.ipynb) — browser-only zero-install preview (~10 min, synthetic-data demo).
+- **v2 canonical protocol**: [`docs/reviewer_package/reviewer_verification_prompt.md`](docs/reviewer_package/reviewer_verification_prompt.md) вЂ” 8-step manual reproduction (~90 min). Produces signed YAML attestation.
+- **Cursor IDE prompt**: [`docs/reviewer_package/cursor_verification_prompt.md`](docs/reviewer_package/cursor_verification_prompt.md) вЂ” AI-guided execution (~30 min).
+- **Colab notebook**: [`docs/reviewer_package/NeuroTCS_v1.8.0_Reviewer_Verification.ipynb`](docs/reviewer_package/NeuroTCS_v1.8.0_Reviewer_Verification.ipynb) вЂ” browser-only zero-install preview (~10 min, synthetic-data demo).
 
 All three surfaces produce the same YAML attestation schema and reference the same locked invariants. The Colab path can only achieve `FRAMEWORK_INSTALL_VERIFIED` (DUA-controlled data cannot be uploaded to third-party cloud); local paths can achieve `FULL_REPRODUCED`.
 
@@ -173,23 +173,23 @@ All three surfaces produce the same YAML attestation schema and reference the sa
 
 The canonical spec is [`docs/spec/temporalmetric_v1.7_FINAL.md`](docs/spec/temporalmetric_v1.7_FINAL.md). Read this to understand:
 
-- §A.2 — Coherence Temporal Consistency Score (cTCS) definition
-- §A.3 — Probabilistic TCS with matrix exponential M(Δτ) = exp(Q · Δτ / 365)
-- §A.4 — Unified TCS (weighted ensemble)
-- §A.5 — Cluster bootstrap (B = 10,000) + Huber M-estimation (c = 1.345)
-- §B.1 — Aims 1–6 validation plan
-- §B.2 — Required datasets (ADNI, OASIS-3, NACC, MIRIAD; ALZ-NET planned)
-- §B.6 — Rule pack registry and engineering discipline
-- §C — Library architecture
+- В§A.2 вЂ” Coherence Temporal Consistency Score (cTCS) definition
+- В§A.3 вЂ” Probabilistic TCS with matrix exponential M(О”П„) = exp(Q В· О”П„ / 365)
+- В§A.4 вЂ” Unified TCS (weighted ensemble)
+- В§A.5 вЂ” Cluster bootstrap (B = 10,000) + Huber M-estimation (c = 1.345)
+- В§B.1 вЂ” Aims 1вЂ“6 validation plan
+- В§B.2 вЂ” Required datasets (ADNI, OASIS-3, NACC, MIRIAD; ALZ-NET planned)
+- В§B.6 вЂ” Rule pack registry and engineering discipline
+- В§C вЂ” Library architecture
 
 ## Roadmap to v0.2 / v1.0 / Q-Sub
 
-- **v1.8.0** (May 2026) — Four-cohort triangulation lock + ADNI canonical source. ✅ shipped.
-- **v1.8.1** (May 2026) — Documentation, test hygiene, CI matrix, reference-adapter reorganization, citation backfill. ✅ shipped.
-- **v1.9.0** (May 2026) — **AD-only scope contraction**: non-AD rule packs (PD, MS, oncology, stroke, lung nodule) extracted; preserved as archival history only. ✅ shipped.
-- **v1.9.x** (Q3 2026) — Piece 5 (FHIR output) + Piece 7 (validation harness) + cohort-specific transition priors.
-- **W22 (~Sept 2026)** — Nature Medicine submission with AD validation across ADNI + OASIS-3 + NACC + MIRIAD.
-- **Oct 2026** — ASFNR Newport Beach workshop demo.
+- **v1.8.0** (May 2026) вЂ” Four-cohort triangulation lock + ADNI canonical source. вњ… shipped.
+- **v1.8.1** (May 2026) вЂ” Documentation, test hygiene, CI matrix, reference-adapter reorganization, citation backfill. вњ… shipped.
+- **v1.9.0** (May 2026) вЂ” **AD-only scope contraction**: non-AD rule packs (PD, MS, oncology, stroke, lung nodule) extracted; preserved as archival history only. вњ… shipped.
+- **v1.9.x** (Q3 2026) вЂ” Piece 5 (FHIR output) + Piece 7 (validation harness) + cohort-specific transition priors.
+- **W22 (~Sept 2026)** вЂ” Nature Medicine submission with AD validation across ADNI + OASIS-3 + NACC + MIRIAD.
+- **Oct 2026** вЂ” ASFNR Newport Beach workshop demo.
 - **Aspirational (not a commitment):** a future FDA Q-Submission and v1.0.0 release. NeuroTCS is currently a research instrument and is not FDA-cleared; see [docs/SCOPE.md](docs/SCOPE.md) Regulatory status.
 
 ## Citation
@@ -210,20 +210,20 @@ See [`CITATION.cff`](CITATION.cff) for GitHub's citation widget.
 ## Known limitations (honestly disclosed)
 
 NeuroTCS publicly documents what is NOT yet covered so reviewers can assess
-fitness for purpose. The complete, current gap disclosure — spanning
-methodological, validation, fairness, and regulatory-status gaps — is
+fitness for purpose. The complete, current gap disclosure вЂ” spanning
+methodological, validation, fairness, and regulatory-status gaps вЂ” is
 maintained as a single source of truth in
 [`docs/datasheet/ad_neurotcs_datasheet.md`](docs/datasheet/ad_neurotcs_datasheet.md)
-**Section F — Honest gaps acknowledged**.
+**Section F вЂ” Honest gaps acknowledged**.
 
 To avoid drift, the README does not duplicate the list here; Section F is
 authoritative (enforced by `tests/docs/test_gap_disclosure_single_source.py`).
-These gaps do not invalidate the reproducibility evidence — they define the
+These gaps do not invalidate the reproducibility evidence вЂ” they define the
 scope within which it is interpretable.
 
 ## License
 
-Apache 2.0 — see [`LICENSE`](LICENSE). The cited published guidelines remain © their respective publishers; this package transcribes them into machine-readable form for academic / regulatory audit purposes under fair-use interpretation. NeuroTCS does NOT redistribute the publications themselves.
+Apache 2.0 вЂ” see [`LICENSE`](LICENSE). The cited published guidelines remain В© their respective publishers; this package transcribes them into machine-readable form for academic / regulatory audit purposes under fair-use interpretation. NeuroTCS does NOT redistribute the publications themselves.
 
 ## Contact
 

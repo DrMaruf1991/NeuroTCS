@@ -51,7 +51,7 @@ top of the `Dockerfile`).
 
 On every push and pull request, GitHub Actions runs the full suite across a
 matrix of operating systems (Ubuntu, macOS, Windows) and Python versions
-(3.10-3.12), each installing from the lockfile. A dedicated job publishes the
+(3.11-3.12), each installing from the lockfile. A dedicated job publishes the
 `audit_id` invariant evidence (the validation, threshold-derivation, and
 reproducibility-structure tests) on the canonical interpreter.
 

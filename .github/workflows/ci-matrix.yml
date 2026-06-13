@@ -1,6 +1,6 @@
-name: CI matrix (cross-platform × Python)
+name: CI matrix (cross-platform Г— Python)
 
-# Runs the framework-only test suite across {ubuntu, windows} × {Python 3.10, 3.11, 3.12, 3.13}.
+# Runs the framework-only test suite across {ubuntu, windows} Г— {Python 3.11, 3.12, 3.13}.
 # Cohort tests are excluded (they require DUA-controlled data not available in CI).
 # This complements ci.yml which runs the full suite on ubuntu-latest + Python 3.11.
 
@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
       - name: Checkout
@@ -41,7 +41,7 @@ jobs:
       - name: Lint with ruff (blocking)
         run: ruff check src/ tests/ scripts/
 
-      - name: Framework-only pytest (cohort tests excluded — expect 397 passed)
+      - name: Framework-only pytest (cohort tests excluded вЂ” expect 397 passed)
         # Single-line pytest invocation is portable across Windows + Linux without
         # shell-specific line-continuation characters. Cohort tests are excluded
         # via --ignore because the underlying CSV/RDA files are DUA-controlled

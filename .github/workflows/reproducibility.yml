@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.10", "3.11", "3.12"]
+        python: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +41,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       # Install the LOCKED closure first. On the canonical interpreter (3.12)
-      # this is the exact reproducibility set; on 3.10/3.11 pip may back-solve a
+      # this is the exact reproducibility set; on 3.11 pip may back-solve a
       # compatible build of a pinned dep, which still proves cross-version
       # behavioral reproducibility (the suite + invariants must hold).
       - name: Install locked dependencies
