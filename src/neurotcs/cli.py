@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -296,12 +297,28 @@ def _score_sheet_for_axis(name: str, axis: str) -> int:
     return best
 
 
+# v1.78.0: separator-insensitive normalization for the staging-column fallback.
+# MUST stay byte-identical to neurotcs.io.autowire._norm so the staging matcher
+# and the measurement matcher agree on what "same column" means. If you change
+# one, change both -- enforced by tests/cli/test_best_column_norm_parity.py.
+def _norm_col(s: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(s).lower())
+
+
 def _best_column(cols: list[str], synonyms: tuple[tuple[str, int], ...],
                  fallback_canonical: str, return_none_on_miss: bool = False) -> str | None:
-    """Find the highest-scoring synonym that's present in `cols` (case-insensitive).
+    """Find the highest-scoring synonym present in `cols`.
 
-    Returns the actual column name from `cols` (original case). If no synonym matches,
-    returns either `<FILL:fallback_canonical>` or None (when `return_none_on_miss`)."""
+    Pass 1 (exact, case-insensitive): unchanged historical behavior -- every
+    column that mapped before maps identically, so audit_ids never drift.
+    Pass 2 (separator-insensitive fallback, v1.78.0): only if Pass 1 misses,
+    retry under _norm_col so e.g. `DXSTATUS` matches synonym `dx_status`.
+    Mirrors the measurement matcher (io.autowire._find_col/_norm). Fail-closed:
+    a Pass-2 hit is accepted ONLY when exactly one column maps; any ambiguity
+    (one synonym normalizing onto >1 column) refuses rather than guessing.
+
+    Returns the actual column name from `cols` (original case). If nothing
+    matches, returns `<FILL:fallback_canonical>` or None (return_none_on_miss)."""
     cols_lower_to_orig = {str(c).lower(): str(c) for c in cols}
     best_score = 0
     best_col: str | None = None
@@ -311,6 +328,21 @@ def _best_column(cols: list[str], synonyms: tuple[tuple[str, int], ...],
             best_col = cols_lower_to_orig[syn.lower()]
     if best_col is not None:
         return best_col
+
+    # Pass 2: separator-insensitive fallback (only reached when Pass 1 found nothing).
+    norm_to_origs: dict[str, list[str]] = {}
+    for c in cols:
+        norm_to_origs.setdefault(_norm_col(c), []).append(str(c))
+    best_score = 0
+    best_norm: str | None = None
+    for syn, score in synonyms:
+        ns = _norm_col(syn)
+        if ns in norm_to_origs and score > best_score:
+            best_score = score
+            best_norm = ns
+    if best_norm is not None and len(norm_to_origs[best_norm]) == 1:
+        return norm_to_origs[best_norm][0]
+
     return None if return_none_on_miss else f"<FILL:{fallback_canonical}>"
 
 

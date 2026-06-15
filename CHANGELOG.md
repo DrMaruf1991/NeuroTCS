@@ -1,3 +1,30 @@
+## [1.78.0] -- 2026-06-15 -- A4: separator-insensitive staging-column fallback (fail-closed)
+
+External-audit A4: the staging-column matcher (_best_column) was separator-
+sensitive -- DX_STATUS auto-mapped but DXSTATUS refused -- diverging from the
+measurement matcher (io.autowire._norm). Added a Pass-2 fallback: only when the
+exact Pass-1 lookup misses, retry under separator-insensitive normalization,
+accepting a match ONLY when exactly one column maps (fail-closed on ambiguity).
+Pass 1 is byte-identical, so existing audit_ids never drift.
+
+### Fixed: staging-column detection separator-sensitivity (external-audit A4)
+- _best_column gains a separator-insensitive Pass-2 fallback mirroring _norm;
+  fail-closed when a normalized synonym maps onto >1 column.
+- New _norm_col helper, pinned byte-identical to io.autowire._norm by a parity
+  test (tests/cli/test_best_column_norm_parity.py) so the two cannot silently
+  diverge.
+
+Verified against REAL ADNI DXSUM (NEUROTCS_ADNI_DXSUM_RDA): the locked-invariant
+regression test (test_real_adni_audit) reproduces the canonical audit_id, cTCS
+0.994575, n_patients_scored 2958, and n_transitions 12006 THROUGH the A4 code --
+proving scoring is byte-identical (audit_id is a content hash; identical id =
+identical output). An unchanged audit_id is a stronger check than tier counts:
+it is cryptographic proof the scientific output did not move.
+
+Full suite 1987 passed / 24 skipped (+5 A4 tests: _norm_col/_norm parity, Pass-1
+unchanged, Pass-1 precedence, fail-closed ambiguity, end-to-end DXSTATUS map).
+ruff clean; new files strict ASCII.
+
 ## [1.77.1] -- 2026-06-10 -- E-2026-051: verifier normalization fixes (multi-word surnames, journal abbreviations)
 
 The v1.77.0 networked run dropped false positives from ~340 to 18 and the TRAC
