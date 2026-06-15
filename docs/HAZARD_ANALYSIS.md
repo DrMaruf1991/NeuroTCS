@@ -266,9 +266,17 @@ residual risk; gap.
   - The auditor operates on values/trajectories, not on identity fields, and
     does not require names/MRNs.
 - **Residual risk:** S3 / P2 -> ALARP.
-- **Gap:** PHI handling is **by convention, not enforced**. No input PHI scan /
-  refusal. RECOMMENDED control: add an optional identifier-detection gate that
-  refuses or warns on probable PHI columns.
+- **Control added (v1.80.0):** an **optional direct-identifier (PHI) input
+  gate** (src/neurotcs/io/phi_gate.py, docs/PHI_INPUT_GATE.md). It scans
+  input column names and sampled values for high-confidence direct
+  identifiers and **warns by default** (audit still runs); `--refuse-phi`
+  makes it **fail-closed** (EXIT_INPUT, no bundle written). It allowlists the
+  de-identified study vocabulary so cohort data (ADNI/OASIS/NACC) does not
+  false-positive.
+- **Residual gap:** the gate is **best-effort, not a de-identification
+  guarantee** -- free-text names, contextual identifiers, and unusual formats
+  are not caught. PHI handling is no longer purely by convention, but the
+  user remains responsible for de-identification.
 
 ### H7 -- Non-reproducible result
 
@@ -423,7 +431,7 @@ to close the loop:
 |----|-----|------|--------------|
 | G1 | Flag PPV / sensitivity unmeasured (H1, H2) | Clinical validation | Run Arm A |
 | G2 | Semantic citation attribution not exhaustively adjudicated (H3) | Content review | Rule-by-rule source adjudication |
-| G3 | PHI handling by convention, not enforced (H6) | Software control | Optional PHI-detection input gate |
+| G3 | PHI handling by convention (H6) | Software control | DONE v1.80.0: optional warn/refuse PHI input gate (best-effort) |
 | G4 | Criteria-currency check is manual (H9) | Process | Define periodic review cadence |
 | G5 | No release signing; lockfile lacks hashes (H8) | Supply chain | Sign releases; `--generate-hashes` |
 | G6 | ~15 mypy advisory findings | Code quality | Focused typing pass |

@@ -17,7 +17,7 @@ to the latest released minor series.
 
 | Version | Supported |
 |---------|-----------|
-| 1.79.x (latest) | Yes |
+| 1.80.x (latest) | Yes |
 | < 1.79  | No -- upgrade to the latest release |
 
 ## Reporting a vulnerability
@@ -42,7 +42,7 @@ You will receive an acknowledgement within 5 business days. Critical issues will
 - **Critical:** Override mechanism bypassed without explicit citation in audit log.
 - **High:** Schema validator accepts disallowed extra fields (Pydantic strict-mode regression).
 - **High:** YAML loader fails to fail-closed on malformed input.
-- **Medium:** Input contract validator passes a submission containing PHI.
+- **Medium:** Input contract validator passes a submission containing PHI. (Mitigated v1.80.0 by the optional PHI input gate -- warn by default, `--refuse-phi` to fail closed; best-effort, not a de-identification guarantee. See docs/PHI_INPUT_GATE.md.)
 - **Medium:** Performance regression causing audit DoS on large cohorts.
 
 ## Out of scope

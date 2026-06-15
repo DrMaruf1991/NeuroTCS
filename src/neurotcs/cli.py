@@ -736,6 +736,24 @@ def cmd_audit(args: argparse.Namespace) -> int:
     if tables is None:
         return EXIT_INPUT
 
+    # v1.80.0 (hazard H6 / gap G3): optional direct-identifier (PHI) input
+    # gate. WARNS by default on probable direct identifiers (a patient_name /
+    # MRN / SSN / DOB column, or SSN/email-shaped values), allowlisting the
+    # de-identified study vocabulary so cohort data never trips it.
+    # --refuse-phi turns the warning into a fail-closed refusal. Best-effort,
+    # NOT a de-identification guarantee (see docs/PHI_INPUT_GATE.md).
+    from neurotcs.io.phi_gate import scan_tables, format_findings
+    _phi = scan_tables(tables)
+    if _phi.has_findings:
+        for _line in format_findings(_phi):
+            _note(f"NOTE: {_line}")
+        if getattr(args, "refuse_phi", False):
+            _err("refusing: probable PHI detected and --refuse-phi is set. "
+                 "De-identify the input (or remove the flagged columns) and "
+                 "re-run. This gate is best-effort, not a de-identification "
+                 "guarantee.")
+            return EXIT_INPUT
+
     # v1.42.0: snapshot the ORIGINAL wide-format sheets before autowire_ranges
     # mutates `tables` with derived long-format range tables. The cross-sheet
     # role resolver must see the original cohort sheets, not the long-format
@@ -1420,6 +1438,10 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--dry-run", action="store_true",
                    help="resolve the mapping and report what WOULD be audited, then "
                         "exit without producing a bundle (verify routing first)")
+    a.add_argument("--refuse-phi", action="store_true",
+                   help="fail closed if probable direct identifiers (PHI) "
+                        "are detected in the input (default: warn only). "
+                        "Best-effort; not a de-identification guarantee.")
     a.add_argument("--confirm-assays", action="store_true",
                    help="assert that assay/scale-calibrated biomarker columns "
                         "(CSF/plasma p-tau, NfL, centiloid, volumetry, FDG, ...) "
