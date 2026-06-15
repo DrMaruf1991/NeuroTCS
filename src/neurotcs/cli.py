@@ -39,6 +39,7 @@ from neurotcs.io import (
     read_tables,
     tables_to_submission,
 )
+from neurotcs.io.phi_gate import format_findings, scan_tables
 from neurotcs.report import bundle_to_pdf, bundle_to_svg, flags_to_csv
 
 EXIT_CLEAN = 0
@@ -742,7 +743,6 @@ def cmd_audit(args: argparse.Namespace) -> int:
     # de-identified study vocabulary so cohort data never trips it.
     # --refuse-phi turns the warning into a fail-closed refusal. Best-effort,
     # NOT a de-identification guarantee (see docs/PHI_INPUT_GATE.md).
-    from neurotcs.io.phi_gate import scan_tables, format_findings
     _phi = scan_tables(tables)
     if _phi.has_findings:
         for _line in format_findings(_phi):

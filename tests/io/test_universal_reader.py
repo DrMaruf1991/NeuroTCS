@@ -126,7 +126,7 @@ class TestEncodingHonesty:
 
     def test_utf8_bom_handled(self, tmp_path):
         f = tmp_path / "b.csv"
-        f.write_bytes("\ufeffsubject_id,x\nP1,1\n".encode("utf-8"))
+        f.write_bytes("\ufeffsubject_id,x\nP1,1\n".encode())
         tables = read_tables(f)
         assert "subject_id" in tables["b"].columns
 

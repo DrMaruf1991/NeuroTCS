@@ -101,7 +101,7 @@ _IDENTIFIER_NAME_EXACT: frozenset[str] = frozenset((
 # --------------------------------------------------------------------------- #
 # Strict VALUE patterns -- low false-positive direct identifiers.
 # --------------------------------------------------------------------------- #
-_VALUE_PATTERNS: tuple[tuple[str, "re.Pattern[str]"], ...] = (
+_VALUE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("US SSN", re.compile(r"^\d{3}-\d{2}-\d{4}$")),
     ("email address", re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")),
     ("US phone", re.compile(r"^\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$")),
