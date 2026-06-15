@@ -337,3 +337,75 @@ class TestLongFormatValueAuditing:
             {"COG": wide}, set(), confirm_assays=False)
         assert not any("long format" in d.lower() for d in decisions)
         assert len(rspecs) == 1  # still wired the wide way
+
+
+# --------------------------------------------------------------------------- #
+# v1.79.0 -- same-sheet measurement coverage. A staging sheet that ALSO carries
+# measurement columns (single-file zero-config CSVs) previously had those
+# measurements silently skipped, because autowire_ranges skipped any sheet
+# already wired to staging -- a fail-open coverage gap in a fail-closed tool.
+# The fix skips only the consumed staging columns, not the whole sheet.
+# (External second-pass audit finding #1; reproduced and fixed from roots.)
+# --------------------------------------------------------------------------- #
+def test_v179_same_sheet_measurements_are_wired():
+    """Same-sheet MMSE/CDR-SB ARE range-audited despite the sheet being
+    staging-wired. Pre-v1.79.0 this returned no specs (whole-sheet skip)."""
+    tables = {
+        "ALL": pd.DataFrame({
+            "subject_id": ["S1", "S2"], "visit": [0, 1],
+            "visit_date": ["2020-01-01", "2021-01-01"],
+            "clinical_state": ["CN", "MCI"],
+            "biological_stage_atn": ["A-T-", "A+T-"],
+            "MMSE": [40, 28], "CDRSB": [-1, 2],
+        }),
+    }
+    consumed = {"ALL": ["subject_id", "visit", "visit_date",
+                        "clinical_state", "biological_stage_atn"]}
+    specs, extra, decisions, refusals, wired_src = autowire_ranges(
+        tables, {"ALL"}, consumed_columns=consumed)
+    joined = " ".join(decisions)
+    assert "MMSE=mmse_total" in joined, f"MMSE not wired; decisions={decisions}"
+    assert "CDRSB=cdr_sb_sum_boxes" in joined, f"CDRSB not wired; decisions={decisions}"
+    assert "ALL" in wired_src
+    # consumed staging columns are NOT mis-resolved as measurements
+    assert "clinical_state" not in joined
+    assert "biological_stage_atn" not in joined
+
+
+def test_v179_staging_only_sheet_wires_nothing():
+    """Invariant safety: a staging-ONLY sheet (cohort loaders emit these) wires
+    NO ranges -> audit_id unchanged. Unit twin of the real-ADNI invariant."""
+    tables = {
+        "STG": pd.DataFrame({
+            "subject_id": ["S1", "S2"], "visit": [0, 1],
+            "visit_date": ["2020-01-01", "2021-01-01"],
+            "clinical_state": ["CN", "MCI"],
+        }),
+    }
+    consumed = {"STG": ["subject_id", "visit", "visit_date", "clinical_state"]}
+    specs, extra, decisions, refusals, wired_src = autowire_ranges(
+        tables, {"STG"}, consumed_columns=consumed)
+    assert specs == [], f"staging-only sheet must wire nothing; got {specs}"
+
+
+def test_v179_same_sheet_impossible_values_flagged_end_to_end(tmp_path):
+    """End-to-end: a single CSV combining staging + impossible MMSE/CDR-SB must
+    surface impossible flags. Pre-v1.79.0 this returned CLEAN (impossible 0)."""
+    f = tmp_path / "single.csv"
+    pd.DataFrame({
+        "subject_id": ["S1", "S1", "S2", "S2"],
+        "visit": [1, 2, 1, 2],
+        "visit_date": ["2020-01-01", "2021-01-01", "2020-01-01", "2021-01-01"],
+        "clinical_state": ["CN", "MCI", "CN", "MCI"],
+        "biological_stage_atn": ["A-T-", "A+T-", "A-T-", "A+T-"],
+        "MMSE": [40, 28, 29, 27],     # MMSE=40 impossible (>30)
+        "CDRSB": [2, -1, 0, 1],       # CDRSB=-1 impossible (<0)
+    }).to_csv(f, index=False)
+    out = tmp_path / "out"
+    main(["audit", str(f), "-o", str(out), "--allow-no-dates", "--quiet"])
+    b = json.load(open(glob.glob(str(out / "*.bundle.json"))[0]))
+    flags = b["neurotcs_bundle"]["deterministic_core"]["flags"]
+    fields = {x["field"] for x in flags["impossible"]}
+    assert "mmse_total" in fields, f"MMSE=40 not flagged; impossible={flags['impossible']}"
+    assert "cdr_sb_sum_boxes" in fields, f"CDRSB=-1 not flagged; impossible={flags['impossible']}"
+    assert len(flags["impossible"]) >= 2

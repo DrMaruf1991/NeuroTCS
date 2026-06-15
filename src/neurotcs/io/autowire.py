@@ -242,6 +242,7 @@ def autowire_ranges(
     tables: dict[str, pd.DataFrame],
     already_wired_sheets: set[str],
     confirm_assays: bool = False,
+    consumed_columns: dict[str, list[str]] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, pd.DataFrame], list[str], list[str],
            set[str]]:
     """Return (ranges_specs, extra_long_tables, decisions, refusals,
@@ -272,8 +273,15 @@ def autowire_ranges(
     assay_confirmed_cols: set[str] = set()
 
     for sheet, df in tables.items():
-        if sheet in already_wired_sheets:
-            continue
+        # v1.79.0: a staging sheet may ALSO carry measurement columns (single-file
+        # zero-config CSVs). Skip only the columns the mapping already consumed
+        # (subject_id/visit/visit_date/state), so safe measurements (e.g. MMSE,
+        # CDR-SB) on a staging sheet are still range-audited. Cohort staging sheets
+        # carry ONLY _STAGING_REQUIRED columns -> all consumed -> nothing remains
+        # -> audit_id unchanged (invariant-safe by construction).
+        consumed = set(consumed_columns.get(sheet, [])) if consumed_columns else set()
+        if sheet in already_wired_sheets and not consumed:
+            continue  # wired but consumed cols unknown -> preserve prior behavior
         cols = [str(c) for c in df.columns]
         pid = _find_col(cols, _PID_SYNONYMS)
         vis = _find_col(cols, _VISIT_SYNONYMS)
@@ -305,6 +313,8 @@ def autowire_ranges(
         for c in cols:
             if c in (pid, vis):
                 continue
+            if c in consumed:
+                continue  # staging-consumed col (state/visit_date) -- not a measurement
             canon = _resolve_column(c)
             if canon is None:
                 continue  # unresolved -> left to coverage (not a refusal per-col)

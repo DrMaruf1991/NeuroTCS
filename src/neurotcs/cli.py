@@ -775,8 +775,11 @@ def cmd_audit(args: argparse.Namespace) -> int:
         # to the coverage declaration). Every wiring decision is printed.
         from neurotcs.io.autowire import autowire_ranges
         wired_sheets = _sheets_referenced_by_mapping(mapping)
+        consumed_cols = _columns_consumed_by_mapping(mapping)
         rspecs, extra_tables, decisions, _refusals, _wired_src = autowire_ranges(
-            tables, wired_sheets, confirm_assays=getattr(args, "confirm_assays", False))
+            tables, wired_sheets,
+            confirm_assays=getattr(args, "confirm_assays", False),
+            consumed_columns=consumed_cols)
         range_refusals.extend(_refusals)
         _autowired_source_sheets.update(_wired_src)
         if rspecs:
@@ -817,8 +820,11 @@ def cmd_audit(args: argparse.Namespace) -> int:
         # in scope" lever applied to the explicit-mapping path.
         from neurotcs.io.autowire import autowire_ranges
         wired_sheets = _sheets_referenced_by_mapping(mapping)
+        consumed_cols = _columns_consumed_by_mapping(mapping)
         rspecs, extra_tables, decisions, _refusals, _wired_src = autowire_ranges(
-            tables, wired_sheets, confirm_assays=getattr(args, "confirm_assays", False))
+            tables, wired_sheets,
+            confirm_assays=getattr(args, "confirm_assays", False),
+            consumed_columns=consumed_cols)
         range_refusals.extend(_refusals)
         _autowired_source_sheets.update(_wired_src)
         if rspecs:

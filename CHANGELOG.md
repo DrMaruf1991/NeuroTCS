@@ -1,3 +1,24 @@
+## [1.79.0] -- 2026-06-15 -- same-sheet measurement coverage (fail-open gap closed)
+
+External second-pass audit (finding #1): a single-file CSV combining staging
+columns (clinical_state, biological_stage_atn) with measurement columns (e.g.
+MMSE, CDR-SB) had the measurements silently skipped. autowire_ranges skipped any
+sheet already wired to staging, so same-sheet MMSE=40 / CDR-SB=-1 went unflagged
+and the run returned CLEAN -- a fail-OPEN coverage gap in a fail-closed tool.
+Reproduced and fixed from roots.
+
+### Fixed: same-sheet measurement columns are now range-audited
+- autowire_ranges skips only the mapping-consumed staging columns (subject_id/
+  visit/visit_date/state), not the whole sheet, so safe ordinal/cognitive scales
+  on a staging sheet are auto-wired and audited. pid/vis remain available as
+  melt anchors. Assay-calibrated biomarkers are still refused by default.
+- Invariant-safe by construction: cohort loaders emit _STAGING_REQUIRED-only
+  sheets (every column consumed -> nothing wired). The real-ADNI locked audit_id
+  reproduces byte-identically through the fix (test_real_adni_audit PASSED).
+- Locked by 3 regression tests (tests/cli/test_v140_range_autowire.py): same-
+  sheet measurements wired, staging-only wires nothing, end-to-end impossible
+  flags surface.
+
 ## [1.78.0] -- 2026-06-15 -- A4: separator-insensitive staging-column fallback (fail-closed)
 
 External-audit A4: the staging-column matcher (_best_column) was separator-
