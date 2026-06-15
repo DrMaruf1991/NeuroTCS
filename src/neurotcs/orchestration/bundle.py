@@ -1,6 +1,6 @@
 """neurotcs.orchestration.bundle -- the self-verifying result bundle.
 
-This is the signed source-of-truth format a `pip install neurotcs` user gets
+This is the fingerprinted source-of-truth format a `pip install neurotcs` user gets
 when they audit a dataset. PDF/CSV/SVG are derived views rendered FROM it and
 are never part of the hash.
 
@@ -14,7 +14,7 @@ are never part of the hash.
    hostname live in run_metadata, OUTSIDE the hash. Same input -> same id.
 
 3. A partial run (INCOMPLETE_REFUSED) carries NO bundle_id and is therefore
-   cryptographically distinguishable from a complete one.
+   structurally distinguishable from a complete one.
 
 == CANONICALIZATION (declared, not implied) ==
 
@@ -33,6 +33,22 @@ Because BOTH the stored core and the hashed core are the normalized object, the
 stored values are exactly the hashed values. Two correct implementations on any
 platform produce identical bundle_ids from the same audit. This declaration is
 the contract; do not change it without bumping BUNDLE_FORMAT_VERSION.
+
+== INTEGRITY vs AUTHENTICITY (what bundle_id does and does not prove) ==
+bundle_id is a SHA-256 content fingerprint, NOT a cryptographic signature.
+It provides:
+  * INTEGRITY / tamper-evidence: any edit to the deterministic core changes
+    the id, so a re-run on the same inputs reproduces the same id and any
+    later alteration is detectable by recomputation.
+  * REPRODUCIBILITY: two correct implementations on any platform produce the
+    same id from the same audit.
+It does NOT provide:
+  * AUTHENTICITY: there is no secret key. A holder of a bundle can edit the
+    core and recompute a self-consistent bundle_id. The fingerprint cannot
+    prove WHO produced a bundle, only that a given bundle is internally
+    consistent and unchanged since it was produced.
+Proving origin would require true signing (e.g. Sigstore or GPG over the
+bundle_id); that is a roadmap item, not a current guarantee.
 
 The bundle_format_version and framework_version are INSIDE the deterministic
 core, so they are covered by the hash -- a bundle's structure and engine are
@@ -344,7 +360,7 @@ def verify_bundle(bundle: dict[str, Any]) -> bool:
         raise BundleVerificationError(
             f"bundle_id mismatch: stored {str(stored_id)[:16]}... != "
             f"recomputed {recomputed[:16]}.... The deterministic core was "
-            f"altered after signing (tampering or corruption)."
+            f"altered after fingerprinting (tampering or corruption)."
         )
     return True
 
@@ -377,13 +393,13 @@ def fingerprint_file(path: str) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# Human-readable rendered view (NOT part of the signed bundle)
+# Human-readable rendered view (NOT part of the fingerprinted bundle)
 # --------------------------------------------------------------------------- #
 def render_report(bundle: dict[str, Any], *, use_symbols: bool = True) -> str:
     """Render a bundle as a human-readable text report.
 
     Presentation only: symbols/emoji and formatting live HERE, never in the
-    signed JSON (which stays ASCII/emoji-free for cross-platform determinism).
+    fingerprinted JSON (which stays ASCII/emoji-free for cross-platform determinism).
     """
     nb = bundle["neurotcs_bundle"]
     core = nb["deterministic_core"]

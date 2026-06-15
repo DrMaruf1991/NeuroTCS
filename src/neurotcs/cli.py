@@ -2,8 +2,8 @@
 
 Verbs:
   describe <file> [--emit-mapping PATH]   inspect a dataset file; scaffold a mapping
-  audit    <file> --mapping map.json ...  audit a dataset, emit a signed bundle
-  verify   <bundle.json>                  re-verify a signed bundle (tamper check)
+  audit    <file> --mapping map.json ...  audit a dataset, emit a fingerprinted bundle
+  verify   <bundle.json>                  re-verify a fingerprinted bundle (tamper check)
 
 Exit codes (stable contract -- safe to branch on in pipelines):
   0  CLEAN              audit ran, no flags / bundle verified
@@ -1157,7 +1157,7 @@ def cmd_audit(args: argparse.Namespace) -> int:
         _err(f"failed to build bundle: {e}")
         return EXIT_INPUT
 
-    # always write the signed artifact of record + the text report
+    # always write the fingerprinted artifact of record + the text report
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     stem = Path(args.file).stem
@@ -1348,7 +1348,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="assert the text encoding of delimited files (e.g. cp1251 Cyrillic, cp1252 Western European). Default: UTF-8 only; a non-UTF-8 file is refused unless this is given.")
     d.set_defaults(func=cmd_describe)
 
-    a = sub.add_parser("audit", help="audit a dataset and emit a signed bundle")
+    a = sub.add_parser("audit", help="audit a dataset and emit a fingerprinted bundle")
     a.add_argument("file", help="dataset to audit: a single file (.csv/.tsv/.xlsx/.xls/.parquet/.json/.sas7bdat/.dta/.sav/.rds/.pdf), a FOLDER of such files, a glob, or a .zip/.gz archive")
     a.add_argument("--mapping", default=None,
                    help="mapping JSON (see 'describe --emit-mapping'). OMIT to "
@@ -1419,7 +1419,7 @@ def build_parser() -> argparse.ArgumentParser:
                         "labels pass through (never guessed). Off by default.")
     a.set_defaults(func=cmd_audit)
 
-    v = sub.add_parser("verify", help="re-verify a signed bundle")
+    v = sub.add_parser("verify", help="re-verify a fingerprinted bundle")
     v.add_argument("bundle",
                    help="path to a *.bundle.json file, OR the audit output "
                         "directory (the bundle inside it is located automatically)")

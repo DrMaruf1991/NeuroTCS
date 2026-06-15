@@ -1,6 +1,6 @@
-"""Presentation renderers for a NeuroTCS signed bundle.
+"""Presentation renderers for a NeuroTCS fingerprinted bundle.
 
-Every renderer here is a PURE VIEW over the signed deterministic core: it reads
+Every renderer here is a PURE VIEW over the fingerprinted deterministic core: it reads
 the bundle and produces a human/tool-facing artifact (CSV, SVG, ...). Renderers
 never recompute audit values and are never part of the hashed core -- the bundle
 remains the single source of truth.

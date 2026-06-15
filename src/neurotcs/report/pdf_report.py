@@ -1,4 +1,4 @@
-"""Render a bundle as a PDF report. Pure view over the signed core; no recompute.
+"""Render a bundle as a PDF report. Pure view over the fingerprinted core; no recompute.
 
 Uses reportlab (a declared dependency). Lays out the verdict, per-axis cTCS with
 its 95% CI, severity counts, a flags table, and provenance. If reportlab is ever
