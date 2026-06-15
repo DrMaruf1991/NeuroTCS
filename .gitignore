@@ -77,3 +77,9 @@ private/
 # But keep example/test fixtures
 !tests/fixtures/*.csv
 !tests/fixtures/*.yaml
+
+# Generated audit outputs / benchmark artifacts (never commit; may contain DUA-derived data)
+v3_check/
+benchmark/audit_bench/
+benchmark/NeuroTCS_AD_Challenge_*.csv
+
