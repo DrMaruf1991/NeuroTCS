@@ -28,6 +28,23 @@
   cohort-shape + positive identifier) + 3 CLI integration (warn emits note and
   audit runs; --refuse-phi returns EXIT_INPUT; clean data emits no note).
 
+### Reviewed, deferred: coverage lineage for autowired columns (audit #7)
+- Second-pass audit summary item: coverage lineage for autowired columns is
+  'not clear enough'. Reviewed against source. The column-coverage ledger
+  (columns_present / columns_consumed / columns_ignored / columns_unwired)
+  already partitions every input column with a fail-honest, never-silently-
+  dropped guarantee; full per-column disposition is visible. The residual gap
+  -- consumed columns are not separately labelled autowired-vs-explicitly-
+  mapped -- is real but minor.
+- DEFERRED by design-risk: the coverage ledger is part of the deterministic
+  core and is hashed into bundle_id (bundle.py _coverage_from -> raw_core ->
+  _compute_bundle_id). Adding an autowired distinction would alter hashed core
+  structure, drifting every bundle_id and breaking the locked cohort
+  invariants (ADNI/OASIS/MIRIAD). Such a change is only justified as a
+  deliberate bundle_format_version increment with re-locked invariants and a
+  migration note -- not a presentation-clarity tweak. Deferred until a
+  concrete need justifies a format-versioned change.
+
 Test count (no cohort): 1992 -> 2004 (+12 PHI tests, others unchanged).
 
 ## [1.79.2] -- 2026-06-15 -- bundle authenticity caveat sharpened (hazard G5 / A3)
