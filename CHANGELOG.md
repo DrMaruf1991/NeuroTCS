@@ -1,3 +1,29 @@
+## [1.79.1] -- 2026-06-15 -- CLI messaging clarity (external second-pass audit #4, #5)
+
+Non-functional CLI/stderr messaging fixes. No change to audit results,
+scoring, bundle structure, or audit_id; the full suite is byte-stable and the
+real-ADNI locked invariant is unaffected.
+
+### Fixed: informational notes no longer mislabeled as errors (#4)
+- Notes were printed as 'error: NOTE: ...' via _err(), mislabeling them in
+  production logs and CI stderr greps. A _note() helper now prints notes to
+  stderr without the 'error:' prefix (stdout bundle/JSON output unaffected).
+
+### Fixed: --allow-no-dates advice gated on an actual derived-date warning (#5)
+- The advice was printed for ANY submission warning (label normalization,
+  cross-sheet roles, coverage, disease-control partition), even on files with
+  valid dates. It is now gated on the derived-date warning marker, so it
+  appears only when visit_date was actually derived from visit ordering.
+
+### Reviewed, no change: data_integrity layer accounting (#9)
+- Audit #9 reported data_integrity missing from layers_run on clean runs.
+  Traced to source: the integrity layer is genuinely not-applicable when the
+  submission carries no integrity-checkable payload, so its absence is correct
+  disclosure -- listing it would falsely claim a layer ran. No change made.
+
+Locked by 2 regression tests (tests/cli/test_cli.py: notes-not-error,
+allow-no-dates-advice-gated).
+
 ## [1.79.0] -- 2026-06-15 -- same-sheet measurement coverage (fail-open gap closed)
 
 External second-pass audit (finding #1): a single-file CSV combining staging

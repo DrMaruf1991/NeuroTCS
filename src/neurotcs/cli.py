@@ -55,6 +55,14 @@ def _err(msg: str) -> None:
     print(f"error: {msg}", file=sys.stderr)
 
 
+def _note(msg: str) -> None:
+    """Informational note to stderr -- NOT an error. On stderr (never
+    stdout) so it cannot contaminate piped bundle/JSON output, but without
+    the misleading 'error:' prefix that mislabels notes in production logs.
+    """
+    print(msg, file=sys.stderr)
+
+
 def _load_tables(path: str, allow_pdf: bool,
                  encoding: str | None = None) -> dict[str, Any] | None:
     skipped: list[str] = []
@@ -69,9 +77,9 @@ def _load_tables(path: str, allow_pdf: bool,
     # Surface every non-trivial read decision (encoding chosen, folder/zip
     # contents, delimiter) and every skipped non-data file -- never hidden.
     for d in decisions:
-        _err(f"NOTE: {d}")
+        _note(f"NOTE: {d}")
     for s in skipped:
-        _err(f"NOTE: skipped non-data file (not read): {s}")
+        _note(f"NOTE: skipped non-data file (not read): {s}")
     return tables
 
 
@@ -981,9 +989,14 @@ def cmd_audit(args: argparse.Namespace) -> int:
     # (suppresses the per-axis stderr NOTE); the bundle records it either way.
     if submission_warnings and not getattr(args, "allow_no_dates", False):
         for w in submission_warnings:
-            _err(f"NOTE: {w}")
-        _err("Pass --allow-no-dates to acknowledge derived dates explicitly "
-             "and suppress this note.")
+            _note(f"NOTE: {w}")
+        # v1.79.x: only advise --allow-no-dates when a date was actually
+        # DERIVED; the flag has no effect on other warning types, so
+        # printing it for label/coverage/partition notes is misleading.
+        if any("DERIVED from visit ordering" in w
+               for w in submission_warnings):
+            _err("Pass --allow-no-dates to acknowledge derived dates "
+                 "explicitly and suppress this note.")
 
     # v1.39: --dry-run resolves the mapping and reports what WOULD be audited,
     # then exits without running the audit. Lets a user verify routing first.
@@ -1360,7 +1373,7 @@ def cmd_validate_coverage(args: argparse.Namespace) -> int:
 
     if args.out:
         _Path(args.out).write_text(_json.dumps(payload, indent=2))
-        _err(f"NOTE: coverage report written to {args.out}")
+        _note(f"NOTE: coverage report written to {args.out}")
     return EXIT_CLEAN
 
 
