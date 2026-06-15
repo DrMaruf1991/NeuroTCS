@@ -451,7 +451,7 @@ def render_report(bundle: dict[str, Any], *, use_symbols: bool = True) -> str:
     # 2. Flag summary
     sc = core["severity_counts"]
     out.append(f"\n{sec['flags']} Flags By Severity")
-    out.append(f"   {tmap['impossible']} Impossible (data-integrity):     {sc['impossible']}")
+    out.append(f"   {tmap['impossible']} Impossible (hard violations):     {sc['impossible']}")
     out.append(f"   {tmap['implausible']} Implausible (out of range):      {sc['implausible']}")
     out.append(f"   {tmap['informational']} Informational (not errors):      {sc['informational']}")
 
