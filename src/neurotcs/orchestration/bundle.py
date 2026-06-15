@@ -47,8 +47,19 @@ It does NOT provide:
     core and recompute a self-consistent bundle_id. The fingerprint cannot
     prove WHO produced a bundle, only that a given bundle is internally
     consistent and unchanged since it was produced.
-Proving origin would require true signing (e.g. Sigstore or GPG over the
-bundle_id); that is a roadmap item, not a current guarantee.
+AUTHENTICITY is the producer's to add and the verifier's to trust -- and
+the bundle_id is precisely the anchor to do it over. Because the bundle_id
+cryptographically commits to the entire deterministic core, a detached
+signature over the bundle_id string authenticates the whole audit. A
+producer who needs to prove origin signs it with THEIR OWN key, e.g.
+  printf '%s' "$BUNDLE_ID" | gpg --detach-sign --armor -o bundle.sig
+and a recipient verifies it against the producer's public key with
+  printf '%s' "$BUNDLE_ID" | gpg --verify bundle.sig -
+(Sigstore keyless signing is an equivalent, key-custody-free alternative.)
+NeuroTCS itself holds no key and certifies no one: a good signature proves
+only that a given KEY signed this id, never that the key is trustworthy --
+key trust is the verifier's decision, out of band. See
+docs/BUNDLE_AUTHENTICITY.md for the full recipe and trust model.
 
 The bundle_format_version and framework_version are INSIDE the deterministic
 core, so they are covered by the hash -- a bundle's structure and engine are

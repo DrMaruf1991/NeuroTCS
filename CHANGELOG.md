@@ -1,3 +1,25 @@
+## [1.79.2] -- 2026-06-15 -- bundle authenticity caveat sharpened (hazard G5 / A3)
+
+Documentation only -- no code, behavior, API, or audit_id change.
+
+### Docs: integrity-vs-authenticity caveat made concrete and actionable
+- The bundle.py caveat previously said proving origin 'would require true
+  signing ... a roadmap item, not a current guarantee'. Sharpened to a
+  concrete recipe: because bundle_id commits to the entire deterministic
+  core, a producer who needs authenticity detached-signs the bundle_id with
+  their own key (GPG or Sigstore); a verifier checks it against the
+  producer's public key. NeuroTCS holds no key and certifies no one -- a
+  good signature proves only that a key signed this id, never that the key
+  is trustworthy (key trust is the verifier's decision, out of band).
+- Added docs/BUNDLE_AUTHENTICITY.md: the full GPG/Sigstore recipe, the
+  integrity-first verification order, and the trust model.
+- Rationale for not shipping a built-in signer: signing needs a key and a
+  key infrastructure the producer holds; for a user base spanning clinical
+  and research environments (many without GnuPG), a built-in signer would
+  add a dependency most users would not exercise. The integrity anchor plus
+  a precise recipe is the honest closure; a first-party signer is a natural
+  addition when a concrete need (e.g. a journal mandate) justifies it.
+
 ## [1.79.1] -- 2026-06-15 -- CLI messaging clarity (external second-pass audit #4, #5)
 
 Non-functional CLI/stderr messaging fixes. No change to audit results,
