@@ -233,3 +233,32 @@ def test_no_bare_optional_dependency_import_in_tests():
         "Optional dependencies must be imported via pytest.importorskip or "
         "inside try/except ImportError, never bare (they crash on a clean "
         "install without the optional extra):\n  " + "\n  ".join(offenders))
+
+
+def _current_minor() -> str:
+    # '1.80.0' -> '1.80'
+    parts = CANON.split(".")
+    return ".".join(parts[:2])
+
+
+def test_security_floor_row_matches_current_minor():
+    """SECURITY.md support table: both the (latest) row AND the floor row
+    must track the current minor. The floor row was NOT guarded before, which
+    let a 1.80.0 bump ship '1.80.x (latest)' next to a stale '< 1.79' floor.
+    """
+    sec = (_ROOT / "SECURITY.md").read_text(encoding="utf-8")
+    minor = _current_minor()
+    assert f"{minor}.x (latest)" in sec, (
+        f"SECURITY.md missing '{minor}.x (latest)' row for current minor")
+    assert f"< {minor} " in sec or f"< {minor}\n" in sec, (
+        f"SECURITY.md floor row does not say '< {minor}' "
+        f"(stale floor would mislead users about supported versions)")
+
+
+def test_changelog_has_current_version_entry():
+    """CHANGELOG.md must carry an entry for the current version. The 1.80.0
+    bump aborted before prepending its entry; nothing caught the omission.
+    """
+    cl = (_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert f"## [{CANON}]" in cl, (
+        f"CHANGELOG.md has no '## [{CANON}]' entry for the current release")
