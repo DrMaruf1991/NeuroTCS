@@ -65,7 +65,7 @@ def run(dxsum_path: str | Path) -> None:
     print(f"  patients_scored: {result.n_patients_scored:,}")
     print()
     print(f"  cTCS:        {result.ctcs.ci.point:.6f}  "
-          f"(BCA 95% CI: {result.ctcs.ci.lo:.4f}..{result.ctcs.ci.hi:.4f})")
+          f"(BCA 95% CI: {result.ctcs.ci.ci_low:.4f}..{result.ctcs.ci.ci_high:.4f})")
     print(f"  audit_id:    {result.audit_id}")
     if hasattr(result, "audit_id_v2"):
         print(f"  audit_id_v2: {result.audit_id_v2}")
