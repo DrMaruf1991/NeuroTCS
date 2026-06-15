@@ -1,3 +1,35 @@
+## [1.80.0] -- 2026-06-15 -- optional PHI input gate (hazard H6 / gap G3)
+
+### Added: optional direct-identifier (PHI) input gate
+- New module src/neurotcs/io/phi_gate.py and CLI flag `--refuse-phi`. At the
+  start of `neurotcs audit`, input column names and a sample of values are
+  scanned for high-confidence direct identifiers (patient_name / MRN / SSN /
+  DOB / address / phone / email column names; SSN / email / phone value
+  patterns).
+- **Warn by default:** a probable identifier emits a stderr NOTE and the audit
+  still runs -- a false positive is a dismissable note, not a broken audit.
+- **`--refuse-phi` (opt-in):** the same detection instead fails closed with
+  EXIT_INPUT (4) and writes no bundle.
+- **Allowlist-first:** the de-identified study vocabulary (subject_id, rid,
+  ptid, usubjid, visit, visit/exam/scan dates, age, sex, apoe, state, the
+  measurement scales, ...) never triggers, so ADNI/OASIS/NACC cohort data does
+  not false-positive. Verified by negative tests on cohort-shaped data and by
+  the full suite (the gate runs on every audit) staying green.
+- **Honest limit:** best-effort, NOT a de-identification guarantee -- free-text
+  names, contextual identifiers, and unusual formats are not caught; the user
+  remains responsible for de-identification. See docs/PHI_INPUT_GATE.md.
+- The gate runs BEFORE the audit and only READS columns (never mutates the
+  tables), so audit_id is unaffected -- the real-ADNI locked invariant passes
+  unchanged.
+- Closes gap G3 (HAZARD_ANALYSIS.md): PHI handling moves from 'by convention,
+  not enforced' to an optional warn/refuse gate. Mitigates the SECURITY.md
+  'validator passes a submission containing PHI' item.
+- Locked by 12 tests (tests/io/test_phi_gate.py): 9 detector (negative
+  cohort-shape + positive identifier) + 3 CLI integration (warn emits note and
+  audit runs; --refuse-phi returns EXIT_INPUT; clean data emits no note).
+
+Test count (no cohort): 1992 -> 2004 (+12 PHI tests, others unchanged).
+
 ## [1.79.2] -- 2026-06-15 -- bundle authenticity caveat sharpened (hazard G5 / A3)
 
 Documentation only -- no code, behavior, API, or audit_id change.
