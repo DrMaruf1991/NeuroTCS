@@ -57,7 +57,7 @@ pointing to the roadmap).
 | 1 | `neurotcs.input_contract.v1_0` | [shipped] | Categorical input contract (8-step validation, fail-closed) |
 | 2 | `neurotcs.input_contract.v1_1` | [shipped] | Continuous-biomarker contract with UCUM unit enforcement |
 | 3 | `neurotcs.rulepack` | [shipped] | **8 production AD rule packs** (NIA-AA 2018, AA 2024, AA 2024 TRAC, AT(N) 2018, A/T biological, ADNI clinical-stage, NIA-AA 2024 numeric, NIA-AA 2024 biological letter) |
-| 4 | `neurotcs.audit_core` | [shipped] | cTCS / pTCS / uTCS engine + cluster bootstrap + BCa + Huber |
+| 4 | `neurotcs.audit_core` | [shipped] | cTCS (all packs) / pTCS (where transition priors are published) / uTCS engine + cluster bootstrap + BCa + Huber |
 | 5 | `neurotcs.output_schema` | [roadmap v1.9.x] | FHIR Observation emitter (importing raises ImportError) |
 | 6a | `neurotcs.input_contract.v1_1.adapters` | [shipped] | OASIS-3, ADNI (canonical R-format), NACC, MIRIAD trajectory loaders |
 | 6b | `neurotcs.reference_adapters` | [shipped] | Reference submission-builders for vendor onboarding (ADNI categorical + volumetric) |
