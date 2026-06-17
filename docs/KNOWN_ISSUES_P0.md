@@ -292,3 +292,47 @@ quick fix was proven INFEASIBLE as scoped (would emit a non-auditing mapping), s
 it was documented as a larger feature. P1-2's fix was purely additive in the
 non-hashed zone -> small, safe, multi-feature -> implemented. Verdict follows the
 evidence, not a default.
+
+---
+
+## Remaining audit items (unreproduced) -- map for the next session
+
+External-audit status after this work:
+- P0-1 -- REAL bug, fixed + shipped (v1.81.0). [done]
+- P0-2 -- correct-by-design, reproduced both directions. [done]
+- P1-1 -- REAL but infeasible as a quick fix (numeric-only long->wide pivot
+  cannot carry categorical state); scoped as a feature. [documented; deferred]
+- P1-2 -- correct placement + structured-advisory enhancement, shipped (v1.82.0).
+  [done]
+- P2  -- README test-count consistency. [resolved]
+
+STILL OPEN (reproduce from roots before any disposition; same method as above):
+
+### P1-3 -- "English-centric labels"
+Claim: clinical-state label recognition is English-centric; non-English labels
+are not handled.
+Hypothesis (VERIFY, do not assume): the design is synonym-only, citation-anchored
+label normalization that NEVER hallucinates a non-English label's meaning -- so
+"support more languages" is an ontology-CONTENT question (add cited synonym
+mappings), not a code defect. Russian/Uzbek labels would be a content gap, not a
+bug, and must stay synonym-only (never machine-translate or guess).
+Reproduce: audit a file with non-English clinical-state labels (e.g. Russian
+CN/MCI/AD equivalents); observe whether they pass through unrecognized
+(fail-closed, correct) vs are silently mis-staged (would be a real bug).
+Decide: correct-by-design (synonym-only + content gap) vs real defect.
+
+### P1-5 -- "do not claim real-data clinical validation"
+Claim: the project should not claim real-data clinical validation it hasn't done.
+Hypothesis (VERIFY): the audit AGREES with the existing honesty posture. docs/
+VALIDATION_PROTOCOL.md and the Arm-A gap already state that the locked invariants
+prove REPRODUCIBILITY, not clinical VALIDITY. Likely a documentation
+confirmation, not a fix.
+Reproduce: read what the tool/README/docs actually CLAIM vs what the audit says
+they should claim; confirm no over-claim of clinical validation exists (or fix
+the wording if one does).
+
+Standing discipline for both: read intent -> reproduce -> decide; never conclude
+from the prior pattern; willing to find REAL (like P1-1) or correct-by-design
+(like P0-2). A skipped invariant test is a false baseline; verify any fix is
+invariant-safe via _compute_audit_id / bundle_id (audit_id is scores-only;
+run_metadata is non-hashed).
