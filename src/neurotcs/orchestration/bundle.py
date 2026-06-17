@@ -254,6 +254,7 @@ def build_bundle(
     timings_seconds: dict[str, float] | None = None,
     raw_input_sha256: str | None = None,
     input_warnings: list[str] | None = None,
+    advisories: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a self-verifying result bundle from an OrchestratorResult.
 
@@ -319,6 +320,12 @@ def build_bundle(
         # the persistent bundle. In run_metadata, so NOT hashed -- the determinism
         # guarantee (bundle_id) is unaffected, but the note is part of the record.
         "input_warnings": list(input_warnings or []),
+        # v1.82.0: structured, machine-readable results of opt-in advisory
+        # layers (disease-control partition, conversion audit, ARIA grades).
+        # In run_metadata, so NOT hashed -- bundle_id (the determinism
+        # guarantee) is unaffected; programmatic consumers get structure
+        # instead of having to parse the human-readable warning strings.
+        "advisories": dict(advisories or {}),
     }
 
     return {

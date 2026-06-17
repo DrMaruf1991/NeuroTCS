@@ -1,3 +1,24 @@
+## [1.82.0] -- 2026-06-17 -- P1-2: structured advisory output (machine-readable, non-hashed)
+
+### Added: run_metadata.advisories -- structured opt-in advisory results
+- External audit P1-2 noted that disease-control output was 'buried in
+  warnings' rather than structured. Root cause (reproduced): the
+  disease-control partition and the conversion audit recorded their results
+  only as human-readable strings in run_metadata.input_warnings -- correct
+  placement (advisories must not enter the hashed deterministic_core), but
+  not machine-readable.
+- Added a structured `run_metadata.advisories` object carrying the same
+  results in parseable form: disease_control_partition (by_category,
+  recognized subject->category with citation PMID/DOI, ontology_id +
+  sha256, n_recognized) and conversion_audit (n_transitions, severity
+  counts, structured flags). The human-readable warning strings are kept.
+- INVARIANT-SAFE by construction and VERIFIED: advisories live in
+  run_metadata, which is NOT hashed into bundle_id (verify_bundle recomputes
+  the id over deterministic_core only). Proven empirically: bundle_id is
+  byte-identical with and without --partition-disease-controls on the same
+  input; all 7 real-cohort invariant tests pass unchanged.
+- Test count (no cohort): 2010 -> 2012 (+2 P1-2 regression tests).
+
 ## [1.81.0] -- 2026-06-17 -- P0-1: autowired columns no longer mislabeled as ignored
 
 ### Fixed: autowired source columns are recorded as consumed, not ignored

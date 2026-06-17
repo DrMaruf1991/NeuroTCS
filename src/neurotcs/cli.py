@@ -879,6 +879,7 @@ def cmd_audit(args: argparse.Namespace) -> int:
                     print(f"  {d}")
 
     submission_warnings: list[str] = []
+    _advisories: dict[str, Any] = {}  # v1.82.0: structured opt-in advisory results
     try:
         submission = tables_to_submission(tables, mapping, warnings=submission_warnings)
     except (ValueError, KeyError) as e:
@@ -1101,6 +1102,15 @@ def cmd_audit(args: argparse.Namespace) -> int:
                     f"disease_control_partition: {len(_dc.recognized)} subject(s) "
                     f"recognized as non-AD via {_dc.ontology_id} "
                     f"(sha256 {_dc.ontology_sha256[:12]}): {_summary}")
+                _advisories["disease_control_partition"] = {
+                    "ontology_id": _dc.ontology_id,
+                    "ontology_sha256": _dc.ontology_sha256,
+                    "by_category": {
+                        _c: sorted(_s) for _c, _s in _dc.by_category.items()
+                    },
+                    "recognized": dict(_dc.recognized),
+                    "n_recognized": len(_dc.recognized),
+                }
 
     # v1.61.0 (opt-in, --audit-conversions): advisory longitudinal conversion /
     # reversion audit over the canonical clinical-stage sequence.
@@ -1132,6 +1142,20 @@ def cmd_audit(args: argparse.Namespace) -> int:
                 submission_warnings.append(
                     f"conversion_audit: {_cv.n_transitions} transition(s), "
                     f"{_impl} implausible/impossible flagged (advisory)")
+                _advisories["conversion_audit"] = {
+                    "n_transitions": _cv.n_transitions,
+                    "severity_counts": dict(_cv.severity_counts),
+                    "flags": [
+                        {
+                            "subject_id": _f.subject_id,
+                            "from_state": _f.from_state,
+                            "to_state": _f.to_state,
+                            "tier": _f.tier,
+                            "reason": _f.reason,
+                        }
+                        for _f in _cv.flags
+                    ],
+                }
 
     # v1.63.0 (opt-in, --recognize-aria-grades COLUMN): recognize ARIA severity
     # labels from a named clinical column -> canonical (type, grade), anchored to
@@ -1238,7 +1262,8 @@ def cmd_audit(args: argparse.Namespace) -> int:
             fp_kind = "normalized_data_sha256"
         bundle = build_bundle(result, input_fingerprint=fp,
                               input_fingerprint_kind=fp_kind,
-                              input_warnings=submission_warnings)
+                              input_warnings=submission_warnings,
+                              advisories=_advisories)
     except Exception as e:  # noqa: BLE001 - surface any build failure cleanly
         _err(f"failed to build bundle: {e}")
         return EXIT_INPUT
