@@ -186,3 +186,71 @@ or an explicit mapping), at which point both axes audit.
 The audit mistook a loud, reasoned, fail-closed refusal for silent
 under-coverage; they are opposites. No code change. (Mirrors the P1
 dispositions: do not "fix" correct behavior into a weaker contract.)
+
+---
+
+## P1-1 disposition: CONFIRMED REAL (bounded feature gap) -- long-format CDISC categorical state ingestion
+
+**Audit claim (P1-1):** CDISC/SDTM data is not zero-config; it requires manual
+mapping rather than being recognized automatically.
+
+**Reproduced from roots. The claim is PARTIALLY correct -- a real, bounded gap:**
+
+What WORKS (zero-config, verified):
+- CDISC long-format MEASUREMENT recognition. `recognize_cdisc()` (io/cdisc.py)
+  correctly detects SDTM/ADaM structure: for a QS long file it returns
+  is_cdisc=True, subject_col=USUBJID, visit_col=VISITNUM, date_col=QSDTC,
+  testcd_col=QSTESTCD, state_codes=('DX',), measurement_codes=('MMSE',).
+- Numeric scales auto-wire and range-audit with no mapping (the autowire path
+  pivots QSTESTCD->wide on the numeric result column QSSTRESN).
+
+What does NOT work (the real gap):
+- The CLINICAL STATE axis cannot be ingested from long format. In CDISC the
+  categorical diagnosis (e.g. DX -> CN/MCI) lives in the CHARACTER result column
+  (QSSTRESC), while numeric measurements live in QSSTRESN. The long->wide pivot
+  `_pivot_long_to_wide` (io/autowire.py) HARD-COERCES the value column with
+  `pd.to_numeric(..., errors='coerce')` -- by design, because range-auditing
+  needs numbers. Pivoting the character column therefore yields an EMPTY frame
+  (CN/MCI -> NaN). Verified empirically: char-pivot of QSSTRESC returns zero rows.
+- The describe/emit-mapping scaffold (`_scaffold_mapping` / `_build_axis_spec` /
+  `_sheet_has_recognizable_staging_field`, cli.py) detects state only by COLUMN
+  NAME synonyms and never calls `recognize_cdisc`. A long-format sheet has no
+  state COLUMN (state is a row value), so the gate rejects it and `state` is
+  left as `<FILL:state>` -- even though recognize_cdisc would have found it.
+
+**Why this is NOT a one-session patch (and why the obvious quick fix fails):**
+Wiring `recognize_cdisc` into the describe scaffold to emit `state: "DX"` would
+produce a mapping that DOES NOT AUDIT: the audit-time numeric pivot drops the DX
+rows (categorical), so there is no DX state column at audit time. A scaffold that
+emits a non-auditing mapping is a broken promise. The genuine fix requires a NEW
+string-preserving categorical-state ingestion path for long-format CDISC,
+coordinated with the numeric measurement pivot on the same sheet, wired into both
+the audit path and the describe scaffold -- and it must never guess among
+multiple state codes (preserve the CdiscMappingError ambiguous->fail-closed
+contract). That is real ingestion-layer engineering with its own test surface.
+
+**Shape of the genuine fix (for a focused session):**
+1. Add a categorical long->wide pivot (preserve QSSTRESC/AVALC strings; do NOT
+   to_numeric-coerce) used ONLY for the detected state code(s).
+2. In the audit path: when recognize_cdisc reports state_codes on a long sheet,
+   build the staging state column from the categorical pivot of the diagnosis
+   code, alongside the existing numeric pivot for measurements.
+3. In the describe scaffold: call recognize_cdisc when synonym detection finds no
+   state column; if exactly ONE state_code, surface it as the candidate `state`
+   (operator-confirmable); if MULTIPLE, leave <FILL:state> and LIST the candidate
+   codes in _notes (never auto-pick); fill subject/visit/date from recognize_cdisc.
+4. Round-trip test: describe --emit-mapping on a QS+DX long file must produce a
+   mapping that AUDITS (stages the CN->MCI trajectory), not just a populated JSON.
+5. Invariant-safe by construction (describe + ingestion of NEW long-format inputs;
+   does not alter audit() scoring of existing wide submissions) -- but VERIFY by
+   running the 7 real-cohort invariant tests post-change (must stay green).
+
+**Severity:** usability/feature gap, NOT a trust/correctness defect. Long-format
+CDISC data IS auditable today via an explicit wide `state` column or a separate
+clinical sheet; only the zero-config path for categorical long-format state is
+missing. Lower severity than P0-1 (which actively mislabeled coverage).
+
+**Status:** confirmed real, root-caused, scoped. Deferred to a focused
+implementation session (not appended to a long working session). No partial
+scaffold shipped -- a scaffold that emits a non-auditing mapping would be worse
+than the current honest fail-closed refusal.
