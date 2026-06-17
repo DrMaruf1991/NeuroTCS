@@ -254,3 +254,41 @@ missing. Lower severity than P0-1 (which actively mislabeled coverage).
 implementation session (not appended to a long working session). No partial
 scaffold shipped -- a scaffold that emits a non-auditing mapping would be worse
 than the current honest fail-closed refusal.
+
+---
+
+## P1-2 disposition: reviewed, reproduced -- correct placement + enhancement SHIPPED (v1.82.0)
+
+**Audit claim (P1-2):** disease-control output is "buried in warnings" rather
+than structured.
+
+**Reproduced from roots.** With --partition-disease-controls, the disease-control
+partition (and the conversion audit) recorded their results ONLY as
+human-readable strings in run_metadata.input_warnings. The claim is literally
+accurate -- but the placement is correct-by-design: the bundle separates the
+HASHED deterministic_core (citation-locked audit identity) from NON-hashed
+run_metadata, and an advisory RECOGNITION (never diagnosis, never relabels) must
+not enter the hashed core or it would alter the audit's cryptographic bundle_id.
+verify_bundle recomputes bundle_id over deterministic_core only. So warning-string
+placement in run_metadata was the correct (non-hashed) zone -- it just was not
+machine-readable.
+
+**The real, bounded kernel -- IMPLEMENTED in v1.82.0:** added a structured
+`run_metadata.advisories` object alongside the warning strings:
+- disease_control_partition: by_category, recognized (subject -> {category,
+  citation_pmid, citation_doi}), ontology_id + ontology_sha256, n_recognized
+- conversion_audit: n_transitions, severity_counts, structured flags
+Programmatic consumers now get parseable structure (with citation anchors)
+instead of having to regex a warning string.
+
+**Invariant-safe, verified empirically:** advisories live in the non-hashed
+run_metadata. PROVEN: bundle_id is byte-identical with and without
+--partition-disease-controls on the same input; all 7 real-cohort invariant tests
+pass unchanged. Locked by tests/cli/test_p1_2_structured_advisories.py
+(structured advisory present + bundle_id unchanged). Released 1.82.0.
+
+**Contrast with P1-1:** same reproduce-from-roots rigor, different verdict. P1-1's
+quick fix was proven INFEASIBLE as scoped (would emit a non-auditing mapping), so
+it was documented as a larger feature. P1-2's fix was purely additive in the
+non-hashed zone -> small, safe, multi-feature -> implemented. Verdict follows the
+evidence, not a default.
