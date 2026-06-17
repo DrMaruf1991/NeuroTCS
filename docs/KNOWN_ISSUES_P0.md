@@ -396,3 +396,47 @@ session. No hasty tokenizer change shipped -- altering a shared matching
 primitive without full cross-consumer ASCII-regression would risk the existing
 (correct) ASCII matching, which is worse than the current honest fail-closed
 behavior on non-English input.
+
+---
+
+## P1-5 disposition: reproduced from claim-text -- audit AGREES with existing honesty (no over-claim; no change)
+
+**Audit claim (P1-5):** the project should not claim real-data clinical
+validation it has not performed.
+
+**Reproduced by reading the ACTUAL claims (not assuming the ethos was applied):**
+
+- docs/VALIDATION_PROTOCOL.md EXISTS and is scrupulously honest. Header:
+  "Version 1.0 (design; no results)"; "Pre-data study design. Contains NO
+  empirical results. All numeric targets below are design parameters, not
+  findings." It explicitly states it "becomes a result only after execution on a
+  representative adjudicated cohort by blinded board-certified reviewers -- work
+  that cannot be performed inside a chat session and is not simulated here."
+
+- The protocol directly CONFRONTS the exact objection P1-5 raises. Section 0
+  records the auditor's NO-GO verbatim: a deterministic rule-matcher's
+  sensitivity against its own encoded rules is 1.0 by construction and thus
+  scientifically meaningless. The protocol's response is correct: it measures
+  PRECISION (PPV) of flags against an INDEPENDENT expert gold standard and
+  deliberately does NOT report sensitivity-against-rules as a headline metric,
+  because that quantity is tautological for a deterministic matcher.
+
+- README does NOT over-claim. Validation language is framed as roadmap/plan:
+  the validation_harness is marked [roadmap v1.9.x]; the Aims validation plan and
+  the planned Nature Medicine submission are future work. The tool is described as
+  auditing AGAINST published clinical guidelines (reproducibility), not as having
+  been clinically validated. No surface asserts "clinically validated" or
+  "real-world validated".
+
+**Verdict:** the project already does exactly what the audit asks. It draws the
+reproducibility-vs-clinical-validity line precisely, anticipates the tautology
+objection, and states plainly that the validation study is an unexecuted design.
+This is the same evidence-locked honesty discipline applied to the audit itself,
+already present in the project's documentation. No change required.
+
+**The irreducible science gap (unchanged, correctly held by the docs):** genuine
+clinical validation -- flag PPV/sensitivity against a blinded adjudicated cohort,
+under a DUA, with a biostatistician co-author and OSF pre-registration -- is real
+work no code can substitute for. The locked invariants prove REPRODUCIBILITY
+(same input -> same audit), never clinical VALIDITY. VALIDATION_PROTOCOL.md holds
+that gap honestly.
