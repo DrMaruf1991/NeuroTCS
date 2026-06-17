@@ -336,3 +336,63 @@ from the prior pattern; willing to find REAL (like P1-1) or correct-by-design
 (like P0-2). A skipped invariant test is a false baseline; verify any fix is
 invariant-safe via _compute_audit_id / bundle_id (audit_id is scores-only;
 run_metadata is non-hashed).
+
+---
+
+## P1-3 disposition: reproduced -- PARTLY REAL (runtime correct; multilingual blocked by ASCII-only shared tokenizer)
+
+**Audit claim (P1-3):** clinical-state label recognition is English-centric;
+non-English labels are not handled.
+
+**Reproduced from roots. Two distinct truths, both verified:**
+
+1. RUNTIME IS CORRECT (not a bug). Audited a file with Russian clinical-state
+   labels ('Норма', 'УКР') and no normalization flag: the audit FAILED CLOSED --
+   status INCOMPLETE_REFUSED, layer staging_clinical skipped with reason
+   'vocabulary_mismatch', no score emitted. Non-English labels are never
+   mis-staged, never guessed, never coin-flipped; they surface as contamination
+   in the vocabulary gate exactly as the never-guess design promises. A user with
+   non-English data gets an honest refusal, not a silently wrong audit.
+
+2. THE SYNONYM LAYER IS STRUCTURALLY ASCII-ONLY (real, bounded limitation). The
+   matching primitive label_normalization._norm_token uses the regex
+   `[^a-z0-9]+` to collapse "punctuation". Verified directly:
+     'Norma' -> 'norma'      (ASCII: fine)
+     'Норма' -> ''           (Cyrillic: collapsed to EMPTY)
+     'УКР'  -> ''            (Cyrillic: collapsed to EMPTY)
+     'oʻrtacha' -> 'o rtacha' (Uzbek modifier letter stripped)
+   Distinct non-ASCII labels ('Норма', 'УКР') both normalize to ''. Consequence:
+   the ontology CANNOT be safely extended with non-English synonyms -- adding
+   'Норма -> CN' would make EVERY empty-normalizing label collide onto that
+   entry. So "just add cited non-English synonyms" is NOT possible without first
+   fixing the tokenizer. (This corrects the earlier hypothesis that non-English
+   was a pure content gap; reproduction showed the code blocks the content.)
+
+**Why this is a focused-session feature, not a quick patch:**
+_norm_token is a SHARED matching primitive. Verified consumers:
+  - label_normalization (clinical-stage synonyms)
+  - aria_grade (ARIA severity labels; 4 call sites)
+  - disease_control (non-AD diagnosis recognition; 3 call sites)
+Changing its tokenization changes how ALL THREE match. A correct fix needs:
+  1. a Unicode-aware _norm_token (preserve Cyrillic/Uzbek/other letters while
+     keeping ASCII matching byte-identical -- e.g. per-char str.isalnum() or
+     re.UNICODE handling, chosen carefully: Unicode \w also admits '_' and other
+     categories, so the change must be exact),
+  2. FULL ASCII-regression across all three consumers (the existing synonym /
+     ARIA / disease-control matches must not drift), and
+  3. cited non-English synonym ONTOLOGY CONTENT (Russian/Uzbek clinical-stage
+     terms anchored to authoritative sources) -- real domain/research work.
+That is a genuine feature touching a shared primitive with real test surface; it
+should be done deliberately, not by hastily editing a matching primitive three
+matchers depend on at the end of a long session.
+
+**Severity:** runtime safety is fine (fail-closed correct). The gap is a missing
+CAPABILITY (multilingual label recognition), blocked by an ASCII-only tokenizer.
+Lower urgency than P0-1; comparable in shape to P1-1 (real, but a scoped feature
+with a code + content component, not a one-liner).
+
+**Status:** confirmed partly-real, root-caused, scoped. Deferred to a focused
+session. No hasty tokenizer change shipped -- altering a shared matching
+primitive without full cross-consumer ASCII-regression would risk the existing
+(correct) ASCII matching, which is worse than the current honest fail-closed
+behavior on non-English input.
