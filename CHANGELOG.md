@@ -1,3 +1,29 @@
+## [1.81.0] -- 2026-06-17 -- P0-1: autowired columns no longer mislabeled as ignored
+
+### Fixed: autowired source columns are recorded as consumed, not ignored
+- External audit P0-1 (production-trust defect): wide measurement columns
+  (e.g. mmse_total, cdr_sb, and by extension amyloid/p-tau217/hippocampal
+  volume/Fazekas) were melted into __autowired__ range tables and AUDITED,
+  but the coverage ledger listed them under columns_ignored -- falsely
+  implying the clinically central columns were not examined.
+- Root: orchestrator computed ignored = present - consumed, and consumed
+  (from the CLI ledger) named only mapping-wired + derived __autowired__
+  columns, never the autowire SOURCE columns. Those fell through to ignored.
+- Fix: autowire_ranges now returns source_cols_by_sheet (structured 6th
+  element); the CLI threads it into _column_coverage_ledger, which folds the
+  autowired source columns into columns_consumed. The orchestrator's ignored
+  derivation then self-corrects. (autowire.py, cli.py.)
+- Locked by a regression test (tests/cli/test_p0_1_autowired_coverage.py) and
+  a CI release gate (scripts/ci/check_no_audited_columns_ignored.py: fail if
+  any audited/autowired column appears under columns_ignored).
+- BLAST RADIUS (verified, not assumed): the five locked cohort invariants are
+  UNAFFECTED. The invariant audit_id = SHA-256 over (rulepack SHA, score
+  vectors, B, seed) -- it does NOT hash coverage. The invariant tests call
+  audit() directly (not the CLI/bundle path), so coverage changes cannot
+  drift their audit_ids. Confirmed: all 7 real-cohort invariant tests
+  (ADNI/OASIS-3/NACC/MIRIAD x2 + fairness) PASS unchanged after the fix.
+- Test count (no cohort): 2008 -> 2010 (+2 P0-1 regression tests).
+
 ## [1.80.0] -- 2026-06-15 -- optional PHI input gate (hazard H6 / gap G3)
 
 ### Added: optional direct-identifier (PHI) input gate

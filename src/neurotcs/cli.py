@@ -682,6 +682,7 @@ def _column_coverage_ledger(
     mapping: dict[str, Any],
     autowired_sources: set[str],
     range_refusals: list[str],
+    autowired_source_cols: dict[str, list[str]] | None = None,
 ) -> dict[str, Any]:
     """Build the machine-readable column-coverage ledger for the bundle.
 
@@ -704,6 +705,14 @@ def _column_coverage_ledger(
         columns_present[sheet] = cols
 
     columns_consumed = _columns_consumed_by_mapping(mapping)
+    # P0-1: autowired SOURCE columns were audited (melted into __autowired__
+    # range tables); record them as consumed so they are not misreported as
+    # 'ignored' (present - consumed) by the orchestrator. Audited != ignored.
+    if autowired_source_cols:
+        for _sheet, _cols in autowired_source_cols.items():
+            _existing = set(columns_consumed.get(_sheet, []))
+            _existing.update(str(c) for c in _cols)
+            columns_consumed[_sheet] = sorted(_existing)
     columns_refused = _refused_columns(range_refusals)
     refused_cols_by_sheet: dict[str, set[str]] = {}
     for key in columns_refused:
@@ -734,6 +743,7 @@ def cmd_audit(args: argparse.Namespace) -> int:
     tables = _load_tables(args.file, args.allow_pdf, args.encoding)
     range_refusals: list[str] = []
     _autowired_source_sheets: set[str] = set()
+    _autowired_source_cols: dict[str, list[str]] = {}
     if tables is None:
         return EXIT_INPUT
 
@@ -802,12 +812,15 @@ def cmd_audit(args: argparse.Namespace) -> int:
         from neurotcs.io.autowire import autowire_ranges
         wired_sheets = _sheets_referenced_by_mapping(mapping)
         consumed_cols = _columns_consumed_by_mapping(mapping)
-        rspecs, extra_tables, decisions, _refusals, _wired_src = autowire_ranges(
+        (rspecs, extra_tables, decisions, _refusals, _wired_src,
+         _src_cols) = autowire_ranges(
             tables, wired_sheets,
             confirm_assays=getattr(args, "confirm_assays", False),
             consumed_columns=consumed_cols)
         range_refusals.extend(_refusals)
         _autowired_source_sheets.update(_wired_src)
+        for _sheet, _cols in _src_cols.items():
+            _autowired_source_cols.setdefault(_sheet, []).extend(_cols)
         if rspecs:
             tables.update(extra_tables)
             mapping.setdefault("ranges", []).extend(rspecs)
@@ -847,12 +860,15 @@ def cmd_audit(args: argparse.Namespace) -> int:
         from neurotcs.io.autowire import autowire_ranges
         wired_sheets = _sheets_referenced_by_mapping(mapping)
         consumed_cols = _columns_consumed_by_mapping(mapping)
-        rspecs, extra_tables, decisions, _refusals, _wired_src = autowire_ranges(
+        (rspecs, extra_tables, decisions, _refusals, _wired_src,
+         _src_cols) = autowire_ranges(
             tables, wired_sheets,
             confirm_assays=getattr(args, "confirm_assays", False),
             consumed_columns=consumed_cols)
         range_refusals.extend(_refusals)
         _autowired_source_sheets.update(_wired_src)
+        for _sheet, _cols in _src_cols.items():
+            _autowired_source_cols.setdefault(_sheet, []).extend(_cols)
         if rspecs:
             tables.update(extra_tables)
             mapping.setdefault("ranges", []).extend(rspecs)
@@ -1051,7 +1067,8 @@ def cmd_audit(args: argparse.Namespace) -> int:
     # consumed / refused (with reason) / left un-wired -- the same coverage the
     # CLI prints to stderr, now in the artifact a regulator reads.
     _ledger = _column_coverage_ledger(
-        tables, mapping, _autowired_source_sheets, range_refusals)
+        tables, mapping, _autowired_source_sheets, range_refusals,
+        _autowired_source_cols)
     submission["columns_present"] = _ledger["columns_present"]
     submission["columns_consumed"] = _ledger["columns_consumed"]
     submission["columns_refused"] = _ledger["columns_refused"]

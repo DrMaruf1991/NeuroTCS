@@ -9,8 +9,11 @@ is not currently available, that dependency is stated rather than worked around.
 
 ## P0-1: autowired source columns are mislabeled as `columns_ignored`
 
-**Status:** CONFIRMED (reproduced from source). Fix designed. Blocked on a
-complete re-lock that requires all four governed cohorts mounted.
+**Status:** FIXED in v1.81.0. The fix is contained -- it corrects the CLI
+coverage ledger only; the five locked invariants are UNAFFECTED (their
+audit_id is scores-only, not coverage-derived), verified by all 7
+real-cohort invariant tests passing unchanged post-fix. No re-lock was
+needed. See CHANGELOG [1.81.0].
 
 ### Reproduction (v1.80.0)
 

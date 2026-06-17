@@ -48,6 +48,9 @@ jobs:
       - name: Verify audit_core + v1.7.x public API
         run: python scripts/ci/verify_public_api.py
 
+      - name: Release gate -- no audited column reported as ignored (P0-1)
+        run: python scripts/ci/check_no_audited_columns_ignored.py
+
       - name: Build wheel + sdist
         run: |
           pip install build

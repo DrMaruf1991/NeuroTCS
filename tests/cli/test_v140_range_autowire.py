@@ -25,7 +25,7 @@ def test_safe_ordinal_scales_are_wired():
         "CG": pd.DataFrame({"subject_id": ["S1"], "visit": [0],
                             "mmse": [28], "moca": [25]}),
     }
-    specs, extra, decisions, refusals, wired_src = autowire_ranges(tables, set())
+    specs, extra, decisions, refusals, wired_src, *_ = autowire_ranges(tables, set())
     joined = " ".join(decisions)
     assert "mmse=mmse_total" in joined
     assert "moca=moca_total" in joined
@@ -37,7 +37,7 @@ def test_assay_specific_biomarkers_are_refused_not_wired():
         "FL": pd.DataFrame({"subject_id": ["S1"], "visit": [0],
                             "csf_ptau181_pgml": [50.0], "plasma_nfl_pgml": [20.0]}),
     }
-    specs, extra, decisions, refusals, wired_src = autowire_ranges(tables, set())
+    specs, extra, decisions, refusals, wired_src, *_ = autowire_ranges(tables, set())
     # neither fluid biomarker is wired
     assert all("csf_ptau181" not in d for d in decisions)
     assert all("plasma_nfl" not in d for d in decisions)
@@ -54,7 +54,7 @@ def test_unit_mismatch_column_is_refused():
                             "hippocampal_total_mm3": [3000.0]}),
     }
     # mm3 hippocampus is assay/volumetry -> refused regardless (not in safe set)
-    specs, extra, decisions, refusals, wired_src = autowire_ranges(tables, set())
+    specs, extra, decisions, refusals, wired_src, *_ = autowire_ranges(tables, set())
     assert all("hippocamp" not in d for d in decisions)
 
 
@@ -93,7 +93,7 @@ def test_confirm_assays_default_off_keeps_failclosed_refusal():
         "FL": pd.DataFrame({"subject_id": ["S1"], "visit": [0],
                             "plasma_ptau217_pgml": [0.4]}),
     }
-    specs, extra, decisions, refusals, _ = autowire_ranges(tables, set())
+    specs, extra, decisions, refusals, _, *_ = autowire_ranges(tables, set())
     assert specs == []
     assert any("plasma_ptau217_pgml" in r for r in refusals)
     assert any("--confirm-assays" in r for r in refusals)
@@ -105,7 +105,7 @@ def test_confirm_assays_wires_assay_biomarker_when_asserted():
         "FL": pd.DataFrame({"subject_id": ["S1", "S2"], "visit": [0, 0],
                             "plasma_ptau217_pgml": [0.4, 0.5]}),
     }
-    specs, extra, decisions, refusals, wired_src = autowire_ranges(
+    specs, extra, decisions, refusals, wired_src, *_ = autowire_ranges(
         tables, set(), confirm_assays=True)
     assert specs, "assay column should be wired under --confirm-assays"
     joined = " ".join(decisions)
@@ -124,7 +124,7 @@ def test_confirm_assays_emits_raw_pack_unit_no_spurious_unit_mismatch():
         "FL": pd.DataFrame({"subject_id": ["S1", "S2", "S3"], "visit": [0, 0, 0],
                             "plasma_ptau217_pgml": [0.3, 0.4, 0.5]}),
     }
-    specs, extra, decisions, refusals, _ = autowire_ranges(
+    specs, extra, decisions, refusals, _, *_ = autowire_ranges(
         tables, set(), confirm_assays=True)
     assert len(specs) == 1
     spec = specs[0]
@@ -148,7 +148,7 @@ def test_confirm_assays_does_not_override_genuine_unit_suffix_mismatch():
         "MR": pd.DataFrame({"subject_id": ["S1"], "visit": [0],
                             "etiv_mm3": [1500000.0]}),  # pack expects cm^3
     }
-    specs, extra, decisions, refusals, _ = autowire_ranges(
+    specs, extra, decisions, refusals, _, *_ = autowire_ranges(
         tables, set(), confirm_assays=True)
     # etiv_mm3 alias maps to None (mm3 explicitly refused) OR unit-mismatches;
     # either way it must NOT be wired.
@@ -286,7 +286,7 @@ class TestLongFormatValueAuditing:
             "visit": [1, 1, 1, 1],
             "QSTESTCD": ["MMSE", "MOCA", "MMSE", "MOCA"],
             "QSSTRESN": [28, 26, 27, 25]})
-        rspecs, extra, decisions, _ref, wired = autowire_ranges(
+        rspecs, extra, decisions, _ref, wired, *_ = autowire_ranges(
             {"QS": qs}, set(), confirm_assays=False)
         assert any("long format" in d.lower() for d in decisions)
         assert len(rspecs) == 1
@@ -299,7 +299,7 @@ class TestLongFormatValueAuditing:
         adqs = pd.DataFrame({
             "subject_id": ["001", "001"], "visit": [1, 1],
             "PARAMCD": ["MMSE", "MOCA"], "AVAL": [29, 27]})
-        rspecs, extra, decisions, _ref, _wired = autowire_ranges(
+        rspecs, extra, decisions, _ref, _wired, *_ = autowire_ranges(
             {"ADQS": adqs}, set(), confirm_assays=False)
         assert any("long format" in d.lower() for d in decisions)
         assert len(rspecs) == 1
@@ -333,7 +333,7 @@ class TestLongFormatValueAuditing:
         wide = pd.DataFrame({
             "subject_id": ["001", "002"], "visit": [1, 1],
             "mmse": [29, 27], "moca": [28, 26]})
-        rspecs, extra, decisions, _ref, _wired = autowire_ranges(
+        rspecs, extra, decisions, _ref, _wired, *_ = autowire_ranges(
             {"COG": wide}, set(), confirm_assays=False)
         assert not any("long format" in d.lower() for d in decisions)
         assert len(rspecs) == 1  # still wired the wide way
@@ -361,7 +361,7 @@ def test_v179_same_sheet_measurements_are_wired():
     }
     consumed = {"ALL": ["subject_id", "visit", "visit_date",
                         "clinical_state", "biological_stage_atn"]}
-    specs, extra, decisions, refusals, wired_src = autowire_ranges(
+    specs, extra, decisions, refusals, wired_src, *_ = autowire_ranges(
         tables, {"ALL"}, consumed_columns=consumed)
     joined = " ".join(decisions)
     assert "MMSE=mmse_total" in joined, f"MMSE not wired; decisions={decisions}"
@@ -383,7 +383,7 @@ def test_v179_staging_only_sheet_wires_nothing():
         }),
     }
     consumed = {"STG": ["subject_id", "visit", "visit_date", "clinical_state"]}
-    specs, extra, decisions, refusals, wired_src = autowire_ranges(
+    specs, extra, decisions, refusals, wired_src, *_ = autowire_ranges(
         tables, {"STG"}, consumed_columns=consumed)
     assert specs == [], f"staging-only sheet must wire nothing; got {specs}"
 

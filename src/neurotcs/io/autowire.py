@@ -244,7 +244,7 @@ def autowire_ranges(
     confirm_assays: bool = False,
     consumed_columns: dict[str, list[str]] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, pd.DataFrame], list[str], list[str],
-           set[str]]:
+           set[str], dict[str, list[str]]]:
     """Return (ranges_specs, extra_long_tables, decisions, refusals,
     wired_source_sheets).
 
@@ -270,6 +270,7 @@ def autowire_ranges(
     decisions: list[str] = []
     refusals: list[str] = []
     wired_source_sheets: set[str] = set()
+    source_cols_by_sheet: dict[str, list[str]] = {}
     assay_confirmed_cols: set[str] = set()
 
     for sheet, df in tables.items():
@@ -307,6 +308,8 @@ def autowire_ranges(
                     f"(code='{code_col}', value='{val_col}') -> pivoted to wide "
                     f"for value range-auditing."
                 )
+                source_cols_by_sheet.setdefault(sheet, []).extend(
+                    [c for c in (code_col, val_col) if c])
 
         # group resolvable value columns by target pack
         by_pack: dict[str, list[tuple[str, str, str]]] = {}
@@ -369,5 +372,8 @@ def autowire_ranges(
                 + ", ".join(f"{c}={canon}" for c, canon, _ in items)
                 + note
             )
+            source_cols_by_sheet.setdefault(sheet, []).extend(
+                c for c, _, _ in items)
 
-    return ranges_specs, extra_tables, decisions, refusals, wired_source_sheets
+    return (ranges_specs, extra_tables, decisions, refusals,
+            wired_source_sheets, source_cols_by_sheet)
