@@ -148,3 +148,41 @@ needs full fresh attention, not the tail of a long session).
 Each re-locked invariant value MUST come from actually running NeuroTCS on the
 real cohort data and capturing what it produces -- never a transcribed or
 expected value. Same standard as every verified value this session.
+
+---
+
+## P0-2 disposition: reviewed, reproduced both directions -- CORRECT BY DESIGN (no change)
+
+**Audit claim (P0-2):** a single sheet carrying both a clinical-stage axis and a
+biological (A/T/N) axis audits ONLY the clinical axis, silently under-covering
+the biological one.
+
+**Reproduced from roots** (single sheet with clinical columns mmse_total/cdr_sb
+plus a biological column `centiloid`):
+
+Without `--confirm-assays`:
+- The audit FAILS CLOSED with an explicit error naming the gap:
+  "Column NOT wired: centiloid: resolves to centiloid_value
+  (pet_amyloid/centiloid_consensus) but that is an assay/scale-calibrated
+  biomarker -- NOT auto-wired ... Re-run with --confirm-assays ... or provide an
+  explicit 'ranges' mapping."
+- Coverage records it honestly in three places: REFUSED (with reason), IGNORED
+  (listed), and the clinical axis CONSUMED. Nothing is dropped silently.
+
+With `--confirm-assays` (operator asserts the calibration):
+- BOTH packs wire on the same sheet: cognitive_scales/cdr_mmse_moca_consensus
+  AND pet_amyloid/centiloid_consensus. Two autowired tables are created;
+  centiloid moves into consumed; ignored is empty.
+
+**Conclusion:** there is no same-sheet dual-axis under-coverage. The `by_pack`
+grouping (autowire.py) wires EVERY pack a sheet's columns resolve to, not one.
+The only gate on the biological axis is the assay-calibration refusal, which is
+CORRECT fail-closed behavior: centiloid bounds are calibration-specific, and a
+column name cannot certify which assay produced the value. Auto-wiring it would
+fabricate an assay certification -- the exact hallucination the tool refuses to
+make. The operator clears the gate by asserting the calibration (--confirm-assays
+or an explicit mapping), at which point both axes audit.
+
+The audit mistook a loud, reasoned, fail-closed refusal for silent
+under-coverage; they are opposites. No code change. (Mirrors the P1
+dispositions: do not "fix" correct behavior into a weaker contract.)
