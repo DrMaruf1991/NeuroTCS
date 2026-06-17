@@ -101,3 +101,47 @@ coverage; it does NOT produce wrong audit RESULTS (the values are audited
 correctly). So it is a real production-readiness blocker but not an emergency:
 the right fix is the complete one, done when the data is mounted -- not a rushed
 partial re-lock or a human-report-only patch that leaves the JSON bundle wrong.
+
+---
+
+## P0-1 update: governed data LOCATED -- blocker lifted (ready to execute)
+
+All four cohorts required to re-lock the five invariants are present locally,
+under `G:\NeuroTCS data\NeuroTCS data\NeuroTCS\`:
+
+| Cohort | File(s) | Path (under the base above) |
+|---|---|---|
+| ADNI | DXSUM.rda | `ADNI\ADNIMERGE2\data\DXSUM.rda` |
+| OASIS-3 | OASIS3_UDSb4_cdr.csv | `OASIS3\OASIS3_UDSb4_cdr.csv` |
+| NACC | investigator_nacc73.csv (~951 MB) | `NACC\investigator_nacc73.csv` |
+| MIRIAD | three export CSVs (~18 KB / ~37 KB / ~1.7 KB) | `MIRIAD\DrMaruf_5_18_2026_*.csv` |
+
+So the P0-1 fix is no longer data-blocked; it is a scoped, ready-to-execute
+task. Recommended as a DEDICATED session (highest-stakes change in the codebase:
+it deliberately rewrites every bundle_id and re-locks all five cryptographic
+invariants -- a wrong locked value would silently corrupt reproducibility, so it
+needs full fresh attention, not the tail of a long session).
+
+### Execution order for the fix session (each step gated on verification)
+
+1. BASELINE: re-run all five invariant tests on CURRENT code; confirm they pass
+   (captures the pre-fix audit_ids, so post-fix drift is provable, not assumed).
+2. CODE: thread autowire SOURCE columns into a new `columns_autowired` category;
+   remove them from the `ignored` derivation (autowire.py -> cli.py ledger ->
+   orchestrator.py manifest). Verify with the synthetic mmse_total/cdr_sb case.
+3. FORMAT: bump BUNDLE_FORMAT_VERSION 1.4.0 -> 1.5.0.
+4. RE-LOCK: re-run each of the five cohort audits on the real data; capture
+   EXACTLY the audit_id each produces; lock THAT value (never transcribe/guess).
+   Update tests/audit_core/test_real_*.py.
+5. REGEN: INVARIANTS_SUMMARY.md + reviewer package notebook/prompt (new audit_ids).
+6. VERSION: framework 1.80.0 -> 1.81.0 (all 6 bump locations + the guards).
+7. TESTS: update any bundle_format==1.4.0 assertions; add the P0-1 regression
+   test + a release gate (fail if an audited column appears under `ignored`).
+8. VERIFY: full suite green + ruff clean LOCALLY before push.
+9. SHIP: commit, push, confirm CI green, rebuild + republish to PyPI.
+
+### Discipline reminder for the re-lock
+
+Each re-locked invariant value MUST come from actually running NeuroTCS on the
+real cohort data and capturing what it produces -- never a transcribed or
+expected value. Same standard as every verified value this session.
