@@ -58,6 +58,48 @@ class ArchiveLimitError(ValueError):
     a potential decompression bomb rather than exhaust memory mid-run."""
 
 
+
+# Third-party binary parsers (pyarrow, openpyxl, pyreadstat, pyreadr, pandas'
+# SAS/Stata readers) raise their own exception types on a corrupt, truncated, or
+# mislabeled file. Those are INPUT errors, not internal faults: a parse failure
+# means "this file cannot be read as the format its extension claims". Convert
+# them to AmbiguousInputError -- the same input-error type the text/JSON readers
+# already raise -- so the CLI boundary (_load_tables) returns EXIT_INPUT with a
+# clean, path-free message instead of leaking a raw traceback as exit 1
+# (FLAGS_PRESENT), which would mis-report an unreadable file as a clinical finding.
+#
+# Catch tuple is grounded in the exception types these readers actually raise
+# (verified empirically): parquet pyarrow.ArrowInvalid (a ValueError subclass),
+# openpyxl/SAS/Stata ValueError, SPSS pyreadstat ReadstatError, R pyreadr
+# LibrdataError. It wraps ONLY the parse call; the typed-read contract and any
+# downstream logic run OUTSIDE, so genuine internal errors still surface.
+def _binary_parser_exceptions() -> tuple[type[BaseException], ...]:
+    excs: list[type[BaseException]] = [ValueError]  # covers parquet/xlsx/sas/dta + json
+    try:
+        from pyreadstat._readstat_parser import ReadstatError
+        excs.append(ReadstatError)
+    except Exception:  # pragma: no cover - pyreadstat optional on rare platforms
+        pass
+    try:
+        from pyreadr.custom_errors import LibrdataError
+        excs.append(LibrdataError)
+    except Exception:  # pragma: no cover - pyreadr optional on rare platforms
+        pass
+    return tuple(excs)
+
+
+def _parse_or_refuse(name: str, fmt: str, parse):
+    """Run a third-party binary parse callable; convert a parse failure into
+    AmbiguousInputError (-> EXIT_INPUT at the CLI boundary). Wraps ONLY the parse
+    call so genuine downstream errors are not masked."""
+    try:
+        return parse()
+    except _binary_parser_exceptions() as e:
+        raise AmbiguousInputError(
+            f"{name}: could not be read as {fmt}; the file may be corrupt, "
+            f"truncated, or mislabeled ({type(e).__name__}: {e})."
+        ) from e
+
 # ---- archive / compressed-input safety limits (v1.75.0) --------------------- #
 # A small compressed file can expand to gigabytes (a "zip/gzip bomb"), exhausting
 # memory before any audit runs. These bounds make the readers fail CLOSED with a
@@ -260,12 +302,13 @@ def _read_single_file(
                 "dependency). Install it with: pip install openpyxl -- or export "
                 "your data to CSV."
             ) from e
-        sheets = pd.read_excel(p, sheet_name=None)
+        sheets = _parse_or_refuse(
+            p.name, "Excel", lambda: pd.read_excel(p, sheet_name=None))
         return {str(k): apply_typed_read_contract(v, f"{p.name}:{k}", decisions)
                 for k, v in sheets.items()}
     if ext == ".parquet":
-        return {p.stem: apply_typed_read_contract(
-            pd.read_parquet(p), p.name, decisions)}
+        _df = _parse_or_refuse(p.name, "Parquet", lambda: pd.read_parquet(p))
+        return {p.stem: apply_typed_read_contract(_df, p.name, decisions)}
     if ext == ".json":
         return {p.stem: apply_typed_read_contract(_read_json(p), p.name, decisions)}
     if ext in (".jsonl", ".ndjson"):
@@ -466,10 +509,10 @@ def _read_statistical(
         decisions.append(
             f"{p.name}: read SAS; value labels (external SAS formats) are NOT "
             f"applied -- verify any coded categorical columns.")
-        return pd.read_sas(p)
+        return _parse_or_refuse(p.name, "SAS", lambda: pd.read_sas(p))
     if ext == ".dta":
         # pandas applies Stata value labels by default (convert_categoricals).
-        return pd.read_stata(p)
+        return _parse_or_refuse(p.name, "Stata", lambda: pd.read_stata(p))
     if ext in (".sav", ".zsav"):
         try:
             import pyreadstat  # core dependency (rare-platform wheel fallback below)
@@ -484,7 +527,9 @@ def _read_statistical(
         # apply_value_formats=True maps coded categoricals to their LABELS (e.g.
         # sex 1/2 -> 'Male'/'Female') so the auditor sees meaningful values, not
         # raw codes that would trip categorical-domain checks.
-        df, _meta = pyreadstat.read_sav(str(p), apply_value_formats=True)
+        df, _meta = _parse_or_refuse(
+            p.name, "SPSS",
+            lambda: pyreadstat.read_sav(str(p), apply_value_formats=True))
         decisions.append(f"{p.name}: read SPSS; value labels applied.")
         return df
     if ext in (".rds", ".rdata", ".rda"):
@@ -498,7 +543,7 @@ def _read_statistical(
                 "with pip install --force-reinstall pyreadr -- or export your "
                 "data to CSV/Excel."
             ) from e
-        result = pyreadr.read_r(str(p))
+        result = _parse_or_refuse(p.name, "R data", lambda: pyreadr.read_r(str(p)))
         if not result:
             raise UnsupportedFormatError(
                 f"{p.name}: no data frame found in the R file.")
@@ -661,18 +706,22 @@ def _read_bytes_as_table(
         return {stem: apply_typed_read_contract(
             _read_csv_id_safe(text, sep), name, decisions)}
     if ext in (".xlsx", ".xls"):
-        sheets = pd.read_excel(io.BytesIO(data), sheet_name=None)
+        sheets = _parse_or_refuse(
+            name, "Excel", lambda: pd.read_excel(io.BytesIO(data), sheet_name=None))
         return {str(k): apply_typed_read_contract(v, f"{name}:{k}", decisions)
                 for k, v in sheets.items()}
     if ext == ".parquet":
-        return {stem: apply_typed_read_contract(
-            pd.read_parquet(io.BytesIO(data)), name, decisions)}
+        _df = _parse_or_refuse(
+            name, "Parquet", lambda: pd.read_parquet(io.BytesIO(data)))
+        return {stem: apply_typed_read_contract(_df, name, decisions)}
     if ext == ".json":
-        df = pd.read_json(io.BytesIO(data))
+        df = _parse_or_refuse(
+            name, "JSON", lambda: pd.read_json(io.BytesIO(data)))
         _refuse_nested(df, name)
         return {stem: apply_typed_read_contract(df, name, decisions)}
     if ext in (".jsonl", ".ndjson"):
-        df = pd.read_json(io.BytesIO(data), lines=True)
+        df = _parse_or_refuse(
+            name, "JSON Lines", lambda: pd.read_json(io.BytesIO(data), lines=True))
         _refuse_nested(df, name)
         return {stem: apply_typed_read_contract(df, name, decisions)}
     if ext in SUPPORTED_STATISTICAL:

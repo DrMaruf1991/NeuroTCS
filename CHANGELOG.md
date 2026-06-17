@@ -1,3 +1,27 @@
+## [1.82.1] -- 2026-06-17 -- fix: corrupt/mislabeled binary inputs fail closed (external audit round 2, Defect 1)
+
+### Fixed: binary parser failures no longer leak a traceback as exit 1 (FLAGS_PRESENT)
+- A corrupt, truncated, or mislabeled binary input (Parquet/Excel/SAS/Stata/
+  SPSS/R) caused the third-party parser (pyarrow, openpyxl, pandas SAS/Stata,
+  pyreadstat, pyreadr) to raise its own exception, which ESCAPED the CLI's
+  input-error boundary -- producing a raw Python traceback (leaking internal
+  paths) and exit code 1. Exit 1 means FLAGS_PRESENT, so an UNREADABLE file was
+  mis-reported as a clinical finding -- a fail-OPEN failure in a fail-closed tool.
+- Root cause: the binary readers did not wrap their parser failures into the
+  AmbiguousInputError family the way the text/JSON readers already did (the
+  delimited reader's _decode_bytes wraps decode failures). A consistency gap.
+- Fix: a _parse_or_refuse helper (io/readers.py) converts the parser exceptions
+  (empirically: pyarrow.ArrowInvalid (a ValueError), ValueError for openpyxl/
+  SAS/Stata, pyreadstat ReadstatError, pyreadr LibrdataError) into
+  AmbiguousInputError -> the existing CLI boundary returns EXIT_INPUT (4) with a
+  clean, path-free message. Applied at all 10 binary parse sites (single-file +
+  in-archive, including the archive JSON/JSONL paths that bypassed the safe
+  readers). It wraps ONLY the parse call; the typed-read contract and downstream
+  logic run outside, so genuine internal errors still surface.
+- Locked by tests/io/test_corrupt_binary_inputs_fail_closed.py (6 corrupt
+  formats + mislabeled-CSV-as-parquet + valid-file-still-reads happy path).
+  All 7 real-cohort invariants unchanged (error-path-only fix); suite 2012 -> 2020.
+
 ## [1.82.0] -- 2026-06-17 -- P1-2: structured advisory output (machine-readable, non-hashed)
 
 ### Added: run_metadata.advisories -- structured opt-in advisory results
