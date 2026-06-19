@@ -97,7 +97,7 @@ def _production_inventory() -> dict[str, tuple[str, str]]:
 # Functional domain knowledge (naming conventions across ADNI / NACC / vendor
 # exports), NOT values and NOT tuned to any single dataset. Only unambiguous,
 # high-confidence aliases belong here. Unit is still checked separately.
-_ALIASES: dict[str, str] = {
+_ALIASES: dict[str, str | None] = {
     # cognitive
     "mmse": "mmse_total", "mmsetotal": "mmse_total", "mmsescore": "mmse_total",
     "moca": "moca_total", "mocatotal": "moca_total",

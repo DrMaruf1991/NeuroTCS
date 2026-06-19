@@ -72,15 +72,19 @@ import json
 import math
 import platform
 from datetime import datetime, timezone
+from types import ModuleType
 from typing import Any
-
-try:
-    import numpy as _np
-except Exception:  # noqa: BLE001 - numpy is a hard dep via pandas, but stay safe
-    _np = None
 
 from neurotcs import __version__ as _FRAMEWORK_VERSION
 from neurotcs.orchestration.orchestrator import OrchestratorResult
+
+# numpy is a hard dep via pandas, but guard the import defensively. Declared after
+# the package imports so the import block stays contiguous (ruff E402).
+_np: ModuleType | None
+try:
+    import numpy as _np
+except Exception:  # noqa: BLE001
+    _np = None
 
 # Envelope schema version. Bump when the bundle STRUCTURE or the canonicalization
 # rule changes, independently of the framework version.

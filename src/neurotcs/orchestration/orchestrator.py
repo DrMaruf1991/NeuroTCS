@@ -568,26 +568,26 @@ def run_full_audit(
             for n, p in zip(pack_names, packs, strict=False):
                 packs_applied[f"cross_sheet:{n}"] = getattr(
                     p, "sha256", getattr(p, "invariantpack_sha256", ""))
-            fl = []
-            for f in cres.flags:
-                tier = _tier_for_cross_sheet_flag(f)
-                fl.append({"invariant": f.invariant_name,
-                           "flag_id": getattr(f, "flag_id", None),
-                           "pack_id": getattr(f, "pack_id", None),
-                           "join_key": f.join_key_values,
-                           "reason": f.flag_reason,
-                           "citation": f.flag_reason,
-                           "citation_pmid": getattr(f, "citation_pmid", None),
-                           "citation_doi": getattr(f, "citation_doi", None),
+            fl_cs = []
+            for f_cs in cres.flags:
+                tier = _tier_for_cross_sheet_flag(f_cs)
+                fl_cs.append({"invariant": f_cs.invariant_name,
+                           "flag_id": getattr(f_cs, "flag_id", None),
+                           "pack_id": getattr(f_cs, "pack_id", None),
+                           "join_key": f_cs.join_key_values,
+                           "reason": f_cs.flag_reason,
+                           "citation": f_cs.flag_reason,
+                           "citation_pmid": getattr(f_cs, "citation_pmid", None),
+                           "citation_doi": getattr(f_cs, "citation_doi", None),
                            "citation_public_url": getattr(
-                               f, "citation_public_url", None),
-                           "severity": getattr(f, "severity", None),
+                               f_cs, "citation_public_url", None),
+                           "severity": getattr(f_cs, "severity", None),
                            "tier": tier})
                 severity[tier] += 1
             layers.append(LayerResult(
                 layer="cross_sheet", ran=True,
                 summary={"n_packs": len(pack_names), "n_flags": len(cres.flags)},
-                flags=fl))
+                flags=fl_cs))
 
         elif layer == "input_contract":
             from neurotcs.input_contract.v1_2.validate import validate_submission

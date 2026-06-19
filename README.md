@@ -5,7 +5,7 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.82.4](https://img.shields.io/badge/version-1.82.4-success.svg)](CHANGELOG.md)
+[![Version 1.82.5](https://img.shields.io/badge/version-1.82.5-success.svg)](CHANGELOG.md)
 [![Tests 2030](https://img.shields.io/badge/tests-2030%20passed-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7%20FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
@@ -132,7 +132,7 @@ git clone https://github.com/DrMaruf1991/NeuroTCS.git
 cd NeuroTCS
 pip install -e .
 
-# Tests (no cohort data required) -- expect 2030 passed, ~24 skipped (v1.82.4)
+# Tests (no cohort data required) -- expect 2030 passed, ~24 skipped (v1.82.5)
 python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_adni_audit.py \
     --ignore=tests/audit_core/test_real_oasis3_audit.py \
@@ -250,7 +250,7 @@ docs/SCOPE.md Regulatory status.
 @software{salokhiddinov2026neurotcs,
   author    = {Salokhiddinov, Marufjon},
   title     = {NeuroTCS: Citation-locked, fail-closed longitudinal medical AI audit framework},
-  version   = {1.82.4},
+  version   = {1.82.5},
   year      = {2026},
   url       = {https://github.com/DrMaruf1991/NeuroTCS},
   note      = {temporalmetric v1.7 FINAL specification, 8 AD production rule packs, four-cohort triangulation lock; v1.9.0+ AD-only scope}

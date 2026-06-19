@@ -1,3 +1,38 @@
+## [1.82.5] -- 2026-06-19 -- type-check hardening: all mypy findings resolved at root + mypy promoted to blocking CI gate
+
+### Changed: mypy is now a BLOCKING CI gate
+The ~15 mypy findings tracked since v1.75.0 as a deferred "focused typing pass"
+(flag-type union refinements and float()-on-Optional guards in cross_sheet / cli /
+conversion paths) are now all resolved at root, with zero behavior change. mypy is
+promoted from advisory to a blocking CI gate (`mypy src/neurotcs
+--ignore-missing-imports`, alongside ruff) so the type-clean state cannot silently
+regress -- which is exactly how the prior cleanup rotted back to ~15 findings.
+
+### Fixed (type model, zero behavior change)
+- **orchestrator.py / rulepack/schema.py**: disambiguated reused loop variables
+  (`f`/`fl` for cross-sheet vs clinical-range flags; `t` for admissible vs
+  inadmissible transitions) that mypy narrowed function-wide to one type. Renamed
+  the second binding (`f_cs`/`fl_cs`, `t_inadm`) including its consumers. No
+  runtime change; caught a real loop-consumer subtlety during the type pass.
+- **cross_sheet/audit.py**: `_make_missing_sheet_flag` param `list[str]` ->
+  `Sequence[str]` (read-only, covariant -- the correct contract); retained the
+  genuine `pred.threshold is None` guard (threshold is `float | None`).
+- **io/typed_read.py**: `out` annotated `list[float | None]` (the parse functions
+  return `float | None`; None becomes NaN in the float64 Series).
+- **orchestration/conversion_audit.py**: visit sort key `float(vs[0])` ->
+  `float(str(vs[0]))` (`vs[0]` is `object`; behavior-identical for numeric values,
+  the existing except still guards non-numeric).
+- **orchestration/bundle.py**: optional-numpy fallback typed `ModuleType | None`;
+  numpy try/except relocated after the package imports to keep the import block
+  contiguous (ruff E402).
+- **io/cdisc.py**: removed a stale `type: ignore[assignment]`.
+
+### Verification
+- mypy: `Success: no issues found in 81 source files` (`--ignore-missing-imports`).
+- Zero behavior change proven: full suite **2030 passed / 24 skipped** (byte-
+  identical to 1.82.4); all **7 cohort invariants byte-identical** (ADNI/OASIS-3/
+  NACC/MIRIAD bundle_id + cTCS unchanged). ruff clean; wheel + sdist build.
+
 ## [1.82.4] -- 2026-06-19 -- audit round 4: XLSX dual-axis routing fix + coverage-ledger cluster + SPSS/RDS numeric stages + validate-coverage end-to-end
 
 A third-party "triple end-to-end" external audit of v1.82.3 was reproduced from

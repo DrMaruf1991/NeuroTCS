@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurotcs"
-version = "1.82.4"
+version = "1.82.5"
 description = "Citation-locked, fail-closed longitudinal medical AI audit framework (NeuroTCS / temporalmetric)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -119,7 +119,9 @@ python_files = ["test_*.py"]
 addopts = "-v --tb=short"
 
 [tool.mypy]
-# Type-checking is ADVISORY (not yet a blocking CI gate). As of v1.75.0 mypy
+# Type-checking is a BLOCKING CI gate as of v1.82.5 (the focused typing pass
+# noted below was completed: 0 findings, resolved at root, zero behavior change).
+# History: as of v1.75.0 mypy
 # runs clean of the high-severity classes that indicate runtime bugs (None
 # dereferences, wrong return-arity, missing annotations -- all fixed). A small
 # baseline of ~15 lower-risk findings remains (flag-type union refinements and

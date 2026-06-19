@@ -152,7 +152,7 @@ def audit_conversions(
     for sid, visits in by_subject.items():
         # order by visit; visits may be ints or strings -> sort by (type-safe key)
         try:
-            ordered = sorted(visits, key=lambda vs: (float(vs[0]),))
+            ordered = sorted(visits, key=lambda vs: (float(str(vs[0])),))
         except (TypeError, ValueError):
             ordered = sorted(visits, key=lambda vs: str(vs[0]))
         # keep only rows whose state is canonical for transition logic

@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -1336,12 +1337,16 @@ def _evaluate_rowwise_conjunction_advisory(
                     all_hold = False
                     break
             else:  # numeric
+                if raw is None:
+                    all_hold = False
+                    break
                 try:
                     val = float(raw)
                 except (TypeError, ValueError):
                     all_hold = False
                     break
-                if not _cmp(val, float(pred.threshold), pred.operator):
+                if pred.threshold is None or not _cmp(
+                        val, float(pred.threshold), pred.operator):
                     all_hold = False
                     break
         if all_hold:
@@ -1579,7 +1584,7 @@ def _iter_rows(sheet: Any) -> list[dict[str, Any]]:
 def _make_missing_sheet_flag(
     invariant: CrossSheetInvariant,
     lp: LoadedInvariantPack,
-    missing: list[str],
+    missing: Sequence[str],
 ) -> CrossSheetFlag:
     """Emit a 'missing_required_sheet' info flag (section 8 rule 1)."""
     payload = {

@@ -395,7 +395,7 @@ def read_cdisc_submission(
 
     submission = normalize_cdisc_to_long(
         chosen_df, chosen_rec, decisions, state_code=state_code)
-    submission["_cdisc"] = chosen_rec  # type: ignore[assignment]
+    submission["_cdisc"] = chosen_rec
     return submission
 
 

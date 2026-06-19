@@ -540,14 +540,14 @@ class RulePack(BaseModel):
                 raise ValueError(
                     f"Transition to_state '{t.to_state}' not in state_space"
                 )
-        for t in self.inadmissible_transitions:
-            if t.from_state not in state_names:
+        for t_inadm in self.inadmissible_transitions:
+            if t_inadm.from_state not in state_names:
                 raise ValueError(
-                    f"Inadmissible from_state '{t.from_state}' not in state_space"
+                    f"Inadmissible from_state '{t_inadm.from_state}' not in state_space"
                 )
-            if t.to_state not in state_names:
+            if t_inadm.to_state not in state_names:
                 raise ValueError(
-                    f"Inadmissible to_state '{t.to_state}' not in state_space"
+                    f"Inadmissible to_state '{t_inadm.to_state}' not in state_space"
                 )
         for p in self.transition_priors:
             if p.from_state not in state_names:

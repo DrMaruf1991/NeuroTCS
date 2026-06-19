@@ -28,10 +28,13 @@ jobs:
         run: pip install -e .
 
       - name: Install dev tools
-        run: pip install pytest ruff
+        run: pip install pytest ruff mypy
 
       - name: Lint with ruff (blocking — fails CI on any violation)
         run: ruff check src/ tests/ scripts/
+
+      - name: Type-check with mypy (blocking — fails CI on any violation)
+        run: mypy src/neurotcs --ignore-missing-imports
 
       # --- Single source of truth for test discovery (v1.7.1 fix) ---
       # Replaces per-file invocations so every test under tests/ is

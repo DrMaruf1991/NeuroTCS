@@ -163,7 +163,7 @@ def _try_numeric_series(
         return None, None  # ambiguous decimal convention -> stay string
 
     parse = parse_dot if chosen_kind == "dot" else parse_comma
-    out = []
+    out: list[float | None] = []
     for v in vals:
         if v is None or _looks_missing(str(v), na_tokens) or (
             isinstance(v, float) and pd.isna(v)

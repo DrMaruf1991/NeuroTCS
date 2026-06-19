@@ -1137,8 +1137,8 @@ def cmd_audit(args: argparse.Namespace) -> int:
                     print("# disease-control partition "
                           "(--partition-disease-controls): non-AD subjects "
                           "recorded out-of-AD-scope:")
-                    for _cat, _subs in sorted(_dc.by_category.items()):
-                        print(f"  {_cat}: {len(_subs)} subject(s)")
+                    for _cat, _dc_subs in sorted(_dc.by_category.items()):
+                        print(f"  {_cat}: {len(_dc_subs)} subject(s)")
                 _summary = "; ".join(f"{c}={len(s)}"
                                      for c, s in sorted(_dc.by_category.items()))
                 submission_warnings.append(
@@ -1227,8 +1227,8 @@ def cmd_audit(args: argparse.Namespace) -> int:
                     print("# ARIA grade recognition "
                           f"(--recognize-aria-grades {_aria_col}): "
                           f"{len(_ar.recognized)} subject(s) recognized:")
-                    for _ty, _subs in sorted(_ar.by_type.items()):
-                        print(f"  {_ty}: {len(_subs)} subject(s)")
+                    for _ty, _ar_subs in sorted(_ar.by_type.items()):
+                        print(f"  {_ty}: {len(_ar_subs)} subject(s)")
                 _ar_summary = "; ".join(f"{t}={len(s)}"
                                         for t, s in sorted(_ar.by_type.items()))
                 submission_warnings.append(
