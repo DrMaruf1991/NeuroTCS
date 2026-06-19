@@ -57,6 +57,16 @@ jobs:
           python -m build
           ls -la dist/
 
+      - name: Clean wheel install (non-editable; proves packaging)
+        run: |
+          python -m venv /tmp/wheeltest
+          . /tmp/wheeltest/bin/activate
+          python -m pip install --upgrade pip
+          pip install dist/*.whl
+          python -c "import neurotcs; print('installed', neurotcs.__version__)"
+          neurotcs --version
+          deactivate
+
   citations:
     name: Citation resolver (Crossref + PubMed EUtils)
     runs-on: ubuntu-latest

@@ -677,10 +677,35 @@ def run_full_audit(
 
     cols_present = submission.get("columns_present", {})
     cols_consumed = submission.get("columns_consumed", {})
-    cols_ignored = {sheet: [c for c in cols if c not in cols_consumed.get(sheet, [])]
-                    for sheet, cols in cols_present.items()}
     cols_refused = submission.get("columns_refused", {})
     cols_unwired = submission.get("columns_unwired", {})
+    # P1 #8 (audit round 4): the four coverage categories must PARTITION the
+    # present columns. A refused column (recognized but assay-gated, with a
+    # reason in columns_refused) or an unwired column is already accounted
+    # for -- it must NOT also appear under columns_ignored. "ignored" means
+    # present-but-otherwise-unaccounted-for: not consumed, not refused, not
+    # unwired. columns_refused keys are "sheet.column"; columns_unwired is
+    # keyed by sheet -> [columns]. Build a per-sheet exclusion set from both.
+    def _refused_cols_for(sheet: str) -> set[str]:
+        out: set[str] = set()
+        for key in (cols_refused or {}):
+            # key may be "sheet.column" or just "column"
+            if isinstance(key, str) and "." in key:
+                s, _, c = key.partition(".")
+                if s == sheet and c:
+                    out.add(c)
+            elif isinstance(key, str):
+                out.add(key)
+        return out
+    cols_ignored = {
+        sheet: [
+            c for c in cols
+            if c not in cols_consumed.get(sheet, [])
+            and c not in _refused_cols_for(sheet)
+            and c not in (cols_unwired.get(sheet, []) if isinstance(cols_unwired, dict) else [])
+        ]
+        for sheet, cols in cols_present.items()
+    }
 
     manifest = CoverageManifest(
         orchestrator_version=ORCHESTRATOR_VERSION,

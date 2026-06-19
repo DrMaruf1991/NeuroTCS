@@ -13,6 +13,7 @@ Per temporalmetric v1.7 FINAL spec §A.2 - §A.4 + §C.5.
 from __future__ import annotations
 
 import logging
+import math
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -192,6 +193,23 @@ def _coerce_visit_dates(values: pd.Series) -> pd.Series:
         return pd.to_datetime(values, format="mixed", errors="coerce")
 
 
+def _states_as_str(series: pd.Series) -> tuple[str, ...]:
+    """Stringify state/treatment values, normalizing integer-VALUED floats to
+    their integer form. SPSS/RDS have no integer type, so an integer stage code
+    1 is read back as float 1.0; a plain astype(str) yields '1.0', which the
+    staging vocabulary (keyed on '1') does not match, while CSV/DTA int 1 yields
+    '1' and matches. Collapsing integer-valued floats to '1' makes every reader
+    behave identically (P1 #5, audit round 4). A genuine non-integer float (1.5)
+    or a string state ('MCI') is returned unchanged, so already-correct paths
+    and all string-state cohorts are byte-identical (invariants unaffected).
+    """
+    def _one(v: Any) -> str:
+        if isinstance(v, float) and not math.isnan(v) and v.is_integer():
+            return str(int(v))
+        return str(v)
+    return tuple(_one(v) for v in series.tolist())
+
+
 def trajectories_from_dataframe(
     df: pd.DataFrame,
     *,
@@ -274,7 +292,7 @@ def trajectories_from_dataframe(
     trajectories: list[Trajectory] = []
     n_skipped = 0
     for pid, group in work.groupby(patient_id_col, sort=False):
-        states = tuple(group[state_col].astype(str).tolist())
+        states = _states_as_str(group[state_col])
         dates = tuple(d.date() if isinstance(d, (pd.Timestamp, datetime))
                        else d for d in group[visit_date_col].tolist())
 
@@ -289,7 +307,7 @@ def trajectories_from_dataframe(
 
         tx: tuple[str, ...] | None = None
         if treatment_status_col is not None and treatment_status_col in group.columns:
-            tx = tuple(group[treatment_status_col].astype(str).tolist())
+            tx = _states_as_str(group[treatment_status_col])
 
         meta: dict[str, Any] = {}
         if metadata_cols is not None:

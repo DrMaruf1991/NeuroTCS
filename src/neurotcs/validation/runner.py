@@ -44,7 +44,14 @@ def run_audit_flags(
         if not bundles:
             raise RuntimeError(
                 "NeuroTCS audit produced no bundle for "
-                f"{cohort_path.name}; cannot score Arm B detection."
+                f"{cohort_path.name}; cannot score Arm B detection. "
+                "Arm B injects errors into biomarker fields (e.g. FL plasma/"
+                "csf, AM centiloid), but a cohort that produces no bundle "
+                "cannot be scored. A valid validate-coverage cohort needs "
+                "BOTH a staging axis (a clinical_stage or biological_stage "
+                "column whose states match a rule pack, so the cohort audits "
+                "to a bundle) AND injectable biomarker fields. A biomarker-"
+                "only workbook will not bundle. See docs/VALIDATION_PROTOCOL.md."
             )
         bundle = json.loads(bundles[0].read_text())
         core = bundle["neurotcs_bundle"]["deterministic_core"]

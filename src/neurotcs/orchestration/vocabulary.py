@@ -10,6 +10,7 @@ REFUSES (fail-closed) rather than emitting a meaningless score.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from neurotcs.rulepack.loader import list_rulepacks, load_rulepack
@@ -58,6 +59,21 @@ def _pack_state_names(rulepack_name: str) -> tuple[str, ...]:
     return tuple(s.name for s in lp.rulepack.state_space)
 
 
+def _state_str(x: object) -> str:
+    """Stringify a single state value, collapsing integer-VALUED floats to
+    their integer form. SPSS/RDS have no integer type, so an integer stage
+    code 1 is read back as float 1.0; str(1.0)=='1.0' matches no rule-pack
+    vocabulary (keyed '1'), while CSV/DTA int 1 -> '1' matches. Collapsing
+    1.0 -> '1' makes every reader's numeric stages match identically (P1 #5,
+    audit round 4). A genuine non-integer float (1.5) or a string state
+    ('MCI') is returned unchanged, so string-state cohorts (all real DUA
+    cohorts) are byte-identical and the locked invariants are unaffected.
+    """
+    if isinstance(x, float) and not math.isnan(x) and x.is_integer():
+        return str(int(x))
+    return str(x)
+
+
 def assess_vocabulary(
     data_states: list[str],
     rulepack_name: str,
@@ -93,7 +109,7 @@ def assess_vocabulary(
     """
     pack_states = _pack_state_names(rulepack_name)
     pack_set = set(pack_states)
-    distinct = [s for s in dict.fromkeys(str(x) for x in data_states if x is not None)]
+    distinct = [s for s in dict.fromkeys(_state_str(x) for x in data_states if x is not None)]
     data_set = set(distinct)
     matched = tuple(s for s in distinct if s in pack_set)
     unmatched = tuple(s for s in distinct if s not in pack_set)
@@ -180,7 +196,7 @@ def select_rulepack_or_refuse(
                 best_name, best_match = name, vm
 
     if best_match is None or not best_match.is_applicable:
-        distinct = sorted({str(x) for x in data_states if x is not None})
+        distinct = sorted({_state_str(x) for x in data_states if x is not None})
         tried = ", ".join(candidate_packs) if candidate_packs else "(none)"
         best_cov = f"{best_match.coverage_fraction:.2f}" if best_match else "n/a"
         raise VocabularyMismatchError(

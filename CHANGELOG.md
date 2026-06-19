@@ -1,3 +1,79 @@
+## [1.82.4] -- 2026-06-19 -- audit round 4: XLSX dual-axis routing fix + coverage-ledger cluster + SPSS/RDS numeric stages + validate-coverage end-to-end
+
+A third-party "triple end-to-end" external audit of v1.82.3 was reproduced from
+roots across ALL input formats (CSV, XLSX, SPSS/.sav, Stata/.dta, CDISC). Every
+claim was traced to its true mechanism before any fix. Headline finding: the
+round-1 P0-2 disposition ("correct by design") was WRONG -- it was reached by a
+CSV/single-sheet reproduction that structurally could not surface the real bug,
+which is XLSX-specific. Corrected in docs/KNOWN_ISSUES_P0.md and fixed here.
+
+### Fixed: XLSX same-sheet/by-name dual-axis routing (P0)
+- A multi-sheet XLSX whose SHEET NAME scores for one axis (e.g. a sheet named
+  "Clinical") was routed to ONLY that axis by `_scaffold_mapping`'s name-match
+  candidacy loop; the other axis (e.g. biological_stage) was silently dropped and
+  the bundle returned CLEAN. CSV escaped because a filename-stem sheet scores 0/0
+  and reaches the column-evidence fallback -- which is exactly why the round-1
+  CSV-only reproduction masked the bug.
+- Added a column-evidence sweep ("2b") in `_scaffold_mapping`: for each routed
+  sheet, probe the OTHER axis; if it resolves to a distinct real (non-FILL) state
+  column, engage it. Proven: XLSX now audits both axes; CSV unchanged; a
+  clinical-only sheet does NOT acquire a phantom biological axis (no over-fire).
+
+### Fixed: coverage-ledger cluster (treatment column, hippocampus synonym, category partition)
+- `trac_status` (treatment_status), though wired to the biological-axis TRAC
+  carve-out, was omitted from `_columns_consumed_by_mapping` and so was reported
+  under columns_ignored. Now credited as consumed.
+- `hippocampus_total_mm3` normalizes to the noun "hippocampustotalmm3", which was
+  missing from `_ALIASES` (only adjective forms were present). Added; the column
+  is now recognized and (assay-calibrated) fail-closes loudly into columns_refused
+  without --confirm-assays, consumed with it -- instead of silently ignored.
+- The coverage categories could overlap (a column in both refused and ignored).
+  `cols_ignored` now partitions as present - consumed - refused - unwired, so the
+  four ledger categories are mutually exclusive. Locked by
+  tests/cli/test_coverage_ledger_partition.py.
+
+### Fixed: SPSS/RDS integer-coded stages refused as a float-vs-int vocabulary mismatch (P1)
+- Statistical formats (SPSS .sav, R .rds) have no integer type, so an integer
+  stage code 1 is read back as float 1.0; str(1.0)=="1.0" matched no rule-pack
+  vocabulary (keyed "1"), and the cohort was INCOMPLETE_REFUSED while the same
+  integer-coded CSV audited CLEAN. Added a `_state_str` normalizer (integer-valued
+  floats collapse to their integer string) at the vocabulary decision points; a
+  genuine non-integer (1.5) or string state ("MCI") is unchanged. Real cohorts use
+  string states and are byte-identical -- all 7 locked invariants unaffected.
+  Locked by tests/io/test_numeric_stage_float_normalization.py.
+
+### Fixed: validate-coverage proven end-to-end through the CLI (P1)
+- The Arm-B injector targets biomarker fields (FL/AM/EN), but a biomarker-only
+  cohort produces no bundle to score against, so the CLI failed closed with "no
+  bundle for corrupt.xlsx" on ad-hoc workbooks. Root: a valid validate-coverage
+  cohort needs BOTH a staging axis (to bundle) AND injectable biomarker fields.
+  Added a known-good combined cohort + CLI end-to-end release test
+  (tests/cli/test_validate_coverage_end_to_end.py; injected 24/24 detected,
+  specificity 1.0) and expanded the no-bundle error to explain the requirement.
+
+### Reconfirmed (no change): P1 #6 CDISC long-format, P1 #7 Cyrillic/multilingual
+- Both reproduced from roots and confirmed fail-closed safe (refuse, never
+  mis-stage). They remain documented deferred features, not defects. The Cyrillic
+  fail-closed path was re-verified AFTER the P1#5 vocabulary change -- no
+  regression (non-ASCII states still refuse).
+
+### Documented WON'T-FIX: P2 #12 internal __autowired__ ledger key
+- Internal synthetic table keys ("__autowired__<sheet>__<pack>") appear in the
+  hashed coverage ledger. The real consumption is already recorded under the real
+  sheet name, so the key is a redundant duplicate. Because coverage is inside the
+  HASHED deterministic_core, filtering it would change bundle_id for every
+  autowiring cohort and break all 7 locked invariants -- not worth a cosmetic
+  dedup. Documented in docs/KNOWN_ISSUES_P0.md (same judgment as the round-3
+  NO_DATA decision: do not perturb the hashed core for cosmetic gains).
+
+### CI / docs
+- CI now installs the freshly built wheel in a clean step (proves a non-editable
+  `pip install` of the wheel, not just that the build succeeds) (P1 #10 / P2 #14).
+- README test count updated 2024 -> 2030 (no-cohort-env suite).
+- docs/KNOWN_ISSUES_P0.md: P0-2 record corrected from "correct by design" to a
+  superseded entry documenting the real XLSX routing bug and the
+  single-format-reproduction lesson.
+
 ## [1.82.3] -- 2026-06-17 -- scope-honesty: no_auditable_data advisory on empty input (audit round 3, Section D NO_DATA recommendation)
 
 ### Added: run_metadata.advisories.no_auditable_data for empty cohorts

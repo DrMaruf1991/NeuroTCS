@@ -110,6 +110,13 @@ _ALIASES: dict[str, str] = {
     "gds15": "gds15_total", "gds15total": "gds15_total",
     # MRI volumetrics (unit suffix is checked; mm3 vs cm3 caught downstream)
     "hippocampaltotalmm3": "hippocampal_volume_total_mm3",
+    # P1 #4 (audit round 4): noun form. The natural column name
+    # "hippocampus_total_mm3" normalizes to "hippocampustotalmm3" and
+    # matched neither the adjective ("hippocampal...") nor the
+    # noun+volume ("hippocampusvolume...") key, so it was silently ignored.
+    # Once recognized it is an assay-calibrated volumetric -> REFUSED by
+    # default (loud), consumable only with --confirm-assays.
+    "hippocampustotalmm3": "hippocampal_volume_total_mm3",
     "hippocampusvolumetotalmm3": "hippocampal_volume_total_mm3",
     "etivmm3": None,  # explicit: eTIV in cm^3 only; mm3 column refused
     "etivcm3": "total_intracranial_volume_eTIV_cm3",

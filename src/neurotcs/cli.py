@@ -502,6 +502,40 @@ def _scaffold_mapping(desc: dict[str, Any]) -> dict[str, Any]:
             auto_routed.append(f"{axis}<-{name} (score {score})")
             break
 
+    # 2b. Column-evidence sweep (v1.82.4): the name-match loop above routes
+    #     each axis by SHEET NAME independently. A single sheet named e.g.
+    #     "Clinical" scores >0 for clinical but 0 for biological, so it never
+    #     becomes a biological candidate -- even when it physically carries a
+    #     biological_stage column. (CSV escapes this only because a filename-
+    #     stem sheet scores 0/0 and reaches the step-3 column fallback.) Here
+    #     we bring that same column evidence to the name-matched sheets: for
+    #     each sheet already routed to one axis, probe the OTHER axis; if it
+    #     resolves to a DISTINCT real (non-FILL) state column on that sheet
+    #     and the axis is not already mapped, engage it. Name-score ranks and
+    #     disambiguates; it must NEVER suppress an axis whose state column is
+    #     physically present. This makes XLSX same-sheet routing identical to
+    #     CSV/Parquet. Mirrors the step-3 "distinct real state column" rule so
+    #     a single column is never staged on two axes.
+    for routed_sheet in sorted(chosen_sheets):
+        info = next((i for n, i in non_toc_sheets if n == routed_sheet), None)
+        if info is None:
+            continue
+        for axis in ("clinical", "biological"):
+            if axis in mapping:
+                continue  # already routed by name
+            spec = _build_axis_spec(routed_sheet, info, axis)
+            this_state = spec.get("state")
+            is_real = isinstance(this_state, str) and not this_state.startswith("<FILL")
+            already_taken = {
+                axis_state_col[a] for a in axis_state_col
+                if mapping.get(a, {}).get("sheet") == routed_sheet
+            }
+            if is_real and this_state not in already_taken:
+                mapping[axis] = spec
+                axis_state_col[axis] = this_state
+                auto_routed.append(
+                    f"{axis}<-{routed_sheet} (column evidence: distinct state column)")
+
     # 3. If neither axis got a name-pattern match, fall back to the first non-TOC
     #    sheet that ACTUALLY has recognizable staging fields (item 4 guard). A
     #    generically-named single sheet (e.g. a one-CSV trial export named
@@ -647,6 +681,15 @@ def _columns_consumed_by_mapping(mapping: dict[str, Any]) -> dict[str, list[str]
             col = spec.get(key)
             if isinstance(col, str) and col:
                 consumed.setdefault(sheet, set()).add(col)
+        # P1 #3 (audit round 4): a per-visit treatment / TRAC column wired
+        # into the biological spec (spec["treatment_status"]) IS consumed --
+        # it is threaded to the staging trajectory and drives the TRAC
+        # carve-out. Credit it here so the coverage ledger does not file a
+        # genuinely-examined column under columns_ignored. Only a real,
+        # named column is counted (never overstates what was examined).
+        _tx_col = spec.get("treatment_status")
+        if isinstance(_tx_col, str) and _tx_col:
+            consumed.setdefault(sheet, set()).add(_tx_col)
     for r in mapping.get("ranges") or []:
         if not isinstance(r, dict):
             continue

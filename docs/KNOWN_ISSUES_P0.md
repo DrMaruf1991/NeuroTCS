@@ -151,7 +151,27 @@ expected value. Same standard as every verified value this session.
 
 ---
 
-## P0-2 disposition: reviewed, reproduced both directions -- CORRECT BY DESIGN (no change)
+## P0-2 disposition: SUPERSEDED -- round-1 verdict was WRONG (CSV/single-sheet repro); real XLSX routing bug, FIXED round 4 (P0 #1)
+
+> **CORRECTION (audit round 4).** The round-1 disposition below concluded
+> 'CORRECT BY DESIGN'. That was WRONG. It reproduced only a SINGLE
+> MIXED-COLUMN sheet (mmse_total/cdr_sb + centiloid on one sheet), where
+> the only gate is the assay-calibration refusal -- and correctly found
+> THAT safe. But it never tested the scenario that is actually broken: a
+> multi-sheet XLSX where a SHEET NAME scores for one axis (e.g. a sheet
+> named 'Clinical'). There, `_scaffold_mapping`'s name-match candidacy
+> loop makes the sheet a candidate for ONLY the matching axis and never
+> probes the other, so the second axis (e.g. biological_stage) is silently
+> dropped and the bundle is CLEAN. CSV escaped because a filename-stem
+> sheet scores 0/0 and reaches the column-evidence fallback (which detects
+> both axes) -- which is exactly why a CSV-only reproduction masked the
+> bug. Round 4 reproduced from roots across ALL formats and FIXED it (P0
+> #1): a column-evidence sweep ('2b') in `_scaffold_mapping` probes the
+> other axis for each routed sheet and engages it when it resolves to a
+> distinct real state column. Proven: XLSX now audits both axes; CSV
+> unchanged; a clinical-only sheet does not get a phantom biological axis.
+> Lesson: reproduce across EVERY format/path; a single-format repro is not
+> a disposition. The round-1 analysis below is retained for the record.
 
 **Audit claim (P0-2):** a single sheet carrying both a clinical-stage axis and a
 biological (A/T/N) axis audits ONLY the clinical axis, silently under-covering
@@ -299,7 +319,7 @@ evidence, not a default.
 
 External-audit status after this work:
 - P0-1 -- REAL bug, fixed + shipped (v1.81.0). [done]
-- P0-2 -- correct-by-design, reproduced both directions. [done]
+- P0-2 -- round-1 verdict WRONG (CSV/single-sheet repro masked it); real XLSX name-routing bug, fixed round 4 (P0 #1). [corrected]
 - P1-1 -- REAL but infeasible as a quick fix (numeric-only long->wide pivot
   cannot carry categorical state); scoped as a feature. [documented; deferred]
 - P1-2 -- correct placement + structured-advisory enhancement, shipped (v1.82.0).
@@ -333,7 +353,10 @@ the wording if one does).
 
 Standing discipline for both: read intent -> reproduce -> decide; never conclude
 from the prior pattern; willing to find REAL (like P1-1) or correct-by-design
-(like P0-2). A skipped invariant test is a false baseline; verify any fix is
+(like P1-2). NOTE: P0-2 is the cautionary counter-example -- a single-format
+(CSV/one-sheet) reproduction wrongly concluded correct-by-design and MASKED a real
+XLSX name-routing bug (found+fixed round 4). Reproduce across EVERY format/path.
+A skipped invariant test is a false baseline; verify any fix is
 invariant-safe via _compute_audit_id / bundle_id (audit_id is scores-only;
 run_metadata is non-hashed).
 
@@ -440,3 +463,37 @@ under a DUA, with a biostatistician co-author and OSF pre-registration -- is rea
 work no code can substitute for. The locked invariants prove REPRODUCIBILITY
 (same input -> same audit), never clinical VALIDITY. VALIDATION_PROTOCOL.md holds
 that gap honestly.
+
+---
+
+## P2 #12 disposition (audit round 4): internal __autowired__ ledger key -- DOCUMENTED WON'T-FIX (hashed core)
+
+**Audit claim (P2 #12):** internal synthetic table names of the form
+`__autowired__<sheet>__<pack>` appear in the user-facing coverage ledger
+(`columns_consumed`), where a reader expects only their real input sheets.
+
+**Reproduced from roots.** Confirmed: `columns_consumed` contains both the
+real sheet (`clinical: [clinical_stage, mmse_total, subject_id, visit,
+visit_date]`) AND a synthetic key
+(`__autowired__clinical__cognitivescales...: [measurement_name, visit_id]`).
+The synthetic key is an internal derived table created during autowiring to
+carry a measurement into a range pack; its columns are derived artifacts, not
+user input. The REAL consumption (mmse_total) is already correctly recorded
+under the real sheet name -- so the synthetic key is a redundant duplicate.
+
+**Disposition: documented WON'T-FIX.** The coverage block is built at
+bundle.py `_coverage_from` and placed INSIDE `raw_core` ->
+`deterministic_core` (bundle.py: `"coverage": _coverage_from(result)` within
+raw_core; `deterministic_core = _normalize(raw_core)`; `bundle_id =
+_compute_bundle_id(deterministic_core)`). It is therefore HASHED into
+bundle_id. Filtering the `__autowired__` key would change `deterministic_core`
+-> change bundle_id for every cohort that autowires a measurement, INCLUDING
+the real DUA cohorts -- breaking all 7 locked invariants (ADNI cTCS=0.994575
+audit_id d344ec1a..., OASIS-3, NACC, MIRIAD). Re-blessing 7 invariant hashes
+to remove a cosmetic, redundant ledger entry -- whose real information is
+already recorded under the real sheet name -- is a bad trade: it sacrifices
+the determinism guarantee (and invalidates any downstream consumer who pinned
+a bundle_id) for a minor readability gain. The synthetic name is also a
+faithful, deterministic record that autowiring engaged (provenance), which is
+arguably appropriate to hash. Same judgment as the round-3 NO_DATA decision:
+do not perturb the hashed core for cosmetic gains. NO code change.
