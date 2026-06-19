@@ -1,3 +1,33 @@
+## [1.82.6] -- 2026-06-19 -- release polish (no change to the audit engine, rule packs, or determinism)
+
+Two release-polish items flagged by the v1.82.5 production audits, fixed at root.
+No functional change to the auditor: 7 cohort invariants byte-identical; suite
+2032 passed / 24 skipped (2030 + 2 new --version tests).
+
+### Added
+- **`neurotcs --version`**: top-level CLI flag reporting the package version and
+  exiting 0. Closes the one user-facing CLI gap noted by the production audit (the
+  parser previously required a subcommand and had no version flag). Locked by
+  tests/cli/test_version_flag.py.
+
+### Changed
+- **Repo-wide ruff is now clean**: the two historical reviewer-verification
+  notebooks under docs/reviewer_package/ are excluded via [tool.ruff]
+  extend-exclude (archived artifacts, not source), so `ruff check .` matches CI's
+  src/tests/scripts lint scope.
+
+### Deliberately unchanged (verified from roots, documented -- not defects)
+- **PyPI classifier "Development Status :: 4 - Beta"**: retained. It is the honest
+  classifier for a research / regulatory-audit framework that explicitly disclaims
+  FDA-cleared-device and general-medical-AI status; promoting to "5 - Production/
+  Stable" would over-signal against the limitations the audits asked us to keep.
+- **Empty-input top-line status CLEAN + `no_auditable_data` advisory**: retained.
+  The status enum is load-bearing and HASHED into the deterministic_core; the
+  no-data condition is already machine-readable via the non-hashed advisory
+  (v1.82.3). External audits flagged the top-line wording as a judgment call
+  deferred to the maintainer; changing the hashed status enum for a semantic
+  nicety is not warranted (same discipline as the P2 #12 disposition).
+
 ## [1.82.5] -- 2026-06-19 -- type-check hardening: all mypy findings resolved at root + mypy promoted to blocking CI gate
 
 ### Changed: mypy is now a BLOCKING CI gate
