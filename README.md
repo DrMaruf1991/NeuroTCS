@@ -5,8 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.82.5](https://img.shields.io/badge/version-1.82.5-success.svg)](CHANGELOG.md)
-[![Tests 2030](https://img.shields.io/badge/tests-2030%20passed-success.svg)](tests/)
+[![Version 1.82.6](https://img.shields.io/badge/version-1.82.6-success.svg)](CHANGELOG.md)
+[![Tests 2032](https://img.shields.io/badge/tests-2032%20passed-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7%20FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions
@@ -132,7 +132,7 @@ git clone https://github.com/DrMaruf1991/NeuroTCS.git
 cd NeuroTCS
 pip install -e .
 
-# Tests (no cohort data required) -- expect 2030 passed, ~24 skipped (v1.82.5)
+# Tests (no cohort data required) -- expect 2032 passed, ~24 skipped (v1.82.6)
 python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_adni_audit.py \
     --ignore=tests/audit_core/test_real_oasis3_audit.py \
@@ -141,7 +141,7 @@ python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_miriad_fairness_audit.py \
     --ignore=tests/audit_core/test_four_cohort_triangulation.py
 
-# Full suite with cohort data (set env vars first; expect 2030+cohort tests passed, cohort-version-dependent)
+# Full suite with cohort data (set env vars first; expect 2032+cohort tests passed, cohort-version-dependent)
 export NEUROTCS_OASIS3_CDR=/path/to/OASIS3_UDSb4_cdr.csv
 export NEUROTCS_ADNI_DXSUM_RDA=/path/to/ADNIMERGE2/data/DXSUM.rda
 export NEUROTCS_NACC_CSV=/path/to/investigator_nacc73_slim.csv
@@ -149,7 +149,7 @@ export NEUROTCS_MIRIAD_DIR=/path/to/MIRIAD_directory
 python -m pytest tests/ -q
 ```
 
-The test count is environment-dependent: **2030 passed / 24 skipped** on a
+The test count is environment-dependent: **2032 passed / 24 skipped** on a
 standard install without cohort env vars (cohort-data tests skip; current as of
 v1.80.0). As of v1.73.0 the R (`pyreadr`) and SPSS (`pyreadstat`) readers ship in
 core, so those format tests run on a standard install -- no extra is needed. With
@@ -250,7 +250,7 @@ docs/SCOPE.md Regulatory status.
 @software{salokhiddinov2026neurotcs,
   author    = {Salokhiddinov, Marufjon},
   title     = {NeuroTCS: Citation-locked, fail-closed longitudinal medical AI audit framework},
-  version   = {1.82.5},
+  version   = {1.82.6},
   year      = {2026},
   url       = {https://github.com/DrMaruf1991/NeuroTCS},
   note      = {temporalmetric v1.7 FINAL specification, 8 AD production rule packs, four-cohort triangulation lock; v1.9.0+ AD-only scope}
