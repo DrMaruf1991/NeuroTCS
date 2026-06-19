@@ -8,11 +8,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
-import pytest
 
+import neurotcs.validation as _val
 from neurotcs import cli
 from neurotcs.cli import EXIT_CLEAN, EXIT_INPUT
-import neurotcs.validation as _val
 
 
 def _tiny_cohort(tmp_path: Path) -> Path:
