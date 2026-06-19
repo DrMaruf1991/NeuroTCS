@@ -24,6 +24,7 @@ from typing import Any
 
 from neurotcs import (
     BundleVerificationError,
+    __version__,
     build_bundle,
     fingerprint_dataframe,
     fingerprint_file,
@@ -1512,6 +1513,10 @@ def build_parser() -> argparse.ArgumentParser:
         description="NeuroTCS - fail-closed clinical trajectory auditor.",
         epilog="For low-level single-axis audits with bootstrap/prior tuning, "
                "see the 'neurotcs-audit' command.",
+    )
+    p.add_argument(
+        "--version", action="version",
+        version=f"neurotcs {__version__}",
     )
     sub = p.add_subparsers(dest="command", required=True)
 
