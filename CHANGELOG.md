@@ -1,3 +1,22 @@
+## [1.82.2] -- 2026-06-17 -- fix: validate-coverage fails closed on no-bundle audit (external audit round 2, Defect 2)
+
+### Fixed: a no-bundle RuntimeError no longer escapes validate-coverage as exit 1
+- run_audit_flags (validation/runner.py) deliberately raises RuntimeError when
+  the injected-error cohort audits to no bundle (nothing to score). In
+  cmd_validate_coverage that call sat OUTSIDE the try/except (which wrapped only
+  inject_errors), so the RuntimeError escaped as a raw traceback + exit 1
+  (FLAGS_PRESENT) -- the same fail-open pattern as Defect 1, in a different
+  subsystem.
+- Fix: the run_audit_flags + score_detection calls are brought inside the
+  existing try/except, with a RuntimeError handler that surfaces the guard's own
+  (already-clean) message and returns EXIT_INPUT (4). The handler is scoped to
+  this block and re-emits the real message, so a different RuntimeError still
+  shows its reason rather than being silently masked.
+- Locked by tests/cli/test_validate_coverage_no_bundle_fail_closed.py (no-bundle
+  RuntimeError -> EXIT_INPUT; happy path -> EXIT_CLEAN, proving the boundary
+  extension is transparent on success). All 7 real-cohort invariants unchanged
+  (CLI-error-path-only fix); suite 2020 -> 2022.
+
 ## [1.82.1] -- 2026-06-17 -- fix: corrupt/mislabeled binary inputs fail closed (external audit round 2, Defect 1)
 
 ### Fixed: binary parser failures no longer leak a traceback as exit 1 (FLAGS_PRESENT)

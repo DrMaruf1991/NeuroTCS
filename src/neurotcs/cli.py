@@ -1408,11 +1408,19 @@ def cmd_validate_coverage(args: argparse.Namespace) -> int:
         corrupt = _Path(td) / "corrupt.xlsx"
         try:
             manifest = inject_errors(args.cohort, spec, args.seed, corrupt)
+            flags = run_audit_flags(str(corrupt))
+            report = score_detection(manifest, flags)
         except (ValueError, FileNotFoundError) as e:
             _err(str(e))
             return EXIT_INPUT
-        flags = run_audit_flags(str(corrupt))
-        report = score_detection(manifest, flags)
+        except RuntimeError as e:
+            # run_audit_flags raises RuntimeError when the injected-error
+            # cohort audits to no bundle (nothing to score). That is an
+            # input-level condition, not an internal fault: surface the
+            # guard's own message and fail closed with EXIT_INPUT instead of
+            # leaking a traceback as exit 1 (FLAGS_PRESENT).
+            _err(str(e))
+            return EXIT_INPUT
 
     payload = report.to_dict()
     payload["seed"] = args.seed
