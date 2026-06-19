@@ -1,3 +1,23 @@
+## [1.82.3] -- 2026-06-17 -- scope-honesty: no_auditable_data advisory on empty input (audit round 3, Section D NO_DATA recommendation)
+
+### Added: run_metadata.advisories.no_auditable_data for empty cohorts
+- A third-auditor review recommended (not a correctness bug) that an empty
+  cohort returning status CLEAN reads more honestly with an explicit no-data
+  signal. Reproduced: an all-empty input returns CLEAN with cTCS None -- a
+  vacuous CLEAN over no data.
+- Added a structured, NON-HASHED advisory: when every input table has zero
+  data rows, run_metadata.advisories['no_auditable_data'] records that the
+  CLEAN status is vacuous and no audit was performed. The (emergent) CLEAN
+  status is intentionally left unchanged -- the signal rides run_metadata, so
+  it cannot perturb the hashed deterministic_core / bundle_id.
+- Detector is input-shape based (all tables zero rows), deliberately NOT
+  result.n_transitions == 0, which also occurs for real single-visit cohorts
+  and would misfire. Verified: a real 3-row cohort (incl. a single-visit
+  subject) does NOT receive the advisory.
+- Locked by tests/cli/test_no_auditable_data_advisory.py (empty -> advisory +
+  CLEAN; real -> no misfire). All 7 real-cohort invariants unchanged
+  (non-hashed advisory only); suite 2022 -> 2024.
+
 ## [1.82.2] -- 2026-06-17 -- fix: validate-coverage fails closed on no-bundle audit (external audit round 2, Defect 2)
 
 ### Fixed: a no-bundle RuntimeError no longer escapes validate-coverage as exit 1

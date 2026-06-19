@@ -1260,6 +1260,21 @@ def cmd_audit(args: argparse.Namespace) -> int:
                 _h.update(fingerprint_dataframe(tables[_name]).encode("utf-8"))
             fp = _h.hexdigest()
             fp_kind = "normalized_data_sha256"
+        # Scope-honesty: if every input table has zero data rows, the CLEAN
+        # status is vacuous -- no audit was actually performed. Record a
+        # structured, NON-HASHED advisory so a consumer is not misled by a
+        # CLEAN verdict over no data. Status is intentionally left CLEAN
+        # (emergent, tested adapter behaviour); the signal rides run_metadata.
+        if tables and all(
+            getattr(_df, "shape", (1,))[0] == 0 for _df in tables.values()
+        ):
+            _advisories["no_auditable_data"] = {
+                "reason": (
+                    "every input table has zero data rows; the CLEAN status "
+                    "is vacuous -- no audit was performed"
+                ),
+                "tables": {str(_n): 0 for _n in tables},
+            }
         bundle = build_bundle(result, input_fingerprint=fp,
                               input_fingerprint_kind=fp_kind,
                               input_warnings=submission_warnings,
