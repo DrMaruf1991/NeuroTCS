@@ -30,6 +30,31 @@ New tests/io/test_visit_optional_staging.py locks the full matrix: both paths x
 {visit-present (legacy), visit-absent+date, visit-absent+row-order} + fail-closed
 on missing subject_id/state. Suite: 2032 -> 2039 passed, 24 skipped.
 
+### Fixed (defects 2 & 3 -- visit optional in SCAFFOLDING too; same root)
+describe --emit-mapping emitted <FILL:visit> for the now-optional visit field,
+and the audit validator refused any mapping containing a <FILL:> -- so the tool
+rejected its own emitted output (defect 2), and a clean subject/date/state file
+with no visit column scaffolded a blocking <FILL:visit> that made zero-config
+auto-detect give up (defect 3). Both are one root: OPTIONAL staging fields were
+emitted as REQUIRED <FILL:> placeholders.
+
+Fix: _build_axis_spec now returns visit=null on miss (mirroring visit_date, which
+already did this); the fallback templates split required vs optional via the new
+_required_fill() / _optional_null() helpers. Only required fields (sheet,
+subject_id, state) get a <FILL:> on miss; optional fields (visit, visit_date) get
+null, which the audit path derives. The now-unused _STAGING_COLS constant was
+removed. _has_placeholder is unchanged: because optional fields no longer carry
+<FILL:>, it only ever sees genuinely-unfilled REQUIRED fields, which still block
+(fail-closed preserved).
+
+Net effect: an A4/LEARN-shaped file (subject + visit_date + stage, no visit code)
+now scaffolds a COMPLETE mapping and round-trips describe -> audit with ZERO manual
+editing -- the exact case that previously required six hand-edits.
+
+New tests/cli/test_visit_optional_scaffold.py (5): complete auto-detect with
+visit=null, emitted mapping passes the placeholder gate, missing-required still
+blocks, required/optional partition, empty-desc fallback. Suite: 2039 -> 2044.
+
 ## [1.82.6] -- 2026-06-19 -- release polish (no change to the audit engine, rule packs, or determinism)
 
 Two release-polish items flagged by the v1.82.5 production audits, fixed at root.

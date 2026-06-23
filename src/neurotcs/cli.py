@@ -49,7 +49,12 @@ EXIT_REFUSED = 3
 EXIT_INPUT = 4
 EXIT_VERIFY = 5
 
-_STAGING_COLS = ("subject_id", "visit", "visit_date", "state")
+# v1.83.0: staging field requiredness. Required fields (sheet, subject_id,
+# state) get a <FILL:> placeholder on miss (user MUST supply). Optional
+# fields (visit, visit_date) get null on miss -- the audit path derives
+# them, so a placeholder there would wrongly block a complete mapping.
+_STAGING_REQUIRED_FIELDS = ("sheet", "subject_id", "state")
+_STAGING_OPTIONAL_FIELDS = ("visit", "visit_date")
 _RANGE_COLS = ("patient_id", "visit_id", "measurement_name", "value", "unit")
 
 
@@ -356,6 +361,16 @@ def _best_column(cols: list[str], synonyms: tuple[tuple[str, int], ...],
     return None if return_none_on_miss else f"<FILL:{fallback_canonical}>"
 
 
+def _required_fill() -> dict[str, Any]:
+    """Required staging fields as <FILL:> placeholders (must be edited)."""
+    return {c: f"<FILL:{c}>" for c in _STAGING_REQUIRED_FIELDS}
+
+
+def _optional_null() -> dict[str, Any]:
+    """Optional staging fields as null (derived by the audit path on miss)."""
+    return {c: None for c in _STAGING_OPTIONAL_FIELDS}
+
+
 def _build_axis_spec(sheet: str, info: dict[str, Any], axis: str) -> dict[str, Any]:
     """Build a {sheet, subject_id, visit, visit_date, state} spec by auto-detecting
     columns via the synonym tables.
@@ -370,7 +385,10 @@ def _build_axis_spec(sheet: str, info: dict[str, Any], axis: str) -> dict[str, A
     spec = {
         "sheet": sheet,
         "subject_id": _best_column(cols, _COL_SYN_SUBJECT_ID, "subject_id"),
-        "visit":      _best_column(cols, _COL_SYN_VISIT, "visit"),
+        # v1.83.0: visit is OPTIONAL (consumer derives order from visit_date
+        # or row order). Like visit_date, null on miss -- NOT a blocking FILL.
+        "visit":      _best_column(cols, _COL_SYN_VISIT, "visit",
+                                   return_none_on_miss=True),
         # visit_date may be None -> consumer derives from visit order. Don't FILL.
         "visit_date": _best_column(cols, _COL_SYN_VISIT_DATE, "visit_date",
                                    return_none_on_miss=True),
@@ -440,8 +458,7 @@ def _scaffold_mapping(desc: dict[str, Any]) -> dict[str, Any]:
     clinical, all synonyms find exact matches, visit_date is non-null.
     """
     if not desc:
-        return {"clinical": {"sheet": "<FILL:sheet>",
-                             **{c: f"<FILL:{c}>" for c in _STAGING_COLS}},
+        return {"clinical": {**_required_fill(), **_optional_null()},
                 "ranges": []}
 
     # 1. Classify sheets: TOC vs candidate
@@ -576,10 +593,7 @@ def _scaffold_mapping(desc: dict[str, Any]) -> dict[str, Any]:
                 mapping["clinical"] = _build_axis_spec(name, info, "clinical")
                 auto_routed.append(f"clinical<-{name} (fallback: no name match found)")
         else:
-            mapping["clinical"] = {
-                "sheet": "<FILL:sheet>",
-                **{c: f"<FILL:{c}>" for c in _STAGING_COLS},
-            }
+            mapping["clinical"] = {**_required_fill(), **_optional_null()}
 
     # 4. Top-level notes block (consumed by the user, dropped by _clean_mapping)
     notes = [
