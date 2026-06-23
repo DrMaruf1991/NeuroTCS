@@ -55,6 +55,39 @@ New tests/cli/test_visit_optional_scaffold.py (5): complete auto-detect with
 visit=null, emitted mapping passes the placeholder gate, missing-required still
 blocks, required/optional partition, empty-desc fallback. Suite: 2039 -> 2044.
 
+### Added (cohort recognition -- A4/LEARN one-command auditing)
+New neurotcs.cohorts package: column-signature recognizers that auto-build the
+staging mapping for a known public cohort. The A4/LEARN CDR recognizer keys on the
+(BID, CDGLOBAL, CDADTC_DAYS_T0) signature and builds a mapping that crosswalks
+CDGLOBAL (0->CN, 0.5->MCI, >=1->AD), treats the -99 day sentinel as missing, and
+derives visit ordering from the day-offset -- the exact manual prep a real A4 CDR
+file needed before (six hand-steps), now one command:
+  neurotcs audit cdr.csv --cohort a4 -o out
+
+DESIGN -- recognize-then-CONFIRM (never silent). Running WITHOUT --cohort prints a
+suggestion ('this looks like A4/LEARN ... re-run with --cohort a4') and otherwise
+falls through to the unchanged generic scaffold. The crosswalk/sentinel mapping is
+applied ONLY on explicit --cohort a4. Recognition never rewrites clinical values by
+itself; an unrecognized file is unaffected (generic path, byte-identical).
+
+Additive and fail-closed: the recognizer builds a MAPPING for the existing
+tables_to_submission path; it does not touch the invariant-locked Trajectory
+loaders in input_contract.*.adapters. An all-sentinel / unmappable A4 file raises
+(nothing to audit) rather than guessing. Also fixed the zero-config summary printer
+to treat visit as optional (sp.get('visit')) -- same root as the staging fix, in the
+display path.
+
+SCOPE (honest): --cohort currently recognizes A4/LEARN only. The ADNI/OASIS-3/NACC/
+MIRIAD canonical loaders remain in input_contract.*.adapters (unchanged, invariant-
+locked); exposing them via --cohort is roadmap, to be built and verified where the
+DUA data is mounted -- not shipped unproven.
+
+New tests/cohorts/test_a4_recognizer.py (8): recognition (A4 yes / non-A4 no /
+partial-signature no), CDGLOBAL crosswalk, mapping shape + derivation, sentinel-row
+dropped, fail-closed on all-sentinel, end-to-end via tables_to_submission. Proven
+end-to-end through the real CLI (status CLEAN, cTCS 1.0, signed bundle). Suite:
+2044 -> 2052 passed, 24 skipped.
+
 ## [1.82.6] -- 2026-06-19 -- release polish (no change to the audit engine, rule packs, or determinism)
 
 Two release-polish items flagged by the v1.82.5 production audits, fixed at root.

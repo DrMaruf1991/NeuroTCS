@@ -837,8 +837,36 @@ def cmd_audit(args: argparse.Namespace) -> int:
     # exactly what it auto-detected, and it falls back to the explicit-mapping
     # workflow the moment anything is ambiguous.
     if args.mapping is None:
-        scaffold = _scaffold_mapping(describe_tables(tables))
-        mapping = _clean_mapping(scaffold)
+        # v1.83.0: cohort recognition (recognize-then-confirm). If the file
+        # matches a known public cohort signature, SUGGEST it; apply its mapping
+        # only when the user passes --cohort <id>. Never rewrites values silently.
+        from neurotcs.cohorts import recognize_cohort
+        _match = recognize_cohort(tables)
+        _cohort_arg = getattr(args, "cohort", None)
+        if _cohort_arg is not None:
+            if _match is None or _match.cohort_id != _cohort_arg:
+                _err(
+                    f"--cohort {_cohort_arg} was given, but this file does not "
+                    f"match that cohort's signature. Run without --cohort to see "
+                    f"which cohort (if any) is recognized."
+                )
+                return EXIT_INPUT
+            if not args.quiet:
+                print(f"# applying {_match.display_name} cohort mapping "
+                      f"(--cohort {_match.cohort_id}):")
+                for _n in _match.notes:
+                    print(f"#   {_n}")
+            assert _match.build_mapping is not None
+            scaffold = _match.build_mapping(tables)
+            mapping = _clean_mapping(scaffold)
+        else:
+            if _match is not None and not args.quiet:
+                print(f"# NOTE: this file looks like {_match.display_name} data "
+                      f"(confidence {_match.confidence:.0%}). To apply its "
+                      f"auto-mapping (CDR crosswalk, sentinel handling, ordering), "
+                      f"re-run with:  --cohort {_match.cohort_id}")
+            scaffold = _scaffold_mapping(describe_tables(tables))
+            mapping = _clean_mapping(scaffold)
         if _has_placeholder(mapping) or not any(
             k in mapping for k in ("clinical", "biological")
         ):
@@ -856,8 +884,9 @@ def cmd_audit(args: argparse.Namespace) -> int:
                 if axis in mapping:
                     sp = mapping[axis]
                     vd = sp.get("visit_date") or "(derived from visit order)"
+                    _v = sp.get("visit") or "(derived from order)"
                     print(f"  {axis}: sheet '{sp['sheet']}' "
-                          f"subject_id={sp['subject_id']} visit={sp['visit']} "
+                          f"subject_id={sp['subject_id']} visit={_v} "
                           f"visit_date={vd} state={sp['state']}")
             print("  (to override, generate and edit a mapping with "
                   "`neurotcs describe ... --emit-mapping mapping.json`)")
@@ -1549,6 +1578,12 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--mapping", default=None,
                    help="mapping JSON (see 'describe --emit-mapping'). OMIT to "
                         "auto-detect a mapping for conventional files (zero-config).")
+    a.add_argument("--cohort", default=None, metavar="ID",
+                   help="apply a known public cohort's auto-mapping (currently: "
+                        "a4 for A4/LEARN CDR). Run WITHOUT this first -- if the "
+                        "file matches a known cohort, the auditor suggests the id "
+                        "to use. Recognition never rewrites clinical values "
+                        "silently; --cohort is the explicit confirmation.")
     a.add_argument("-o", "--outdir", default="neurotcs_out", help="output directory")
     a.add_argument("--csv", action="store_true", help="also write flags CSV")
     a.add_argument("--svg", action="store_true", help="also write summary SVG")
