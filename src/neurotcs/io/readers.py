@@ -878,11 +878,16 @@ def tables_to_submission(
         )
 
         if derive_date:
-            # Build a working copy with a derived date column. Sort by
-            # (subject_id, visit) so the derivation preserves intra-subject order.
+            # Build a working copy with a derived date column.
+            # v1.83.0: visit is OPTIONAL here. The derive path needs an ORDERING
+            # key, not specifically a column named visit. Choose one, fail-closed:
+            #   1) a real visit column      -> UNCHANGED behavior (audit_ids stable)
+            #   2) a real visit_date column -> order by it (dates still derived)
+            #   3) stable original row order -> derive order from row sequence
+            # subject_id and state are always required; visit is not.
             sid_col = spec["subject_id"]
-            v_col = spec["visit"]
-            missing_required = [c for c in (sid_col, v_col, spec["state"])
+            state_col = spec["state"]
+            missing_required = [c for c in (sid_col, state_col)
                                 if c not in df.columns]
             if missing_required:
                 raise ValueError(
@@ -891,7 +896,21 @@ def tables_to_submission(
                     f"NeuroTCS will not guess column names -- fix the mapping to "
                     f"point at a real column."
                 )
-            df_local = df[[sid_col, v_col, spec["state"]]].copy()
+            v_col_decl = spec.get("visit")
+            vd_decl = spec.get("visit_date")
+            if isinstance(v_col_decl, str) and v_col_decl in df.columns:
+                _order_mode = "visit"
+                v_col = v_col_decl
+            elif (isinstance(vd_decl, str) and vd_decl in df.columns
+                  and not vd_decl.startswith("<FILL:")):
+                _order_mode = "visit_date"
+                v_col = vd_decl
+            else:
+                _order_mode = "row"
+                v_col = None
+            _keep = ([sid_col, state_col] if v_col is None
+                     else [sid_col, v_col, state_col])
+            df_local = df[_keep].copy()
             # v1.71.0: optionally retain a per-visit treatment column so the
             # staging layer can carry treatment context (TRAC carve-out). Only
             # when the spec names a real `treatment_status` column present in the
@@ -900,40 +919,93 @@ def tables_to_submission(
             _tx_present = isinstance(_tx, str) and _tx in df.columns
             if _tx_present:
                 df_local["treatment_status"] = df[_tx].to_numpy()
-            # Sort by (subject_id, NATURAL visit order). A plain lexical sort on
-            # the visit code mis-orders unpadded codes ('m12' before 'm6',
-            # 'v10' before 'v2'); the natural key compares embedded numbers
-            # numerically so the derived chronology matches true visit number.
-            # pandas sorts a column of (comparable) tuples lexicographically.
-            df_local = df_local.assign(_nat_key=df_local[v_col].map(_natural_sort_key))
-            df_local = (df_local.sort_values(by=[sid_col, "_nat_key"],
-                                             kind="stable")
-                        .drop(columns="_nat_key")
-                        .reset_index(drop=True))
+            # Order rows within subject according to the chosen ordering key.
+            #  - "visit": natural sort on the visit code (UNCHANGED legacy path;
+            #    a plain lexical sort mis-orders unpadded codes like m12<m6, so
+            #    the natural key compares embedded numbers numerically).
+            #  - "visit_date": sort by the real date column (chronological).
+            #  - "row": preserve the original row order within subject.
+            if _order_mode == "visit":
+                df_local = df_local.assign(
+                    _nat_key=df_local[v_col].map(_natural_sort_key))
+                df_local = (df_local.sort_values(by=[sid_col, "_nat_key"],
+                                                 kind="stable")
+                            .drop(columns="_nat_key")
+                            .reset_index(drop=True))
+            elif _order_mode == "visit_date":
+                df_local = df_local.assign(
+                    _date_key=pd.to_datetime(df_local[v_col], errors="coerce"))
+                df_local = (df_local.sort_values(by=[sid_col, "_date_key"],
+                                                 kind="stable")
+                            .drop(columns="_date_key")
+                            .reset_index(drop=True))
+            else:  # "row": stable original order within subject
+                df_local = (df_local.sort_values(by=[sid_col], kind="stable")
+                            .reset_index(drop=True))
             # Vectorized derivation: 2000-01-01 + 365 days per visit index per subject.
             # Use vector math (no lambda) so the closure-capture warning B023 doesn't fire.
             visit_index = df_local.groupby(sid_col, sort=False).cumcount()
             df_local["_derived_visit_date"] = (
                 pd.Timestamp("2000-01-01") + pd.to_timedelta(visit_index * 365, unit="D")
             )
-            _cols = [sid_col, v_col, "_derived_visit_date", spec["state"]]
+            # The output requires a visit column. In "visit" mode it is the real
+            # column; in "visit_date"/"row" modes there is no visit column, so the
+            # 1-based within-subject order index serves as the visit identifier
+            # (preserves the (subject, visit, visit_date, state) output contract).
+            if v_col is not None:
+                df_local["_visit_out"] = df_local[v_col].to_numpy()
+            else:
+                df_local["_visit_out"] = (visit_index + 1).to_numpy()
+            _cols = [sid_col, "_visit_out", "_derived_visit_date", spec["state"]]
             out = df_local[_cols].copy()
             out.columns = list(_STAGING_REQUIRED)
             if _tx_present:
                 out["treatment_status"] = df_local["treatment_status"].to_numpy()
             out["visit_date"] = pd.to_datetime(out["visit_date"])
+            _order_desc = {
+                "visit": f"visit ordering (column '{v_col}')",
+                "visit_date": f"visit ordering (date column '{v_col}')",
+                "row": "visit ordering (original row order)",
+            }[_order_mode]
             warnings.append(
                 f"{axis}: sheet '{sheet}' has no usable visit_date column; dates "
-                f"were DERIVED from visit ordering (column '{v_col}'). Visit ORDER "
+                f"were DERIVED from {_order_desc}. Visit ORDER "
                 f"is preserved, but the derived dates are synthetic -- any "
                 f"time-window-dependent rule is not meaningful on this axis. To use "
                 f"real dates, add a visit_date column to '{sheet}' and re-run."
             )
         else:
-            colmap = {k: spec[k] for k in _STAGING_REQUIRED}
-            _require_columns(df, colmap, f"{axis} staging")
-            out = df[[colmap[k] for k in _STAGING_REQUIRED]].copy()
-            out.columns = list(_STAGING_REQUIRED)
+            # Date-present path. v1.83.0: visit is OPTIONAL here too. When the
+            # mapping supplies a real visit column, the path is UNCHANGED (the
+            # full _STAGING_REQUIRED colmap, byte-identical output -> audit_ids
+            # stable for every existing cohort/adapter). When visit is absent,
+            # synthesize it from chronological order of the real visit_date
+            # within each subject (1-based index), preserving the output contract.
+            _v_decl = spec.get("visit")
+            _visit_present = isinstance(_v_decl, str) and _v_decl in df.columns
+            if _visit_present:
+                colmap = {k: spec[k] for k in _STAGING_REQUIRED}
+                _require_columns(df, colmap, f"{axis} staging")
+                out = df[[colmap[k] for k in _STAGING_REQUIRED]].copy()
+                out.columns = list(_STAGING_REQUIRED)
+            else:
+                # require subject_id, visit_date, state (not visit)
+                _req = {k: spec[k] for k in ("subject_id", "visit_date", "state")}
+                _require_columns(df, _req, f"{axis} staging")
+                _tmp = df[[_req["subject_id"], _req["visit_date"],
+                          _req["state"]]].copy()
+                _tmp.columns = ["subject_id", "visit_date", "state"]
+                from neurotcs.audit_core.trajectory import _coerce_visit_dates as _cvd0
+                _tmp["visit_date"] = _cvd0(_tmp["visit_date"])
+                _tmp = (_tmp.sort_values(by=["subject_id", "visit_date"],
+                                         kind="stable").reset_index(drop=True))
+                _tmp["visit"] = _tmp.groupby("subject_id", sort=False).cumcount() + 1
+                out = _tmp[list(_STAGING_REQUIRED)].copy()
+                warnings.append(
+                    f"{axis}: sheet '{sheet}' has no visit column; visit index "
+                    f"was DERIVED from chronological visit_date order within each "
+                    f"subject. Visit ORDER is preserved from the real dates."
+                )
             # v1.71.0: optionally retain a per-visit treatment column (TRAC).
             _tx = spec.get("treatment_status")
             if isinstance(_tx, str) and _tx in df.columns:

@@ -1,3 +1,35 @@
+## [1.83.0] -- 2026-06-23 -- visit is OPTIONAL in staging (root fix: derive ordering from any available key)
+
+### Fixed (root cause, both staging branches)
+tables_to_submission hard-required a 'visit' column even though the derive-date
+path documented visit_date as optional. The two halves disagreed: a dataset with
+an ordering signal (a real visit_date, or stable row order) but no column named
+'visit' crashed -- KeyError when 'visit' was absent, "declared column [None] not
+found" when null, refused when a <FILL:> placeholder. This is exactly the friction
+a real preclinical cohort (A4/LEARN CDR: subject + date + stage, no visit code)
+hits. The bug existed in BOTH branches of tables_to_submission (the no-date derive
+path AND the real-date path), so both are fixed.
+
+The derive path now selects an ordering key in priority order, fail-closed:
+  1. a real 'visit' column      -> UNCHANGED behavior (natural-sort; byte-identical)
+  2. a real 'visit_date' column -> chronological order
+  3. stable original row order  -> derived order (recorded in a visible warning)
+The real-date path likewise makes 'visit' optional, synthesizing a 1-based
+within-subject visit index from chronological visit_date order when absent.
+subject_id and state remain required; only 'visit' became optional.
+
+### Invariant safety (by construction)
+Every existing cohort/adapter (ADNI/OASIS-3/NACC/MIRIAD) supplies a real 'visit'
+column, so they take the UNCHANGED branch -> identical output -> audit_ids cannot
+drift. The visit-present path is byte-for-byte the legacy code. (The 7 governed
+cohort invariants are proven safe by construction + the full no-cohort suite;
+live invariant re-confirmation runs where the DUA data is mounted.)
+
+### Tests
+New tests/io/test_visit_optional_staging.py locks the full matrix: both paths x
+{visit-present (legacy), visit-absent+date, visit-absent+row-order} + fail-closed
+on missing subject_id/state. Suite: 2032 -> 2039 passed, 24 skipped.
+
 ## [1.82.6] -- 2026-06-19 -- release polish (no change to the audit engine, rule packs, or determinism)
 
 Two release-polish items flagged by the v1.82.5 production audits, fixed at root.
