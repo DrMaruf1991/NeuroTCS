@@ -1,3 +1,23 @@
+## [1.85.1] -- 2026-06-24 -- A4/LEARN brought to real-data invariant parity
+
+Adds tests/audit_core/test_real_a4_audit.py: a LOCKED real-data invariant for the
+A4/LEARN --cohort recognizer, matching the standard already enforced for NACC,
+OASIS-3, ADNI, and MIRIAD. Run against the real A4 Raw Data CDR export, --cohort a4
+reproduces:
+
+  cTCS = 0.996374   (8,892 transitions, 34 flagged)
+
+A4 is preclinical (amyloid-positive cognitively-unimpaired), so most subjects are CN
+with few admissible-state transitions; the cTCS is correspondingly high but is a REAL
+audit of thousands of transitions, not a trivial perfect score. The test gates on
+NEUROTCS_A4_CDR (skips without DUA data), exactly like the other four cohort
+invariants. All five public cohorts now carry an enforced real-data cTCS invariant:
+
+  a4 0.996374 | nacc 0.991502 | oasis3 0.9942 | adni 0.994575 | miriad 0.985369
+
+No engine, rule-pack, or recognizer logic changed -- this release only adds the
+missing A4 invariant lock (test-only; full suite 2084 passed / 25 skipped).
+
 ## [1.85.0] -- 2026-06-24 -- MIRIAD joins --cohort: all four AD cohorts in one command
 
 `--cohort miriad <DIRECTORY>` now audits MIRIAD directly from its three XNAT export
