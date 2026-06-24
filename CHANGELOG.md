@@ -1,3 +1,30 @@
+## [1.85.0] -- 2026-06-24 -- MIRIAD joins --cohort: all four AD cohorts in one command
+
+`--cohort miriad <DIRECTORY>` now audits MIRIAD directly from its three XNAT export
+files, reproducing the locked longitudinal cTCS=0.985369 (69 trajectories, 454
+transitions, 7 flagged) on real DUA data. This completes the four-cohort set:
+
+  - nacc   -> 0.991502    (single CSV)
+  - oasis3 -> 0.9942      (single CSV)
+  - adni   -> 0.994575    (single .rda)
+  - miriad -> 0.985369    (three-file XNAT export directory)
+
+MIRIAD was the multi-file exception (v1.84.0 deferred it honestly). It is wired
+here WITHOUT duplicating its entangled three-file join: the recognizer detects the
+three file roles by header content (clinical = subject+MMSE; sessions =
+subject+age+scans; subjects = subject/YOB/education/MR-count), calls the canonical
+load_miriad_trajectories WHOLE and untouched (the 3-file join, rescan dedup, and
+MMSE forward-fill all stay inside the invariant-locked loader), then flattens the
+returned trajectories into a staging submission -- a pure, lossless reshape with no
+clinical logic. The flattened submission re-enters the standard audit+bundle path,
+so the locked cTCS is reproduced by construction. The three consumed source sheets
+are removed from the table set after the loader consumes them (they ARE examined --
+their content flows into the audited frame), so the coverage-honesty gate reports a
+complete audit, not an un-wired-input refusal.
+
+10 new MIRIAD recognizer tests; full suite 2084 passed / 24 skipped; all 7 real-data
+cohort invariants remain green.
+
 ## [1.84.0] -- 2026-06-24 -- one-command cohort auditing for NACC, OASIS-3, ADNI
 
 `--cohort {nacc,oasis3,adni}` now audits the canonical single-table AD cohorts
