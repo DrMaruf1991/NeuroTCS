@@ -1,3 +1,27 @@
+## [1.84.0] -- 2026-06-24 -- one-command cohort auditing for NACC, OASIS-3, ADNI
+
+`--cohort {nacc,oasis3,adni}` now audits the canonical single-table AD cohorts
+directly from their native files, each reproducing its locked cTCS invariant
+exactly on real DUA data:
+
+  - nacc   : investigator_nacc73.csv  -> cTCS 0.991502 (158,423 transitions)
+  - oasis3 : OASIS3_UDSb4_cdr.csv     -> cTCS 0.9942   (7,248 transitions, 30 flagged)
+  - adni   : ADNIMERGE2/DXSUM.rda     -> cTCS 0.994575 (12,006 transitions, 65 flagged)
+
+Each recognizer REUSES its canonical adapter's exact crosswalk
+(naccudsd_to_state / cdr_to_state / DIAGNOSIS_MAP) and ID handling -- no clinical
+logic is re-implemented, so the audit reproduces the locked invariant by
+construction. The recognize-then-confirm design (v1.83.0) is preserved:
+recognition only SUGGESTS by column signature; the crosswalk is applied only on
+explicit --cohort. 23 new recognizer tests; full suite 2075 passed / 24 skipped.
+
+Scope (honest): --cohort exposes single-table cohorts only. MIRIAD is intentionally
+NOT exposed via --cohort -- its loader performs a three-file join (clinical +
+sessions + subjects) with rescan deduplication and MMSE forward-fill that has no
+reusable single-table seam; exposing it would require duplicating that join
+(divergence risk) or refactoring the locked adapter. MIRIAD remains fully available
+via its canonical load_miriad_trajectories loader (invariant cTCS 0.985369).
+
 ## [1.83.0] -- 2026-06-23 -- visit is OPTIONAL in staging (root fix: derive ordering from any available key)
 
 ### Fixed (root cause, both staging branches)

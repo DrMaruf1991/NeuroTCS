@@ -29,7 +29,7 @@ abstract: >-
   MIRIAD (0.985369), with max pairwise ΔcTCS = 0.009206 (all 6 pairs ≤
   0.01 world-class threshold).
 type: software
-version: "1.83.0"
+version: "1.84.0"
 date-released: "2026-05-23"
 license: Apache-2.0
 repository-code: "https://github.com/DrMaruf1991/NeuroTCS"

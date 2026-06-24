@@ -22,6 +22,9 @@ neurotcs.input_contract.*.adapters (those remain the canonical cohort loaders).
 from __future__ import annotations
 
 from neurotcs.cohorts import a4 as _a4  # noqa: F401  (registers recognizer)
+from neurotcs.cohorts import adni as _adni  # noqa: F401  (registers recognizer)
+from neurotcs.cohorts import nacc as _nacc  # noqa: F401  (registers recognizer)
+from neurotcs.cohorts import oasis3 as _oasis3  # noqa: F401  (registers recognizer)
 from neurotcs.cohorts.base import CohortMatch, recognize_cohort
 
 __all__ = ["CohortMatch", "recognize_cohort"]
