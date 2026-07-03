@@ -15,7 +15,7 @@ let COHORT_ORDER = [];
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
-  bindThemeFromSystem();
+  document.documentElement.setAttribute("data-theme", "light");
   document.getElementById("run-all").addEventListener("click", runAll);
   try {
     const res = await fetch("/api/cohorts").then((r) => r.json());
@@ -33,14 +33,6 @@ async function init() {
     setEnv(false, "unreachable");
     document.getElementById("run-all-hint").textContent = "Backend unreachable.";
   }
-}
-
-function bindThemeFromSystem() {
-  const mq = window.matchMedia("(prefers-color-scheme: dark)");
-  const apply = () =>
-    document.documentElement.setAttribute("data-theme", mq.matches ? "dark" : "light");
-  apply();
-  mq.addEventListener("change", () => { apply(); renderChart(); });
 }
 
 function setEnv(ok, text) {
@@ -168,7 +160,7 @@ function renderCard(id) {
 
     <div class="cite">${citeRows}</div>
 
-    ${r ? `<div><div class="k" style="font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">audit id — same input, same id</div>
+    ${r ? `<div><div class="auditid-label">audit id — same input, same id</div>
       <div class="auditid">${r.audit_id || "—"}</div></div>` : ""}
 
     ${st.error ? `<div class="errline">${st.error}</div>` : ""}
