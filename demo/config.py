@@ -14,6 +14,32 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+
+def _load_dotenv_if_present() -> None:
+    """Load ``demo/.env`` (if it exists) into the environment for LOCAL dev.
+
+    Makes the documented ".env" workflow actually work: both pytest and uvicorn
+    pick up the cohort data paths without the caller having to export env vars by
+    hand -- which matters on Windows and when a path contains spaces (e.g.
+    ``G:/NeuroTCS data/...``), where shell quoting is easy to get wrong.
+
+    Real environment variables ALWAYS win (``override=False``): on Azure the App
+    Service Application Settings provide the paths and there is no ``.env`` file,
+    so this is a silent no-op in production. Best-effort: if python-dotenv is not
+    installed, we simply skip and fall back to os.environ.
+    """
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        return
+    env_path = Path(__file__).with_name(".env")
+    if env_path.exists():
+        load_dotenv(env_path, override=False)
+
+
+_load_dotenv_if_present()
 
 
 @dataclass(frozen=True)
