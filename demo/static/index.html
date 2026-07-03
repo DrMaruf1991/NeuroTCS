@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NeuroTCS — Live Cohort Audit</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232456c9'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='sans-serif'%3E%E2%97%AB%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">◫</span>
+        <div>
+          <h1>NeuroTCS <span class="tag">Live Audit</span></h1>
+          <p class="sub">Reproducible, citation-locked auditor of Alzheimer’s-disease
+            cohort staging trajectories.</p>
+        </div>
+      </div>
+      <div class="env" id="env-badge" title="neurotcs engine version on this server">
+        <span class="dot" id="env-dot"></span>
+        <span id="env-text">connecting…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section class="lede">
+      <p>
+        This page runs <strong>real audits</strong> of five public AD cohorts on
+        this private server, live, through the shipped NeuroTCS engine. NeuroTCS is
+        an <strong>auditor, not a measurement tool</strong>: it checks whether each
+        cohort’s <span class="mono">CN → MCI → AD</span> trajectories obey published
+        staging criteria (NIA-AA 2018) and emits a consistency score
+        (<strong>cTCS</strong>), flagged transitions, and a byte-deterministic
+        <strong>audit id</strong>. It never measures, segments, or diagnoses.
+      </p>
+      <div class="actions">
+        <button id="run-all" class="btn btn-primary">Run all audits</button>
+        <span class="hint" id="run-all-hint"></span>
+      </div>
+    </section>
+
+    <section class="chart-card">
+      <div class="chart-head">
+        <h2>Cross-cohort cTCS</h2>
+        <p>Consistency score with 95% CI whiskers. Higher = fewer inadmissible
+          transitions. The spread is real and explainable — A4 is preclinical
+          (mostly CN), MIRIAD is MMSE-staged (coarser).</p>
+      </div>
+      <div class="chart-scroll">
+        <svg id="chart" viewBox="0 0 760 340" role="img"
+             aria-label="Cross-cohort cTCS chart with confidence intervals"></svg>
+      </div>
+      <div class="legend">
+        <span class="lg"><i class="sw sw-locked"></i>Locked invariant</span>
+        <span class="lg"><i class="sw sw-live"></i>Live result</span>
+        <span class="lg"><i class="sw sw-ci"></i>95% CI</span>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">Cohorts</h2>
+      <div id="cards" class="cards"></div>
+    </section>
+
+    <section class="repro">
+      <h2>Why this is reproducible</h2>
+      <div class="repro-grid">
+        <div class="repro-item">
+          <span class="ri-ico">＝</span>
+          <h3>Same input → same audit id</h3>
+          <p>The <span class="mono">audit_id</span> is a SHA-256 over the audited
+            trajectories and the rule pack. Re-run on the same data and it is
+            byte-for-byte identical — the proof of reproducibility.</p>
+        </div>
+        <div class="repro-item">
+          <span class="ri-ico">§</span>
+          <h3>Rules cite published criteria</h3>
+          <p>Every admissibility rule traces to a specific paper by
+            <span class="mono">PMID</span> / <span class="mono">DOI</span>. A result
+            means “checked against these exact cited rules.”</p>
+        </div>
+        <div class="repro-item">
+          <span class="ri-ico">#</span>
+          <h3>IDs are hashed, data stays home</h3>
+          <p>The browser receives <strong>results only</strong> — scores, counts,
+            citations, and a hashed audit id. Raw records and subject ids never
+            leave the private server.</p>
+        </div>
+        <div class="repro-item">
+          <span class="ri-ico">✓</span>
+          <h3>Parity with the CLI, proven</h3>
+          <p>Each live result is checked against the locked cTCS/counts already
+            proven via the CLI (<span class="mono">demo/test_web_parity.py</span>),
+            to tolerance 0.0005 on cTCS and exactly on the counts.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <p>NeuroTCS audits pre-existing staging data against cited published criteria.
+        No measurement, no inference, no LLM. Results shown are de-identified
+        aggregates.</p>
+      <p class="foot-ver" id="foot-ver"></p>
+    </footer>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
