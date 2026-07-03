@@ -83,3 +83,12 @@ v3_check/
 benchmark/audit_bench/
 benchmark/NeuroTCS_AD_Challenge_*.csv
 
+# NeuroTCS web demo — never commit real data paths, env files, or generated bundles.
+# (The global *.csv/*.rda/data/ blocks above already cover raw cohort files; these
+# are explicit so a demo .env or a generated bundle can never slip in.)
+demo/.env
+demo/**/*.bundle.json
+demo/**/*.report.txt
+demo/out/
+demo/data/
+
