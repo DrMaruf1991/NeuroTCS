@@ -84,9 +84,12 @@ Before uploading, confirm:
 - [ ] **Orderable visits**: a date or a visit number per visit (or accept the
       derived-from-row-order warning).
 - [ ] **Mappable states**: every state is CN/MCI/AD (or a recognized text synonym,
-      with normalization on). Numeric scores must be pre-converted. Unmappable values
-      (blank, `Unknown`, `8`, `-99`) are dropped, not guessed — if too many drop, the
-      audit thins out.
+      with normalization on). Numeric scores must be pre-converted. Two different
+      things happen to values that don't resolve to a stage (see *How unmappable
+      states are handled* below): a **blank/missing** cell drops that one visit; a
+      **non-null but unrecognized** value (`Unknown`, `8`, `-99`) is **kept and its
+      transitions are flagged as impossible** — so clean the data if those aren't
+      real findings.
 - [ ] **One staging table**: a single sheet/file with these columns. (A `.zip` may
       contain several files, but multi-file joins like MIRIAD are handled by the
       cohort loaders, not the generic upload.)
@@ -102,6 +105,24 @@ Before uploading, confirm:
 | Statistical / archive | `.rds` `.rdata` `.rda` `.sav` `.dta` `.sas7bdat` `.zip` | Read via a **secure temp file, deleted immediately** after parsing (their readers need a path) |
 
 Size limit: **50 MB**. The result shows which read path was used.
+
+---
+
+## How unmappable states are handled (important)
+
+NeuroTCS is an auditor — it **surfaces** data problems rather than silently hiding
+them. So a value in the `state` column that doesn't resolve to CN/MCI/AD is treated
+one of two ways:
+
+| Your value | What happens |
+|-----------|--------------|
+| **blank / empty / missing (NaN)** | that single visit is **dropped**; the trajectory joins the visits on either side (no flag for the gap) |
+| **a non-null value that isn't a stage** (`Unknown`, `8`, `-99`, a typo) | it is **kept as a state**, and the transitions **into and out of it are flagged as `impossible`** |
+
+So one stray `Unknown` in a subject's timeline produces **two** flagged transitions
+(`… → Unknown` and `Unknown → …`). That's the auditor doing its job — it's telling
+you the trajectory contains an inadmissible state. If those aren't real findings,
+map the value to CN/MCI/AD or remove the row before uploading.
 
 ---
 
