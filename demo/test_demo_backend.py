@@ -200,6 +200,57 @@ def test_normalize_is_noop_on_canonical_labels(client):
     assert on["label_normalization"] == []
 
 
+def _raw_staging_summary(data: bytes):
+    """Audit `data` through the bare engine (CLI-equivalent, no upload transforms)."""
+    from neurotcs.io import tables_to_submission
+    from neurotcs.io.readers import _read_bytes_as_table
+    from neurotcs.orchestration.orchestrator import run_full_audit
+    t = _read_bytes_as_table(data, "t.csv", allow_pdf=False, encoding=None, decisions=[])
+    sub = tables_to_submission(t, {"clinical": {"sheet": "t", "subject_id": "subject_id",
+                                                "state": "state", "visit_date": "visit_date"},
+                                   "ranges": []}, warnings=[])
+    return next((lyr for lyr in run_full_audit(sub, expected_layers=["staging_clinical"]).layers
+                 if lyr.layer == "staging_clinical" and lyr.ran), None)
+
+
+def test_normalize_does_not_corrupt_missing_states(client):
+    """Regression: normalization must NOT stringify a missing state (NaN) into the
+    literal 'nan'. Doing so would keep the visit and add spurious impossible
+    transitions, diverging from the CLI. A missing state must stay missing so the
+    engine drops that visit -- normalize ON must equal the raw engine."""
+    import numpy as np
+    rows = [{"subject_id": "S1", "visit_date": "2010-01-01", "state": "CN"},
+            {"subject_id": "S1", "visit_date": "2011-01-01", "state": np.nan},  # missing
+            {"subject_id": "S1", "visit_date": "2012-01-01", "state": "AD"},
+            {"subject_id": "S2", "visit_date": "2010-01-01", "state": "CN"},
+            {"subject_id": "S2", "visit_date": "2011-01-01", "state": "MCI"},
+            {"subject_id": "S2", "visit_date": "2012-01-01", "state": "AD"}]
+    data = pd.DataFrame(rows).to_csv(index=False).encode()
+    raw = _raw_staging_summary(data).summary
+    mp = {"sheet": "t", "subject_id": "subject_id", "state": "state", "visit_date": "visit_date"}
+    on = _audit(client, "t.csv", data, mp, normalize="true").json()
+    assert on["n_transitions"] == raw["n_transitions"], "normalize changed transition count on NaN"
+    assert on["n_flagged"] == raw["n_flagged"], "normalize added spurious flags on NaN"
+    assert abs(on["ctcs"] - raw["ctcs"]) < 1e-12, "normalize changed cTCS on NaN"
+
+
+def test_non_null_unmappable_state_is_kept_and_flagged(client):
+    """A non-null out-of-vocabulary state ('Unknown') is NOT dropped -- it is kept
+    and its transitions are flagged impossible, exactly as the raw engine does."""
+    rows = [{"subject_id": "S1", "visit_date": "2010-01-01", "state": "CN"},
+            {"subject_id": "S1", "visit_date": "2011-01-01", "state": "Unknown"},
+            {"subject_id": "S1", "visit_date": "2012-01-01", "state": "AD"},
+            {"subject_id": "S2", "visit_date": "2010-01-01", "state": "CN"},
+            {"subject_id": "S2", "visit_date": "2011-01-01", "state": "MCI"},
+            {"subject_id": "S2", "visit_date": "2012-01-01", "state": "AD"}]
+    data = pd.DataFrame(rows).to_csv(index=False).encode()
+    raw = _raw_staging_summary(data).summary
+    mp = {"sheet": "t", "subject_id": "subject_id", "state": "state", "visit_date": "visit_date"}
+    on = _audit(client, "t.csv", data, mp, normalize="true").json()
+    assert on["n_flagged"] == raw["n_flagged"] == 2  # CN->Unknown, Unknown->AD
+    assert on["n_transitions"] == raw["n_transitions"]
+
+
 # --------------------------------------------------------------------------- #
 # Formats + fail-closed + routing
 # --------------------------------------------------------------------------- #

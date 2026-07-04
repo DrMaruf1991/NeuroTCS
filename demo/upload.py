@@ -240,8 +240,15 @@ def audit_upload(
                 normalize_labels,
             )
             ont = load_label_ontology()
-            res = normalize_labels(list(work_df[state].astype(str)), ont)
-            work_df[state] = res.normalized
+            # Normalize ONLY non-null cells. A missing state (NaN/blank) must stay
+            # NaN so the engine drops that visit exactly as the CLI does -- calling
+            # .astype(str) on the whole column would turn NaN into the literal
+            # string "nan", which the engine then audits as an out-of-vocabulary
+            # state (2 spurious impossible transitions), diverging from the CLI.
+            col = work_df[state]
+            mask = col.notna()
+            res = normalize_labels(list(col[mask].astype(str)), ont)
+            work_df.loc[mask, state] = res.normalized
             seen: set[tuple[str, str]] = set()
             for rec in getattr(res, "applied", []) or []:
                 key = (rec.get("raw", ""), rec.get("canonical", ""))
