@@ -21,13 +21,11 @@ Run:  pytest demo/test_web_parity.py -v
 """
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from starlette.testclient import TestClient
 
 from demo.app import app
-from demo.config import COHORTS, CTCS_ABS_TOL, resolve_data_path
+from demo.config import COHORTS, CTCS_ABS_TOL, data_available
 
 
 @pytest.fixture(scope="module")
@@ -38,12 +36,11 @@ def client() -> TestClient:
 @pytest.mark.parametrize("spec", COHORTS, ids=[c.cohort_id for c in COHORTS])
 def test_web_matches_locked_invariant(client: TestClient, spec) -> None:
     """The web audit reproduces the locked cTCS/counts for ``spec`` cohort."""
-    path = resolve_data_path(spec)
-    # Data-gated exactly like the shipped tests/audit_core/test_real_*_audit.py:
-    # skip when the path is unset OR points at a file/dir not present on this host
-    # (e.g. a .env carried over from another machine). A missing path means "data
-    # not available here", which is a skip -- not a parity failure.
-    if not path or not Path(path).exists():
+    # Data-gated via the SAME canonical predicate the /api/cohorts `available`
+    # field uses (config.data_available = configured AND present), so the gate and
+    # the UI can never disagree. A path unset -- or set but absent on this host
+    # (e.g. a .env carried over from another machine) -- is a skip, not a failure.
+    if not data_available(spec):
         pytest.skip(
             f"{spec.cohort_id}: data not available on this host "
             f"(set one of {', '.join(spec.env_vars)} to an existing path). The DUA "

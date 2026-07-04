@@ -143,9 +143,28 @@ def resolve_data_path(spec: CohortSpec) -> str | None:
     and non-empty wins. Never returns a hardcoded path -- if nothing is
     configured the caller reports the cohort as unavailable (and the endpoint
     fails closed rather than auditing a guessed path).
+
+    NOTE: this only reports what is *configured*; it does NOT check that the path
+    exists. Use ``data_available`` to decide whether a cohort can actually be
+    audited on this host -- "configured" and "present" are different things.
     """
     for var in spec.env_vars:
         val = os.environ.get(var)
         if val:
             return val
     return None
+
+
+def data_available(spec: CohortSpec) -> bool:
+    """True only if the cohort's data path is configured AND present on this host.
+
+    THE canonical definition of "this cohort can be audited here", used by both
+    the /api/cohorts ``available`` field and the parity test's skip gate, so the
+    two can never diverge. A path that is set but missing (e.g. a .env carried
+    over from another machine, or an Azure app-setting pointing at an unmounted
+    share) is NOT available: reporting it as available would enable the UI's Run
+    button and then fail at click time with a 503. Directories (MIRIAD) and files
+    both satisfy ``Path.exists()``.
+    """
+    path = resolve_data_path(spec)
+    return bool(path and Path(path).exists())

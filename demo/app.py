@@ -38,6 +38,7 @@ from demo.config import (
     COHORTS,
     COHORTS_BY_ID,
     CTCS_ABS_TOL,
+    data_available,
     resolve_data_path,
 )
 from demo.engine import (
@@ -70,15 +71,16 @@ _locks: dict[str, asyncio.Lock] = {c.cohort_id: asyncio.Lock() for c in COHORTS}
 
 def _cohort_public(spec) -> dict[str, object]:
     """Public, non-secret description of a cohort (path presence, not the path)."""
-    data_path = resolve_data_path(spec)
     return {
         "cohort_id": spec.cohort_id,
         "display_name": spec.display_name,
         "input_hint": spec.input_hint,
         "note": spec.note,
-        # availability only -- we expose WHETHER a path is configured, never the
-        # path string itself (it can encode a private mount location).
-        "available": bool(data_path),
+        # availability = configured AND present on this host (canonical definition
+        # in config.data_available). We expose only the boolean, never the path
+        # string itself (it can encode a private mount location). A configured-but-
+        # missing path reports False so the UI never enables a Run that would 503.
+        "available": data_available(spec),
         "locked": {
             "ctcs": spec.locked_ctcs,
             "n_transitions": spec.locked_n_transitions,
