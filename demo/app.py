@@ -250,9 +250,16 @@ async def audit_cohort(cohort: str) -> JSONResponse:
     return JSONResponse(payload)
 
 
-# ---- User guide (served from the demo package so the in-app link works) ----
+# ---- User guide ----
+@app.get("/guide")
+async def guide() -> FileResponse:
+    """Rendered, human-readable user manual (styled HTML, not raw markdown)."""
+    return FileResponse(_STATIC_DIR / "guide.html")
+
+
 @app.get("/DATASET_REQUIREMENTS.md")
 async def dataset_requirements() -> FileResponse:
+    """Raw markdown guide (kept for GitHub/link parity; /guide is the rendered page)."""
     return FileResponse(
         Path(__file__).with_name("DATASET_REQUIREMENTS.md"),
         media_type="text/markdown; charset=utf-8",
