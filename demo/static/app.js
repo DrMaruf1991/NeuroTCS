@@ -321,7 +321,8 @@ function initUpload() {
   });
 }
 
-const OK_EXT = [".csv", ".tsv", ".txt", ".xlsx", ".xls", ".parquet", ".json", ".jsonl", ".ndjson"];
+const OK_EXT = [".csv", ".tsv", ".txt", ".xlsx", ".xls", ".parquet", ".json", ".jsonl",
+  ".ndjson", ".rds", ".rdata", ".rda", ".sav", ".dta", ".sas7bdat", ".zsav", ".zip"];
 
 async function onFile(file) {
   const panel = document.getElementById("upload-panel");
@@ -329,7 +330,7 @@ async function onFile(file) {
   const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
   if (!OK_EXT.includes(ext)) {
     panel.innerHTML = fileHeader(file) +
-      `<div class="up-msg err">Unsupported type ${esc(ext)}. Use .csv, .tsv, .xlsx, .parquet, .json or .jsonl.</div>`;
+      `<div class="up-msg err">Unsupported type ${esc(ext)}. Use a tabular file (.csv/.xlsx/.parquet/.json), a statistical file (.rds/.rda/.dta/.sav), or a .zip.</div>`;
     bindClear();
     return;
   }
@@ -493,6 +494,10 @@ function renderUploadResult(r) {
     ? `<span class="status-pill st-flags">flags present</span>`
     : `<span class="status-pill st-clean">clean</span>`;
 
+  const readNote = r.read_mode === "transient_temp_file"
+    ? `read via a secure temp file, deleted immediately after parsing`
+    : `read in memory — nothing written to disk`;
+
   const warn = (r.warnings && r.warnings.length)
     ? `<div class="up-warn">${r.warnings.map(esc).join("<br>")}</div>` : "";
 
@@ -539,6 +544,7 @@ function renderUploadResult(r) {
         <div class="auditid-label">audit id — same input, same id</div>
         <div class="auditid">${esc(r.audit_id || "—")}</div>
       </div>
+      <p class="flags-note" style="margin-top:8px;">${esc(readNote)}.</p>
       ${flagsTable ? `<div style="margin-top:16px;"><div class="auditid-label" style="margin-bottom:8px;">flagged transitions (your file)</div>${flagsTable}</div>` : ""}
       <div class="up-actions" style="margin-top:16px;">
         <button class="btn btn-sm" id="dl-bundle">Download bundle JSON</button>

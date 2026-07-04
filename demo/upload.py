@@ -13,12 +13,15 @@ SAME staging audit path the cohorts use. Nothing is reimplemented:
       -> run_full_audit(submission)       # neurotcs.orchestration -- the engine
       -> build_bundle(result, ...)        # neurotcs -- the self-verifying artifact
 
-DUA / privacy: the upload is processed ENTIRELY IN MEMORY. The bytes are read
-from the request into a local variable, parsed via BytesIO, and never written to
-disk (uploads are restricted to xlsx/xls/csv/tsv, none of which take the temp-file
-path in _read_bytes_as_table). The tables and bytes are discarded when the request
-returns. The response carries the audit result of the caller's OWN file back to
-the same caller; it is not a DUA cohort.
+DUA / privacy: the upload is the caller's OWN file, processed transiently and
+discarded when the request returns. Tabular formats (csv/tsv/txt/xlsx/xls/parquet/
+json/jsonl/ndjson) are parsed ENTIRELY IN MEMORY via BytesIO -- nothing touches
+disk (read_mode="in_memory"). Statistical formats (rds/rdata/rda/sav/dta/...) and
+.zip have readers that require a filesystem path; for these the bytes are written
+to a SECURE temp file (mkstemp, 0600), read via the shipped read_tables, and
+deleted immediately in a finally block, even on error (read_mode=
+"transient_temp_file"). The response carries the audit result back to the same
+caller; it is not a DUA cohort.
 """
 from __future__ import annotations
 
@@ -28,25 +31,39 @@ from typing import Any
 
 import pandas as pd
 
+import os
+import shutil
+import tempfile
+
 import neurotcs
 from neurotcs import build_bundle, load_rulepack
 from neurotcs.cli import _clean_mapping, _scaffold_mapping
-from neurotcs.io import describe_tables, tables_to_submission
+from neurotcs.io import describe_tables, read_tables, tables_to_submission
 from neurotcs.io.readers import _read_bytes_as_table
+
 from neurotcs.orchestration.orchestrator import run_full_audit
 
-# Uploads are restricted to the formats _read_bytes_as_table parses via BytesIO
-# ONLY (SUPPORTED_TABULAR) -- every one reads straight from memory, no temp file.
-# Statistical formats (.rds/.rdata/.rda/.sav/.dta/.sas7bdat) are intentionally
-# EXCLUDED: their readers (pyreadr/pyreadstat) need a filesystem path, so reading
-# one would write a transient temp file -- which would break the "never touch
-# disk" guarantee. .zip/directories are also excluded (not handled by the in-
-# memory byte reader). This tuple mirrors neurotcs.io.readers.SUPPORTED_TABULAR.
-ALLOWED_EXT = (
+# Two tiers of accepted upload format:
+#
+# TABULAR_INMEM -- parsed by _read_bytes_as_table straight from a BytesIO buffer.
+#   Nothing touches disk (mirrors neurotcs.io.readers.SUPPORTED_TABULAR).
+#
+# PATH_REQUIRED -- statistical formats (pyreadr/pyreadstat) and .zip, whose readers
+#   need a filesystem path. For these we write the bytes to a SECURE temp file
+#   (mkstemp, 0600), read them via the shipped read_tables, and delete the temp
+#   file immediately in a finally block (even on error). This is a transient,
+#   controlled disk write -- surfaced to the caller as read_mode="transient_temp_file"
+#   so the UI can say so honestly. It matches how the shipped CLI reads these.
+TABULAR_INMEM = (
     ".csv", ".tsv", ".txt", ".xlsx", ".xls",
     ".parquet", ".json", ".jsonl", ".ndjson",
 )
-MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB -- a demo staging file, not a data lake
+PATH_REQUIRED = (
+    ".rds", ".rdata", ".rda", ".sav", ".dta", ".sas7bdat", ".zsav", ".zip",
+)
+ALLOWED_EXT = TABULAR_INMEM + PATH_REQUIRED
+
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB -- a demo staging file, not a data lake
 MAX_FLAGS_RETURNED = 200  # cap the flag list in the response payload
 
 # The demo audits the clinical staging trajectory only (as the cohorts do).
@@ -70,8 +87,14 @@ def _norm(value: Any) -> str | None:
     return value
 
 
-def _read_upload(filename: str, data: bytes) -> dict[str, pd.DataFrame]:
-    """Parse the uploaded bytes into tables IN MEMORY. Fail-closed on type/size."""
+def _read_upload(filename: str, data: bytes) -> tuple[dict[str, pd.DataFrame], str]:
+    """Parse the uploaded bytes into tables. Returns (tables, read_mode).
+
+    read_mode is "in_memory" for tabular formats (BytesIO, no disk) or
+    "transient_temp_file" for path-required formats (statistical / .zip), which
+    are written to a secure temp file, read via the shipped read_tables, and
+    deleted immediately. Fail-closed on type/size/parse errors.
+    """
     ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXT:
         raise UploadError(
@@ -85,16 +108,43 @@ def _read_upload(filename: str, data: bytes) -> dict[str, pd.DataFrame]:
             f"file is {len(data) // (1024 * 1024)} MB; the limit is "
             f"{MAX_UPLOAD_BYTES // (1024 * 1024)} MB."
         )
-    decisions: list[str] = []
-    try:
-        tables = _read_bytes_as_table(
-            data, filename, allow_pdf=False, encoding=None, decisions=decisions
-        )
-    except Exception as e:  # noqa: BLE001 -- surface a clean parse error to the client
-        raise UploadError(f"could not read the file: {e}") from e
+
+    if ext in TABULAR_INMEM:
+        # Pure in-memory: parse straight from a BytesIO buffer, nothing on disk.
+        try:
+            tables = _read_bytes_as_table(
+                data, filename, allow_pdf=False, encoding=None, decisions=[]
+            )
+        except Exception as e:  # noqa: BLE001 -- clean parse error to the client
+            raise UploadError(f"could not read the file: {e}") from e
+        read_mode = "in_memory"
+    else:
+        # Path-required (statistical / zip): the readers need a filesystem path.
+        # Write to a SECURE temp DIRECTORY (mkdtemp -> mode 0700) under the file's
+        # ORIGINAL basename, read via the shipped loader, then remove the whole
+        # directory in finally (even if the read raises). Using the original name
+        # (not a random one) keeps the derived table key STABLE across the separate
+        # describe and audit requests -- otherwise the confirmed sheet name would
+        # not match on the second call. Path(...).name strips any directory
+        # components, so a crafted filename cannot escape the temp dir.
+        safe_name = Path(filename).name or f"upload{ext}"
+        tmp_dir = tempfile.mkdtemp(prefix="neurotcs_upload_")
+        tmp_path = os.path.join(tmp_dir, safe_name)
+        try:
+            with open(tmp_path, "wb") as fh:
+                fh.write(data)
+            tables = read_tables(
+                tmp_path, allow_pdf=False, skipped=[], decisions=[]
+            )
+        except Exception as e:  # noqa: BLE001
+            raise UploadError(f"could not read the file: {e}") from e
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+        read_mode = "transient_temp_file"
+
     if not tables:
         raise UploadError("the file contained no readable tables.")
-    return tables
+    return tables, read_mode
 
 
 def describe_upload(filename: str, data: bytes) -> dict[str, Any]:
@@ -105,7 +155,7 @@ def describe_upload(filename: str, data: bytes) -> dict[str, Any]:
     clinical staging axis (subject_id / state / visit_date / visit), with
     placeholders normalized to null.
     """
-    tables = _read_upload(filename, data)
+    tables, read_mode = _read_upload(filename, data)
     desc = describe_tables(tables)
     mapping = _clean_mapping(_scaffold_mapping(desc))
     clinical = mapping.get("clinical", {}) if isinstance(mapping, dict) else {}
@@ -126,6 +176,7 @@ def describe_upload(filename: str, data: bytes) -> dict[str, Any]:
         "filename": filename,
         "sheets": desc,  # {name: {shape:[r,c], columns:[...]}}
         "suggested": suggested,
+        "read_mode": read_mode,
         "complete": bool(
             suggested["sheet"] and suggested["subject_id"] and suggested["state"]
         ),
@@ -141,7 +192,7 @@ def audit_upload(filename: str, data: bytes, mapping_in: dict[str, Any]) -> dict
     counts, flags (of the caller's own file), citations, the audit_id, and the
     self-verifying bundle.
     """
-    tables = _read_upload(filename, data)
+    tables, read_mode = _read_upload(filename, data)
 
     sheet = _norm(mapping_in.get("sheet"))
     subject_id = _norm(mapping_in.get("subject_id"))
@@ -229,6 +280,7 @@ def audit_upload(filename: str, data: bytes, mapping_in: dict[str, Any]) -> dict
         "filename": filename,
         "sheet": sheet,
         "mapping": clinical,
+        "read_mode": read_mode,
         "ctcs": float(ctcs) if ctcs is not None else None,
         "ci_low": summary.get("ctcs_ci_95_low"),
         "ci_high": summary.get("ctcs_ci_95_high"),

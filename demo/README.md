@@ -69,10 +69,19 @@ mapping; `POST /api/audit/upload` takes the file plus the confirmed mapping (JSO
 `{sheet, subject_id, state, visit_date?, visit?}`) and returns cTCS, CI, counts,
 flags (of the caller's own file), citations, `audit_id`, and the bundle.
 
-**In-memory only:** uploads are read into memory, parsed via `BytesIO`, and
-discarded when the request returns — nothing is written to disk (uploads are
-restricted to `.xlsx/.xls/.csv/.tsv`, none of which take the temp-file path).
-25 MB cap. This is the caller's own file, not a DUA cohort.
+**Accepted formats & disk policy** (50 MB cap; the caller's own file, not a DUA
+cohort — discarded when the request returns):
+
+- **Tabular** — `.csv .tsv .txt .xlsx .xls .parquet .json .jsonl .ndjson`: parsed
+  entirely in memory via `BytesIO`, **nothing written to disk**
+  (`read_mode="in_memory"`).
+- **Statistical & archive** — `.rds .rdata .rda .sav .dta .sas7bdat .zsav .zip`:
+  their readers (pyreadr/pyreadstat, zip) require a filesystem path, so the bytes
+  are written to a **secure temp directory** (`mkdtemp`, 0700) under the file's
+  original name, read via the shipped `read_tables`, and the directory is removed
+  immediately in a `finally` block — even on error
+  (`read_mode="transient_temp_file"`). The response reports which path was used so
+  the UI can state it plainly.
 
 `POST /api/audit/{cohort}` returns **results only** — no raw records, no subject
 ids:

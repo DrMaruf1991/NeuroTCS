@@ -69,25 +69,27 @@
     <section class="upload-section">
       <h2 class="section-title">Audit your own file</h2>
       <p class="upload-lede">Upload a staging table
-        (<span class="mono">.csv .tsv .xlsx .parquet .json .jsonl</span>)
+        (<span class="mono">.csv .xlsx .parquet .json .rds .rda .dta .sav .zip</span>)
         with a subject id, a diagnosis/state
         column, and — optionally — a visit date. NeuroTCS auto-suggests the column
         mapping; you confirm it, then it runs the <strong>same audit engine</strong>
         the cohorts use and returns the cTCS, flagged transitions, and an
-        <span class="mono">audit_id</span>. The file is processed
-        <strong>in memory only</strong> — never written to disk, discarded when the
-        audit returns.</p>
+        <span class="mono">audit_id</span>. Tabular files are read
+        <strong>in memory</strong>; statistical formats (<span class="mono">.rds /
+        .rda / .dta / .sav</span>) and <span class="mono">.zip</span> are read via a
+        <strong>secure temp file that is deleted immediately</strong> after parsing.
+        Either way the file is discarded when the audit returns.</p>
 
       <div class="upload-card">
         <div id="dropzone" class="dropzone" tabindex="0" role="button"
              aria-label="Upload a file">
           <input type="file" id="file-input"
-                 accept=".csv,.tsv,.txt,.xlsx,.xls,.parquet,.json,.jsonl,.ndjson" hidden />
+                 accept=".csv,.tsv,.txt,.xlsx,.xls,.parquet,.json,.jsonl,.ndjson,.rds,.rdata,.rda,.sav,.dta,.sas7bdat,.zip" hidden />
           <div class="dz-inner">
             <span class="dz-icon" aria-hidden="true">⬆</span>
             <p class="dz-title">Drop a file here, or
               <span class="linklike" id="browse-btn">browse</span></p>
-            <p class="dz-sub">.csv · .tsv · .xlsx · .parquet · .json · .jsonl — up to 25 MB, in-memory only</p>
+            <p class="dz-sub">.csv · .xlsx · .parquet · .json · .rds · .rda · .dta · .sav · .zip — up to 50 MB</p>
           </div>
         </div>
         <div id="upload-panel" class="upload-panel" hidden></div>
