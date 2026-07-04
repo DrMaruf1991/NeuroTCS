@@ -113,12 +113,25 @@
     </table></div>
     <p>Every substitution is shown in the result ("Normalized stage labels: …") — nothing changes
       silently.</p>
-    <h3><span class="no">✕</span> Numeric scale scores are NOT converted on upload</h3>
-    <p><code>CDR-global</code> (0 / 0.5 / 1…), <code>NACCUDSD</code> codes (1 / 2 / 3 / 4), MMSE, etc.
-      are <strong>not</strong> crosswalked here — those conversions are specific to each public
-      cohort's loader. If your <code>state</code> column is a numeric score, convert it to CN/MCI/AD
-      before uploading (e.g. CDR-global <code>0 → CN</code>, <code>0.5 → MCI</code>,
-      <code>≥1 → AD</code>).</p>
+    <h3><span class="no">✕</span> Numeric codes — DON'T upload raw numbers</h3>
+    <div class="warn-callout callout"><strong>Convert numeric staging codes to CN/MCI/AD text
+      before uploading.</strong> A column of raw numbers (<code>1</code>/<code>2</code>/<code>3</code>,
+      CDR-global <code>0</code>/<code>0.5</code>/<code>1</code>, NACCUDSD, …) is <strong>not</strong>
+      crosswalked using <em>your</em> cohort's meaning. The engine may instead match the numbers to a
+      different published numeric scheme (e.g. NIA-AA 2024 clinical staging, where <code>1/2/3</code>
+      mean preclinical / transitional / MCI-like) and return a plausible-looking but <strong>wrong</strong>
+      score. For example, ADNI's <code>DXCURREN</code> codes are <code>1=Normal, 2=MCI, 3=AD</code> — an
+      upload of those raw codes is <strong>misinterpreted</strong> and a real reversal
+      (<code>3→2→1</code>) is not flagged.</div>
+    <p>Convert first, e.g. CDR-global <code>0 → CN</code>, <code>0.5 → MCI</code>, <code>≥1 → AD</code>;
+      ADNI <code>1 → CN</code>, <code>2 → MCI</code>, <code>3 → AD</code>. (For a recognized public
+      cohort, use the CLI's <code>--cohort</code> path, which applies that cohort's exact crosswalk.)</p>
+
+    <h3><span class="no">✕</span> Bare <code>Dementia</code> is not recognized</h3>
+    <p>The ADNIMERGE <code>DX</code> label <code>Dementia</code> is not mapped (it can mean non-AD
+      dementia). Use <code>AD</code> or <code>Alzheimer's disease</code>, or map
+      <code>Dementia → AD</code> before uploading. The finer ADNI stages <code>SMC</code>,
+      <code>EMCI</code>, <code>LMCI</code> <em>are</em> recognized.</p>
 
     <h2 id="unmappable">How unmappable states are handled (important)</h2>
     <p>NeuroTCS is an auditor — it <strong>surfaces</strong> data problems rather than silently hiding
