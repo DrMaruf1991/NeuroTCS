@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", init);
 async function init() {
   document.documentElement.setAttribute("data-theme", "light");
   document.getElementById("run-all").addEventListener("click", runAll);
+  initUpload();
   try {
     const res = await fetch("/api/cohorts").then((r) => r.json());
     setEnv(true, res.neurotcs_version);
@@ -286,4 +287,272 @@ function text(svg, x, y, s, size, fill, anchor, rot) {
   if (rot) e.setAttribute("transform", `rotate(${rot} ${x} ${y})`);
   e.textContent = s;
   svg.appendChild(e);
+}
+
+/* ============================ upload audit ============================ */
+const esc = (s) =>
+  String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+let UPLOAD = null; // { file, describe }
+
+function initUpload() {
+  const dz = document.getElementById("dropzone");
+  const input = document.getElementById("file-input");
+  const browse = document.getElementById("browse-btn");
+  if (!dz) return;
+
+  const pick = () => input.click();
+  dz.addEventListener("click", (e) => { if (e.target !== browse) pick(); });
+  browse.addEventListener("click", (e) => { e.stopPropagation(); pick(); });
+  dz.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); }
+  });
+  input.addEventListener("change", () => {
+    if (input.files && input.files[0]) onFile(input.files[0]);
+  });
+  ["dragenter", "dragover"].forEach((ev) =>
+    dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add("dragover"); }));
+  ["dragleave", "drop"].forEach((ev) =>
+    dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove("dragover"); }));
+  dz.addEventListener("drop", (e) => {
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) onFile(f);
+  });
+}
+
+const OK_EXT = [".xlsx", ".xls", ".csv", ".tsv"];
+
+async function onFile(file) {
+  const panel = document.getElementById("upload-panel");
+  panel.hidden = false;
+  const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+  if (!OK_EXT.includes(ext)) {
+    panel.innerHTML = fileHeader(file) +
+      `<div class="up-msg err">Unsupported type ${esc(ext)}. Use .xlsx, .xls, .csv or .tsv.</div>`;
+    bindClear();
+    return;
+  }
+  UPLOAD = { file, describe: null };
+  panel.innerHTML = fileHeader(file) +
+    `<div class="up-msg info">Reading file and detecting columns…</div>`;
+  bindClear();
+
+  const fd = new FormData();
+  fd.append("file", file, file.name);
+  try {
+    const resp = await fetch("/api/upload/describe", { method: "POST", body: fd });
+    const body = await resp.json();
+    if (!resp.ok) throw new Error(body.detail || `HTTP ${resp.status}`);
+    UPLOAD.describe = body;
+    renderMapping(body);
+  } catch (e) {
+    panel.innerHTML = fileHeader(file) +
+      `<div class="up-msg err">${esc(e.message || e)}</div>`;
+    bindClear();
+  }
+}
+
+function fileHeader(file) {
+  const kb = file.size < 1024 * 1024
+    ? (file.size / 1024).toFixed(0) + " KB"
+    : (file.size / 1024 / 1024).toFixed(1) + " MB";
+  return `<div class="up-file">
+    <span class="fname">${esc(file.name)}</span>
+    <span class="fmeta">· ${kb}</span>
+    <button class="btn btn-sm clear" id="up-clear">Clear</button>
+  </div>`;
+}
+
+function bindClear() {
+  const c = document.getElementById("up-clear");
+  if (c) c.addEventListener("click", () => {
+    UPLOAD = null;
+    const panel = document.getElementById("upload-panel");
+    panel.hidden = true; panel.innerHTML = "";
+    document.getElementById("file-input").value = "";
+  });
+}
+
+function colOptions(cols, selected, includeNone) {
+  let html = "";
+  if (includeNone) {
+    const sel = !selected ? " selected" : "";
+    html += `<option value=""${sel}>(none — derive from order)</option>`;
+  }
+  for (const c of cols) {
+    const sel = c === selected ? " selected" : "";
+    html += `<option value="${esc(c)}"${sel}>${esc(c)}</option>`;
+  }
+  return html;
+}
+
+function renderMapping(desc) {
+  const panel = document.getElementById("upload-panel");
+  const sheets = desc.sheets || {};
+  const sheetNames = Object.keys(sheets);
+  const s = desc.suggested || {};
+  const curSheet = s.sheet && sheets[s.sheet] ? s.sheet : sheetNames[0];
+  const cols = (sheets[curSheet] && sheets[curSheet].columns) || [];
+
+  const sheetField = sheetNames.length > 1 ? `
+    <div class="map-field">
+      <label>Sheet</label>
+      <select id="m-sheet">${sheetNames.map((n) =>
+        `<option value="${esc(n)}"${n === curSheet ? " selected" : ""}>${esc(n)} (${sheets[n].shape[0]}×${sheets[n].shape[1]})</option>`).join("")}</select>
+    </div>` : "";
+
+  panel.innerHTML = fileHeader(UPLOAD.file) + `
+    <p class="map-hint">Confirm the column mapping. NeuroTCS pre-selected its best
+      guess — adjust if needed. <strong>subject id</strong> and <strong>state</strong>
+      are required; a visit date is optional (order is derived if omitted).</p>
+    <div class="map-grid">
+      ${sheetField}
+      <div class="map-field">
+        <label>Subject id <span class="req">*</span></label>
+        <select id="m-subject_id">${colOptions(cols, s.subject_id, false)}</select>
+      </div>
+      <div class="map-field">
+        <label>State / diagnosis <span class="req">*</span></label>
+        <select id="m-state">${colOptions(cols, s.state, false)}</select>
+      </div>
+      <div class="map-field">
+        <label>Visit date</label>
+        <select id="m-visit_date">${colOptions(cols, s.visit_date, true)}</select>
+      </div>
+      <div class="map-field">
+        <label>Visit</label>
+        <select id="m-visit">${colOptions(cols, s.visit, true)}</select>
+      </div>
+    </div>
+    <div class="up-actions">
+      <button class="btn btn-primary" id="run-upload">Run audit</button>
+      <span class="up-msg info" id="up-status"></span>
+    </div>
+    <div id="up-result"></div>`;
+
+  bindClear();
+
+  const sheetSel = document.getElementById("m-sheet");
+  if (sheetSel) sheetSel.addEventListener("change", () => {
+    // re-render column dropdowns for the newly selected sheet
+    const ns = { ...desc, suggested: { ...s, sheet: sheetSel.value,
+      subject_id: null, state: null, visit_date: null, visit: null } };
+    renderMapping(ns);
+  });
+
+  document.getElementById("run-upload").addEventListener("click", () =>
+    runUploadAudit(curSheet));
+}
+
+async function runUploadAudit(sheet) {
+  const status = document.getElementById("up-status");
+  const btn = document.getElementById("run-upload");
+  const val = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
+  const mapping = {
+    sheet: (document.getElementById("m-sheet") || {}).value || sheet,
+    subject_id: val("m-subject_id"),
+    state: val("m-state"),
+    visit_date: val("m-visit_date") || null,
+    visit: val("m-visit") || null,
+  };
+  if (!mapping.subject_id || !mapping.state) {
+    status.className = "up-msg err";
+    status.textContent = "Select a subject id and a state column.";
+    return;
+  }
+  btn.disabled = true;
+  status.className = "up-msg info";
+  status.textContent = "Auditing… (large files take longer)";
+
+  const fd = new FormData();
+  fd.append("file", UPLOAD.file, UPLOAD.file.name);
+  fd.append("mapping", JSON.stringify(mapping));
+  try {
+    const resp = await fetch("/api/audit/upload", { method: "POST", body: fd });
+    const body = await resp.json();
+    if (!resp.ok) throw new Error(body.detail || `HTTP ${resp.status}`);
+    status.textContent = "";
+    renderUploadResult(body);
+  } catch (e) {
+    status.className = "up-msg err";
+    status.textContent = String(e.message || e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderUploadResult(r) {
+  const host = document.getElementById("up-result");
+  const ci = r.ci_low != null ? ` [${fmt4(r.ci_low)}–${fmt4(r.ci_high)}]` : "";
+  const pmid = r.citation_pmid
+    ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${esc(r.citation_pmid)}/" target="_blank" rel="noopener" class="mono">${esc(r.citation_pmid)}</a>` : "—";
+  const doi = r.citation_doi
+    ? `<a href="https://doi.org/${esc(r.citation_doi)}" target="_blank" rel="noopener" class="mono">${esc(r.citation_doi)}</a>` : "—";
+  const statusPill = r.n_flagged > 0
+    ? `<span class="status-pill st-flags">flags present</span>`
+    : `<span class="status-pill st-clean">clean</span>`;
+
+  const warn = (r.warnings && r.warnings.length)
+    ? `<div class="up-warn">${r.warnings.map(esc).join("<br>")}</div>` : "";
+
+  let flagsTable = "";
+  if (r.flags && r.flags.length) {
+    const rows = r.flags.map((f) => {
+      const tier = f.tier || "";
+      return `<tr>
+        <td class="mono">${esc(f.subject_id)}</td>
+        <td>${esc(f.from)} → ${esc(f.to)}</td>
+        <td>${f.delta_days != null ? Math.round(f.delta_days) + "d" : "—"}</td>
+        <td class="tier-${esc(tier)}">${esc(tier)}</td>
+      </tr>`;
+    }).join("");
+    flagsTable = `
+      <div class="flags-wrap"><table class="flags">
+        <thead><tr><th>Subject</th><th>Transition</th><th>Δ</th><th>Tier</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+      ${r.flags_truncated ? `<p class="flags-note">Showing first ${r.flags.length} flags of the full set.</p>` : ""}`;
+  }
+
+  host.innerHTML = `
+    <div class="up-result">
+      <div class="up-result-head">
+        <h3>Audit result</h3>
+        ${statusPill}
+      </div>
+      <div class="up-metrics">
+        <div class="metric"><div class="k">cTCS</div>
+          <div class="v">${fmt6(r.ctcs)}<small>${ci}</small></div></div>
+        <div class="metric"><div class="k">Transitions</div>
+          <div class="v">${intc(r.n_transitions)}</div></div>
+        <div class="metric"><div class="k">Flagged</div>
+          <div class="v">${intc(r.n_flagged)} <small>(${pct(r.flagged_rate)})</small></div></div>
+      </div>
+      ${warn}
+      <div class="cite">
+        <div class="row"><span class="lbl">rule pack</span><span class="mono">${esc(r.rulepack_id || "—")}</span></div>
+        <div class="row"><span class="lbl">PMID</span>${pmid}</div>
+        <div class="row"><span class="lbl">DOI</span>${doi}</div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="auditid-label">audit id — same input, same id</div>
+        <div class="auditid">${esc(r.audit_id || "—")}</div>
+      </div>
+      ${flagsTable ? `<div style="margin-top:16px;"><div class="auditid-label" style="margin-bottom:8px;">flagged transitions (your file)</div>${flagsTable}</div>` : ""}
+      <div class="up-actions" style="margin-top:16px;">
+        <button class="btn btn-sm" id="dl-bundle">Download bundle JSON</button>
+      </div>
+    </div>`;
+
+  const dl = document.getElementById("dl-bundle");
+  if (dl) dl.addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(r.bundle, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (r.filename || "upload").replace(/\.[^.]+$/, "") + ".bundle.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
 }

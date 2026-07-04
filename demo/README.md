@@ -48,7 +48,31 @@ Tolerance: **0.0005** on cTCS, **exact** on the transition/flagged counts.
 | GET    | `/api/health`           | liveness + `neurotcs` version on the server                   |
 | GET    | `/api/cohorts`          | the 5 cohorts, availability (path configured?), locked values |
 | POST   | `/api/audit/{cohort}`   | de-identified result + live parity check                      |
+| POST   | `/api/upload/describe`  | read an uploaded `.xlsx/.csv`, suggest a column mapping        |
+| POST   | `/api/audit/upload`     | audit an uploaded file with a confirmed mapping               |
 | GET    | `/`                     | the single-page frontend                                      |
+
+### Upload audit (bring-your-own file)
+
+The "Audit your own file" panel lets an expert drop an `.xlsx`/`.csv` staging
+table and audit it through the **same engine path** the cohorts use:
+
+```
+_read_bytes_as_table(data)              # neurotcs.io.readers — in-memory (BytesIO)
+  → describe_tables → _scaffold_mapping # the `neurotcs describe` auto-mapping
+  → (user confirms subject_id/state/visit_date in the UI)
+  → tables_to_submission → run_full_audit → build_bundle
+```
+
+`POST /api/upload/describe` returns the sheet/column inventory + an auto-suggested
+mapping; `POST /api/audit/upload` takes the file plus the confirmed mapping (JSON:
+`{sheet, subject_id, state, visit_date?, visit?}`) and returns cTCS, CI, counts,
+flags (of the caller's own file), citations, `audit_id`, and the bundle.
+
+**In-memory only:** uploads are read into memory, parsed via `BytesIO`, and
+discarded when the request returns — nothing is written to disk (uploads are
+restricted to `.xlsx/.xls/.csv/.tsv`, none of which take the temp-file path).
+25 MB cap. This is the caller's own file, not a DUA cohort.
 
 `POST /api/audit/{cohort}` returns **results only** — no raw records, no subject
 ids:
