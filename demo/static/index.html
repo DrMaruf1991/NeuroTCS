@@ -68,8 +68,9 @@
 
     <section class="upload-section">
       <h2 class="section-title">Audit your own file</h2>
-      <p class="upload-lede">Upload a staging table (<span class="mono">.xlsx</span>
-        or <span class="mono">.csv</span>) with a subject id, a diagnosis/state
+      <p class="upload-lede">Upload a staging table
+        (<span class="mono">.csv .tsv .xlsx .parquet .json .jsonl</span>)
+        with a subject id, a diagnosis/state
         column, and — optionally — a visit date. NeuroTCS auto-suggests the column
         mapping; you confirm it, then it runs the <strong>same audit engine</strong>
         the cohorts use and returns the cTCS, flagged transitions, and an
@@ -80,12 +81,13 @@
       <div class="upload-card">
         <div id="dropzone" class="dropzone" tabindex="0" role="button"
              aria-label="Upload a file">
-          <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.tsv" hidden />
+          <input type="file" id="file-input"
+                 accept=".csv,.tsv,.txt,.xlsx,.xls,.parquet,.json,.jsonl,.ndjson" hidden />
           <div class="dz-inner">
             <span class="dz-icon" aria-hidden="true">⬆</span>
             <p class="dz-title">Drop a file here, or
               <span class="linklike" id="browse-btn">browse</span></p>
-            <p class="dz-sub">.xlsx · .xls · .csv · .tsv — up to 25 MB, in-memory only</p>
+            <p class="dz-sub">.csv · .tsv · .xlsx · .parquet · .json · .jsonl — up to 25 MB, in-memory only</p>
           </div>
         </div>
         <div id="upload-panel" class="upload-panel" hidden></div>

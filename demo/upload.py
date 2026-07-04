@@ -1,6 +1,7 @@
 """In-memory upload audit for the NeuroTCS demo -- BYO file, same engine path.
 
-Lets an expert upload a single .xlsx/.csv, get a describe-style auto-suggested
+Lets an expert upload a single tabular file (.csv/.tsv/.txt/.xlsx/.xls/.parquet/
+.json/.jsonl/.ndjson), get a describe-style auto-suggested
 column mapping (subject_id / visit_date / state), confirm/adjust it, and run the
 SAME staging audit path the cohorts use. Nothing is reimplemented:
 
@@ -34,10 +35,17 @@ from neurotcs.io import describe_tables, tables_to_submission
 from neurotcs.io.readers import _read_bytes_as_table
 from neurotcs.orchestration.orchestrator import run_full_audit
 
-# Uploads are restricted to formats _read_bytes_as_table parses via BytesIO only
-# (no temp file). Statistical formats (.sav/.dta/.rds) are intentionally excluded
-# because their readers need a path -- keeping the "never touch disk" guarantee.
-ALLOWED_EXT = (".xlsx", ".xls", ".csv", ".tsv")
+# Uploads are restricted to the formats _read_bytes_as_table parses via BytesIO
+# ONLY (SUPPORTED_TABULAR) -- every one reads straight from memory, no temp file.
+# Statistical formats (.rds/.rdata/.rda/.sav/.dta/.sas7bdat) are intentionally
+# EXCLUDED: their readers (pyreadr/pyreadstat) need a filesystem path, so reading
+# one would write a transient temp file -- which would break the "never touch
+# disk" guarantee. .zip/directories are also excluded (not handled by the in-
+# memory byte reader). This tuple mirrors neurotcs.io.readers.SUPPORTED_TABULAR.
+ALLOWED_EXT = (
+    ".csv", ".tsv", ".txt", ".xlsx", ".xls",
+    ".parquet", ".json", ".jsonl", ".ndjson",
+)
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB -- a demo staging file, not a data lake
 MAX_FLAGS_RETURNED = 200  # cap the flag list in the response payload
 

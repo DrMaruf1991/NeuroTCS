@@ -321,7 +321,7 @@ function initUpload() {
   });
 }
 
-const OK_EXT = [".xlsx", ".xls", ".csv", ".tsv"];
+const OK_EXT = [".csv", ".tsv", ".txt", ".xlsx", ".xls", ".parquet", ".json", ".jsonl", ".ndjson"];
 
 async function onFile(file) {
   const panel = document.getElementById("upload-panel");
@@ -329,7 +329,7 @@ async function onFile(file) {
   const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
   if (!OK_EXT.includes(ext)) {
     panel.innerHTML = fileHeader(file) +
-      `<div class="up-msg err">Unsupported type ${esc(ext)}. Use .xlsx, .xls, .csv or .tsv.</div>`;
+      `<div class="up-msg err">Unsupported type ${esc(ext)}. Use .csv, .tsv, .xlsx, .parquet, .json or .jsonl.</div>`;
     bindClear();
     return;
   }
