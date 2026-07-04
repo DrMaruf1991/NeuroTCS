@@ -22,12 +22,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from demo.config import CohortSpec
 from neurotcs import load_rulepack
 from neurotcs.cohorts import recognize_cohort
 from neurotcs.io import read_tables, tables_to_submission
 from neurotcs.orchestration.orchestrator import run_full_audit
-
-from demo.config import CohortSpec
 
 # The demo audits the clinical staging trajectory only (the invariant layer).
 _EXPECTED_LAYERS = ["staging_clinical"]

@@ -34,7 +34,6 @@ from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
 import neurotcs
-
 from demo.config import (
     COHORTS,
     COHORTS_BY_ID,

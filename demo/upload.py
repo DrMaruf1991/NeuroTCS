@@ -18,29 +18,27 @@ discarded when the request returns. Tabular formats (csv/tsv/txt/xlsx/xls/parque
 json/jsonl/ndjson) are parsed ENTIRELY IN MEMORY via BytesIO -- nothing touches
 disk (read_mode="in_memory"). Statistical formats (rds/rdata/rda/sav/dta/...) and
 .zip have readers that require a filesystem path; for these the bytes are written
-to a SECURE temp file (mkstemp, 0600), read via the shipped read_tables, and
-deleted immediately in a finally block, even on error (read_mode=
-"transient_temp_file"). The response carries the audit result back to the same
-caller; it is not a DUA cohort.
+into a SECURE temp directory (mkdtemp, mode 0700) under the file's original name,
+read via the shipped read_tables, and the whole directory is removed immediately
+in a finally block, even on error (read_mode="transient_temp_file"). The response
+carries the audit result back to the same caller; it is not a DUA cohort.
 """
 from __future__ import annotations
 
 import hashlib
+import os
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
-import os
-import shutil
-import tempfile
 
 import neurotcs
 from neurotcs import build_bundle, load_rulepack
 from neurotcs.cli import _clean_mapping, _scaffold_mapping
 from neurotcs.io import describe_tables, read_tables, tables_to_submission
 from neurotcs.io.readers import _read_bytes_as_table
-
 from neurotcs.orchestration.orchestrator import run_full_audit
 
 # Two tiers of accepted upload format:
@@ -49,11 +47,12 @@ from neurotcs.orchestration.orchestrator import run_full_audit
 #   Nothing touches disk (mirrors neurotcs.io.readers.SUPPORTED_TABULAR).
 #
 # PATH_REQUIRED -- statistical formats (pyreadr/pyreadstat) and .zip, whose readers
-#   need a filesystem path. For these we write the bytes to a SECURE temp file
-#   (mkstemp, 0600), read them via the shipped read_tables, and delete the temp
-#   file immediately in a finally block (even on error). This is a transient,
-#   controlled disk write -- surfaced to the caller as read_mode="transient_temp_file"
-#   so the UI can say so honestly. It matches how the shipped CLI reads these.
+#   need a filesystem path. For these we write the bytes into a SECURE temp
+#   directory (mkdtemp, mode 0700) under the file's original name, read via the
+#   shipped read_tables, and remove the whole directory immediately in a finally
+#   block (even on error). This is a transient, controlled disk write -- surfaced
+#   to the caller as read_mode="transient_temp_file" so the UI can say so honestly.
+#   It matches how the shipped CLI reads these.
 TABULAR_INMEM = (
     ".csv", ".tsv", ".txt", ".xlsx", ".xls",
     ".parquet", ".json", ".jsonl", ".ndjson",
