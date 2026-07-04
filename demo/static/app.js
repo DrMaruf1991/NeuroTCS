@@ -426,6 +426,7 @@ function renderMapping(desc) {
         <select id="m-visit">${colOptions(cols, s.visit, true)}</select>
       </div>
     </div>
+    <div id="numeric-warn" class="numeric-warn" hidden></div>
     <label class="norm-toggle">
       <input type="checkbox" id="m-normalize" checked />
       <span>Normalize stage labels to CN/MCI/AD
@@ -438,6 +439,27 @@ function renderMapping(desc) {
     <div id="up-result"></div>`;
 
   bindClear();
+
+  // numeric-column guard: warn (live) if the chosen state column looks numeric
+  const numericCols = (sheets[curSheet] && sheets[curSheet].numeric_like) || [];
+  const stateSel = document.getElementById("m-state");
+  const updateNumericWarn = () => {
+    const warn = document.getElementById("numeric-warn");
+    if (!warn || !stateSel) return;
+    if (numericCols.includes(stateSel.value)) {
+      warn.hidden = false;
+      warn.innerHTML =
+        `⚠️ <strong>“${esc(stateSel.value)}” looks numeric.</strong> Raw staging codes
+         (e.g. ADNI <span class="mono">1/2/3</span>, CDR <span class="mono">0/0.5/1</span>)
+         can be matched to a <em>different</em> published scheme and misinterpreted — a real
+         reversal may come back unflagged. Convert to <span class="mono">CN/MCI/AD</span> text
+         first. <a href="/guide" target="_blank" rel="noopener">Why →</a>`;
+    } else {
+      warn.hidden = true;
+    }
+  };
+  if (stateSel) stateSel.addEventListener("change", updateNumericWarn);
+  updateNumericWarn();
 
   const sheetSel = document.getElementById("m-sheet");
   if (sheetSel) sheetSel.addEventListener("change", () => {
@@ -513,6 +535,13 @@ function renderUploadResult(r) {
         .map((m) => `<span class="mono">${esc(m.raw)}→${esc(m.canonical)}</span>`)
         .join(", ")}</div>` : "";
 
+  const numWarn = r.state_looks_numeric
+    ? `<div class="numeric-warn">⚠️ <strong>The state column looked numeric.</strong>
+        Raw codes may have been matched to a different published scheme and
+        misinterpreted — treat this score with caution and re-run with
+        <span class="mono">CN/MCI/AD</span> text.
+        <a href="/guide" target="_blank" rel="noopener">Why →</a></div>` : "";
+
   let flagsTable = "";
   if (r.flags && r.flags.length) {
     const rows = r.flags.map((f) => {
@@ -546,6 +575,7 @@ function renderUploadResult(r) {
         <div class="metric"><div class="k">Flagged</div>
           <div class="v">${intc(r.n_flagged)} <small>(${pct(r.flagged_rate)})</small></div></div>
       </div>
+      ${numWarn}
       ${norm}
       ${warn}
       <div class="cite">
