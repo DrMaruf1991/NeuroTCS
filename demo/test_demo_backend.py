@@ -308,3 +308,21 @@ def test_guide_route_served(client):
     assert r.status_code == 200
     assert "text/markdown" in r.headers.get("content-type", "")
     assert "subject_id" in r.text and "cTCS" in r.text
+
+
+def test_rendered_guide_page_served(client):
+    """The human-readable /guide page (linked from the header) renders as HTML."""
+    r = client.get("/guide")
+    assert r.status_code == 200
+    assert "text/html" in r.headers.get("content-type", "")
+    # real rendered content, not raw markdown
+    assert "Preparing your dataset" in r.text
+    assert "How unmappable states are handled" in r.text
+    assert "Supported formats" in r.text
+
+
+def test_homepage_links_to_guide(client):
+    """The main page must expose the guide so users can find it."""
+    html = client.get("/").text
+    assert 'href="/guide"' in html  # header link + inline help link
+    assert "User guide" in html

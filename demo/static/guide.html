@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NeuroTCS — User Guide</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232456c9'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='sans-serif'%3E%E2%97%AB%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .guide { max-width: 860px; margin: 0 auto; padding: 0 24px 64px; }
+    .guide-top { display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 22px 0; border-bottom: 1px solid var(--line); margin-bottom: 8px; flex-wrap: wrap; }
+    .guide-top h1 { font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--ink); }
+    .guide-top .sub { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
+    .back { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600;
+      color: var(--brand); text-decoration: none; border: 1px solid var(--line-2); background: var(--panel);
+      border-radius: var(--pill); padding: 8px 15px; white-space: nowrap; }
+    .back:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line-2)); background: var(--brand-tint); }
+    .guide h2 { font-family: var(--serif); font-size: 21px; font-weight: 600; color: var(--ink);
+      margin: 34px 0 12px; padding-left: 14px; position: relative; }
+    .guide h2::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px; width: 4px;
+      border-radius: 3px; background: linear-gradient(var(--brand-2), var(--brand)); }
+    .guide h3 { font-size: 15.5px; font-weight: 640; margin: 20px 0 8px; color: var(--ink); }
+    .guide p, .guide li { font-size: 15px; line-height: 1.62; color: var(--ink-2); }
+    .guide ul { padding-left: 22px; }
+    .guide li { margin-bottom: 8px; }
+    .guide strong { color: var(--ink); font-weight: 640; }
+    .guide a { color: var(--brand); }
+    .callout { background: var(--brand-tint); border: 1px solid color-mix(in srgb, var(--brand) 16%, transparent);
+      border-radius: var(--r-sm); padding: 14px 16px; font-size: 14px; color: var(--brand-ink); margin: 14px 0; }
+    .warn-callout { background: var(--amber-tint); border-color: color-mix(in srgb, var(--amber) 26%, transparent);
+      color: var(--amber); }
+    .g-table-wrap { overflow-x: auto; margin: 14px 0; border: 1px solid var(--line); border-radius: 10px; }
+    table.g { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 460px; }
+    table.g th, table.g td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    table.g th { background: var(--panel-2); color: var(--faint); text-transform: uppercase;
+      font-size: 11px; letter-spacing: .5px; font-weight: 600; }
+    table.g tr:last-child td { border-bottom: none; }
+    table.g td.mono, table.g code { font-family: var(--mono); font-size: 12.5px; }
+    .ok { color: var(--emerald); font-weight: 700; }
+    .no { color: var(--rose); font-weight: 700; }
+    .guide code { background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px;
+      padding: 1px 5px; font-family: var(--mono); font-size: .9em; }
+    .guide hr { border: none; border-top: 1px solid var(--line); margin: 30px 0; }
+    .toc { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
+      padding: 16px 20px; box-shadow: var(--sh-sm); margin: 18px 0 8px; }
+    .toc strong { font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--faint); }
+    .toc ul { columns: 2; margin: 8px 0 0; padding-left: 18px; }
+    .toc a { font-size: 13.5px; }
+  </style>
+</head>
+<body>
+  <div class="guide">
+    <div class="guide-top">
+      <div>
+        <h1>Preparing your dataset</h1>
+        <p class="sub">What your file needs so the audit runs cleanly and gives a valid cTCS.</p>
+      </div>
+      <a class="back" href="/">← Back to the audit</a>
+    </div>
+
+    <div class="toc">
+      <strong>On this page</strong>
+      <ul>
+        <li><a href="#what">What NeuroTCS does</a></li>
+        <li><a href="#columns">The three columns</a></li>
+        <li><a href="#state">The state column</a></li>
+        <li><a href="#unmappable">Unmappable states</a></li>
+        <li><a href="#checklist">Requirements checklist</a></li>
+        <li><a href="#formats">Supported formats</a></li>
+        <li><a href="#example">Minimal example</a></li>
+        <li><a href="#messages">What each message means</a></li>
+        <li><a href="#privacy">Privacy</a></li>
+      </ul>
+    </div>
+
+    <h2 id="what">What NeuroTCS does</h2>
+    <p>NeuroTCS audits <strong>longitudinal disease-state trajectories</strong> — it follows each
+      subject across their visits and checks whether the sequence of clinical stages
+      (<code>CN → MCI → AD</code>) is consistent with published staging rules (NIA-AA 2018). It does
+      <strong>not</strong> measure, diagnose, or segment anything; it audits staging data you already
+      have.</p>
+    <p>Because it audits <em>trajectories over time</em>, your data must be <strong>longitudinal</strong>:
+      multiple visits per subject, in a known time order.</p>
+
+    <h2 id="columns">The three columns NeuroTCS must find</h2>
+    <p>Your file needs at least these three pieces of information (column names can differ — you map
+      them in the UI after upload):</p>
+    <div class="g-table-wrap"><table class="g">
+      <thead><tr><th>Role</th><th>What it is</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><strong>subject&nbsp;id</strong></td><td>A stable identifier for each person (same across their visits)</td><td class="mono">S001, PT-4471</td></tr>
+        <tr><td><strong>visit&nbsp;date</strong> <em>or</em> <strong>visit</strong></td><td>When each assessment happened, or its order. Optional — order is derived from row order if omitted.</td><td class="mono">2019-03-14, or 1, 2, 3</td></tr>
+        <tr><td><strong>state</strong></td><td>The clinical stage at that visit</td><td class="mono">CN, MCI, AD</td></tr>
+      </tbody>
+    </table></div>
+    <p>The <strong>subject id</strong> must be identical across a person's visits — that's how visits
+      are grouped into one trajectory (watch for trailing spaces or <code>S1</code> vs <code>s1</code>).</p>
+
+    <h2 id="state">The state column: what's accepted</h2>
+    <h3><span class="ok">✔</span> Already-labelled states (simplest — always works)</h3>
+    <p><code>CN</code> (cognitively normal), <code>MCI</code> (mild cognitive impairment),
+      <code>AD</code> (dementia). The sub-stages <code>SMC</code>, <code>EMCI</code>, <code>LMCI</code>
+      are also accepted.</p>
+    <h3><span class="ok">✔</span> Common text synonyms (auto-normalized — the checkbox is on by default)</h3>
+    <div class="g-table-wrap"><table class="g">
+      <thead><tr><th>Your label</th><th>Becomes</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">Normal, Cognitively Normal, NC, CU</td><td class="mono">CN</td></tr>
+        <tr><td class="mono">early MCI</td><td class="mono">EMCI</td></tr>
+        <tr><td class="mono">Alzheimer's disease, Alzheimer's dementia</td><td class="mono">AD</td></tr>
+      </tbody>
+    </table></div>
+    <p>Every substitution is shown in the result ("Normalized stage labels: …") — nothing changes
+      silently.</p>
+    <h3><span class="no">✕</span> Numeric scale scores are NOT converted on upload</h3>
+    <p><code>CDR-global</code> (0 / 0.5 / 1…), <code>NACCUDSD</code> codes (1 / 2 / 3 / 4), MMSE, etc.
+      are <strong>not</strong> crosswalked here — those conversions are specific to each public
+      cohort's loader. If your <code>state</code> column is a numeric score, convert it to CN/MCI/AD
+      before uploading (e.g. CDR-global <code>0 → CN</code>, <code>0.5 → MCI</code>,
+      <code>≥1 → AD</code>).</p>
+
+    <h2 id="unmappable">How unmappable states are handled (important)</h2>
+    <p>NeuroTCS is an auditor — it <strong>surfaces</strong> data problems rather than silently hiding
+      them. A value in <code>state</code> that doesn't resolve to CN/MCI/AD is treated one of two ways:</p>
+    <div class="g-table-wrap"><table class="g">
+      <thead><tr><th>Your value</th><th>What happens</th></tr></thead>
+      <tbody>
+        <tr><td><strong>blank / empty / missing</strong></td><td>that single visit is <strong>dropped</strong>; the trajectory joins the visits on either side (no flag)</td></tr>
+        <tr><td><strong>a non-null value that isn't a stage</strong> (<code>Unknown</code>, <code>8</code>, <code>-99</code>, a typo)</td><td>it is <strong>kept as a state</strong>, and the transitions <strong>into and out of it are flagged <span class="no">impossible</span></strong></td></tr>
+      </tbody>
+    </table></div>
+    <div class="warn-callout callout">So one stray <code>Unknown</code> in a subject's timeline produces
+      <strong>two</strong> flagged transitions (<code>… → Unknown</code> and <code>Unknown → …</code>).
+      That's the auditor doing its job. If those aren't real findings, map the value to CN/MCI/AD or
+      remove the row before uploading.</div>
+
+    <h2 id="checklist">Requirements checklist</h2>
+    <ul>
+      <li><strong>Longitudinal</strong> — at least some subjects have 2+ visits. One row per subject
+        (cross-sectional) has no trajectory to audit → no cTCS.</li>
+      <li><strong>Consistent IDs</strong> — a subject's ID is identical across their visits.</li>
+      <li><strong>Orderable visits</strong> — a date or visit number per visit (or accept the
+        derived-from-row-order note).</li>
+      <li><strong>Mappable states</strong> — CN/MCI/AD or a recognized synonym; numeric scores
+        pre-converted (see above).</li>
+      <li><strong>One staging table</strong> — a single sheet with these columns. A <code>.zip</code>
+        may hold several files, but multi-file cohort joins (like MIRIAD) are handled by the cohort
+        loaders, not the generic upload.</li>
+    </ul>
+
+    <h2 id="formats">Supported formats</h2>
+    <div class="g-table-wrap"><table class="g">
+      <thead><tr><th>Group</th><th>Extensions</th><th>How it's read</th></tr></thead>
+      <tbody>
+        <tr><td>Tabular</td><td class="mono">.csv .tsv .txt .xlsx .xls .parquet .json .jsonl .ndjson</td><td><strong>In memory</strong> — nothing written to disk</td></tr>
+        <tr><td>Statistical / archive</td><td class="mono">.rds .rdata .rda .sav .dta .sas7bdat .zip</td><td>Read via a <strong>secure temp file, deleted immediately</strong> after parsing</td></tr>
+      </tbody>
+    </table></div>
+    <p>Size limit: <strong>50 MB</strong>. The result shows which read path was used.</p>
+
+    <h2 id="example">Minimal valid example</h2>
+    <p>The simplest file that audits cleanly — three columns, several subjects, multiple visits each:</p>
+    <div class="g-table-wrap"><table class="g">
+      <thead><tr><th>subject_id</th><th>visit_date</th><th>state</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">S001</td><td class="mono">2018-01-10</td><td class="mono">CN</td></tr>
+        <tr><td class="mono">S001</td><td class="mono">2019-01-15</td><td class="mono">CN</td></tr>
+        <tr><td class="mono">S001</td><td class="mono">2020-01-20</td><td class="mono">MCI</td></tr>
+        <tr><td class="mono">S002</td><td class="mono">2018-03-01</td><td class="mono">MCI</td></tr>
+        <tr><td class="mono">S002</td><td class="mono">2019-03-05</td><td class="mono">AD</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2 id="messages">What each message means (and the fix)</h2>
+    <ul>
+      <li><strong>"mapping incomplete: 'sheet', 'subject_id' and 'state' are required"</strong> — pick a
+        subject id and a state column in the dropdowns before running.</li>
+      <li><strong>"the staging layer did not run — check that 'state' points at a recognized staging
+        column"</strong> — your state values didn't resolve to CN/MCI/AD. Turn on "Normalize stage
+        labels", or (for numeric scores) pre-convert to CN/MCI/AD.</li>
+      <li><strong>"mapping does not match the data"</strong> — a chosen column isn't in the sheet
+        (e.g. wrong sheet). Re-check the dropdowns.</li>
+      <li><strong>"…has no visit column; visit index was DERIVED from … order"</strong> <em>(a note,
+        not an error)</em> — some/all visits had no date; order came from row order. Provide dates or
+        a visit index for a guaranteed-correct order.</li>
+      <li><strong>cTCS = 1.0 with very few transitions</strong> — almost no state changes. Valid, but
+        confirm the data really is longitudinal with some progression.</li>
+      <li><strong>Very high "flagged" rate</strong> — many transitions violate the staging rules.
+        That's a <em>real finding</em>, not an error — inspect the flagged transitions.</li>
+    </ul>
+
+    <h2 id="privacy">Privacy</h2>
+    <ul>
+      <li>The upload is <strong>your own file</strong>, processed transiently and <strong>discarded when
+        the audit returns</strong> — nothing is stored server-side.</li>
+      <li><strong>Subject ids are hashed</strong> before the audit runs, so the results, the flagged
+        table, and the downloadable bundle carry only stable, non-reversible hashes — never your raw
+        ids.</li>
+      <li>Still, upload <strong>de-identified</strong> data only — no names, no MRNs, no dates of
+        birth. Coded subject ids are fine (and are hashed in the output).</li>
+    </ul>
+
+    <hr>
+    <p style="text-align:center;"><a class="back" href="/">← Back to the audit</a></p>
+  </div>
+</body>
+</html>

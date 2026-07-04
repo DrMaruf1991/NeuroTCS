@@ -105,6 +105,15 @@ a { color: var(--brand); }
   padding: 3px 8px; border-radius: var(--pill); vertical-align: 5px; margin-left: 8px;
 }
 .sub { margin: 5px 0 0; color: var(--muted); font-size: 13.5px; max-width: 48ch; }
+.header-right { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.guide-link {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
+  color: var(--brand-ink); text-decoration: none; border: 1px solid var(--line-2);
+  background: var(--panel-2); border-radius: var(--pill); padding: 7px 14px;
+  box-shadow: var(--sh-sm); transition: border-color .15s ease, background .15s ease;
+}
+.guide-link:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line-2));
+  background: var(--brand-tint); }
 .env {
   display: inline-flex; align-items: center; gap: 9px; font-size: 12.5px;
   color: var(--ink-2); border: 1px solid var(--line-2); border-radius: var(--pill);
