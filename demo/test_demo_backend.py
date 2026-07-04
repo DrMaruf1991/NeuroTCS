@@ -234,6 +234,26 @@ def test_normalize_does_not_corrupt_missing_states(client):
     assert abs(on["ctcs"] - raw["ctcs"]) < 1e-12, "normalize changed cTCS on NaN"
 
 
+def test_numeric_state_column_is_detected_and_flagged(client):
+    """A numeric-looking state column must be surfaced so the UI can warn: describe
+    lists it under numeric_like, and audit sets state_looks_numeric. A text state
+    column must NOT be flagged."""
+    rows = [{"subject_id": f"S{s}", "visit_date": f"20{10 + v:02d}-01-01",
+             "clinical_stage": st, "dx_code": c}
+            for s in range(1, 6) for v, (st, c) in enumerate([("CN", 1), ("MCI", 2), ("AD", 3)])]
+    data = pd.DataFrame(rows).to_csv(index=False).encode()
+    d = _describe(client, "t.csv", data)
+    sheet = next(iter(d["sheets"]))
+    assert "dx_code" in d["sheets"][sheet]["numeric_like"]
+    assert "clinical_stage" not in d["sheets"][sheet]["numeric_like"]
+
+    mp = {"sheet": sheet, "subject_id": "subject_id", "visit_date": "visit_date"}
+    num = _audit(client, "t.csv", data, {**mp, "state": "dx_code"}).json()
+    txt = _audit(client, "t.csv", data, {**mp, "state": "clinical_stage"}).json()
+    assert num["state_looks_numeric"] is True
+    assert txt["state_looks_numeric"] is False
+
+
 def test_adni_fine_grained_stages_are_recognized(client):
     """ADNI sub-stages (SMC/EMCI/LMCI) are read and audited, not rejected -- a real
     CN->EMCI->LMCI->AD progression must produce a score, not a refusal."""

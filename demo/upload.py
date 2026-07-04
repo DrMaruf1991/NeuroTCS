@@ -86,6 +86,28 @@ def _norm(value: Any) -> str | None:
     return value
 
 
+# A column is "numeric-like" when almost all of its non-null values parse as
+# numbers. If the user maps such a column to `state`, they are probably uploading
+# raw staging CODES (ADNI 1/2/3, CDR 0/0.5/1, NACCUDSD 1-4) -- which the engine may
+# match to a DIFFERENT published numeric scheme and misinterpret. The UI warns on
+# this so a user cannot fall into that trap even if they skip the guide.
+_NUMERIC_LIKE_FRACTION = 0.8
+_NUMERIC_LIKE_MIN_ROWS = 3
+
+
+def _numeric_like_columns(df: pd.DataFrame) -> list[str]:
+    """Return the columns whose non-null values are >=80% numeric (>=3 values)."""
+    out: list[str] = []
+    for col in df.columns:
+        nonnull = df[col].dropna()
+        if len(nonnull) < _NUMERIC_LIKE_MIN_ROWS:
+            continue
+        frac = pd.to_numeric(nonnull, errors="coerce").notna().mean()
+        if frac >= _NUMERIC_LIKE_FRACTION:
+            out.append(str(col))
+    return out
+
+
 def _read_upload(filename: str, data: bytes) -> tuple[dict[str, pd.DataFrame], str]:
     """Parse the uploaded bytes into tables. Returns (tables, read_mode).
 
@@ -159,6 +181,12 @@ def describe_upload(filename: str, data: bytes) -> dict[str, Any]:
     mapping = _clean_mapping(_scaffold_mapping(desc))
     clinical = mapping.get("clinical", {}) if isinstance(mapping, dict) else {}
 
+    # Tag each sheet's numeric-like columns (done AFTER scaffolding so the mapper
+    # sees a clean desc) so the UI can warn when the chosen `state` column looks
+    # like raw codes (ADNI 1/2/3, CDR 0/0.5/1, ...).
+    for name, info in desc.items():
+        info["numeric_like"] = _numeric_like_columns(tables[name])
+
     suggested = {
         "sheet": _norm(clinical.get("sheet")),
         "subject_id": _norm(clinical.get("subject_id")),
@@ -219,6 +247,11 @@ def audit_upload(
             f"sheet '{sheet}' is not in the uploaded file "
             f"(available: {list(tables)})."
         )
+
+    # Warn if the chosen state column looks like raw numeric codes -- those get
+    # matched to a published numeric scheme that may not be the caller's, and
+    # misinterpreted (see the guide). Surfaced in the response; never blocks.
+    state_looks_numeric = state in _numeric_like_columns(tables[sheet])
 
     # Work on a COPY so we never mutate the reader's frame, and apply two
     # transforms before the audit runs:
@@ -358,6 +391,7 @@ def audit_upload(
         "neurotcs_version": neurotcs.__version__,
         "label_normalization": label_normalization,
         "subject_ids_hashed": True,
+        "state_looks_numeric": state_looks_numeric,
         "warnings": warnings,
         "flags": flags_out,
         "flags_truncated": len(flags) > len(flags_out),
