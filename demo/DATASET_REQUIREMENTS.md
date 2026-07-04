@@ -64,12 +64,23 @@ Every substitution is shown in the result ("Normalized stage labels: …") — n
 is changed silently. If your labels aren't recognized, the audit fails clearly and
 you can rename them to CN/MCI/AD.
 
-**❌ Numeric scale scores are NOT converted on the upload path:**
-`CDR-global` (0 / 0.5 / 1 …), `NACCUDSD` codes (1 / 2 / 3 / 4), MMSE, etc. are
-**not** crosswalked here — those conversions are specific to each public cohort's
-loader. If your `state` column is a numeric score, **convert it to CN/MCI/AD before
-uploading**, for example CDR-global `0 → CN`, `0.5 → MCI`, `≥1 → AD`. (Or, for a
-recognized public cohort, use the CLI: `neurotcs audit <file> --cohort <id>`.)
+**⚠️ Numeric codes — DON'T upload raw numbers (convert to CN/MCI/AD first):**
+A column of raw numbers (`1`/`2`/`3`, CDR-global `0`/`0.5`/`1`, NACCUDSD `1`–`4`,
+MMSE, …) is **not** crosswalked using *your* cohort's meaning. The engine may
+instead match the numbers to a **different published numeric scheme** (e.g. NIA-AA
+2024 clinical staging, where `1/2/3` mean *preclinical / transitional / MCI-like*)
+and return a plausible-looking but **wrong** score. Concretely: ADNI's `DXCURREN`
+codes are `1=Normal, 2=MCI, 3=AD`, but uploaded as raw numbers they are
+**misinterpreted** — a real reversal (`3 → 2 → 1`, i.e. AD → MCI → Normal) comes
+back **unflagged**. Always convert to text first: CDR-global `0 → CN`, `0.5 → MCI`,
+`≥1 → AD`; ADNI `1 → CN`, `2 → MCI`, `3 → AD`. (For a recognized public cohort, use
+the CLI `--cohort <id>` path, which applies that cohort's exact crosswalk.)
+
+**Note on ADNI text labels:** `CN`, `SMC`, `EMCI`, `LMCI`, `MCI`, `AD` are all
+recognized (plus synonyms: `NL`/`Normal` → CN, `Early/Late MCI` → EMCI/LMCI,
+`Subjective Memory Concern` → SMC, `Alzheimer's disease` → AD). The one exception
+is the ADNIMERGE `DX` value **`Dementia`**, which is *not* mapped (it can mean
+non-AD dementia) — use `AD` or map `Dementia → AD` before uploading.
 
 ---
 

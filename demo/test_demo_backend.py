@@ -234,6 +234,27 @@ def test_normalize_does_not_corrupt_missing_states(client):
     assert abs(on["ctcs"] - raw["ctcs"]) < 1e-12, "normalize changed cTCS on NaN"
 
 
+def test_adni_fine_grained_stages_are_recognized(client):
+    """ADNI sub-stages (SMC/EMCI/LMCI) are read and audited, not rejected -- a real
+    CN->EMCI->LMCI->AD progression must produce a score, not a refusal."""
+    rows = [{"subject_id": f"S{s}", "visit_date": f"20{10 + v:02d}-01-01", "state": st}
+            for s in range(1, 5) for v, st in enumerate(["CN", "EMCI", "LMCI", "AD"])]
+    data = pd.DataFrame(rows).to_csv(index=False).encode()
+    mp = {"sheet": "t", "subject_id": "subject_id", "state": "state", "visit_date": "visit_date"}
+    r = _audit(client, "t.csv", data, mp, normalize="true").json()
+    assert r["ctcs"] is not None and r["n_transitions"] > 0
+
+
+def test_adni_dementia_label_not_recognized(client):
+    """Bare 'Dementia' (ADNIMERGE DX) is NOT mapped -> the audit fails closed, so a
+    user is told to map Dementia->AD rather than getting a silent wrong score."""
+    rows = [{"subject_id": f"S{s}", "visit_date": f"20{10 + v:02d}-01-01", "state": st}
+            for s in range(1, 5) for v, st in enumerate(["CN", "MCI", "Dementia"])]
+    data = pd.DataFrame(rows).to_csv(index=False).encode()
+    mp = {"sheet": "t", "subject_id": "subject_id", "state": "state", "visit_date": "visit_date"}
+    assert _audit(client, "t.csv", data, mp, normalize="true").status_code == 422
+
+
 def test_non_null_unmappable_state_is_kept_and_flagged(client):
     """A non-null out-of-vocabulary state ('Unknown') is NOT dropped -- it is kept
     and its transitions are flagged impossible, exactly as the raw engine does."""
