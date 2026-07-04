@@ -48,7 +48,57 @@ Tolerance: **0.0005** on cTCS, **exact** on the transition/flagged counts.
 | GET    | `/api/health`           | liveness + `neurotcs` version on the server                   |
 | GET    | `/api/cohorts`          | the 5 cohorts, availability (path configured?), locked values |
 | POST   | `/api/audit/{cohort}`   | de-identified result + live parity check                      |
+| POST   | `/api/upload/describe`  | read an uploaded `.xlsx/.csv`, suggest a column mapping        |
+| POST   | `/api/audit/upload`     | audit an uploaded file with a confirmed mapping               |
 | GET    | `/`                     | the single-page frontend                                      |
+
+### Upload audit (bring-your-own file)
+
+The "Audit your own file" panel lets an expert drop an `.xlsx`/`.csv` staging
+table and audit it through the **same engine path** the cohorts use:
+
+```
+_read_bytes_as_table(data)              # neurotcs.io.readers — in-memory (BytesIO)
+  → describe_tables → _scaffold_mapping # the `neurotcs describe` auto-mapping
+  → (user confirms subject_id/state/visit_date in the UI)
+  → tables_to_submission → run_full_audit → build_bundle
+```
+
+`POST /api/upload/describe` returns the sheet/column inventory + an auto-suggested
+mapping; `POST /api/audit/upload` takes the file plus the confirmed mapping (JSON:
+`{sheet, subject_id, state, visit_date?, visit?}`) and an optional `normalize`
+flag, and returns cTCS, CI, counts, flags (of the caller's own file), citations,
+`audit_id`, and the bundle.
+
+**Label normalization** (`normalize`, default on): reuses the shipped
+citation-anchored ontology (`normalize_labels`) to map common text labels
+("Normal"→CN, "Alzheimer's disease"→AD, "early MCI"→EMCI, …) to the canonical
+staging vocabulary. Every substitution is reported in the response
+(`label_normalization`) — never silent. Numeric scale scores (CDR-global,
+NACCUDSD) are **not** converted; those need cohort-specific crosswalks.
+
+**De-identification**: subject ids are **hashed before the audit runs**, so the
+cTCS, flags, `audit_id`, and the bundle are all computed over hashes — no raw id
+enters the engine or any returned artifact (the bundle stays self-verifying, and
+cTCS is unchanged since hashing is a bijection on the id).
+
+A user-facing guide lives at [`demo/DATASET_REQUIREMENTS.md`](DATASET_REQUIREMENTS.md)
+and is served in-app at `/DATASET_REQUIREMENTS.md` (linked from the upload panel's
+"What file do I need?" help).
+
+**Accepted formats & disk policy** (50 MB cap; the caller's own file, not a DUA
+cohort — discarded when the request returns):
+
+- **Tabular** — `.csv .tsv .txt .xlsx .xls .parquet .json .jsonl .ndjson`: parsed
+  entirely in memory via `BytesIO`, **nothing written to disk**
+  (`read_mode="in_memory"`).
+- **Statistical & archive** — `.rds .rdata .rda .sav .dta .sas7bdat .zsav .zip`:
+  their readers (pyreadr/pyreadstat, zip) require a filesystem path, so the bytes
+  are written to a **secure temp directory** (`mkdtemp`, 0700) under the file's
+  original name, read via the shipped `read_tables`, and the directory is removed
+  immediately in a `finally` block — even on error
+  (`read_mode="transient_temp_file"`). The response reports which path was used so
+  the UI can state it plainly.
 
 `POST /api/audit/{cohort}` returns **results only** — no raw records, no subject
 ids:

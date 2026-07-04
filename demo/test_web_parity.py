@@ -25,7 +25,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from demo.app import app
-from demo.config import COHORTS, CTCS_ABS_TOL, resolve_data_path
+from demo.config import COHORTS, CTCS_ABS_TOL, data_available
 
 
 @pytest.fixture(scope="module")
@@ -36,11 +36,15 @@ def client() -> TestClient:
 @pytest.mark.parametrize("spec", COHORTS, ids=[c.cohort_id for c in COHORTS])
 def test_web_matches_locked_invariant(client: TestClient, spec) -> None:
     """The web audit reproduces the locked cTCS/counts for ``spec`` cohort."""
-    if not resolve_data_path(spec):
+    # Data-gated via the SAME canonical predicate the /api/cohorts `available`
+    # field uses (config.data_available = configured AND present), so the gate and
+    # the UI can never disagree. A path unset -- or set but absent on this host
+    # (e.g. a .env carried over from another machine) -- is a skip, not a failure.
+    if not data_available(spec):
         pytest.skip(
-            f"{spec.cohort_id}: no data path configured "
-            f"(set one of {', '.join(spec.env_vars)}). The DUA data lives on the "
-            f"private server; enable there to run this gate."
+            f"{spec.cohort_id}: data not available on this host "
+            f"(set one of {', '.join(spec.env_vars)} to an existing path). The DUA "
+            f"data lives on the private server; enable there to run this gate."
         )
 
     resp = client.post(f"/api/audit/{spec.cohort_id}")

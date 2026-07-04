@@ -66,6 +66,68 @@
       <div id="cards" class="cards"></div>
     </section>
 
+    <section class="upload-section">
+      <h2 class="section-title">Audit your own file</h2>
+      <p class="upload-lede">Upload a staging table
+        (<span class="mono">.csv .xlsx .parquet .json .rds .rda .dta .sav .zip</span>)
+        with a subject id, a diagnosis/state
+        column, and — optionally — a visit date. NeuroTCS auto-suggests the column
+        mapping; you confirm it, then it runs the <strong>same audit engine</strong>
+        the cohorts use and returns the cTCS, flagged transitions, and an
+        <span class="mono">audit_id</span>. Tabular files are read
+        <strong>in memory</strong>; statistical formats (<span class="mono">.rds /
+        .rda / .dta / .sav</span>) and <span class="mono">.zip</span> are read via a
+        <strong>secure temp file that is deleted immediately</strong> after parsing.
+        Either way the file is discarded when the audit returns.</p>
+
+      <details class="help">
+        <summary>What file do I need? <span class="help-chev" aria-hidden="true">▾</span></summary>
+        <div class="help-body">
+          <p>NeuroTCS audits <strong>longitudinal</strong> trajectories, so your file
+            needs <strong>multiple visits per subject</strong> and these three
+            columns (names can differ — you map them):</p>
+          <ul>
+            <li><strong>subject id</strong> — same value across a person’s visits
+              (e.g. <span class="mono">S001</span>). This groups visits into one trajectory.</li>
+            <li><strong>state</strong> — the stage at that visit: <span class="mono">CN</span>,
+              <span class="mono">MCI</span>, <span class="mono">AD</span>. Common text labels
+              (“Normal”, “Alzheimer’s disease”, “early MCI”) are auto-normalized;
+              numeric scale scores (CDR-global, NACCUDSD) are <em>not</em> — convert
+              those to CN/MCI/AD first.</li>
+            <li><strong>visit date</strong> <em>or</em> <strong>visit</strong> — orders
+              the visits. Optional: if omitted, order is derived from row order.</li>
+          </ul>
+          <div class="help-table-wrap"><table class="help-table">
+            <thead><tr><th>subject_id</th><th>visit_date</th><th>state</th></tr></thead>
+            <tbody>
+              <tr><td>S001</td><td>2018-01-10</td><td>CN</td></tr>
+              <tr><td>S001</td><td>2019-01-15</td><td>MCI</td></tr>
+              <tr><td>S001</td><td>2020-01-20</td><td>AD</td></tr>
+              <tr><td>S002</td><td>2018-03-01</td><td>MCI</td></tr>
+              <tr><td>S002</td><td>2019-03-05</td><td>AD</td></tr>
+            </tbody>
+          </table></div>
+          <p class="help-more">Full guide, crosswalks, and troubleshooting:
+            <a href="/DATASET_REQUIREMENTS.md" target="_blank" rel="noopener">Preparing your dataset →</a></p>
+        </div>
+      </details>
+
+      <div class="upload-card">
+        <div id="dropzone" class="dropzone" tabindex="0" role="button"
+             aria-label="Upload a file">
+          <input type="file" id="file-input"
+                 accept=".csv,.tsv,.txt,.xlsx,.xls,.parquet,.json,.jsonl,.ndjson,.rds,.rdata,.rda,.sav,.dta,.sas7bdat,.zip" hidden />
+          <div class="dz-inner">
+            <span class="dz-icon" aria-hidden="true">⬆</span>
+            <p class="dz-title">Drop a file here, or
+              <span class="linklike" id="browse-btn">browse</span></p>
+            <p class="dz-sub">.csv · .xlsx · .parquet · .json · .rds · .rda · .dta · .sav · .zip — up to 50 MB</p>
+          </div>
+        </div>
+        <div id="upload-panel" class="upload-panel" hidden></div>
+      </div>
+    </section>
+
     <section class="repro">
       <h2>Why this is reproducible</h2>
       <div class="repro-grid">

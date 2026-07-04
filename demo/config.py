@@ -14,6 +14,32 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+
+def _load_dotenv_if_present() -> None:
+    """Load ``demo/.env`` (if it exists) into the environment for LOCAL dev.
+
+    Makes the documented ".env" workflow actually work: both pytest and uvicorn
+    pick up the cohort data paths without the caller having to export env vars by
+    hand -- which matters on Windows and when a path contains spaces (e.g.
+    ``G:/NeuroTCS data/...``), where shell quoting is easy to get wrong.
+
+    Real environment variables ALWAYS win (``override=False``): on Azure the App
+    Service Application Settings provide the paths and there is no ``.env`` file,
+    so this is a silent no-op in production. Best-effort: if python-dotenv is not
+    installed, we simply skip and fall back to os.environ.
+    """
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        return
+    env_path = Path(__file__).with_name(".env")
+    if env_path.exists():
+        load_dotenv(env_path, override=False)
+
+
+_load_dotenv_if_present()
 
 
 @dataclass(frozen=True)
@@ -117,9 +143,28 @@ def resolve_data_path(spec: CohortSpec) -> str | None:
     and non-empty wins. Never returns a hardcoded path -- if nothing is
     configured the caller reports the cohort as unavailable (and the endpoint
     fails closed rather than auditing a guessed path).
+
+    NOTE: this only reports what is *configured*; it does NOT check that the path
+    exists. Use ``data_available`` to decide whether a cohort can actually be
+    audited on this host -- "configured" and "present" are different things.
     """
     for var in spec.env_vars:
         val = os.environ.get(var)
         if val:
             return val
     return None
+
+
+def data_available(spec: CohortSpec) -> bool:
+    """True only if the cohort's data path is configured AND present on this host.
+
+    THE canonical definition of "this cohort can be audited here", used by both
+    the /api/cohorts ``available`` field and the parity test's skip gate, so the
+    two can never diverge. A path that is set but missing (e.g. a .env carried
+    over from another machine, or an Azure app-setting pointing at an unmounted
+    share) is NOT available: reporting it as available would enable the UI's Run
+    button and then fail at click time with a 503. Directories (MIRIAD) and files
+    both satisfy ``Path.exists()``.
+    """
+    path = resolve_data_path(spec)
+    return bool(path and Path(path).exists())

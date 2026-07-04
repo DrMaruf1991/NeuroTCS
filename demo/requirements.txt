@@ -11,3 +11,8 @@
 fastapi==0.139.0
 uvicorn[standard]==0.49.0
 gunicorn==26.0.0
+# Required by FastAPI to parse multipart uploads (the /api/*/upload endpoints).
+python-multipart==0.0.32
+# Loads demo/.env for LOCAL dev (config.py auto-loads it); no-op in production
+# where App Service Application Settings supply the paths.
+python-dotenv==1.2.2
