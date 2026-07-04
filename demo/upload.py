@@ -183,7 +183,18 @@ def describe_upload(filename: str, data: bytes) -> dict[str, Any]:
     }
 
 
-def audit_upload(filename: str, data: bytes, mapping_in: dict[str, Any]) -> dict[str, Any]:
+def _hash_id(value: Any) -> str:
+    """Deterministic short hash of a subject id -- de-identifies flags returned to
+    the browser (the caller sees stable, non-reversible ids, never the raw value)."""
+    return hashlib.sha256(str(value).encode("utf-8")).hexdigest()[:12]
+
+
+def audit_upload(
+    filename: str,
+    data: bytes,
+    mapping_in: dict[str, Any],
+    normalize: bool = True,
+) -> dict[str, Any]:
     """Run the staging audit on the uploaded file using the caller's confirmed mapping.
 
     ``mapping_in`` = {sheet, subject_id, state, visit_date?, visit?}. subject_id
@@ -209,6 +220,50 @@ def audit_upload(filename: str, data: bytes, mapping_in: dict[str, Any]) -> dict
             f"sheet '{sheet}' is not in the uploaded file "
             f"(available: {list(tables)})."
         )
+
+    # Work on a COPY so we never mutate the reader's frame, and apply two
+    # transforms before the audit runs:
+    work_df = tables[sheet].copy()
+
+    # (1) Optional label normalization (reuse the shipped citation-anchored
+    # ontology): map raw stage labels ("Normal", "cognitively normal",
+    # "Alzheimer's disease", "early MCI", ...) to the canonical
+    # CN/SMC/EMCI/LMCI/MCI/AD the rule packs consume -- the same transform the
+    # CLI's --normalize-labels applies. NON-SILENT: every raw->canonical change is
+    # reported back in the response. (Numeric scale scores like CDR-global or
+    # NACCUDSD codes are NOT label synonyms, so they are left untouched -- those
+    # need cohort-specific crosswalks.)
+    label_normalization: list[dict[str, str]] = []
+    if normalize and state in work_df.columns:
+        try:
+            from neurotcs.orchestration.label_normalization import (
+                load_label_ontology,
+                normalize_labels,
+            )
+            ont = load_label_ontology()
+            res = normalize_labels(list(work_df[state].astype(str)), ont)
+            work_df[state] = res.normalized
+            seen: set[tuple[str, str]] = set()
+            for rec in getattr(res, "applied", []) or []:
+                key = (rec.get("raw", ""), rec.get("canonical", ""))
+                if key not in seen and key[0] != key[1]:
+                    seen.add(key)
+                    label_normalization.append({
+                        "raw": rec.get("raw", ""),
+                        "canonical": rec.get("canonical", ""),
+                    })
+        except Exception:  # noqa: BLE001 -- normalization is best-effort convenience
+            label_normalization = []
+
+    # (2) De-identify: hash the subject-id column BEFORE the audit, so the entire
+    # pipeline (cTCS, flags, audit_id, and the self-verifying bundle) is computed
+    # over hashed ids. The raw id never enters the engine or any returned artifact.
+    # Hashing is a bijection per id, so trajectory grouping -- and therefore the
+    # cTCS/counts -- are IDENTICAL to a raw-id audit; only the id labels change.
+    if subject_id in work_df.columns:
+        work_df[subject_id] = work_df[subject_id].astype(str).map(_hash_id)
+
+    tables[sheet] = work_df
 
     clinical: dict[str, Any] = {
         "sheet": sheet,
@@ -272,7 +327,8 @@ def audit_upload(filename: str, data: bytes, mapping_in: dict[str, Any]) -> dict
         raise UploadError(f"failed to build bundle: {e}") from e
 
     # Flags of the caller's OWN file (capped). Each is a transition the engine
-    # judged inadmissible under the cited pack.
+    # judged inadmissible under the cited pack. Subject ids are ALREADY hashed
+    # (the whole audit ran over hashed ids), so nothing raw leaves the process.
     flags = list(staging.flags or [])
     flags_out = flags[:MAX_FLAGS_RETURNED]
 
@@ -294,6 +350,8 @@ def audit_upload(filename: str, data: bytes, mapping_in: dict[str, Any]) -> dict
         "citation_pmid": citation_pmid,
         "citation_doi": citation_doi,
         "neurotcs_version": neurotcs.__version__,
+        "label_normalization": label_normalization,
+        "subject_ids_hashed": True,
         "warnings": warnings,
         "flags": flags_out,
         "flags_truncated": len(flags) > len(flags_out),

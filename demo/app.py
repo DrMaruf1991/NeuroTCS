@@ -151,12 +151,14 @@ async def upload_describe(file: UploadFile = File(...)) -> JSONResponse:
 async def upload_audit(
     file: UploadFile = File(...),
     mapping: str = Form(...),
+    normalize: str = Form("true"),
 ) -> JSONResponse:
-    """Audit an uploaded .xlsx/.csv with the caller's confirmed mapping.
+    """Audit an uploaded file with the caller's confirmed mapping.
 
     ``mapping`` is a JSON object {sheet, subject_id, state, visit_date?, visit?}.
-    Runs the SAME tables_to_submission -> run_full_audit staging path the cohorts
-    use. In-memory only; the file is discarded when this returns.
+    ``normalize`` ("true"/"false") toggles stage-label normalization. Runs the SAME
+    tables_to_submission -> run_full_audit staging path the cohorts use; subject
+    ids are hashed before the audit. In-memory; the file is discarded on return.
     """
     import json
 
@@ -168,9 +170,12 @@ async def upload_audit(
     except (ValueError, TypeError) as e:
         raise HTTPException(status_code=422, detail=f"bad mapping: {e}") from e
 
+    normalize_flag = str(normalize).strip().lower() not in ("false", "0", "no", "off")
+
     try:
         result = await run_in_threadpool(
-            audit_upload, file.filename or "upload", data, mapping_obj
+            audit_upload, file.filename or "upload", data, mapping_obj,
+            normalize_flag,
         )
     except UploadError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
@@ -242,6 +247,15 @@ async def audit_cohort(cohort: str) -> JSONResponse:
         ),
     }
     return JSONResponse(payload)
+
+
+# ---- User guide (served from the demo package so the in-app link works) ----
+@app.get("/DATASET_REQUIREMENTS.md")
+async def dataset_requirements() -> FileResponse:
+    return FileResponse(
+        Path(__file__).with_name("DATASET_REQUIREMENTS.md"),
+        media_type="text/markdown; charset=utf-8",
+    )
 
 
 # ---- Static single-page frontend (mounted last so /api/* wins) ----

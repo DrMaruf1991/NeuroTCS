@@ -426,6 +426,11 @@ function renderMapping(desc) {
         <select id="m-visit">${colOptions(cols, s.visit, true)}</select>
       </div>
     </div>
+    <label class="norm-toggle">
+      <input type="checkbox" id="m-normalize" checked />
+      <span>Normalize stage labels to CN/MCI/AD
+        <span class="norm-hint">(e.g. “Normal”→CN, “Alzheimer’s disease”→AD; numeric CDR/NACC scores are not converted)</span></span>
+    </label>
     <div class="up-actions">
       <button class="btn btn-primary" id="run-upload">Run audit</button>
       <span class="up-msg info" id="up-status"></span>
@@ -466,9 +471,11 @@ async function runUploadAudit(sheet) {
   status.className = "up-msg info";
   status.textContent = "Auditing… (large files take longer)";
 
+  const normEl = document.getElementById("m-normalize");
   const fd = new FormData();
   fd.append("file", UPLOAD.file, UPLOAD.file.name);
   fd.append("mapping", JSON.stringify(mapping));
+  fd.append("normalize", normEl && normEl.checked ? "true" : "false");
   try {
     const resp = await fetch("/api/audit/upload", { method: "POST", body: fd });
     const body = await resp.json();
@@ -500,6 +507,11 @@ function renderUploadResult(r) {
 
   const warn = (r.warnings && r.warnings.length)
     ? `<div class="up-warn">${r.warnings.map(esc).join("<br>")}</div>` : "";
+
+  const norm = (r.label_normalization && r.label_normalization.length)
+    ? `<div class="up-norm">Normalized stage labels: ${r.label_normalization
+        .map((m) => `<span class="mono">${esc(m.raw)}→${esc(m.canonical)}</span>`)
+        .join(", ")}</div>` : "";
 
   let flagsTable = "";
   if (r.flags && r.flags.length) {
@@ -534,6 +546,7 @@ function renderUploadResult(r) {
         <div class="metric"><div class="k">Flagged</div>
           <div class="v">${intc(r.n_flagged)} <small>(${pct(r.flagged_rate)})</small></div></div>
       </div>
+      ${norm}
       ${warn}
       <div class="cite">
         <div class="row"><span class="lbl">rule pack</span><span class="mono">${esc(r.rulepack_id || "—")}</span></div>
@@ -545,7 +558,7 @@ function renderUploadResult(r) {
         <div class="auditid">${esc(r.audit_id || "—")}</div>
       </div>
       <p class="flags-note" style="margin-top:8px;">${esc(readNote)}.</p>
-      ${flagsTable ? `<div style="margin-top:16px;"><div class="auditid-label" style="margin-bottom:8px;">flagged transitions (your file)</div>${flagsTable}</div>` : ""}
+      ${flagsTable ? `<div style="margin-top:16px;"><div class="auditid-label" style="margin-bottom:8px;">flagged transitions (subject ids hashed)</div>${flagsTable}</div>` : ""}
       <div class="up-actions" style="margin-top:16px;">
         <button class="btn btn-sm" id="dl-bundle">Download bundle JSON</button>
       </div>

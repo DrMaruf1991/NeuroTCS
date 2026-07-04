@@ -66,8 +66,25 @@ _read_bytes_as_table(data)              # neurotcs.io.readers — in-memory (Byt
 
 `POST /api/upload/describe` returns the sheet/column inventory + an auto-suggested
 mapping; `POST /api/audit/upload` takes the file plus the confirmed mapping (JSON:
-`{sheet, subject_id, state, visit_date?, visit?}`) and returns cTCS, CI, counts,
-flags (of the caller's own file), citations, `audit_id`, and the bundle.
+`{sheet, subject_id, state, visit_date?, visit?}`) and an optional `normalize`
+flag, and returns cTCS, CI, counts, flags (of the caller's own file), citations,
+`audit_id`, and the bundle.
+
+**Label normalization** (`normalize`, default on): reuses the shipped
+citation-anchored ontology (`normalize_labels`) to map common text labels
+("Normal"→CN, "Alzheimer's disease"→AD, "early MCI"→EMCI, …) to the canonical
+staging vocabulary. Every substitution is reported in the response
+(`label_normalization`) — never silent. Numeric scale scores (CDR-global,
+NACCUDSD) are **not** converted; those need cohort-specific crosswalks.
+
+**De-identification**: subject ids are **hashed before the audit runs**, so the
+cTCS, flags, `audit_id`, and the bundle are all computed over hashes — no raw id
+enters the engine or any returned artifact (the bundle stays self-verifying, and
+cTCS is unchanged since hashing is a bijection on the id).
+
+A user-facing guide lives at [`demo/DATASET_REQUIREMENTS.md`](DATASET_REQUIREMENTS.md)
+and is served in-app at `/DATASET_REQUIREMENTS.md` (linked from the upload panel's
+"What file do I need?" help).
 
 **Accepted formats & disk policy** (50 MB cap; the caller's own file, not a DUA
 cohort — discarded when the request returns):

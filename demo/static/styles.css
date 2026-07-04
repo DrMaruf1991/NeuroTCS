@@ -245,6 +245,33 @@ a { color: var(--brand); }
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
   box-shadow: var(--sh); padding: 22px;
 }
+.help {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm);
+  box-shadow: var(--sh-sm); margin-bottom: 16px; overflow: hidden;
+}
+.help summary {
+  cursor: pointer; padding: 14px 18px; font-weight: 600; font-size: 14.5px;
+  color: var(--ink); list-style: none; display: flex; align-items: center;
+  justify-content: space-between; gap: 10px;
+}
+.help summary::-webkit-details-marker { display: none; }
+.help-chev { color: var(--muted); transition: transform .2s ease; }
+.help[open] .help-chev { transform: rotate(180deg); }
+.help-body { padding: 0 18px 18px; font-size: 13.5px; color: var(--ink-2); }
+.help-body p { margin: 0 0 10px; }
+.help-body ul { margin: 0 0 12px; padding-left: 20px; }
+.help-body li { margin-bottom: 6px; }
+.help-body strong { font-weight: 640; color: var(--ink); }
+.help-table-wrap { overflow-x: auto; margin: 0 0 12px; }
+.help-table { border-collapse: collapse; font-size: 12.5px; min-width: 320px; }
+.help-table th, .help-table td {
+  border: 1px solid var(--line); padding: 6px 12px; text-align: left;
+  font-family: var(--mono); font-size: 12px;
+}
+.help-table th { background: var(--panel-2); color: var(--faint); font-weight: 600; }
+.help-more { margin: 0; }
+.help-more a { color: var(--brand); font-weight: 600; text-decoration: none; }
+.help-more a:hover { text-decoration: underline; }
 .dropzone {
   border: 1.5px dashed var(--line-2); border-radius: var(--r-sm);
   background: var(--panel-2); padding: 34px 20px; text-align: center;
@@ -299,6 +326,17 @@ a { color: var(--brand); }
 }
 .map-field select:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
 .map-hint { font-size: 12px; color: var(--muted); margin: 0 0 16px; }
+.norm-toggle {
+  display: flex; align-items: flex-start; gap: 9px; margin: 0 0 16px;
+  font-size: 13.5px; color: var(--ink-2); cursor: pointer; max-width: 78ch;
+}
+.norm-toggle input { margin-top: 2px; accent-color: var(--brand); width: 15px; height: 15px; }
+.norm-hint { color: var(--muted); font-size: 12.5px; }
+.up-norm {
+  font-size: 12.5px; color: var(--brand-ink); background: var(--brand-tint);
+  border-radius: 8px; padding: 9px 12px; margin-bottom: 14px;
+}
+.up-norm .mono { font-size: 12px; }
 .up-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
 .up-msg { font-size: 13px; }
