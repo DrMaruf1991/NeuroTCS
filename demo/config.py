@@ -67,10 +67,27 @@ class CohortSpec:
     locked_n_transitions: int
     locked_n_flagged: int
     note: str
+    # Locked reproducibility metadata (from tests/audit_core/test_real_*_audit.py).
+    # Used to render the "locked reference" result when this host has no DUA data
+    # to recompute -- the real, previously-reproduced values, not a live run.
+    # ``locked_audit_id`` is None for cohorts whose invariant test does not pin one
+    # (A4 locks cTCS/counts only); CI endpoints are None where the test does not
+    # publish them.
+    locked_audit_id: str | None = None
+    locked_ci_low: float | None = None
+    locked_ci_high: float | None = None
 
 
 # cTCS parity tolerance (framework standard) and EXACT count matching.
 CTCS_ABS_TOL = 0.0005
+
+# Rule pack + anchor citation shared by every AD cohort audit (NIA-AA 2018).
+# The engine attaches these to every flag; the demo surfaces them so the
+# "locked reference" view (shown when this host has no DUA data to recompute)
+# carries the same citation the live audit would.
+RULEPACK_ID = "ad/niaaa_2018@1.3.0"
+CITATION_PMID = "29653606"
+CITATION_DOI = "10.1016/j.jalz.2018.02.018"
 
 # The five cohorts, in the order the CLAUDE.md invariant table lists them.
 COHORTS: tuple[CohortSpec, ...] = (
@@ -96,6 +113,9 @@ COHORTS: tuple[CohortSpec, ...] = (
         locked_n_transitions=158423,
         locked_n_flagged=1217,
         note="Large multi-center clinical cohort; broadest trajectory base.",
+        locked_audit_id=(
+            "58329c656e5ae14c8c6af496a6b526c2f93d317379ba3ffd145776e1cfcf07a9"
+        ),
     ),
     CohortSpec(
         cohort_id="oasis3",
@@ -107,6 +127,11 @@ COHORTS: tuple[CohortSpec, ...] = (
         locked_n_transitions=7248,
         locked_n_flagged=30,
         note="Longitudinal CDR-staged research cohort.",
+        locked_audit_id=(
+            "92df5429ed8439f84a9a65d18b1c489a2b50107facc08e3e59538948c9ad6478"
+        ),
+        locked_ci_low=0.9902,
+        locked_ci_high=0.9964,
     ),
     CohortSpec(
         cohort_id="adni",
@@ -118,6 +143,9 @@ COHORTS: tuple[CohortSpec, ...] = (
         locked_n_transitions=12006,
         locked_n_flagged=65,
         note="DXSUM diagnostic-summary staging from the ADNIMERGE2 R package.",
+        locked_audit_id=(
+            "7a973f7b57a91f7cf0af796fd9f69552e14b57aa91f4241fabd5262436588f08"
+        ),
     ),
     CohortSpec(
         cohort_id="miriad",
@@ -130,6 +158,11 @@ COHORTS: tuple[CohortSpec, ...] = (
         locked_n_flagged=7,
         note="MMSE-staged (not CDR): coarser staging on a small cohort -> "
         "lowest cTCS. A real, explainable pattern, not an error.",
+        locked_audit_id=(
+            "abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f"
+        ),
+        locked_ci_low=0.9715,
+        locked_ci_high=0.9937,
     ),
 )
 

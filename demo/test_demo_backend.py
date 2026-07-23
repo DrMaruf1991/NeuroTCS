@@ -344,6 +344,26 @@ def test_upload_route_not_swallowed_by_cohort_route(client):
     assert client.post("/api/audit/bogus").status_code == 404
 
 
+def test_audit_cohort_locked_reference_when_no_data(client):
+    """When a host has no DUA data, POST /api/audit/{cohort} returns the LOCKED
+    REFERENCE result (HTTP 200, mode=locked_reference) with the real locked
+    invariants and citation -- not a 503 -- so all 5 studies can still be shown.
+    """
+    for spec in COHORTS:
+        if data_available(spec):
+            continue  # a configured host would run live; only assert the ref path
+        r = client.post(f"/api/audit/{spec.cohort_id}")
+        assert r.status_code == 200, spec.cohort_id
+        b = r.json()
+        assert b["mode"] == "locked_reference" and b["live"] is False
+        assert b["ctcs"] == spec.locked_ctcs
+        assert b["n_transitions"] == spec.locked_n_transitions
+        assert b["n_flagged"] == spec.locked_n_flagged
+        assert b["audit_id"] == spec.locked_audit_id
+        assert b["citation_pmid"] and b["rulepack_id"]
+        assert "reference" in b["reference_note"].lower()
+
+
 def test_guide_route_served(client):
     r = client.get("/DATASET_REQUIREMENTS.md")
     assert r.status_code == 200

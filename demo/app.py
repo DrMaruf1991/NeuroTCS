@@ -35,9 +35,12 @@ from starlette.concurrency import run_in_threadpool
 
 import neurotcs
 from demo.config import (
+    CITATION_DOI,
+    CITATION_PMID,
     COHORTS,
     COHORTS_BY_ID,
     CTCS_ABS_TOL,
+    RULEPACK_ID,
     data_available,
     resolve_data_path,
 )
@@ -186,29 +189,74 @@ async def upload_audit(
     return JSONResponse(result)
 
 
+def _reference_payload(spec) -> dict[str, object]:
+    """The locked reference result for a cohort (shown when no DUA data is present).
+
+    These are the REAL, previously-reproduced invariants (cTCS, counts, audit_id,
+    CI) from ``tests/audit_core/test_real_*_audit.py`` -- NOT a live recompute on
+    this host. It is returned (HTTP 200, ``mode="locked_reference"``) instead of a
+    503 so the demo can show how each of the 5 studies' data is analysed even where
+    the DUA files are absent. The response is explicitly labelled so a reference
+    result is never mistaken for a live audit.
+    """
+    n_t = spec.locked_n_transitions
+    n_f = spec.locked_n_flagged
+    return {
+        "cohort": spec.cohort_id,
+        "mode": "locked_reference",
+        "live": False,
+        "ctcs": spec.locked_ctcs,
+        "ci_low": spec.locked_ci_low,
+        "ci_high": spec.locked_ci_high,
+        "ci_method": "bca" if spec.locked_ci_low is not None else None,
+        "n_transitions": n_t,
+        "n_flagged": n_f,
+        "flagged_rate": (n_f / n_t) if n_t else 0.0,
+        "status": "FLAGS_PRESENT" if n_f else "CLEAN",
+        "audit_id": spec.locked_audit_id,
+        "rulepack_id": RULEPACK_ID,
+        "citation_pmid": CITATION_PMID,
+        "citation_doi": CITATION_DOI,
+        "neurotcs_version": neurotcs.__version__,
+        "reference_note": (
+            "Locked reference result, reproduced on the private DUA server. This "
+            "host has no DUA data present, so these are the published locked "
+            "invariants (not recomputed here). With the DUA data configured, the "
+            "same audit runs live and reproduces these exact numbers."
+        ),
+        "parity": {
+            "locked_ctcs": spec.locked_ctcs,
+            "locked_n_transitions": n_t,
+            "locked_n_flagged": n_f,
+            "ctcs_abs_tol": CTCS_ABS_TOL,
+            "is_reference": True,
+        },
+    }
+
+
 @app.post("/api/audit/{cohort}")
 async def audit_cohort(cohort: str) -> JSONResponse:
     """Run the real audit for one cohort and return de-identified results.
 
-    Fail-closed: unknown cohort -> 404; unconfigured/missing data -> 503;
-    signature mismatch -> 409. A successful audit returns the de-identified
-    ``AuditOutcome`` plus a live parity check against the locked invariant.
+    Behaviour: unknown cohort -> 404; signature mismatch -> 409. When the DUA data
+    IS present on this host the audit runs live and returns the de-identified
+    ``AuditOutcome`` plus a live parity check against the locked invariant
+    (``mode="live"``). When the DUA data is NOT present, the endpoint returns the
+    LOCKED REFERENCE result (``mode="locked_reference"``, HTTP 200) -- the real,
+    previously-reproduced invariants, clearly labelled -- rather than failing
+    closed, so the 5 studies' results can still be shown and explained.
     """
     spec = COHORTS_BY_ID.get(cohort)
     if spec is None:
         raise HTTPException(status_code=404, detail=f"unknown cohort '{cohort}'")
 
-    data_path = resolve_data_path(spec)
-    if not data_path:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                f"cohort '{cohort}' has no data path configured on this server "
-                f"(set one of {', '.join(spec.env_vars)}). The DUA data lives only "
-                f"on the private server; this instance cannot audit it."
-            ),
-        )
+    # No DUA data on this host -> show the locked reference result (labelled),
+    # not a 503. ``data_available`` is the canonical "configured AND present"
+    # predicate the /api/cohorts ``available`` field also uses.
+    if not data_available(spec):
+        return JSONResponse(_reference_payload(spec))
 
+    data_path = resolve_data_path(spec)
     lock = _locks[cohort]
     async with lock:
         try:
@@ -227,6 +275,8 @@ async def audit_cohort(cohort: str) -> JSONResponse:
             ) from e
 
     payload = outcome.to_dict()
+    payload["mode"] = "live"
+    payload["live"] = True
     # Live parity check against the locked invariant -- the same standard as
     # test_web_parity.py, surfaced to the UI so an expert sees the proof inline.
     ctcs_ok = (

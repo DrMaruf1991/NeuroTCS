@@ -195,6 +195,7 @@ a { color: var(--brand); }
 }
 .st-idle  { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line-2); }
 .st-run   { background: var(--brand-tint); color: var(--brand-ink); }
+.st-ref   { background: var(--brand-tint); color: var(--brand-ink); border: 1px solid var(--line-2); }
 .st-clean { background: var(--emerald-tint); color: var(--emerald); }
 .st-flags { background: var(--amber-tint); color: var(--amber); }
 .st-na    { background: var(--rose-tint); color: var(--rose); }
@@ -241,6 +242,12 @@ a { color: var(--brand); }
 .parity.ok      { background: var(--emerald-tint); color: var(--emerald); }
 .parity.bad     { background: var(--rose-tint); color: var(--rose); }
 .parity.pending { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
+.parity.ref     { background: var(--brand-tint); color: var(--brand-ink); border: 1px solid var(--line-2); }
+
+.ref-note {
+  font-size: 12px; color: var(--muted); line-height: 1.5;
+  border-left: 3px solid var(--brand); padding: 2px 0 2px 11px; margin-top: 2px;
+}
 
 .card-actions { display: flex; align-items: center; gap: 12px; margin-top: auto; padding-top: 4px; }
 .errline { color: var(--rose); font-size: 12.5px; background: var(--rose-tint);

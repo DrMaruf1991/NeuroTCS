@@ -28,8 +28,10 @@ async function init() {
     renderCards();
     renderChart();
     const nAvail = res.cohorts.filter((c) => c.available).length;
-    document.getElementById("run-all-hint").textContent =
-      `${nAvail}/${res.cohorts.length} cohorts have data configured on this server.`;
+    const n = res.cohorts.length;
+    document.getElementById("run-all-hint").textContent = nAvail
+      ? `${nAvail}/${n} cohorts have DUA data on this host — the rest show locked reference results.`
+      : `No DUA data on this host — "Run all audits" shows the locked reference results for all ${n} studies.`;
   } catch (e) {
     setEnv(false, "unreachable");
     document.getElementById("run-all-hint").textContent = "Backend unreachable.";
@@ -46,14 +48,33 @@ function setEnv(ok, text) {
 async function runAll() {
   const btn = document.getElementById("run-all");
   btn.disabled = true;
-  const ids = COHORT_ORDER.filter((id) => STATE.get(id).spec.available);
-  await Promise.all(ids.map((id) => runOne(id)));
+  // Run every cohort. Where the DUA data is present the audit runs live; where it
+  // is absent the backend returns the LOCKED REFERENCE result (clearly labelled),
+  // so all 5 studies' results are shown either way.
+  await Promise.all(COHORT_ORDER.map((id) => runOne(id)));
   btn.disabled = false;
+  const anyRef = COHORT_ORDER.some((id) => {
+    const r = STATE.get(id).result;
+    return r && r.mode === "locked_reference";
+  });
+  const anyLive = COHORT_ORDER.some((id) => {
+    const r = STATE.get(id).result;
+    return r && r.mode === "live";
+  });
+  const hint = document.getElementById("run-all-hint");
+  if (anyRef && !anyLive) {
+    hint.textContent =
+      "Showing the locked reference results — the real, reproduced invariants " +
+      "from all 5 studies. This host has no DUA data to recompute live.";
+  } else if (anyRef && anyLive) {
+    hint.textContent =
+      "Live audits where DUA data is present; locked reference results elsewhere.";
+  }
 }
 
 async function runOne(cohortId) {
   const st = STATE.get(cohortId);
-  if (!st || !st.spec.available) return;
+  if (!st) return;
   st.status = "running";
   st.error = null;
   renderCard(cohortId);
@@ -62,7 +83,10 @@ async function runOne(cohortId) {
     const body = await resp.json();
     if (!resp.ok) throw new Error(body.detail || `HTTP ${resp.status}`);
     st.result = body;
-    st.status = body.n_flagged > 0 ? "flags" : "clean";
+    st.reference = body.mode === "locked_reference";
+    st.status = st.reference
+      ? "reference"
+      : (body.n_flagged > 0 ? "flags" : "clean");
   } catch (e) {
     st.status = "error";
     st.error = String(e.message || e);
@@ -87,20 +111,23 @@ function renderCards() {
 function statusPill(st) {
   switch (st.status) {
     case "running": return `<span class="status-pill st-run">running…</span>`;
+    case "reference": return `<span class="status-pill st-ref">reference</span>`;
     case "clean": return `<span class="status-pill st-clean">clean</span>`;
     case "flags": return `<span class="status-pill st-flags">flags present</span>`;
     case "error": return `<span class="status-pill st-na">error</span>`;
     default:
       return st.spec.available
         ? `<span class="status-pill st-idle">ready</span>`
-        : `<span class="status-pill st-na">no data</span>`;
+        : `<span class="status-pill st-idle">ready · reference</span>`;
   }
 }
 
 function parityBadge(st) {
   if (!st.result) return `<span class="parity pending">parity: —</span>`;
+  if (st.result.mode === "locked_reference")
+    return `<span class="parity ref" title="Reproduced on the private DUA server; shown from the locked invariants, not recomputed on this host">locked reference</span>`;
   const p = st.result.parity;
-  return p.parity_holds
+  return p && p.parity_holds
     ? `<span class="parity ok" title="cTCS within 0.0005 and counts exact vs the locked CLI invariant">✓ parity holds</span>`
     : `<span class="parity bad" title="live result differs from the locked invariant">✕ parity off</span>`;
 }
@@ -129,6 +156,8 @@ function renderCard(id) {
   const transVal = r ? intc(r.n_transitions) : intc(L.n_transitions);
   const flagVal = r ? intc(r.n_flagged) : intc(L.n_flagged);
   const flagRate = r ? pct(r.flagged_rate) : pct(L.n_flagged / L.n_transitions);
+  // "(locked)" tags the pre-run reference number; a reference RESULT is labelled
+  // by its status pill + badge, so only tag when nothing has run yet.
   const preface = r ? "" : `<small> (locked)</small>`;
 
   el.innerHTML = `
@@ -162,14 +191,20 @@ function renderCard(id) {
     <div class="cite">${citeRows}</div>
 
     ${r ? `<div><div class="auditid-label">audit id — same input, same id</div>
-      <div class="auditid">${r.audit_id || "—"}</div></div>` : ""}
+      <div class="auditid">${r.audit_id || "— (not locked for this cohort)"}</div></div>` : ""}
+
+    ${st.reference && r ? `<div class="ref-note">${esc(r.reference_note ||
+      "Locked reference — reproduced on the DUA server, not recomputed on this host.")}</div>` : ""}
 
     ${st.error ? `<div class="errline">${st.error}</div>` : ""}
 
     <div class="card-actions">
-      <button class="btn btn-sm btn-primary" ${(!s.available || st.status === "running") ? "disabled" : ""}
+      <button class="btn btn-sm btn-primary" ${st.status === "running" ? "disabled" : ""}
         onclick="window.__runOne('${id}')">
-        ${st.status === "running" ? "Auditing…" : (r ? "Re-run audit" : "Run audit")}
+        ${st.status === "running"
+          ? "Auditing…"
+          : (r ? (st.reference ? "Show reference" : "Re-run audit")
+               : (s.available ? "Run audit" : "Show result"))}
       </button>
       ${parityBadge(st)}
     </div>
