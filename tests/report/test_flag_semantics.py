@@ -79,8 +79,9 @@ def test_pdf_report_carries_flag_semantics(tmp_path):
 
 
 def test_cli_summary_carries_flag_semantics(capsys):
-    from neurotcs.cli import _print_summary
     import argparse
+
+    from neurotcs.cli import _print_summary
     bundle = _bundle_with_flags()
     args = argparse.Namespace(csv=False, svg=False, pdf=False)
     _print_summary(bundle, Path("/tmp"), "x", args)

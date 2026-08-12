@@ -863,7 +863,7 @@ def test_aa_2024_persistence_minimum_for_transitional_decline():
 
 def run_all():
     tests = [
-        test_schema_version_is_1_4,
+        test_schema_version_is_1_5,
         test_citation_requires_pmid_or_doi,
         test_transition_requires_citation_and_section,
         test_transition_attribution_type_default_is_guideline_quote,
