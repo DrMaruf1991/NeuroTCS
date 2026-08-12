@@ -47,9 +47,16 @@ def _serialize_dump(dump: dict) -> bytes:
     """Mirror loader._canonical_serialize but operate on a dump dict directly.
 
     Must stay byte-identical to the production logic: same field restriction,
-    same json.dumps parameters.
+    same nested provenance stripping (schema v1.5.0 inadmissible attribution
+    fields, ERRATA E-2026-011), same json.dumps parameters.
     """
-    scientific = {k: dump[k] for k in _SCIENTIFIC_FIELDS if k in dump}
+    scientific = {
+        k: copy.deepcopy(dump[k]) for k in _SCIENTIFIC_FIELDS if k in dump
+    }
+    for entry in scientific.get("inadmissible_transitions", []):
+        if isinstance(entry, dict):  # _mutate may append a sentinel string
+            entry.pop("attribution_type", None)
+            entry.pop("inference_rationale", None)
     return json.dumps(
         scientific, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")

@@ -1,6 +1,6 @@
 # Web layer for the NeuroTCS live demo.
 #
-# The AUDIT ENGINE (neurotcs==1.85.1) is NOT pinned here on purpose: it is
+# The AUDIT ENGINE (neurotcs==1.86.0) is NOT pinned here on purpose: it is
 # installed from THIS repo's source so the App Service runs the EXACT shipped
 # engine whose invariants the demo reproduces (see demo/startup.sh, which runs
 # `pip install .` at the repo root first). Installing neurotcs from a public

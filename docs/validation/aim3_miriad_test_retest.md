@@ -2,7 +2,7 @@
 
 **Status**: REAL-DATA RUN COMPLETE (2026-05-18); invariants locked in v1.7.7.
 **Framework**: temporalmetric v1.7 FINAL §B.1 Aim 3.
-**Rule pack**: `ad/niaaa_2018@1.3.0` (same as Aim 1 ADNI, Aim 2 OASIS-3).
+**Rule pack**: `ad/niaaa_2018@1.4.0` (same as Aim 1 ADNI, Aim 2 OASIS-3; canonical SHA unchanged from the @1.3.0 lock — ERRATA E-2026-011 is provenance-only).
 **Cohort**: MIRIAD (Malone et al. 2013 *NeuroImage* 70:33-36, PMID 23274184, DOI 10.1016/j.neuroimage.2012.12.044). 46 mild-to-moderate AD + 23 cognitively-normal controls (n=69 total), 708 T1 MRI scans, UCL Dementia Research Centre.
 
 ## Real-data findings (2026-05-18 run, NeuroTCS v1.7.6)

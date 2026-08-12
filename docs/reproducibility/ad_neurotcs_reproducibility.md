@@ -27,7 +27,7 @@ Windows) because the loader canonicalises the YAML before hashing.
 
 | Rule pack | rulepack_id | schema_version | SHA-256 |
 |---|---|---|---|
-| `ad/niaaa_2018` | `ad/niaaa_2018@1.3.0` | 1.4.0 | `97811e3f1a145e47393aa2568065303c594ffa20cc81a514ced027a23a81336b` |
+| `ad/niaaa_2018` | `ad/niaaa_2018@1.4.0` | 1.5.0 | `97811e3f1a145e47393aa2568065303c594ffa20cc81a514ced027a23a81336b` (unchanged from @1.3.0; E-2026-011 provenance-only) |
 | `ad/aa_2024` | `ad/aa_2024@2.0.0` | 1.3.0 | `1393ceb489d774c059cc30f500335e29622880e347a8081854f1c461f05c47e2` |
 | `ad/aa_2024_trac` | `ad/aa_2024_trac@1.0.0` | 1.2.0 | `b704a4d21efbe893dead9ea906940c5e61196f9db7f938df55b506cbee6be6e7` |
 

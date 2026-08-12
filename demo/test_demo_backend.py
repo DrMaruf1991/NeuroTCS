@@ -367,3 +367,36 @@ def test_homepage_links_to_guide(client):
     html = client.get("/").text
     assert 'href="/guide"' in html  # header link + inline help link
     assert "User guide" in html
+
+
+# ---------------------------------------------------------------------------
+# Self-condition contract (expert-review hardening, 2026-08): the server must
+# STATE its own condition on every response and the condition must be the
+# pinned one. Asserted here across representative endpoints (API, static
+# page, and even 404s -- middleware wraps everything).
+# ---------------------------------------------------------------------------
+
+def test_every_response_states_engine_and_rulepack_condition(client):
+    from demo.app import EXPECTED_ENGINE_VERSION, EXPECTED_RULEPACK_SHA256
+    for path in ("/api/health", "/api/cohorts", "/", "/guide",
+                 "/api/definitely-not-a-route"):
+        resp = client.get(path)
+        assert resp.headers.get("X-NeuroTCS-Engine") == (
+            EXPECTED_ENGINE_VERSION
+        ), f"{path}: missing/wrong X-NeuroTCS-Engine header"
+        assert resp.headers.get("X-NeuroTCS-Rulepack-SHA256") == (
+            EXPECTED_RULEPACK_SHA256
+        ), f"{path}: missing/wrong X-NeuroTCS-Rulepack-SHA256 header"
+
+
+def test_self_condition_assertion_fails_closed(client, monkeypatch):
+    """If the live condition ever diverges from the pinned expectation, every
+    request must become an explicit 500 naming the mismatch -- never a silent
+    result under an unverified engine."""
+    import demo.app as demo_app
+    monkeypatch.setattr(demo_app, "_LIVE_RULEPACK_SHA256", "deadbeef")
+    resp = client.get("/api/health")
+    assert resp.status_code == 500
+    body = resp.json()
+    assert body["error"] == "self-condition assertion failed"
+    assert body["rulepack_sha256"] == "deadbeef"

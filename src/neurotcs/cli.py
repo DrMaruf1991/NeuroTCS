@@ -1410,6 +1410,9 @@ def _print_summary(bundle: dict[str, Any], outdir: Path, stem: str,
     print(f"severity: impossible {sev.get('impossible', 0)} / "
           f"implausible {sev.get('implausible', 0)} / "
           f"informational {sev.get('informational', 0)}")
+    # What a flag MEANS (expert review 2026-08) -- single source of truth.
+    from neurotcs.report import FLAG_SEMANTICS_STATEMENT
+    print(f"note:     {FLAG_SEMANTICS_STATEMENT}")
     print(f"bundle:   {outdir / (stem + '.bundle.json')}")
     print(f"report:   {outdir / (stem + '.report.txt')}")
     if args.csv:

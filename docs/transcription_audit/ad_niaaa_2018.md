@@ -1,6 +1,6 @@
 # Transcription Audit: AD NIA-AA 2018 Rule Pack
 
-**Rule pack:** `ad/niaaa_2018@1.1.0`
+**Rule pack:** `ad/niaaa_2018@1.4.0`
 **Transcribed by:** Salokhiddinov M, MD PhD
 **Clinical source authority:** NIA-AA Research Framework (Jack et al. 2018, *Alzheimer's & Dementia* 14:535-562, PMID 29653606)
 
@@ -25,10 +25,24 @@ This document is the side-by-side audit of every YAML transition against its sou
 
 ## Documented inadmissible transitions
 
-| From → To | Reason | Source |
-|---|---|---|
-| AD → MCI | AD dementia not expected to revert to MCI under standard care | Jack 2018 pp. 547-549 |
-| AD → CN | AD dementia not expected to revert to CN | Jack 2018 pp. 547-549 |
+| From → To | Reason | Attribution | Source |
+|---|---|---|---|
+| AD → MCI | AD dementia not expected to revert to MCI under standard care | **clinical_inference** (E-2026-011) | Informed by Jack 2018 pp. 547-549 + Salemme 2025 reversion epidemiology; NOT stated verbatim in Jack 2018 |
+| AD → CN | AD dementia not expected to revert to CN | **clinical_inference** (E-2026-011) | Informed by Jack 2018 pp. 547-549; NOT stated verbatim in Jack 2018 |
+
+**Attribution correction (ERRATA E-2026-011, external expert review 2026-08).**
+Jack 2018 describes the AD continuum and syndromal staging (CN/MCI/dementia)
+but does **not** state a one-way CN→MCI→AD state-transition model, and does
+not address dementia→MCI reversion as an explicit transition rule. Both
+inadmissible entries are therefore transcriber clinical inferences — encoded
+because dementia reversion is substantially rarer than MCI reversion in the
+cited epidemiology — and are declared `attribution_type: clinical_inference`
+with a full bridging rationale in the YAML (`inference_rationale`). Documented
+benign causes of apparent reversion (diagnostic reclassification at consensus
+review, resolved delirium/depression, medication effects, label-mapping
+artifacts) are listed there. A flag on these transitions means "inadmissible
+under this rule pack — requires adjudication"; flag precision against expert
+adjudication is measured per `docs/VALIDATION_PROTOCOL.md`.
 
 ## Transition priors
 

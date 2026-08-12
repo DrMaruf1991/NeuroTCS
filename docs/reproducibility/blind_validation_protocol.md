@@ -348,7 +348,7 @@ A single new entry in `docs/validation/external_validations.md`
 
 - Date: <YYYY-MM-DD>
 - NeuroTCS version: v1.7.12
-- Rule pack: ad/niaaa_2018@1.3.0 (SHA-256 97811e3f1a145e47...)
+- Rule pack: ad/niaaa_2018@1.4.0 (SHA-256 97811e3f1a145e47..., unchanged from @1.3.0; E-2026-011 provenance-only)
 - Cohort: <high-level description, n_subjects, n_transitions>
 - audit_id: <SHA-256 from collaborator>
 - cTCS: <point> (95% CI <low>, <high>)
@@ -363,7 +363,7 @@ A single new entry in `docs/validation/external_validations.md`
 ### 7.1 — Why the maintainer cannot tune the rule pack to your data
 
 Each AD rule pack has a SHA-256 hash that is a function of its YAML
-content. The hash for `ad/niaaa_2018@1.3.0` is
+content. The hash for `ad/niaaa_2018@1.4.0` (unchanged from @1.3.0) is
 `97811e3f1a145e47393aa2568065303c594ffa20cc81a514ced027a23a81336b` for
 v1.7.12; you verified this in Phase B Step 1. If the maintainer modified
 the rule pack between pre-registration and your audit, your local SHA

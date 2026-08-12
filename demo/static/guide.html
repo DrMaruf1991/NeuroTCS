@@ -203,6 +203,21 @@
         That's a <em>real finding</em>, not an error — inspect the flagged transitions.</li>
     </ul>
 
+    <h2 id="flag-semantics">What a flag means</h2>
+    <p>
+      A flag marks a transition that is <strong>inadmissible or improbable under the
+      cited rule pack</strong>. Every flag <strong>requires adjudication</strong>: it is not, by
+      itself, a verdict of data error. A flagged transition may turn out to be
+      (1) a true data error, (2) real but rare biology — e.g. a documented
+      diagnostic reclassification, resolved delirium or depression, or a
+      medication effect — or (3) an artifact of how the dataset's labels were
+      mapped into the rule pack's states. Severity tier names
+      (<code>impossible</code> / <code>implausible</code> / <code>informational</code>) are stable
+      machine-schema tokens, not clinical verdicts. The fraction of flags that
+      are true data errors is measured only by the blinded expert-adjudication
+      study specified in <code>docs/VALIDATION_PROTOCOL.md</code>.
+    </p>
+
     <h2 id="privacy">Privacy</h2>
     <ul>
       <li>The upload is <strong>your own file</strong>, processed transiently and <strong>discarded when

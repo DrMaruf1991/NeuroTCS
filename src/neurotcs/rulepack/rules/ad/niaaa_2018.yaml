@@ -7,16 +7,24 @@
 # de-facto international standard for AD biological + clinical staging in
 # research and is the foundation for the AA 2024 revision.
 #
-# Schema version 1.4.0: this pack uses the pack-level endorsing_bodies field
-# added in 1.4.0 (per gap-check Finding A 2026-05-26). It does NOT use
-# required_conditions (1.2.0+) or attribution_type=clinical_inference (1.3.0+).
-# Per the schema-version declaration policy in src/neurotcs/rulepack/schema.py
-# docstring, packs declare the MINIMUM schema version they require.
+# Schema version 1.5.0: this pack uses the pack-level endorsing_bodies field
+# (1.4.0+) AND attribution_type=clinical_inference on INADMISSIBLE transitions
+# (1.5.0+, ERRATA E-2026-011). Per the schema-version declaration policy in
+# src/neurotcs/rulepack/schema.py docstring, packs declare the MINIMUM schema
+# version they require.
+#
+# v1.4.0 (ERRATA E-2026-011, external expert review 2026-08): the AD->MCI and
+# AD->CN inadmissible entries are now declared attribution_type=
+# clinical_inference. Jack 2018 describes the AD continuum but does NOT state
+# a one-way CN->MCI->AD syndromal transition model; the inadmissibility is a
+# transcriber clinical inference from reversion epidemiology. The correction
+# is provenance-only: the canonical scientific SHA is byte-identical to the
+# @1.3.0 lock (97811e3f1a145e47...), so no cohort audit_id drifts.
 
-schema_version: "1.4.0"
-rulepack_id: "ad/niaaa_2018@1.3.0"
-ruleset_version: "1.3.0"
-effective_date: "2026-05-27"
+schema_version: "1.5.0"
+rulepack_id: "ad/niaaa_2018@1.4.0"
+ruleset_version: "1.4.0"
+effective_date: "2026-08-12"
 status: "production"
 disease_domain: "alzheimers"
 framework_name: "NIA-AA 2018 Research Framework (clinical staging CN/MCI/AD)"
@@ -156,6 +164,22 @@ inadmissible_transitions:
       citation_doi: "10.1016/j.jalz.2018.02.018"
       citation_text: "Jack 2018 NIA-AA Research Framework: clinical staging discussion."
     guideline_section: "Jack 2018, §'Clinical staging' (pp. 547-549)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2018
+      (PMID 29653606) describes the AD continuum and syndromal staging but
+      does NOT state a one-way CN->MCI->AD transition model, and does not
+      address dementia->MCI reversion as an explicit transition rule. The
+      inadmissibility encoded here is a transcriber clinical inference:
+      dementia->MCI reversion is substantially rarer than MCI->CN reversion
+      (Salemme 2025, DOI 10.1002/dad2.70074), but apparent reversions DO
+      occur in longitudinal cohorts through documented benign mechanisms --
+      diagnostic reclassification at a later consensus review, resolved
+      delirium or depression, and medication effects. A flag on this
+      transition therefore means "inadmissible under this rule pack --
+      requires adjudication"; it is NOT by itself a verdict of data error.
+      Flag precision against expert adjudication is measured per
+      docs/VALIDATION_PROTOCOL.md.
 
   - from_state: "AD"
     to_state: "CN"
@@ -167,6 +191,20 @@ inadmissible_transitions:
       citation_doi: "10.1016/j.jalz.2018.02.018"
       citation_text: "Jack 2018: clinical staging discussion."
     guideline_section: "Jack 2018, §'Clinical staging' (pp. 547-549)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2018 does
+      not state a one-way syndromal transition model; AD->CN inadmissibility
+      is a transcriber clinical inference. Full reversion from established
+      AD dementia to cognitively normal is not reported as a recurring
+      outcome in the cited epidemiology (Salemme 2025 documents MCI->CN
+      reversion, not AD->CN), making this the strongest inadmissibility
+      inference in the pack -- but apparent AD->CN flips can still arise
+      from diagnostic reclassification or label-mapping artifacts rather
+      than data corruption. A flag on this transition means "inadmissible
+      under this rule pack -- requires adjudication"; it is NOT by itself a
+      verdict of data error. Flag precision against expert adjudication is
+      measured per docs/VALIDATION_PROTOCOL.md.
 
 transition_priors:
 
@@ -309,5 +347,10 @@ override_allowed_default: false
 
 notes: >-
   Canonical NeuroTCS v1 rule pack. AD instantiation per NIA-AA 2018 Research
-  Framework. Validated against 12,006 real ADNI DXSUM transitions: 65 flagged
-  (0.54%), all clinically interpretable.
+  Framework. Run against 12,006 real ADNI DXSUM transitions: 65 flagged
+  (0.54%). Flag counts are descriptive audit output, not adjudicated error
+  counts: the fraction of flags that represent true data errors (vs. real
+  but rare biology, vs. label-mapping artifacts) is measured only by the
+  expert-adjudication study specified in docs/VALIDATION_PROTOCOL.md, which
+  has not yet been executed. Reproducibility of the audit is established;
+  clinical validity of each flag is a separate, pending claim.

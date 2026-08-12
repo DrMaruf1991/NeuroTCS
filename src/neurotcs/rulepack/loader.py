@@ -76,16 +76,32 @@ _SCIENTIFIC_FIELDS = (
 )
 
 
+# Provenance fields nested inside inadmissible_transitions entries (schema
+# v1.5.0, ERRATA E-2026-011). The scoring engine never reads them (the K
+# kernel consumes only the state pair), so they are stripped from the
+# canonical serialization: declaring honest attribution on an inadmissible
+# rule can never drift a cohort audit_id. NOTE the deliberate asymmetry:
+# the same-named fields on ADMISSIBLE transitions (schema v1.3.0) have been
+# part of the canonical bytes since the v1.7.x cohort locks and are kept
+# hashed for cryptographic continuity -- removing them now would drift every
+# locked audit_id, the exact harm this partition exists to prevent.
+_INADMISSIBLE_PROVENANCE_FIELDS = ("attribution_type", "inference_rationale")
+
+
 def _canonical_serialize(rp: RulePack) -> bytes:
     """Canonical JSON over SCIENTIFIC content only -- the audit_id input.
 
     Hashes exactly the rule-pack fields the scoring engine consumes. Metadata
     is intentionally excluded so that adding endorsements, refreshing dates, or
     bumping versions can never drift a cohort audit_id. Two-directional proof:
-    tests/rulepack/test_canonical_serialization_partition.py.
+    tests/rulepack/test_canonical_serialization_partition.py and
+    tests/rulepack/test_inadmissible_attribution.py.
     """
     dump = rp.model_dump(mode="json")
     scientific = {k: dump[k] for k in _SCIENTIFIC_FIELDS if k in dump}
+    for entry in scientific.get("inadmissible_transitions", []):
+        for field in _INADMISSIBLE_PROVENANCE_FIELDS:
+            entry.pop(field, None)
     return json.dumps(
         scientific,
         sort_keys=True,

@@ -44,9 +44,13 @@
 #    syndrome are FIXED ATTRIBUTES (audited by data_integrity, never staged).
 #    Biomarker A/T(N) states are staged by the at_biological / atn_2018 packs.
 
-schema_version: "1.4.0"
-rulepack_id: "ad/adni_clinical_stage@1.0.0"
-ruleset_version: "1.0.0"
+# v1.0.1 (ERRATA E-2026-011): the five AD->* inadmissible entries are now
+# declared attribution_type=clinical_inference (Jack 2018 does not state a
+# one-way model over ADNI recruitment strata). Provenance-only correction:
+# canonical scientific SHA unchanged; no cohort audit_id drifts.
+schema_version: "1.5.0"
+rulepack_id: "ad/adni_clinical_stage@1.0.1"
+ruleset_version: "1.0.1"
 effective_date: "2026-06-01"
 status: "production"
 disease_domain: "alzheimers"
@@ -398,6 +402,22 @@ inadmissible_transitions:
       citation_doi: "10.1016/j.jalz.2018.02.018"
       citation_text: "Jack 2018: clinical staging discussion."
     guideline_section: "Jack 2018, clinical staging (pp. 547-549)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2018
+      (PMID 29653606) describes clinical staging on the AD continuum but
+      does NOT state a one-way transition model over the ADNI recruitment
+      strata (CN/SMC/EMCI/LMCI/MCI/AD), which are ADNI protocol categories,
+      not Jack 2018 constructs. The inadmissibility of reversion from AD
+      dementia encoded here is a transcriber clinical inference from
+      reversion epidemiology (dementia reversion is substantially rarer
+      than MCI reversion; Salemme 2025, DOI 10.1002/dad2.70074). Apparent
+      reversions can arise from documented benign mechanisms -- diagnostic
+      reclassification at consensus review, resolved delirium/depression,
+      medication effects -- or from label-mapping artifacts. A flag on this
+      transition means "inadmissible under this rule pack -- requires
+      adjudication"; it is NOT by itself a verdict of data error. Flag
+      precision is measured per docs/VALIDATION_PROTOCOL.md.
 
   - from_state: "AD"
     to_state: "SMC"
@@ -409,6 +429,22 @@ inadmissible_transitions:
       citation_doi: "10.1016/j.jalz.2018.02.018"
       citation_text: "Jack 2018: clinical staging discussion."
     guideline_section: "Jack 2018, clinical staging (pp. 547-549)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2018
+      (PMID 29653606) describes clinical staging on the AD continuum but
+      does NOT state a one-way transition model over the ADNI recruitment
+      strata (CN/SMC/EMCI/LMCI/MCI/AD), which are ADNI protocol categories,
+      not Jack 2018 constructs. The inadmissibility of reversion from AD
+      dementia encoded here is a transcriber clinical inference from
+      reversion epidemiology (dementia reversion is substantially rarer
+      than MCI reversion; Salemme 2025, DOI 10.1002/dad2.70074). Apparent
+      reversions can arise from documented benign mechanisms -- diagnostic
+      reclassification at consensus review, resolved delirium/depression,
+      medication effects -- or from label-mapping artifacts. A flag on this
+      transition means "inadmissible under this rule pack -- requires
+      adjudication"; it is NOT by itself a verdict of data error. Flag
+      precision is measured per docs/VALIDATION_PROTOCOL.md.
 
   - from_state: "AD"
     to_state: "EMCI"
@@ -420,6 +456,22 @@ inadmissible_transitions:
       citation_doi: "10.1016/j.jalz.2018.02.018"
       citation_text: "Jack 2018: clinical staging discussion."
     guideline_section: "Jack 2018, clinical staging (pp. 547-549)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2018
+      (PMID 29653606) describes clinical staging on the AD continuum but
+      does NOT state a one-way transition model over the ADNI recruitment
+      strata (CN/SMC/EMCI/LMCI/MCI/AD), which are ADNI protocol categories,
+      not Jack 2018 constructs. The inadmissibility of reversion from AD
+      dementia encoded here is a transcriber clinical inference from
+      reversion epidemiology (dementia reversion is substantially rarer
+      than MCI reversion; Salemme 2025, DOI 10.1002/dad2.70074). Apparent
+      reversions can arise from documented benign mechanisms -- diagnostic
+      reclassification at consensus review, resolved delirium/depression,
+      medication effects -- or from label-mapping artifacts. A flag on this
+      transition means "inadmissible under this rule pack -- requires
+      adjudication"; it is NOT by itself a verdict of data error. Flag
+      precision is measured per docs/VALIDATION_PROTOCOL.md.
 
   - from_state: "AD"
     to_state: "MCI"
@@ -431,6 +483,22 @@ inadmissible_transitions:
       citation_doi: "10.1016/j.jalz.2018.02.018"
       citation_text: "Jack 2018: clinical staging discussion."
     guideline_section: "Jack 2018, clinical staging (pp. 547-549)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2018
+      (PMID 29653606) describes clinical staging on the AD continuum but
+      does NOT state a one-way transition model over the ADNI recruitment
+      strata (CN/SMC/EMCI/LMCI/MCI/AD), which are ADNI protocol categories,
+      not Jack 2018 constructs. The inadmissibility of reversion from AD
+      dementia encoded here is a transcriber clinical inference from
+      reversion epidemiology (dementia reversion is substantially rarer
+      than MCI reversion; Salemme 2025, DOI 10.1002/dad2.70074). Apparent
+      reversions can arise from documented benign mechanisms -- diagnostic
+      reclassification at consensus review, resolved delirium/depression,
+      medication effects -- or from label-mapping artifacts. A flag on this
+      transition means "inadmissible under this rule pack -- requires
+      adjudication"; it is NOT by itself a verdict of data error. Flag
+      precision is measured per docs/VALIDATION_PROTOCOL.md.
 
   - from_state: "AD"
     to_state: "LMCI"
@@ -442,6 +510,22 @@ inadmissible_transitions:
       citation_doi: "10.1016/j.jalz.2018.02.018"
       citation_text: "Jack 2018: clinical staging discussion."
     guideline_section: "Jack 2018, clinical staging (pp. 547-549)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2018
+      (PMID 29653606) describes clinical staging on the AD continuum but
+      does NOT state a one-way transition model over the ADNI recruitment
+      strata (CN/SMC/EMCI/LMCI/MCI/AD), which are ADNI protocol categories,
+      not Jack 2018 constructs. The inadmissibility of reversion from AD
+      dementia encoded here is a transcriber clinical inference from
+      reversion epidemiology (dementia reversion is substantially rarer
+      than MCI reversion; Salemme 2025, DOI 10.1002/dad2.70074). Apparent
+      reversions can arise from documented benign mechanisms -- diagnostic
+      reclassification at consensus review, resolved delirium/depression,
+      medication effects -- or from label-mapping artifacts. A flag on this
+      transition means "inadmissible under this rule pack -- requires
+      adjudication"; it is NOT by itself a verdict of data error. Flag
+      precision is measured per docs/VALIDATION_PROTOCOL.md.
 
 transition_priors:
 

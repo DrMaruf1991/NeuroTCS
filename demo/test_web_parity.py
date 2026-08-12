@@ -55,9 +55,9 @@ def test_web_matches_locked_invariant(client: TestClient, spec) -> None:
     body = resp.json()
 
     # --- server ran the SAME engine version whose invariants we lock against ---
-    assert body["neurotcs_version"] == "1.85.1", (
+    assert body["neurotcs_version"] == "1.86.0", (
         f"{spec.cohort_id}: neurotcs on server is {body['neurotcs_version']}, "
-        f"but the locked invariants are for 1.85.1 -- pin the package."
+        f"but the locked invariants are for 1.86.0 -- pin the package."
     )
 
     ctcs = body["ctcs"]

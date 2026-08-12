@@ -49,9 +49,14 @@
 #    clearance carve-out) is a SEPARATE axis (at_biological / atn_2018 / TRAC),
 #    with different rules; it is deliberately not conflated here.
 
-schema_version: "1.4.0"
-rulepack_id: "ad/niaaa_2024_clinical_numeric@1.0.0"
-ruleset_version: "1.0.0"
+# v1.0.1 (ERRATA E-2026-011): the 15 dementia-regression inadmissible entries
+# are now declared attribution_type=clinical_inference (Jack 2024 Table 6
+# defines stages, not transition prohibitions; the "not expected to revert"
+# clause is transcriber inference). Provenance-only correction: canonical
+# scientific SHA unchanged; no cohort audit_id drifts.
+schema_version: "1.5.0"
+rulepack_id: "ad/niaaa_2024_clinical_numeric@1.0.1"
+ruleset_version: "1.0.1"
 effective_date: "2026-06-09"
 status: "production"
 disease_domain: "alzheimers"
@@ -397,6 +402,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "4"
     to_state: "1"
     reason: >-
@@ -407,6 +426,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "4"
     to_state: "2"
     reason: >-
@@ -417,6 +450,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "4"
     to_state: "3"
     reason: >-
@@ -427,6 +474,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "5"
     to_state: "0"
     reason: >-
@@ -437,6 +498,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "5"
     to_state: "1"
     reason: >-
@@ -447,6 +522,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "5"
     to_state: "2"
     reason: >-
@@ -457,6 +546,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "5"
     to_state: "3"
     reason: >-
@@ -467,6 +570,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "5"
     to_state: "4"
     reason: >-
@@ -477,6 +594,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "6"
     to_state: "0"
     reason: >-
@@ -487,6 +618,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "6"
     to_state: "1"
     reason: >-
@@ -497,6 +642,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "6"
     to_state: "2"
     reason: >-
@@ -507,6 +666,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "6"
     to_state: "3"
     reason: >-
@@ -517,6 +690,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "6"
     to_state: "4"
     reason: >-
@@ -527,6 +714,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
   - from_state: "6"
     to_state: "5"
     reason: >-
@@ -537,6 +738,20 @@ inadmissible_transitions:
       citation_text: >-
         Jack 2024 Table 6: stages 4-6 denote dementia of increasing functional severity; established dementia is not expected to revert to a milder clinical stage.
     guideline_section: "Jack 2024 Table 6 (dementia stages 4-6)"
+    attribution_type: "clinical_inference"
+    inference_rationale: >-
+      ERRATA E-2026-011 (external expert review, 2026-08): Jack 2024 Table 6
+      defines the numeric clinical stages and their increasing functional
+      severity; it does not state a transition-prohibition rule. The clause
+      "established dementia is not expected to revert to a milder clinical
+      stage" is a transcriber clinical inference from the ordered stage
+      definitions and reversion epidemiology, not verbatim Table 6 text.
+      Apparent stage regressions can arise from diagnostic reclassification,
+      resolved delirium/depression, medication effects, inter-rater staging
+      variability, or label-mapping artifacts. A flag on this transition
+      means "inadmissible under this rule pack -- requires adjudication";
+      it is NOT by itself a verdict of data error. Flag precision is
+      measured per docs/VALIDATION_PROTOCOL.md.
 
 transition_priors: []
 
