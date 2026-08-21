@@ -69,9 +69,9 @@ TRANSCRIPTION_AUDIT_DIR = PROJECT_ROOT / "docs" / "transcription_audit"
 # Schema-level tests
 # ============================================================
 
-def test_schema_version_is_1_4():
-    assert SCHEMA_VERSION == "1.4.0"
-    print(f"  {PASS} test_schema_version_is_1_4")
+def test_schema_version_is_1_5():
+    assert SCHEMA_VERSION == "1.5.0"
+    print(f"  {PASS} test_schema_version_is_1_5")
 
 
 def test_citation_requires_pmid_or_doi():
@@ -863,7 +863,7 @@ def test_aa_2024_persistence_minimum_for_transitional_decline():
 
 def run_all():
     tests = [
-        test_schema_version_is_1_4,
+        test_schema_version_is_1_5,
         test_citation_requires_pmid_or_doi,
         test_transition_requires_citation_and_section,
         test_transition_attribution_type_default_is_guideline_quote,

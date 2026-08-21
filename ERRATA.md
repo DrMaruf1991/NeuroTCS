@@ -5,6 +5,93 @@ corrections are made transparently and as soon as discovered.
 
 ---
 
+## E-2026-011 · Inadmissible-transition rationales presented with guideline-quote authority the cited papers do not state (fixed in v1.86.0)
+
+**Discovered:** 2026-08-12 (external expert review)
+**Fixed in:** v1.86.0
+**Affected versions:** all versions through v1.85.1
+**Severity:** Does NOT affect any published cTCS/uTCS/pTCS value or any locked audit_id. The canonical scientific SHAs of all three corrected packs are byte-identical before and after the correction (verified programmatically; see below). This errata concerns *attribution honesty in rule provenance*, not any computed number or any flag decision.
+
+### What happened
+
+An external expert review (2026-08) raised two connected objections:
+
+1. "I'm not sure I would describe all of these transitions as clinically
+   impossible... even some apparent improvement from AD/dementia to MCI could
+   reflect diagnostic reclassification rather than a true data-integrity
+   problem."
+2. "I don't think the 2018 NIA-AA framework by itself really establishes a
+   one-way CN to MCI to AD state-transition model."
+
+Both are correct as statements about *attribution*. The affected inadmissible
+entries were clinically defensible as encoded rules, but they were presented
+with citation authority the cited sections do not verbatim contain:
+
+- `ad/niaaa_2018` AD->MCI and AD->CN cited "Jack 2018, §'Clinical staging'
+  (pp. 547-549)". Jack 2018 describes the AD continuum and syndromal staging
+  but does not state a one-way CN->MCI->AD transition model.
+- `ad/adni_clinical_stage` — five AD->* entries cited the identical
+  "clinical staging discussion" authority, over ADNI recruitment strata
+  (CN/SMC/EMCI/LMCI/MCI/AD) that are ADNI protocol categories, not Jack 2018
+  constructs.
+- `ad/niaaa_2024_clinical_numeric` — fifteen dementia-regression entries
+  whose citation_text clause "established dementia is not expected to revert
+  to a milder clinical stage" is a transcriber inference from the ordered
+  stage definitions, not verbatim Jack 2024 Table 6 text.
+
+The root cause was structural, not editorial: `InadmissibleTransition` in the
+rule-pack schema had **no `attribution_type` / `inference_rationale` fields**,
+while admissible `Transition` has carried them since schema v1.3.0
+(E-2026-003). An inadmissible rule *could not* declare "this is clinical
+inference informed by the citation, not a verbatim transcription" — so every
+inadmissible entry silently claimed guideline-quote authority.
+
+Note: the review's other example, MCI->CN, was already an ADMISSIBLE
+transition (with a 180-day minimum interval and Salemme 2025 reversion
+priors) in every affected version; it has never been flagged as an error.
+
+### What changed in v1.86.0
+
+1. **Schema v1.5.0**: `InadmissibleTransition` gains `attribution_type` +
+   `inference_rationale`, with the same fail-closed validator as admissible
+   transitions (`clinical_inference` REQUIRES a rationale).
+2. **22 inadmissible entries re-attributed** across the three packs above
+   (`ad/niaaa_2018@1.4.0`, `ad/adni_clinical_stage@1.0.1`,
+   `ad/niaaa_2024_clinical_numeric@1.0.1`): each now declares
+   `attribution_type: clinical_inference` with an explicit rationale that
+   (a) names what the cited paper does and does not state, (b) lists the
+   documented benign causes of apparent reversion (diagnostic
+   reclassification, resolved delirium/depression, medication effects,
+   label-mapping artifacts), and (c) states that a flag means "inadmissible
+   under this rule pack — requires adjudication", NOT "data error".
+3. **No audit_id drift, by construction**: the new fields are provenance the
+   scoring engine never reads, so `_canonical_serialize` excludes them from
+   the canonical scientific SHA (extending the E-2026-006 partition). The
+   same-named fields on ADMISSIBLE transitions remain hashed — they have been
+   part of the canonical bytes since the v1.7.x cohort locks, and removing
+   them would drift every locked audit_id.
+4. **Entries left as `guideline_quote`**: `ad/aa_2024` biomarker-stage
+   reversions (cite Jack 2024 §4.3's explicit unidirectional-sequence
+   statement), `ad/aa_2024_trac` (verbatim La Joie 2025 quotes), and
+   `ad/at_biological` (Jack 2013/2024 cascade monotonicity, the central
+   structural claim of those papers). Data-holders verifying the source
+   text who find otherwise should file an issue per the transcription-audit
+   protocol; that is exactly the mechanism this errata exercised.
+
+### Cryptographic continuity (verified)
+
+| Pack | Version | Canonical scientific SHA-256 (prefix) | Drift |
+|---|---|---|---|
+| `ad/niaaa_2018` | @1.3.0 → @1.4.0 | `97811e3f1a145e47` | none (byte-identical) |
+| `ad/adni_clinical_stage` | @1.0.0 → @1.0.1 | `0f032caf1e48fb61` | none (byte-identical) |
+| `ad/niaaa_2024_clinical_numeric` | @1.0.0 → @1.0.1 | `a7384bd8c34230c9` | none (byte-identical) |
+
+All locked cohort audit_ids (four-cohort triangulation, README hallmark
+table) therefore remain valid without re-derivation. Regression-locked in
+`tests/rulepack/test_inadmissible_attribution.py`.
+
+---
+
 ## E-2026-010 · Completeness was operator-dependent; orchestrator now enforces complete-or-refuse (fixed in v1.23.0)
 
 **Discovered:** 2026-05-28

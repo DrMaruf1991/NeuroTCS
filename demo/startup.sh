@@ -13,7 +13,7 @@ cd "${APP_PATH:-/home/site/wwwroot}"
 
 echo "[startup] python: $(python --version)"
 
-# 1) Install the audit engine from THIS repo (the shipped 1.85.1), then web deps.
+# 1) Install the audit engine from THIS repo (the shipped 1.86.0), then web deps.
 #    Installing from source (not a public index) is what guarantees the engine
 #    matches the locked invariants.
 python -m pip install --upgrade pip >/dev/null
@@ -22,7 +22,7 @@ python -m pip install -r demo/requirements.txt >/dev/null
 
 # 2) Fail-closed parity guard: refuse to start if the engine version on this
 #    server is not the version whose cTCS invariants the demo reproduces.
-EXPECTED_VERSION="1.85.1"
+EXPECTED_VERSION="1.86.0"
 ACTUAL_VERSION="$(python -c 'import neurotcs; print(neurotcs.__version__)')"
 echo "[startup] neurotcs engine: ${ACTUAL_VERSION} (expected ${EXPECTED_VERSION})"
 if [ "${ACTUAL_VERSION}" != "${EXPECTED_VERSION}" ]; then

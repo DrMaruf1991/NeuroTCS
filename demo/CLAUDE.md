@@ -108,7 +108,7 @@ Also confirm against the CLI directly during dev:
 - Target: the existing private Azure App Service (NeuroTCS env). Keep access control on.
 - FastAPI via the standard Azure App Service Python deploy (gunicorn/uvicorn).
 - Install the `neurotcs` package (pinned to the version whose invariants you're
-  matching — currently 1.85.1) in the App Service env so the engine is the exact
+  matching — currently 1.86.0) in the App Service env so the engine is the exact
   shipped one. Confirm `neurotcs.__version__` on the server == the version whose
   locked cTCS you're reproducing.
 - Provide the exact deploy commands and an app settings checklist (data paths,

@@ -42,7 +42,7 @@ def bundle_to_svg(bundle: dict[str, Any], *, width: int = 720) -> str:
     pad = 24
     row_h = 54
     header_h = 96
-    foot_h = 64
+    foot_h = 110  # provenance line + wrapped flag-semantics statement
     plot_x = 230               # where the cTCS scale starts
     plot_w = width - plot_x - pad - 60
     height = header_h + max(1, len(axes)) * row_h + 70 + foot_h
@@ -140,5 +140,19 @@ def bundle_to_svg(bundle: dict[str, Any], *, width: int = 720) -> str:
         f'{escape(str(core.get("framework_version", "?")))} | format '
         f'{escape(str(core.get("bundle_format_version", "?")))}</text>'
     )
+    # flag-semantics statement (expert review 2026-08): wrap to ~90 chars/line
+    from neurotcs.report import FLAG_SEMANTICS_STATEMENT
+    words = FLAG_SEMANTICS_STATEMENT.split()
+    lines: list[str] = [""]
+    for w in words:
+        if len(lines[-1]) + len(w) + 1 > 92:
+            lines.append(w)
+        else:
+            lines[-1] = (lines[-1] + " " + w).strip()
+    for i, line in enumerate(lines):
+        out.append(
+            f'<text x="{pad}" y="{fy + 16 + i * 13}" fill="#8fa3bd" '
+            f'font-size="10">{escape(line)}</text>'
+        )
     out.append("</svg>")
     return "".join(out)

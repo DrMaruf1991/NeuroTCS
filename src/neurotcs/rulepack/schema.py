@@ -1,5 +1,5 @@
 """
-NeuroTCS Rule Pack Schema v1.4.0.
+NeuroTCS Rule Pack Schema v1.5.0.
 
 Citation-locked, version-stamped, fail-closed Pydantic specification for
 clinical rule packs.
@@ -19,6 +19,9 @@ honest, audit-friendly version tracking:
     `inference_rationale` on any transition) declares `schema_version: "1.3.0"`.
   - A pack that uses the pack-level `endorsing_bodies` field (added in 1.4.0)
     declares `schema_version: "1.4.0"`.
+  - A pack that uses `attribution_type` / `inference_rationale` on an
+    INADMISSIBLE transition (added in 1.5.0 per ERRATA E-2026-011) declares
+    `schema_version: "1.5.0"`.
 
 Rationale: an external reviewer or AI-vendor auditor inspecting the YAML
 can immediately tell which schema features are in play. A pack that
@@ -30,8 +33,21 @@ uses endorsing_bodies) will fail validation at load time.
 automatically across every shipped rule pack — under-declaring will be
 caught at CI time before it reaches a reviewer.
 
-Supported schema versions for loading: {1.1.0, 1.2.0, 1.3.0, 1.4.0}. The
-loader accepts any of these and applies feature gating per-field.
+Supported schema versions for loading: {1.1.0, 1.2.0, 1.3.0, 1.4.0, 1.5.0}.
+The loader accepts any of these and applies feature gating per-field.
+
+v1.5.0 changes vs v1.4.0 (ERRATA E-2026-011, external expert review 2026-08):
+  - Added optional `attribution_type` + `inference_rationale` fields to
+    InadmissibleTransition, mirroring the v1.3.0 fields on (admissible)
+    Transition. Before 1.5.0 an inadmissible rule could not declare that
+    its rationale is a transcriber clinical inference rather than a
+    verbatim guideline statement — the exact over-attribution the external
+    review identified on the ad/niaaa_2018 AD->MCI / AD->CN entries.
+  - Same fail-closed validator: `clinical_inference` REQUIRES
+    `inference_rationale`.
+  - The two fields are provenance, never read by the scoring engine, and
+    are excluded from the canonical scientific SHA (E-2026-006 partition),
+    so declaring honest attribution can never drift a cohort audit_id.
 
 v1.4.0 changes vs v1.3.0 (shipped in v1.12.0):
   - Added optional pack-level `endorsing_bodies: list[str]` field to
@@ -129,11 +145,13 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 # Schema version
 # ============================================================
 
-SCHEMA_VERSION = "1.4.0"
+SCHEMA_VERSION = "1.5.0"
 
 
 # Schema versions that the loader accepts (backward compatible).
-SUPPORTED_SCHEMA_VERSIONS = frozenset({"1.1.0", "1.2.0", "1.3.0", "1.4.0"})
+SUPPORTED_SCHEMA_VERSIONS = frozenset(
+    {"1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0"}
+)
 
 
 # ============================================================
@@ -360,7 +378,17 @@ class Transition(BaseModel):
 
 
 class InadmissibleTransition(BaseModel):
-    """Documented inadmissible transition (for reviewer clarity)."""
+    """Documented inadmissible transition (for reviewer clarity).
+
+    Schema v1.5.0 (ERRATA E-2026-011): inadmissible transitions carry the
+    same attribution honesty markers as admissible Transitions have carried
+    since v1.3.0. An inadmissibility whose rationale is a transcriber
+    clinical inference (informed by, but not stated verbatim in, the cited
+    publication) MUST declare `attribution_type: clinical_inference` with an
+    explicit `inference_rationale`. This is the class-level fix for the
+    external-review finding that ad/niaaa_2018 presented AD->MCI / AD->CN
+    inadmissibility with guideline-quote authority Jack 2018 does not state.
+    """
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     from_state: str = Field(..., min_length=1, max_length=64)
@@ -372,6 +400,41 @@ class InadmissibleTransition(BaseModel):
         description="Optional section pointer documenting where the "
                     "publication states this transition is not expected."
     )
+    attribution_type: AttributionType = Field(
+        AttributionType.GUIDELINE_QUOTE,
+        description="How the citation relates to the encoded inadmissibility. "
+                    "Default 'guideline_quote' (the cited section states the "
+                    "transition is not expected). 'clinical_inference' marks a "
+                    "transcriber's clinical judgment informed by the citation "
+                    "rather than reproduced from it; requires "
+                    "`inference_rationale`. Added schema v1.5.0 per ERRATA "
+                    "E-2026-011. Provenance only: excluded from the canonical "
+                    "scientific SHA, never read by the scoring engine."
+    )
+    inference_rationale: str | None = Field(
+        None, max_length=2048,
+        description="When `attribution_type == clinical_inference`, this "
+                    "field MUST be set and should explain the clinical "
+                    "reasoning that bridges the cited evidence to the encoded "
+                    "inadmissibility, including known benign causes of "
+                    "apparent violations (e.g. diagnostic reclassification). "
+                    "Added schema v1.5.0 per ERRATA E-2026-011."
+    )
+
+    @model_validator(mode="after")
+    def check_inference_rationale_required(self) -> InadmissibleTransition:
+        if (self.attribution_type == AttributionType.CLINICAL_INFERENCE
+                and (self.inference_rationale is None
+                     or not self.inference_rationale.strip())):
+            raise ValueError(
+                f"Inadmissible transition {self.from_state} -> "
+                f"{self.to_state} has attribution_type='clinical_inference' "
+                f"but no inference_rationale. Clinical inferences MUST carry "
+                f"an explicit rationale so reviewers can audit the bridging "
+                f"reasoning separately from the citation. Added schema "
+                f"v1.5.0 per ERRATA E-2026-011."
+            )
+        return self
 
 
 # ============================================================

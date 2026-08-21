@@ -5,8 +5,8 @@
 [![CI](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml/badge.svg)](https://github.com/DrMaruf1991/NeuroTCS/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Version 1.85.1](https://img.shields.io/badge/version-1.85.1-success.svg)](CHANGELOG.md)
-[![Tests 2084](https://img.shields.io/badge/tests-2084%20passed-success.svg)](tests/)
+[![Version 1.86.0](https://img.shields.io/badge/version-1.86.0-success.svg)](CHANGELOG.md)
+[![Tests 2114](https://img.shields.io/badge/tests-2114%20passed-success.svg)](tests/)
 [![Spec v1.7 FINAL](https://img.shields.io/badge/spec-v1.7%20FINAL-success.svg)](docs/spec/temporalmetric_v1.7_FINAL.md)
 
 NeuroTCS audits the temporal coherence of longitudinal medical AI predictions
@@ -44,6 +44,35 @@ MIRIAD uses MMSE-anchored staging. The 4-cohort agreement at <= 0.01 delta-cTCS
 is, in these tested cohorts, strong cross-cohort evidence that the framework
 measures what it claims to measure. (This is a within-tested-cohort observation,
 not a comparative claim against other tools or the wider literature.)
+
+## Validation status — what is established vs. pending
+
+Reproducibility and clinical validity are **separate claims**, and only the
+first is established:
+
+- **Established — reproducibility.** The audit is deterministic: identical
+  inputs produce byte-identical audit_ids across machines, library versions,
+  and reruns (the hallmark table above). This proves the audit is *stable*,
+  not that its rules are *right*.
+- **Established — rule provenance.** Every encoded transition rule is
+  citation-locked, and since ERRATA E-2026-011 each inadmissible rule
+  declares whether it is a verbatim guideline transcription
+  (`guideline_quote`) or a transcriber clinical judgment
+  (`clinical_inference` with an explicit bridging rationale).
+- **Pending — flag precision (clinical validity).** A **flag is not a
+  verdict of data error**: it marks a transition that is inadmissible or
+  improbable under the cited rule pack and requires adjudication. The
+  fraction of flags that are true data errors — versus real but rare
+  biology (e.g. diagnostic reclassification) or label-mapping artifacts —
+  is measured only by the blinded expert-adjudication study specified in
+  [docs/VALIDATION_PROTOCOL.md](docs/VALIDATION_PROTOCOL.md), which has
+  **not yet been executed**. Until it is, flag counts in this README are
+  descriptive audit output, not adjudicated error counts.
+- **Supporting tooling shipped.** `scripts/sample_flags_for_adjudication.py`
+  draws the protocol's deterministic, blinded adjudication sample from any
+  audit flags CSV, and `scripts/inject_known_errors.py` measures detection
+  of deliberately introduced known errors in otherwise-valid longitudinal
+  data (see docs/VALIDATION_PROTOCOL.md §Detection).
 
 ## What's in this repo
 
@@ -83,7 +112,7 @@ non-AD coverage.
 
 | Pack | Disease | Anchor publication | PMID | Transitions |
 |------|---------|--------------------|------|-------------|
-| `ad/niaaa_2018@1.3.0` | Alzheimer's | Jack 2018 NIA-AA Framework | 29653606 | 4 + 2 inadmissible |
+| `ad/niaaa_2018@1.4.0` | Alzheimer's | Jack 2018 NIA-AA Framework | 29653606 | 4 + 2 inadmissible (clinical-inference attribution, E-2026-011) |
 | `ad/aa_2024@2.1.0` | Alzheimer's | Jack 2024 AA Revised Criteria | 38934362 | 28 + 17 inadmissible (Table 7 integrated staging, 17 states) |
 | `ad/aa_2024_trac@1.1.0` | Alzheimer's (anti-Abeta) | La Joie 2025 TRAC framework | 41298245 | 6 + 3 inadmissible (5 require `treatment_status`) |
 | `ad/atn_2018@1.0.0` | Alzheimer's | Jack 2024 AA Revised Criteria (AT(N) origin Jack 2016/2018) | 38934362 | 5 + 0 inadmissible (8 biomarker-profile states; A-T+ inadmissibility enforced) |
@@ -132,7 +161,7 @@ git clone https://github.com/DrMaruf1991/NeuroTCS.git
 cd NeuroTCS
 pip install -e .
 
-# Tests (no cohort data required) -- expect 2084 passed, ~25 skipped (v1.85.1)
+# Tests (no cohort data required) -- expect 2114 passed, ~25 skipped (v1.86.0)
 python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_adni_audit.py \
     --ignore=tests/audit_core/test_real_oasis3_audit.py \
@@ -141,7 +170,7 @@ python -m pytest tests/ -q \
     --ignore=tests/audit_core/test_real_miriad_fairness_audit.py \
     --ignore=tests/audit_core/test_four_cohort_triangulation.py
 
-# Full suite with cohort data (set env vars first; expect 2084+cohort tests passed, cohort-version-dependent)
+# Full suite with cohort data (set env vars first; expect 2114+cohort tests passed, cohort-version-dependent)
 export NEUROTCS_OASIS3_CDR=/path/to/OASIS3_UDSb4_cdr.csv
 export NEUROTCS_ADNI_DXSUM_RDA=/path/to/ADNIMERGE2/data/DXSUM.rda
 export NEUROTCS_NACC_CSV=/path/to/investigator_nacc73_slim.csv
@@ -149,7 +178,7 @@ export NEUROTCS_MIRIAD_DIR=/path/to/MIRIAD_directory
 python -m pytest tests/ -q
 ```
 
-The test count is environment-dependent: **2084 passed / 25 skipped** on a
+The test count is environment-dependent: **2114 passed / 25 skipped** on a
 standard install without cohort env vars (cohort-data tests skip; current as of
 v1.80.0). As of v1.73.0 the R (`pyreadr`) and SPSS (`pyreadstat`) readers ship in
 core, so those format tests run on a standard install -- no extra is needed. With
@@ -250,7 +279,7 @@ docs/SCOPE.md Regulatory status.
 @software{salokhiddinov2026neurotcs,
   author    = {Salokhiddinov, Marufjon},
   title     = {NeuroTCS: Citation-locked, fail-closed longitudinal medical AI audit framework},
-  version   = {1.85.1},
+  version   = {1.86.0},
   year      = {2026},
   url       = {https://github.com/DrMaruf1991/NeuroTCS},
   note      = {temporalmetric v1.7 FINAL specification, 8 AD production rule packs, four-cohort triangulation lock; v1.9.0+ AD-only scope}

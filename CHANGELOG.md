@@ -1,3 +1,61 @@
+## [1.86.0] -- 2026-08-12 -- Attribution honesty + validation tooling (external expert review response; ERRATA E-2026-011)
+
+Response to the 2026-08 external expert review. Zero audit_id drift: the
+canonical scientific SHAs of all touched rule packs are byte-identical
+before and after (regression-locked in
+tests/rulepack/test_inadmissible_attribution.py).
+
+**Schema v1.5.0 — attribution honesty for inadmissible transitions.**
+`InadmissibleTransition` gains `attribution_type` + `inference_rationale`
+(parity with admissible `Transition`, schema v1.3.0), with the same
+fail-closed validator: `clinical_inference` REQUIRES a rationale. Root-cause
+fix for the review finding that inadmissible entries claimed guideline-quote
+authority the cited papers do not verbatim state. The new fields are
+provenance the scoring engine never reads and are excluded from the
+canonical scientific SHA (E-2026-006 partition), so honest attribution can
+never drift a cohort audit_id.
+
+**22 inadmissible entries re-attributed** (ERRATA E-2026-011):
+`ad/niaaa_2018@1.4.0` (AD->MCI, AD->CN), `ad/adni_clinical_stage@1.0.1`
+(five AD->*), `ad/niaaa_2024_clinical_numeric@1.0.1` (fifteen
+dementia-regressions). Each now declares `clinical_inference` with an
+explicit rationale naming what the cited paper does and does not state and
+the documented benign causes of apparent reversion (diagnostic
+reclassification, resolved delirium/depression, medication effects,
+label-mapping artifacts).
+
+**Flag semantics on every human-facing surface.** New single source of
+truth `neurotcs.report.FLAG_SEMANTICS_STATEMENT` rendered in the CLI
+summary, PDF report, SVG summary, and demo UI (landing page + guide): a
+flag marks a transition inadmissible or improbable under the cited rule
+pack and REQUIRES ADJUDICATION — it is not, by itself, a verdict of data
+error. Machine formats (bundle JSON, flags CSV) keep their stable severity
+tokens. Guarded by tests/report/test_flag_semantics.py.
+
+**Reproducibility vs clinical validity separated.** New README
+"Validation status" section; the niaaa_2018 pack note no longer calls the
+65 ADNI flags "all clinically interpretable" (unadjudicated claim).
+
+**Per-cohort label-mapping documentation.** New docs/mappings/ (README +
+adni/nacc/oasis3/miriad), derived line-by-line from the shipped adapters,
+each ending with the mapping-artifact risks an adjudicator must check
+before labeling a flag DATA_ERROR. Guarded by tests/docs/test_mapping_docs.py.
+
+**Arm A sampler shipped.** scripts/sample_flags_for_adjudication.py draws
+the VALIDATION_PROTOCOL.md Arm A sample: severity-stratified
+(largest-remainder proportional), seeded/deterministic, blinded worksheet
+with post-shuffle record ids + separate coordinator-only unblinding key.
+Tested in tests/scripts/test_sample_flags_for_adjudication.py.
+
+**Arm B injector shipped.** scripts/inject_known_errors.py deterministically
+injects known dementia-reversion errors into otherwise-valid longitudinal
+CSVs with a full answer key and reproducible manifest (no wall-clock
+values). Acceptance-tested end to end: on a clean synthetic cohort the
+auditor detects 4/4 injected errors with zero false positives
+(tests/scripts/test_inject_known_errors.py).
+
+Full suite: 2084 -> 2114 tests passed (30 new), 25 skipped.
+
 ## [1.85.1] -- 2026-06-24 -- A4/LEARN brought to real-data invariant parity
 
 Adds tests/audit_core/test_real_a4_audit.py: a LOCKED real-data invariant for the

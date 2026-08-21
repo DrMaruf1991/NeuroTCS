@@ -73,6 +73,11 @@ def bundle_to_pdf(bundle: dict[str, Any], path: str | Path) -> Path:
         f"impossible {sev.get('impossible', 0)} &nbsp; | &nbsp; "
         f"implausible {sev.get('implausible', 0)} &nbsp; | &nbsp; "
         f"informational {sev.get('informational', 0)}", styles["Normal"]))
+    story.append(Spacer(1, 2 * mm))
+    # What a flag MEANS (expert review 2026-08) -- single source of truth.
+    from neurotcs.report import FLAG_SEMANTICS_STATEMENT
+    story.append(Paragraph(
+        f"<i>{FLAG_SEMANTICS_STATEMENT}</i>", styles["Normal"]))
     story.append(Spacer(1, 6 * mm))
 
     # per-axis table

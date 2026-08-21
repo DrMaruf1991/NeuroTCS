@@ -48,7 +48,7 @@ version and obtain bit-identical hashes.
 | MIRIAD longitudinal (Aim 3 A) | 69 | 454 | 7 (1.54%) | 0.9854 (0.9715–0.9937) | `abda26cb4f77c4f5c7644b421b459b79dfa5caf58f32d60860736c6a2c9ee57f` | `1aeb56ce5a88d9f74e7b6942ca4b3e2329fd918d96264b4df062744247cf1a80` |
 | MIRIAD test-retest (Aim 3 B) | 69 (pairs) | 69 | 0 | 1.0000 | `4de7f7111aedea86636dae2f81a768a1013849e5949a21062e3bdbd99f499136` | `fa30cd364d9239a5fbc5774182a4d5093189605c10d5a1abe956653dd76afa1f` |
 
-**Rule pack SHA-256** (`ad/niaaa_2018@1.3.0`): `97811e3f1a145e47...`
+**Rule pack SHA-256** (`ad/niaaa_2018@1.4.0`; unchanged from @1.3.0 — E-2026-011 is provenance-only): `97811e3f1a145e47...`
 **Schema version**: 1.1.0 (per Step 2.1 schema-version declaration policy).
 **Seed**: 42. **Bootstrap B**: 10,000. **CI method**: BCa.
 

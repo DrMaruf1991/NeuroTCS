@@ -65,6 +65,74 @@ app = FastAPI(
     "trajectories. Results only -- no raw data, no LLM.",
 )
 
+# ---------------------------------------------------------------------------
+# Self-condition contract (expert-review hardening, 2026-08): the server
+# STATES its own condition on every response and ASSERTS it fail-closed.
+#
+#   * EXPECTED_ENGINE_VERSION is the version whose locked invariants this
+#     demo reproduces (also enforced at boot by demo/startup.sh).
+#   * EXPECTED_RULEPACK_SHA256 is the canonical scientific SHA of
+#     ad/niaaa_2018 (byte-stable across the E-2026-011 attribution
+#     correction; see ERRATA).
+#
+# Both are computed ONCE at import and re-asserted per request; any drift
+# (wrong package installed, hot-swapped rule pack) turns every response
+# into an explicit 500 instead of silently serving results under an
+# unverified engine. The stated condition rides on every response as
+# X-NeuroTCS-Engine / X-NeuroTCS-Rulepack-SHA256 headers, so clients and
+# tests can assert on it per request.
+# ---------------------------------------------------------------------------
+EXPECTED_ENGINE_VERSION = "1.86.0"
+EXPECTED_RULEPACK_SHA256 = (
+    "97811e3f1a145e47393aa2568065303c594ffa20cc81a514ced027a23a81336b"
+)
+
+from neurotcs import load_rulepack as _load_rulepack  # noqa: E402
+
+_LIVE_ENGINE_VERSION = neurotcs.__version__
+_LIVE_RULEPACK_SHA256 = _load_rulepack("ad/niaaa_2018").sha256
+
+if _LIVE_ENGINE_VERSION != EXPECTED_ENGINE_VERSION:  # fail-closed at import
+    raise RuntimeError(
+        f"neurotcs engine is {_LIVE_ENGINE_VERSION}, but this demo's locked "
+        f"invariants require {EXPECTED_ENGINE_VERSION}. Refusing to start."
+    )
+if _LIVE_RULEPACK_SHA256 != EXPECTED_RULEPACK_SHA256:
+    raise RuntimeError(
+        f"ad/niaaa_2018 canonical SHA is {_LIVE_RULEPACK_SHA256[:16]}..., "
+        f"expected {EXPECTED_RULEPACK_SHA256[:16]}.... The rule pack on this "
+        f"host is not the one the locked invariants were derived under. "
+        f"Refusing to start."
+    )
+
+
+@app.middleware("http")
+async def state_and_assert_condition(request, call_next):
+    """State the system's own condition on EVERY response, re-asserting it.
+
+    The comparison is against import-time cached values (cheap), so a
+    process whose engine or rule pack no longer matches the pinned
+    expectation answers 500 with the mismatch named, never a silent result.
+    """
+    if (neurotcs.__version__ != EXPECTED_ENGINE_VERSION
+            or _LIVE_RULEPACK_SHA256 != EXPECTED_RULEPACK_SHA256):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "self-condition assertion failed",
+                "engine": neurotcs.__version__,
+                "engine_expected": EXPECTED_ENGINE_VERSION,
+                "rulepack_sha256": _LIVE_RULEPACK_SHA256,
+                "rulepack_sha256_expected": EXPECTED_RULEPACK_SHA256,
+            },
+        )
+    response = await call_next(request)
+    response.headers["X-NeuroTCS-Engine"] = _LIVE_ENGINE_VERSION
+    response.headers["X-NeuroTCS-Rulepack-SHA256"] = _LIVE_RULEPACK_SHA256
+    return response
+
+
 # One lock per cohort: serialize duplicate concurrent audits of the same cohort.
 _locks: dict[str, asyncio.Lock] = {c.cohort_id: asyncio.Lock() for c in COHORTS}
 

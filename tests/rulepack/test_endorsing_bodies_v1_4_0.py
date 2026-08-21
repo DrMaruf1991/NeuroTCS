@@ -34,8 +34,10 @@ from neurotcs.rulepack.schema import (
 
 
 def test_schema_version_bumped_to_1_4_0():
-    """v1.12.0 ships schema 1.4.0."""
-    assert SCHEMA_VERSION == "1.4.0"
+    """v1.12.0 shipped schema 1.4.0; current schema has moved past it but
+    1.4.0 must remain a supported loadable version."""
+    assert SCHEMA_VERSION >= "1.4.0"
+    assert "1.4.0" in SUPPORTED_SCHEMA_VERSIONS
 
 
 def test_supported_schema_versions_includes_1_4_0():
@@ -263,13 +265,17 @@ def test_shipped_production_packs_have_5plus_endorsers(pack_name: str):
     ["ad/aa_2024", "ad/aa_2024_trac", "ad/niaaa_2018"],
 )
 def test_shipped_production_packs_declare_schema_1_4_0(pack_name: str):
-    """All 3 production AD rulepacks declare schema_version 1.4.0."""
+    """Production AD rulepacks declare AT LEAST schema_version 1.4.0
+    (endorsing_bodies is a 1.4.0 feature). ad/niaaa_2018 declares 1.5.0
+    since ERRATA E-2026-011 (attribution on inadmissible transitions);
+    the exact minimum-declaration policy is enforced pack-by-pack in
+    tests/rulepack/test_schema_version_declaration.py."""
     from neurotcs.rulepack import load_rulepack
     pack = load_rulepack(pack_name)
-    assert pack.rulepack.schema_version == "1.4.0", (
+    assert pack.rulepack.schema_version >= "1.4.0", (
         f"Pack {pack_name} declares schema_version "
-        f"'{pack.rulepack.schema_version}', expected '1.4.0' "
-        f"(packs that use endorsing_bodies must declare 1.4.0)."
+        f"'{pack.rulepack.schema_version}', expected >= '1.4.0' "
+        f"(packs that use endorsing_bodies must declare 1.4.0+)."
     )
 
 

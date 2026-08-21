@@ -121,7 +121,9 @@ def test_fairness_runner_links_audit_id_to_report(tmp_path: Path):
     assert len(report["audit"]["audit_id"]) == 64
     assert len(report["audit"]["audit_id_v2"]) == 64
     # rulepack identity present
-    assert report["audit"]["rulepack_id"] == "ad/niaaa_2018@1.3.0"
+    # (@1.4.0 since ERRATA E-2026-011 attribution correction; the canonical
+    # SHA below is unchanged because the correction is provenance-only.)
+    assert report["audit"]["rulepack_id"] == "ad/niaaa_2018@1.4.0"
     # SHA prefix matches the known rulepack SHA (first 16 chars).
     # v1.20.0 (ERRATA E-2026-006): the canonical SHA is now computed over
     # SCIENTIFIC content only (state_space, admissible/inadmissible_transitions,

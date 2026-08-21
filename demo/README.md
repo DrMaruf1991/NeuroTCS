@@ -108,9 +108,9 @@ ids:
   "cohort": "a4", "ctcs": 0.996374, "ci_low": 0.9957, "ci_high": 0.9971,
   "n_transitions": 8892, "n_flagged": 34, "flagged_rate": 0.0038,
   "status": "FLAGS_PRESENT",
-  "audit_id": "…sha256…", "rulepack_id": "ad/niaaa_2018@1.3.0",
+  "audit_id": "…sha256…", "rulepack_id": "ad/niaaa_2018@1.4.0",
   "citation_pmid": "29653606", "citation_doi": "10.1016/j.jalz.2018.02.018",
-  "neurotcs_version": "1.85.1",
+  "neurotcs_version": "1.86.0",
   "parity": { "parity_holds": true, "…": "…" }
 }
 ```
@@ -174,8 +174,8 @@ bash demo/startup.sh
 ```
 
 `startup.sh` installs the engine **from this repo** (`pip install .` → the exact
-shipped 1.85.1), installs the web deps, then **refuses to start** unless
-`neurotcs.__version__ == 1.85.1` — so the server can never serve a result under a
+shipped 1.86.0), installs the web deps, then **refuses to start** unless
+`neurotcs.__version__ == 1.86.0` — so the server can never serve a result under a
 different engine than the one the cTCS is locked to. It then runs gunicorn with a
 uvicorn worker.
 
@@ -201,7 +201,7 @@ az webapp deploy \
 ```bash
 # engine version must match the locked-invariant version
 curl -s https://<APP_NAME>.azurewebsites.net/api/health
-# -> {"status":"ok","neurotcs_version":"1.85.1", ...}
+# -> {"status":"ok","neurotcs_version":"1.86.0", ...}
 
 # run the parity gate against the LIVE deployment (all five must pass)
 NEUROTCS_A4_CDR=... NEUROTCS_NACC_CSV=... NEUROTCS_OASIS3_CDR=... \

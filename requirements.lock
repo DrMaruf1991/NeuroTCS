@@ -37,7 +37,7 @@ python-dateutil==2.9.0.post0
 tzdata==2026.2
 six==1.17.0
 et_xmlfile==2.0.0            # openpyxl
-pillow==12.2.0               # reportlab
+pillow==12.3.0               # reportlab
 charset-normalizer==3.4.7    # pyreadstat
 narwhals==2.16.0             # pyreadr
 jsonschema-specifications==2025.9.1
